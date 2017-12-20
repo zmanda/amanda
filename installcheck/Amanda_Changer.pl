@@ -259,7 +259,7 @@ is($chg->{'config'}->get_property("testprop"), "testval",
     "changer properties are correctly represented");
 is($chg->have_inventory(), 1, "changer have inventory");
 my @new_tape_label = $chg->make_new_tape_label();
-is_deeply(\@new_tape_label, [undef, "template is not set, you must set autolabel"], "no make_new_tape_label");
+is_deeply(\@new_tape_label, [undef, "Storage 'TESTCONF': template is not set, you must set autolabel"], "no make_new_tape_label");
 is($chg->make_new_meta_label(), undef, "no make_new_meta_label");
 $chg->quit();
 
@@ -532,7 +532,7 @@ Amanda::MainLoop::run();
     $check_info_err = make_cb('check_info_err' => sub {
 	my ($err, %results) = @_;
 	is($err,
-	  "While getting info key 'mkerror1': err1; While getting info key 'mkerror2': err2",
+	  "Storage 'TESTCONF': While getting info key 'mkerror1': err1; While getting info key 'mkerror2': err2",
 	  "info errors are handled correctly");
 	is($err->{'type'}, 'failed', "error has type 'failed'");
 	ok($err->failed, "\$err->failed is true");

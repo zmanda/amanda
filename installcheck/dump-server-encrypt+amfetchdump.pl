@@ -128,7 +128,7 @@ is($reply->{'body'}->[0]->{'report'}->{'head'}->{'org'}, 'DailySet1' , 'org is c
 is($reply->{'body'}->[0]->{'report'}->{'head'}->{'config_name'}, 'TESTCONF' , 'config_name is correct');
 is($reply->{'body'}->[0]->{'report'}->{'head'}->{'timestamp'}, $timestamp , 'timestamp is correct');
 is($reply->{'body'}->[0]->{'report'}->{'notes'}->[1], '  planner: Adding new disk localhost:diskname2.' , 'notes[1] is correct') || diag("notes: " . Data::Dumper::Dumper($reply->{'body'}->[0]->{'report'}->{'notes'}));
-is($reply->{'body'}->[0]->{'report'}->{'notes'}->[2], '  taper: Slot 1 without label can be labeled' , 'notes[2] is correct') || diag("notes: " . Data::Dumper::Dumper($reply->{'body'}->[0]->{'report'}->{'notes'}));
+is($reply->{'body'}->[0]->{'report'}->{'notes'}->[2], '  taper: Storage \'TESTCONF\': slot 1: without label can be labeled' , 'notes[2] is correct') || diag("notes: " . Data::Dumper::Dumper($reply->{'body'}->[0]->{'report'}->{'notes'}));
 #is($reply->{'body'}->[0]->{'report'}->{'notes'}->[3], '  taper: tape TESTCONF01 kb 94 fm 1 [OK]' , 'notes[3] is correct') || diag("notes: " . Data::Dumper::Dumper($reply->{'body'}->[0]->{'report'}->{'notes'}));
 ok(!exists $reply->{'body'}->[0]->{'report'}->{'notes'}->[4], 'no notes[4]') || diag("notes: " . Data::Dumper::Dumper($reply->{'body'}->[0]->{'report'}->{'notes'}));
 is($reply->{'body'}->[0]->{'report'}->{'usage_by_tape'}->[0]->{'nb'}, '1' , 'one dle on tape 0');

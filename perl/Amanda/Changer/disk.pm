@@ -106,7 +106,8 @@ sub new {
     $self->{'num-slot'} = $config->get_property('num-slot') || 1;
     $self->{'auto-create-slot'} = $config->get_boolean_property(
 					'auto-create-slot', 0);
-    $self->{'removable'} = $config->get_boolean_property('removable', 0);
+    $self->{'removable'} = $params{'removable'};
+    $self->{'removable'} = $config->get_boolean_property('removable', 0) if !defined $self->{'removable'};
     $self->{'mount'} = $config->get_boolean_property('mount', 0);
     $self->{'umount'} = $config->get_boolean_property('umount', 0);
     $self->{'umount_lockfile'} = $config->get_property('umount-lockfile');
@@ -164,6 +165,7 @@ sub create {
 		source_line     => __LINE__,
 		code    => 1100027,
 		severity => $Amanda::Message::SUCCESS,
+		storage_name => $self->{storage}->{storage_name},
 		dir     => $self->{'dir'}));
 }
 
@@ -365,8 +367,12 @@ sub _load_by_slot {
 	    $self->_set_current($params{'state'}, $slot) if ($params{'set_current'});
 	} else {
 	    return $self->make_error("failed", $params{'res_cb'},
+		source_filename => __FILE__,
+		source_line     => __LINE__,
+		severity        => $Amanda::Message::MESSAGE,
+		code	    => 1100031,
 		reason => "invalid",
-		message => "Invalid relative slot '$params{relative_slot}'");
+		relative_slot => $params{relative_slot});
 	}
     } else {
 	$slot = $params{'slot'};
@@ -374,22 +380,33 @@ sub _load_by_slot {
 
     if (exists $params{'except_slots'} and exists $params{'except_slots'}->{$slot}) {
 	return $self->make_error("failed", $params{'res_cb'},
-	    reason => "notfound",
-	    message => "all slots have been loaded");
+	    source_filename => __FILE__,
+	    source_line     => __LINE__,
+	    severity        => $Amanda::Message::MESSAGE,
+	    code	    => 1100032,
+	    reason => "notfound");
     }
 
     if (!$self->_slot_exists($slot)) {
 	return $self->make_error("failed", $params{'res_cb'},
-	    reason => "invalid",
-	    slot   => $slot,
-	    message => "Slot $slot not found");
+		source_filename => __FILE__,
+		source_line     => __LINE__,
+		severity        => $Amanda::Message::MESSAGE,
+		code	    => 1100033,
+		reason => "invalid",
+		slot   => $slot);
     }
 
     if ($drive = $self->_is_slot_in_use($params{'state'}, $slot)) {
 	return $self->make_error("failed", $params{'res_cb'},
-	    reason => "volinuse",
-	    slot => $slot,
-	    message => "Slot $slot is already in use by drive '$drive' and process '$params{state}->{drives}->{$drive}->{pid}'");
+		source_filename => __FILE__,
+		source_line     => __LINE__,
+		severity        => $Amanda::Message::MESSAGE,
+		code		=> 1100034,
+		reason		=> "volinuse",
+		slot		=> $slot,
+		drive		=> $drive,
+		pid		=> $params{state}->{drives}->{$drive}->{pid});
     }
 
     $drive = $self->_alloc_drive($params{state});
@@ -409,15 +426,24 @@ sub _load_by_label {
     $slot = $self->_find_label($label);
     if (!defined $slot) {
 	return $self->make_error("failed", $params{'res_cb'},
-	    reason => "notfound",
-	    message => "Label '$label' not found");
+		source_filename	=> __FILE__,
+		source_line	=> __LINE__,
+		severity	=> $Amanda::Message::MESSAGE,
+		code		=> 1100035,
+		reason		=> "notfound",
+		label		=> $label);
     }
 
     if ($drive = $self->_is_slot_in_use($params{'state'}, $slot)) {
 	return $self->make_error("failed", $params{'res_cb'},
-	    reason => "volinuse",
-	    message => "Slot $slot, containing '$label', is already " .
-			"in use by drive '$drive' and process '$params{state}->{drives}->{$drive}->{pid}'");
+		source_filename	=> __FILE__,
+		source_line	=> __LINE__,
+		severity	=> $Amanda::Message::MESSAGE,
+		code		=> 1100036,
+		reason		=> "volinuse",
+		slot		=> $slot,
+		label		=> $label,
+		pid		=> $params{state}->{drives}->{$drive}->{pid});
     }
 
     $drive = $self->_alloc_drive($params{state});
@@ -437,8 +463,13 @@ sub _make_res {
     my $device = Amanda::Device->new($device_name);
     if ($device->status != $DEVICE_STATUS_SUCCESS) {
 	return $self->make_error("failed", $res_cb,
-		reason => "device",
-		message => "opening '$device_name': " . $device->error_or_status());
+		source_filename	=> __FILE__,
+		source_line	=> __LINE__,
+		severity	=> $Amanda::Message::MESSAGE,
+		code		=> 1100038,
+		reason		=> "device",
+		device_name	=> $device_name,
+		device_error	=> $device->error_or_status);
     }
     my ($use_data, $surety, $source) = $device->property_get("USE-DATA");
     if ($source == $PROPERTY_SOURCE_DEFAULT) {
@@ -446,9 +477,7 @@ sub _make_res {
 	$use_data = !$r;
     }
     if (my $err = $self->{'config'}->configure_device($device, $self->{'storage'})) {
-	return $self->make_error("failed", $res_cb,
-		reason => "device",
-		message => $err);
+	return $res_cb->($err);
     }
 
     $res = Amanda::Changer::disk::Reservation->new($self, $device, $drive, $slot, $state->{'meta'});
@@ -670,7 +699,12 @@ sub _validate() {
 
     unless (-d $dir) {
 	return $self->make_error("fatal", undef,
-	    message => "directory '$dir' does not exist");
+		source_filename	=> __FILE__,
+		source_line	=> __LINE__,
+		severity	=> $Amanda::Message::ERROR,
+		code		=> 1100039,
+		reason		=> "device",
+		dir		=> $dir);
     }
 
     if ($self->{'removable'}) {
@@ -685,15 +719,22 @@ sub _validate() {
 	}
 	if ($dev == $pdev) {
 	    return $self->make_error("failed", undef,
-		reason => "notfound",
-		message => "No removable disk mounted on '$dir'");
+		source_filename	=> __FILE__,
+		source_line	=> __LINE__,
+		severity	=> $Amanda::Message::ERROR,
+		code		=> 1100041,
+		reason		=> "device",
+		dir		=> $dir);
 	}
     }
 
-    if (!$self->{'num-slot'}) {
+    if (!$self->{'num-slot'}) { # this is impossible
 	if ($self->{'auto-create-slot'}) {
 	    return $self->make_error("fatal", undef,
-		message => "property 'auto-create-slot' set but property 'num-slot' is not set");
+		source_filename	=> __FILE__,
+		source_line	=> __LINE__,
+		severity	=> $Amanda::Message::ERROR,
+		code		=> 1100045);
 	}
     }
     return undef;
@@ -731,10 +772,19 @@ sub try_lock {
 	    return Amanda::MainLoop::call_after($poll, $steps->{'lock'});
 	} elsif ($rv == 1) {
 	    return $self->make_error("fatal", $cb,
-		message => "Timeout trying to lock '$self->{'umount_lockfile'}'");
+		source_filename	=> __FILE__,
+		source_line	=> __LINE__,
+		severity	=> $Amanda::Message::ERROR,
+		code		=> 1100046,
+		lock_file	=> $self->{'umount_lockfile'});
 	} elsif ($rv == -1) {
 	    return $self->make_error("fatal", $cb,
-		message => "Error locking '$self->{'umount_lockfile'}'");
+		source_filename	=> __FILE__,
+		source_line	=> __LINE__,
+		severity	=> $Amanda::Message::ERROR,
+		code		=> 1100047,
+		lock_file	=> $self->{'umount_lockfile'},
+		errno		=> $!);
 	} elsif ($rv == 0) {
 	    if (defined $self->{'umount_src'}) {
 		$self->{'umount_src'}->remove();

@@ -132,7 +132,7 @@ is($reply->{'body'}->[0]->{'report'}->{'head'}->{'org'}, 'DailySet1' , 'org is c
 is($reply->{'body'}->[0]->{'report'}->{'head'}->{'config_name'}, 'TESTCONF' , 'config_name is correct');
 is($reply->{'body'}->[0]->{'report'}->{'head'}->{'timestamp'}, $timestamp , 'timestamp is correct');
 is($reply->{'body'}->[0]->{'report'}->{'notes'}->[1], '  planner: Adding new disk localhost:diskname2.' , 'notes[1] is correct');
-is($reply->{'body'}->[0]->{'report'}->{'notes'}->[2], '  taper: Slot 1 without label can be labeled' , 'notes[2] is correct');
+is($reply->{'body'}->[0]->{'report'}->{'notes'}->[2], '  taper: Storage \'TESTCONF\': slot 1: without label can be labeled' , 'notes[2] is correct');
 ok(!exists $reply->{'body'}->[0]->{'report'}->{'notes'}->[3], 'no notes[3]');
 is_deeply($reply->{'body'}->[0]->{'report'}->{'failure_summary'}, [
         "  localhost diskname2 lev 0  FAILED [exec $cwd/amcat-error-no-exec: Permission denied]",
@@ -368,7 +368,7 @@ FAILED DUMP DETAILS:
 NOTES:
   planner: tapecycle (2) <= runspercycle (10)
   planner: Adding new disk localhost:diskname2.
-  taper: Slot 1 without label can be labeled
+  taper: Storage 'TESTCONF': slot 1: without label can be labeled
 
 
 DUMP SUMMARY:

@@ -263,9 +263,7 @@ sub _make_res {
     }
 
     if (my $err = $self->{'config'}->configure_device($rait_device, $self->{'storage'})) {
-	return $self->make_error("failed", $res_cb,
-		reason => "device",
-		message => $err);
+	return $res_cb->($err);
     }
 
     my $combined_res = Amanda::Changer::rait::Reservation->new(

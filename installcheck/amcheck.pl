@@ -58,7 +58,6 @@ $testconf->write();
 like(run_get('amcheck', 'TESTCONF'),
     qr/Amanda Tape Server Host Check/,
     "amcheck with a new config succeeds");
-
 like(run_get('amcheck', '-s', 'TESTCONF'),
     qr/Amanda Tape Server Host Check/,
     "amcheck -s works");

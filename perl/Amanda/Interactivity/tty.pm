@@ -45,6 +45,8 @@ from /dev/tty.
 
 sub new {
     my $class = shift;
+    my $storage_name = shift;
+    my $changer_name = shift;
     my $property = shift;
 
     my $input;
@@ -53,11 +55,21 @@ sub new {
 
     my $r = open($input, '<', "/dev/tty");
     if (!$r) {
-	$abort_message = "Failed to open /dev/tty: $!";
+	$abort_message = Amanda::Changer::Error->new('fatal',
+				storage => $storage_name,
+				changer_name => $changer_name,
+				dev => "/dev/tty",
+				err => $!,
+				code => 1110002);
     } else {
         $r = open($output, '>', "/dev/tty");
 	if (!$r) {
-	    $abort_message = "Failed to open /dev/tty: $!";
+	    $abort_message = Amanda::Changer::Error->new('fatal',
+				storage => $storage_name,
+				changer_name => $changer_name,
+				dev => "/dev/tty",
+				err => $!,
+				code => 1110002);
 	    close $input;
 	    $input = undef;
 	}
@@ -66,6 +78,8 @@ sub new {
 	input_src     => undef,
 	input         => $input,
 	output        => $output,
+	storage_name  => $storage_name,
+	changer_name  => $changer_name,
 	property      => $property,
 	abort_message => $abort_message,
     };
@@ -97,6 +111,7 @@ sub user_request {
     my $label      = $params{'label'};
     my $new_volume = $params{'new_volume'};
     my $err        = $params{'err'};
+    my $storage_name = $params{'storage_name'};
     my $chg_name   = $params{'chg_name'};
 
     my $data_in = sub {
@@ -107,12 +122,17 @@ sub user_request {
 	    $self->abort();
 	    return $params{'request_cb'}->(
 			Amanda::Changer::Error->new('fatal',
-				message => "Fail to read from /dev/tty"));
+				storage => $storage_name,
+				changer_name => $chg_name,
+				dev => "/dev/tty",
+				code => 1110000));
 	} elsif ($n_read == 0) {
 	    $self->abort();
 	    return $params{'request_cb'}->(
 			Amanda::Changer::Error->new('fatal',
-				message => "Aborted by user"));
+				storage => $storage_name,
+				changer_name => $chg_name,
+				code => 1110002));
 	} else {
 	    $buffer .= $b;
 	    if ($b eq "\n") {
@@ -126,9 +146,7 @@ sub user_request {
     };
 
     if ($self->{'abort_message'}) {
-	return $params{'request_cb'}->(
-			Amanda::Changer::Error->new('fatal',
-				message => $self->{'abort_message'}));
+	return $params{'request_cb'}->($self->{'abort_message'});
     }
 
     print {$self->{'output'}} "$err\n";

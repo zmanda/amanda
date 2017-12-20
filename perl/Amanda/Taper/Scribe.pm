@@ -2015,80 +2015,8 @@ sub _start_scanning {
     $self->{'scan_running'} = 1;
 
     my $_user_msg_fn = sub {
-	my %params = @_;
-	if (exists($params{'slot_result'})) {
-	    if ($params{'does_not_match_labelstr'}) {
-		$self->{'feedback'}->scribe_notif_log_info(
-		    message => "Slot $params{'slot'} with label $params{'label'} do not match labelstr");
-	    } elsif ($params{'not_in_tapelist'}) {
-		$self->{'feedback'}->scribe_notif_log_info(
-		    message => "Slot $params{'slot'} with label $params{'label'} is not in the tapelist");
-	    } elsif ($params{'other_config'}) {
-		$self->{'feedback'}->scribe_notif_log_info(
-		    message => "Slot $params{'slot'} with label $params{'label'} is use by config $params{'config'}");
-	    } elsif ($params{'other_pool'}) {
-		$self->{'feedback'}->scribe_notif_log_info(
-		    message => "Slot $params{'slot'} with label $params{'label'} is in pool $params{'pool'}");
-	    } elsif ($params{'active'}) {
-		$self->{'feedback'}->scribe_notif_log_info(
-		    message => "Slot $params{'slot'} with label $params{'label'} is not reusable");
-	    } elsif ($params{'not_autolabel'}) {
-		if ($params{'label'}) {
-		    $self->{'feedback'}->scribe_notif_log_info(
-			message => "Slot $params{'slot'} with label $params{'label'} is not labelable ");
-		} elsif ($params{'empty'}) {
-		    $self->{'feedback'}->scribe_notif_log_info(
-			message => "Slot $params{'slot'} is empty, autolabel not set");
-		} elsif ($params{'non_amanda'}) {
-		    $self->{'feedback'}->scribe_notif_log_info(
-			message => "Slot $params{'slot'} is a non-amanda volume, autolabel not set");
-		} elsif ($params{'volume_error'}) {
-		    $self->{'feedback'}->scribe_notif_log_info(
-			message => "Slot $params{'slot'} is a volume in error: $params{'err'}, autolabel not set");
-		} elsif ($params{'not_success'}) {
-		    $self->{'feedback'}->scribe_notif_log_info(
-			message => "Slot $params{'slot'} is a device in error: $params{'err'}, autolabel not set");
-		} elsif ($params{'err'}) {
-		    $self->{'feedback'}->scribe_notif_log_info(
-			message => "$params{'err'}");
-		} else {
-		    $self->{'feedback'}->scribe_notif_log_info(
-			message => "Slot $params{'slot'} without label is not labelable ");
-		}
-	    } elsif ($params{'empty'}) {
-		$self->{'feedback'}->scribe_notif_log_info(
-		    message => "Slot $params{'slot'} is empty, autolabel disabled");
-	    } elsif ($params{'non_amanda'}) {
-		$self->{'feedback'}->scribe_notif_log_info(
-		    message => "Slot $params{'slot'} is a non-amanda volume, autolabel disabled");
-	    } elsif ($params{'volume_error'}) {
-		$self->{'feedback'}->scribe_notif_log_info(
-		    message => "Slot $params{'slot'} is a volume in error: $params{'err'}, autolabel disabled");
-	    } elsif ($params{'not_success'}) {
-		$self->{'feedback'}->scribe_notif_log_info(
-		    message => "Slot $params{'slot'} is a device in error: $params{'err'}, autolabel disabled");
-	    } elsif ($params{'err'}) {
-		$self->{'feedback'}->scribe_notif_log_info(
-		    message => "$params{'err'}");
-	    } elsif ($params{'not_labelable'}) {
-		$self->{'feedback'}->scribe_notif_log_info(
-		    message => "Slot $params{'slot'} without label can't be labeled");
-	    } elsif (!defined $params{'label'}) {
-		$self->{'feedback'}->scribe_notif_log_info(
-		    message => "Slot $params{'slot'} without label can be labeled");
-	    } elsif ($params{'relabeled'}) {
-		$self->{'feedback'}->scribe_notif_log_info(
-		    message => "Slot $params{'slot'} with label $params{'label'} will be relabeled");
-	    } else {
-		$self->{'feedback'}->scribe_notif_log_info(
-		    message => "Slot $params{'slot'} with label $params{'label'} is usable");
-	    }
-	} elsif (exists($params{'search_result'})) {
-	    if ($params{'err'}) {
-		$self->{'feedback'}->scribe_notif_log_info(
-		    message => "$params{'err'}");
-	    }
-	}
+	my $message = shift;
+	$self->{'feedback'}->scribe_notif_log_info(%$message);
     };
 
     $self->{'taperscan'}->scan(

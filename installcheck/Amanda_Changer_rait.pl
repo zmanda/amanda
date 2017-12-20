@@ -87,13 +87,13 @@ label_vtape(3,4,"mytape");
 {
     my $err = Amanda::Changer->new("chg-rait:chg-disk:$tapebase/1");
     chg_err_like($err,
-	{ message => "chg-rait needs at least two child changers",
+	{ message => "Storage 'TESTCONF': chg-rait needs at least two child changers",
 	  type => 'fatal' },
 	"single child device detected and handled");
 
     $err = Amanda::Changer->new("chg-rait:chg-disk:{$tapebase/13,$tapebase/14}");
     chg_err_like($err,
-	{ message => qr/chg-disk.*13: directory.*; chg-disk.*14: directory.*/,
+	{ message => qr/Storage 'TESTCONF': chg-disk.*13: directory.*; chg-disk.*14: directory.*/,
 	  type => 'fatal' },
 	"constructor errors in child devices detected and handled");
 }
@@ -236,7 +236,7 @@ sub test_threeway {
     step got_res_slot_failure => sub {
 	my ($err, $res) = @_;
 	chg_err_like($err,
-	    { message => qr/from chg-disk.*2: Slot 99 not found/,
+	    { message => qr/Storage 'TESTCONF': from chg-disk.*2: Slot 99 not found/,
 	      type => 'failed',
 	      reason => 'invalid' },
 	    "failure of a child to load a slot is correctly propagated");
@@ -254,7 +254,7 @@ sub test_threeway {
     step got_res_slot_multifailure => sub {
 	my ($err, $res) = @_;
 	chg_err_like($err,
-	    { message => qr/from chg-disk.*1: Slot 99 not found; from chg-disk.*3: /,
+	    { message => qr/Storage 'TESTCONF': from chg-disk.*1: Slot 99 not found; from chg-disk.*3: /,
 	      type => 'failed',
 	      reason => 'invalid' },
 	    "failure of multiple chilren to load a slot is correctly propagated");

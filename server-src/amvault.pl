@@ -42,7 +42,8 @@ sub new {
     close $stdin;
 
     my $self = {
-	input_src => undef};
+	input_src => undef
+    };
     return bless ($self, $class);
 }
 
@@ -64,6 +65,7 @@ sub user_request {
     my $message  = $params{'message'};
     my $label    = $params{'label'};
     my $err      = $params{'err'};
+    my $storage_name = $params{'storage_name'};
     my $chg_name = $params{'chg_name'};
 
     $subs{'data_in'} = sub {
@@ -74,12 +76,17 @@ sub user_request {
 	    $self->abort();
 	    return $params{'request_cb'}->(
 		Amanda::Changer::Error->new('fatal',
-			message => "Fail to read from stdin"));
+			storage_name => $storage_name,
+			chg_name => $chg_name,
+			dev => "stdin",
+			code => 1110000));
 	} elsif ($n_read == 0) {
 	    $self->abort();
 	    return $params{'request_cb'}->(
 		Amanda::Changer::Error->new('fatal',
-			message => "Aborted by user"));
+			storage_name => $storage_name,
+			chg_name => $chg_name,
+			code => 1110001));
 	} else {
 	    $buffer .= $b;
 	    if ($b eq "\n") {

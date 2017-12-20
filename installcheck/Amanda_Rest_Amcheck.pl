@@ -132,83 +132,99 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 		'code' => '2800073'
 	  },
 #3
-          {	'source_filename' => "amcheck.c",
+	  {	'source_filename' => "$amperldir/Amanda/Taper/Scan/traditional.pm",
 		'severity' => $Amanda::Message::MESSAGE,
-		'message' => "slot 1: contains an empty volume",
-		'errstr' => "slot 1: contains an empty volume",
-		'process' => 'amcheck-server',
+		'message' => "Storage 'TESTCONF': slot 1: the volume is empty, autolabel disabled",
+		'changer_message' => "slot 1: the volume is empty, autolabel disabled",
+		'storage_name' => 'TESTCONF',
+		'slot_result' => '1',
+		'slot' => '1',
+		'empty' => '1',
+		'not_autolabel' => '1',
+		'process' => 'amcheck-device',
 		'running_on' => 'amanda-server',
 		'component' => 'amanda',
 		'module' => 'amanda',
-		'code' => '123'
+		'code' => '5101009'
 	  },
 #4
-          {	'source_filename' => "amcheck.c",
+	  {	'source_filename' => "$amperldir/Amanda/Taper/Scan/traditional.pm",
 		'severity' => $Amanda::Message::MESSAGE,
-		'message' => "slot 2: contains an empty volume",
-		'errstr' => "slot 2: contains an empty volume",
-		'process' => 'amcheck-server',
+		'message' => "Storage 'TESTCONF': slot 2: the volume is empty, autolabel disabled",
+		'changer_message' => "slot 2: the volume is empty, autolabel disabled",
+		'storage_name' => 'TESTCONF',
+		'slot_result' => '1',
+		'slot' => '2',
+		'empty' => '1',
+		'not_autolabel' => '1',
+		'process' => 'amcheck-device',
 		'running_on' => 'amanda-server',
 		'component' => 'amanda',
 		'module' => 'amanda',
-		'code' => '123'
+		'code' => '5101009'
 	  },
 #5
-          {	'source_filename' => "amcheck.c",
+	  {	'source_filename' => "$amperldir/Amanda/Taper/Scan/traditional.pm",
 		'severity' => $Amanda::Message::MESSAGE,
-		'message' => "slot 3: contains an empty volume",
-		'errstr' => "slot 3: contains an empty volume",
-		'process' => 'amcheck-server',
+		'message' => "Storage 'TESTCONF': slot 3: the volume is empty, autolabel disabled",
+		'changer_message' => "slot 3: the volume is empty, autolabel disabled",
+		'storage_name' => 'TESTCONF',
+		'slot_result' => '1',
+		'slot' => '3',
+		'empty' => '1',
+		'not_autolabel' => '1',
+		'process' => 'amcheck-device',
 		'running_on' => 'amanda-server',
 		'component' => 'amanda',
 		'module' => 'amanda',
-		'code' => '123'
+		'code' => '5101009'
 	  },
 #6
-          {	'source_filename' => "amcheck.c",
+	  {	'source_filename' => "$amperldir/Amanda/Changer/disk.pm",
 		'severity' => $Amanda::Message::MESSAGE,
-		'message' => 'all slots have been loaded',
-		'errstr' => 'all slots have been loaded',
-		'process' => 'amcheck-server',
+		'message' => 'Storage \'TESTCONF\': all slots have been loaded',
+		'changer_message' => 'all slots have been loaded',
+		'storage_name' => 'TESTCONF',
+		'storage' => 'TESTCONF',
+		'reason' => 'notfound',
+		'type' => 'failed',
+		'process' => 'amcheck-device',
 		'running_on' => 'amanda-server',
 		'component' => 'amanda',
 		'module' => 'amanda',
-		'code' => '123'
+		'code' => '1100032'
 	  },
 #7
-          {	'source_filename' => "amcheck.c",
-		'severity' => $Amanda::Message::MESSAGE,
-		'message' => 'Taper scan algorithm did not find an acceptable volume.',
-		'errstr' => 'Taper scan algorithm did not find an acceptable volume.',
-		'process' => 'amcheck-server',
+	  {	'source_filename' => "$amperldir/Amanda/Taper/Scan/traditional.pm",
+		'severity' => $Amanda::Message::ERROR,
+		'message' => 'Storage \'TESTCONF\': Taper scan algorithm did not find an acceptable volume, (expecting a new volume)',
+		'changer_message' => 'Taper scan algorithm did not find an acceptable volume, (expecting a new volume)',
+		'storage_name' => 'TESTCONF',
+		'scan_failed' => '1',
+		'expected_new' => '1',
+		'expected_label'=> undef,
+		'process' => 'amcheck-device',
 		'running_on' => 'amanda-server',
 		'component' => 'amanda',
 		'module' => 'amanda',
-		'code' => '123'
+		'code' => '5100002'
 	  },
 #8
-          {	'source_filename' => "amcheck.c",
-		'severity' => $Amanda::Message::MESSAGE,
-		'message' => '    (expecting a new volume)',
-		'errstr' => '    (expecting a new volume)',
-		'process' => 'amcheck-server',
+          {	'source_filename' => "$amperldir/Amanda/Taper/Scan/traditional.pm",
+		'severity' => $Amanda::Message::ERROR,
+		'message' => 'Storage \'TESTCONF\': No acceptable volumes found',
+		'changer_message' => 'No acceptable volumes found',
+		'storage_name' => 'TESTCONF',
+		'storage' => 'TESTCONF',
+		'type' => 'failed',
+		'reason' => 'notfound',
+		'process' => 'amcheck-device',
 		'running_on' => 'amanda-server',
 		'component' => 'amanda',
 		'module' => 'amanda',
-		'code' => '123'
+		'code' => '3'
 	  },
 #9
-          {	'source_filename' => "amcheck.c",
-		'severity' => $Amanda::Message::MESSAGE,
-		'message' => 'ERROR: No acceptable volumes found',
-		'errstr' => 'ERROR: No acceptable volumes found',
-		'process' => 'amcheck-server',
-		'running_on' => 'amanda-server',
-		'component' => 'amanda',
-		'module' => 'amanda',
-		'code' => '123'
-	  },
-#10
           {	'source_filename' => "amcheck.c",
 		'severity' => $Amanda::Message::INFO,
 		'message' => "host info dir '$Amanda::Paths::CONFIG_DIR/TESTCONF/curinfo/localhost' does not exist",
@@ -220,7 +236,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 		'module' => 'amanda',
 		'code' => '2800100'
 	  },
-#11
+#10
           {	'source_filename' => "amcheck.c",
 		'severity' => $Amanda::Message::INFO,
 		'message' => "index dir '$Amanda::Paths::CONFIG_DIR/TESTCONF/index/localhost' does not exist",
@@ -232,7 +248,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 		'module' => 'amanda',
 		'code' => '2800126'
 	  },
-#12
+#11
           {	'source_filename' => "amcheck.c",
 		'severity' => $Amanda::Message::MESSAGE,
 		'message' => 'Server check took 1.00 seconds',
@@ -243,7 +259,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 		'module' => 'amanda',
 		'code' => '2800160'
 	  },
-#13
+#12
           {	'source_filename' => "amcheck.c",
 		'severity' => $Amanda::Message::MESSAGE,
 		'message' => 'Amanda Backup Client Hosts Check',
@@ -253,7 +269,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 		'module' => 'amanda',
 		'code' => '2800202'
 	  },
-#14
+#13
           {	'source_filename' => "amcheck.c",
 		'severity' => $Amanda::Message::MESSAGE,
 		'message' => '--------------------------------',
@@ -263,7 +279,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 		'module' => 'amanda',
 		'code' => '2800203'
 	  },
-#15
+#14
           {	'source_filename' => "selfcheck.c",
 		'severity' => $Amanda::Message::ERROR,
 		'message' => Amanda::Util::built_with_component("client")
@@ -283,7 +299,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 		'module' => 'amanda',
 		'code' => '3600051'
 	  },
-#16
+#15
           {	'source_filename' => "amcheck.c",
 		'severity' => $Amanda::Message::MESSAGE,
 		'message' => 'Client check: 1 host checked in 1.00 seconds.  1 problem found.',
@@ -296,7 +312,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 		'module' => 'amanda',
 		'code' => '2800204'
 	  },
-#17
+#16
           {	'source_filename' => "amcheck.c",
 		'severity' => $Amanda::Message::MESSAGE,
 		'message' => '(brought to you by Amanda x.y.z)',

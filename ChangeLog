@@ -1,4 +1,43 @@
 2017-12-20  Jean-Louis Martineau <JMartineau@carbonite.com>
+	All Changer message get their own code and the storage
+	* perl/Amanda/Interactivity.pm (new): Get storage_name and changer_name
+	  as argument
+	* perl/Amanda/ScanInventory.pm (scan): The user_msg_fn function must
+	  accept an Amanda::Message as argument
+	* perl/Amanda/Changer.pm,
+	* perl/Amanda/Changer/aggregate.pm,
+	  perl/Amanda/Changer/disk.pm,
+	  perl/Amanda/Changer/diskflat.pm,
+	  perl/Amanda/Changer/multi.pm,
+	  perl/Amanda/Changer/ndmp.pm,
+	  perl/Amanda/Changer/rait.pm,
+	  perl/Amanda/Changer/robot.pm,
+	  perl/Amanda/Changer/single.pm,
+	  perl/Amanda/Interactivity.pm,
+	  perl/Amanda/Interactivity/email.pm,
+	  perl/Amanda/Interactivity/stdin.pm,
+	  perl/Amanda/Interactivity/tty.pm,
+	  perl/Amanda/Message.pm,
+	  perl/Amanda/Recovery/Scan.pm,
+	  perl/Amanda/Rest/Amcheck.pm,
+	  perl/Amanda/Rest/Storages.pm,
+	  perl/Amanda/ScanInventory.pm,
+	  perl/Amanda/Storage.pm,
+	  perl/Amanda/Taper/Scan/traditional.pm,
+	  perl/Amanda/Taper/Scribe.pm,
+	  perl/Amanda/Taper/Worker.pm: Add code
+	* server-src/amcheck-device.pl: Change text for message, write json
+	  message to amcheck
+	* server-src/amcheck.c: Read json message from amcheck-device
+	* server-src/amfetchdump.pl: Add code
+	* server-src/amreindex.pl: Add code
+	* server-src/amtape.pl: Add code
+	* server-src/amvault.pl: Add code
+	* installcheck/Installcheck/Rest.pm (remove_source_line): Fix for HASH
+	  or ARRAY
+	* installcheck/*.pl: Fix for new message
+
+2017-12-20  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/ammessage.c (struct message_s): Add no_eol, use to not
 	  write a \n after the message
 	* common-src/ammessage.h (message_get_no_eol): New function to get the

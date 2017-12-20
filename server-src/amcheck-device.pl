@@ -22,6 +22,43 @@ use lib '@amperldir@';
 use strict;
 use warnings;
 
+package Amanda::Amcheck_Device::Message;
+use Amanda::Changer;
+use vars qw( @ISA );
+@ISA = qw( Amanda::Changer::Message );
+
+sub local_message {
+    my $self = shift;
+
+    if ($self->{'code'} == 5200000) {
+	return "slot $self->{'slot'}: Will $self->{'modestr'} to volume '$self->{'label'}' in slot $self->{'slot'}";
+    } elsif ($self->{'code'} == 5200001) {
+	return "slot $self->{'slot'}: Will $self->{'modestr'} label '$self->{'label'}' to non-Amanda volume in slot $self->{'slot'}";
+    } elsif ($self->{'code'} == 5200002) {
+	return "slot $self->{'slot'}: Will $self->{'modestr'} label '$self->{'label'}' to new volume in slot $self->{'slot'}";
+    } elsif ($self->{'code'} == 5200003) {
+	return "slot $self->{'slot'}: Media access mode is WRITE_ONLY; dumps may not be recoverable";
+    } elsif ($self->{'code'} == 5200004) {
+	return "DEVICE-OUTPUT-BUFFER-SIZE is not at least twice the block size of the device, it should be increased for better throughput";
+    } elsif ($self->{'code'} == 5200005) {
+	return "slot $self->{'slot'}: $self->{'dev_error'}";
+    } elsif ($self->{'code'} == 5200006) {
+	return "slot $self->{'slot'}: skipping tape-writable test";
+    } elsif ($self->{'code'} == 5200007) {
+	return "slot $self->{'slot'}: taperscan specified access mode $self->{'modestr'}; skipping volume-writeable test";
+    } elsif ($self->{'code'} == 5200008) {
+	return "slot $self->{'slot'}: Writing label '$self->{'label'}' to check writability";
+    } elsif ($self->{'code'} == 5200009) {
+	return "slot $self->{'slot'}: writing to volume: $self->{'dev_error'}";
+    } elsif ($self->{'code'} == 5200010) {
+	return "slot $self->{'slot'}: Volume '$self->{'label'}' is writeable";
+    } else {
+        return "No mesage for code '$self->{'code'}'";
+    }
+}
+
+package main;
+
 use Amanda::Util qw( :constants );
 use Amanda::Config qw( :init :getconf );
 use Amanda::Logfile qw( :logtype_t log_add $amanda_log_trace_log );
@@ -33,7 +70,9 @@ use Amanda::Storage;
 use Amanda::Changer;
 use Amanda::Taper::Scan;
 use Amanda::Interactivity;
+use Amanda::Message;
 use Getopt::Long;
+use JSON -convert_blessed_universally;
 
 Amanda::Util::setup_application("amcheck-device", "server", $CONTEXT_CMDLINE, "amanda", "amanda");
 
@@ -74,116 +113,17 @@ Amanda::Util::finish_setup($RUNNING_AS_DUMPUSER);
 my $exit_status = 0;
 
 sub _user_msg_fn {
-        my %params = @_;
-        if (exists $params{'scan_failed'}) {
-	    print STDERR "Taper scan algorithm did not find an acceptable volume.\n";
-	    if ($params{'expected_label'} or $params{'expected_new'}) {
-		my @exp;
-		if ($params{'expected_label'}) {
-		    push @exp, "volume '$params{expected_label}'";
-		}
-		if ($params{'expected_new'}) {
-		    push @exp, "a new volume";
-		}
-		my $exp = join(" or ", @exp);
-		print STDERR "    (expecting $exp)\n";
-	    }
-	} elsif (exists($params{'text'})) {
-            print STDERR "$params{'text'}\n";
-        } elsif (exists($params{'scan_slot'})) {
-            print STDERR "slot $params{'slot'}:";
-        } elsif (exists($params{'search_label'})) {
-            print STDERR "Searching for label '$params{'label'}':";
-        } elsif (exists($params{'slot_result'}) ||
-                 exists($params{'search_result'})) {
-            if (defined($params{'err'}) and
-		 (ref($params{'err'}) eq "HASH" ||
-		  ref($params{'err'}) eq "Amanda::Changer::Error")) {
-                if (exists($params{'search_result'}) &&
-                    defined($params{'err'}->{'this_slot'})) {
-                    print STDERR "slot $params{'err'}->{'this_slot'}: ";
-                }
-                print STDERR "$params{'err'}\n";
-            } elsif (!$params{'res'}) {
-                my $volume_label = $params{'label'};
-		if ($params{'slot'}) {
-		    print STDERR "slot $params{'slot'}:";
-		}
-                if ($params{'active'}) {
-                    print STDERR " volume '$volume_label' is still active and cannot be overwritten\n";
-                } elsif ($params{'does_not_match_labelstr'}) {
-                    print STDERR " volume '$volume_label' does not match labelstr '$params{'labelstr'}'\n";
-                } elsif ($params{'not_in_tapelist'}) {
-                    print STDERR " volume '$volume_label' is not in the tapelist\n"
-		} elsif ($params{'non_amanda'}) {
-		    print STDERR " not an amanda volume\n";
-		} elsif ($params{'volume_error'}) {
-		    print STDERR " $params{'err'}\n";
-		} elsif ($params{'not_autolabel'}) {
-		    print STDERR " The volume can't be labelled\n";
-		} elsif ($params{'empty'}) {
-		    print STDERR " The volume is empty\n";
-		} elsif ($params{'not_success'}) {
-		    print STDERR " $params{'err'}\n";
-                } elsif (defined $volume_label) {
-                    print STDERR " volume '$volume_label'\n";
-		} elsif ($params{'err'}) {
-		    print STDERR " $params{'err'}\n";
-                } else {
-                    #print STDERR " volume '$volume_label'\n";
-                }
-            } else { # res must be defined
-		my $directtcp = "";
-                my $res = $params{'res'};
-                my $dev = $res->{'device'};
+    my $message = shift;
 
-		if ($dev->directtcp_supported()) {
-		    $directtcp = "DIRECTTCP ";
-		}
-
-                if (exists($params{'search_result'})) {
-                    print STDERR "found in slot $res->{'this_slot'}:";
-                }
-                if ($dev->status == $DEVICE_STATUS_SUCCESS) {
-                    my $volume_label = $res->{device}->volume_label;
-                    if ($params{'active'}) {
-                        print STDERR " volume '$volume_label' is still active and cannot be overwritten\n";
-                    } elsif ($params{'does_not_match_labelstr'}) {
-                        print STDERR " volume '$volume_label' does not match labelstr '$params{'labelstr'}'\n";
-                    } elsif ($params{'not_in_tapelist'}) {
-                        print STDERR " volume '$volume_label' is not in the tapelist\n"
-                    } else {
-                        print STDERR " volume '$volume_label'\n";
-                    }
-                } elsif ($dev->status & $DEVICE_STATUS_VOLUME_UNLABELED and
-                         $dev->volume_header and
-                         $dev->volume_header->{'type'} == $Amanda::Header::F_EMPTY) {
-                    print STDERR " contains an empty volume\n";
-                } elsif ($dev->status & $DEVICE_STATUS_VOLUME_UNLABELED and
-                         $dev->volume_header and
-                         $dev->volume_header->{'type'} == $Amanda::Header::F_WEIRD) {
-		    my $autolabel = storage_getconf($storage, $STORAGE_AUTOLABEL);
-		    if ($autolabel->{'non_amanda'}) {
-			print STDERR " contains a non-Amanda volume\n";
-		    } else {
-			print STDERR " contains a non-Amanda volume; check and relabel it with 'amlabel -f'\n";
-		    }
-                } elsif ($dev->status & $DEVICE_STATUS_VOLUME_ERROR) {
-                    my $message = $dev->error_or_status();
-                    print STDERR " Can't read label: $message\n";
-                } else {
-                    my $errmsg = $res->{device}->error_or_status();
-                    print STDERR " $errmsg\n";
-                }
-            }
-        } else {
-            print STDERR "UNKNOWN\n";
-        }
+    my $msg = $message->message();
+    delete $message->{'res'};
+    my $json = JSON->new->allow_nonref;
+    print STDOUT $json->pretty->allow_blessed->convert_blessed->encode($message);
 }
 
 sub failure {
     my ($msg, $finished_cb) = @_;
-    print STDERR "ERROR: $msg\n";
+    _user_msg_fn($msg);
     $exit_status = 1;
     $finished_cb->();
 }
@@ -195,7 +135,7 @@ sub do_check {
     my ($tl, $message) = Amanda::Tapelist->new($tlf);
     if (defined $message) {
 	if ($message->{'severity'} >= $Amanda::Message::CRITICAL) {
-	    return failure("$message", $finished_cb);
+	    return failure($message, $finished_cb);
 	} else {
 	    print STDERR "ERROR: $message\n";
 	}
@@ -203,14 +143,16 @@ sub do_check {
 
     $storage  = Amanda::Storage->new(storage_name => $storage_name,
 				     tapelist => $tl);
-    return failure("$storage", $finished_cb) if $storage->isa("Amanda::Message");
+    return failure($storage, $finished_cb) if $storage->isa("Amanda::Message");
     my $chg = $storage->{'chg'};
     if ($chg->isa("Amanda::Message")) {
 	$storage->quit();
 	return failure($chg, $finished_cb);
     }
     my $interactivity = Amanda::Interactivity->new(
-					name => $storage->{'interactivity'});
+					name => $storage->{'interactivity'},
+					storage_name => $storage->{'storage_name'},
+					changer_name => $chg->{'chg_name'});
     my $scan_name = $storage->{'taperscan_name'};
     my $taperscan = Amanda::Taper::Scan->new(algorithm => $scan_name,
 					     storage => $storage,
@@ -226,7 +168,7 @@ sub do_check {
     step start => sub {
 	$taperscan->scan(
 	    result_cb => $steps->{'result_cb'},
-	    user_msg_fn => \&_user_msg_fn
+	    user_msg_fn => \&_user_msg_fn,
 	);
     };
 
@@ -235,7 +177,7 @@ sub do_check {
 	if ($err) {
 	    if ($res) {
 		$res->release(finished_cb => sub {
-		    return failure($err, $finished_cb);
+		    return failure("A $err", $finished_cb);
 		});
 		return;
 	    } else {
@@ -246,14 +188,41 @@ sub do_check {
 	my $modestr = ($mode == $ACCESS_APPEND)? "append" : "write";
 	my $slot = $res->{'this_slot'};
 	if (defined $res->{'device'} and defined $res->{'device'}->volume_label()) {
-	    print "Will $modestr to volume '$label' in slot $slot.\n";
+	    _user_msg_fn(Amanda::Amcheck_Device::Message->new(
+				source_filename	=> __FILE__,
+				source_line	=> __LINE__,
+				code		=> 5200000,
+				severity	=> $Amanda::Message::INFO,
+				modestr		=> $modestr,
+				label		=> $label,
+				slot		=> $slot,
+				storage_name	=> $storage->{'storage_name'}));
+	    #print "Will $modestr to volume '$label' in slot $slot.\n";
 	} else {
 	    my $header = $res->{'device'}->volume_header();
 	    if (defined $header and defined $header->{'type'} and
 		$header->{'type'} == $Amanda::Header::F_WEIRD) {
-		print "Will $modestr label '$label' to non-Amanda volume in slot $slot.\n";
+		_user_msg_fn(Amanda::Amcheck_Device::Message->new(
+				source_filename	=> __FILE__,
+				source_line	=> __LINE__,
+				code		=> 5200001,
+				severity	=> $Amanda::Message::INFO,
+				modestr		=> $modestr,
+				label		=> $label,
+				slot		=> $slot,
+				storage_name	=> $storage->{'storage_name'}));
+		#print "Will $modestr label '$label' to non-Amanda volume in slot $slot.\n";
 	    } else {
-		print "Will $modestr label '$label' to new volume in slot $slot.\n";
+		_user_msg_fn(Amanda::Amcheck_Device::Message->new(
+				source_filename	=> __FILE__,
+				source_line	=> __LINE__,
+				code		=> 5200002,
+				severity	=> $Amanda::Message::INFO,
+				modestr		=> $modestr,
+				label		=> $label,
+				slot		=> $slot,
+				storage_name	=> $storage->{'storage_name'}));
+		#print "Will $modestr label '$label' to new volume in slot $slot.\n";
 	    }
 	}
 
@@ -262,15 +231,30 @@ sub do_check {
 
     step check_access_type => sub {
 	my $mat = $res->{'device'}->property_get('medium_access_type');
+	my $slot = $res->{'this_slot'};
 	if (defined $mat and $mat == $MEDIA_ACCESS_MODE_WRITE_ONLY) {
-	    print "WARNING: Media access mode is WRITE_ONLY; dumps may not be recoverable\n";
+	    _user_msg_fn(Amanda::Amcheck_Device::Message->new(
+				source_filename	=> __FILE__,
+				source_line	=> __LINE__,
+				code		=> 5200003,
+				severity	=> $Amanda::Message::WARNING,
+				slot		=> $slot,
+				storage_name	=> $storage->{'storage_name'}));
+	    #print "WARNING: Media access mode is WRITE_ONLY; dumps may not be recoverable\n";
 	}
 
 	if ($storage->{'seen_device_output_buffer_size'}) {
 	    my $dobs = $storage->{'device_output_buffer_size'};
 	    my $block_size = $res->{'device'}->property_get("BLOCK_SIZE");
 	    if ($block_size * 2 > $dobs) {
-		print "WARNING: DEVICE-OUTPUT-BUFFER-SIZE is not at least twice the block size of the device, it should be increased for better throughput\n";
+		_user_msg_fn(Amanda::Amcheck_Device::Message->new(
+				source_filename	=> __FILE__,
+				source_line	=> __LINE__,
+				code		=> 5200004,
+				severity	=> $Amanda::Message::WARNING,
+				slot		=> $slot,
+				storage_name	=> $storage->{'storage_name'}));
+		#print "WARNING: DEVICE-OUTPUT-BUFFER-SIZE is not at least twice the block size of the device, it should be increased for better throughput\n";
 	    }
 	}
 	$steps->{'check_writable'}->();
@@ -279,7 +263,15 @@ sub do_check {
     step check_writable => sub {
 
 	if($res->{'device'} and !$res->{'device'}->check_writable()) {
-	    print "ERROR: " . $res->{'device'}->error_or_status() . "\n";
+	    _user_msg_fn(Amanda::Amcheck_Device::Message->new(
+				source_filename	=> __FILE__,
+				source_line	=> __LINE__,
+				code		=> 5200005,
+				severity	=> $Amanda::Message::ERROR,
+				slot		=> $res->{'this_slot'},
+				storage_name	=> $storage->{'storage_name'},
+				dev_error	=> $res->{'device'}->error_or_status()));
+	    #print "ERROR: " . $res->{'device'}->error_or_status() . "\n";
 	    return $steps->{'release'}->();
 	}
 	$steps->{'check_overwrite'}->();
@@ -288,22 +280,61 @@ sub do_check {
     step check_overwrite => sub {
 	# if we're not overwriting, just release the reservation
 	if (!$overwrite) {
-	    print "NOTE: skipping tape-writable test\n";
+	    #_user_msg_fn(Amanda::Amcheck_Device::Message->new(
+				#source_filename	=> __FILE__,
+				#source_line	=> __LINE__,
+				#code		=> 5200006,
+				#severity	=> $Amanda::Message::INFO,
+				#slot		=> $res->{'this_slot'},
+				#storage_name	=> $storage->{'storage_name'}));
+	    #print "NOTE: skipping tape-writable test\n";
 	    return $steps->{'release'}->();
 	}
 
 	if ($mode != $ACCESS_WRITE) {
 	    my $modestr = Amanda::Device::DeviceAccessMode_to_string($mode);
-	    print "NOTE: taperscan specified access mode $modestr; skipping volume-writeable test\n";
+	    _user_msg_fn(Amanda::Amcheck_Device::Message->new(
+				source_filename	=> __FILE__,
+				source_line	=> __LINE__,
+				code		=> 5200007,
+				severity	=> $Amanda::Message::INFO,
+				slot		=> $res->{'this_slot'},
+				modestr		=> $modestr,
+				storage_name	=> $storage->{'storage_name'}));
+	    #print "NOTE: taperscan specified access mode $modestr; skipping volume-writeable test\n";
 	    return $steps->{'release'}->();
 	}
 
-	print "Writing label '$label' to check writability\n";
+	_user_msg_fn(Amanda::Amcheck_Device::Message->new(
+				source_filename	=> __FILE__,
+				source_line	=> __LINE__,
+				code		=> 5200008,
+				severity	=> $Amanda::Message::INFO,
+				slot		=> $res->{'this_slot'},
+				label		=> $label,
+				storage_name	=> $storage->{'storage_name'}));
+	#print "Writing label '$label' to check writability\n";
 	if (!$res->{'device'}->start($ACCESS_WRITE, $label, "X")) {
-	    print "ERROR: writing to volume: " . $res->{'device'}->error_or_status(), "\n";
+	    _user_msg_fn(Amanda::Amcheck_Device::Message->new(
+				source_filename	=> __FILE__,
+				source_line	=> __LINE__,
+				code		=> 5200009,
+				severity	=> $Amanda::Message::INFO,
+				slot		=> $res->{'this_slot'},
+				dev_error	=> $res->{'device'}->error_or_status(),
+				storage_name	=> $storage->{'storage_name'}));
+	    #print "ERROR: writing to volume: " . $res->{'device'}->error_or_status(), "\n";
 	    $exit_status = 1;
 	} else {
-	    print "Volume '$label' is writeable.\n";
+	    _user_msg_fn(Amanda::Amcheck_Device::Message->new(
+				source_filename	=> __FILE__,
+				source_line	=> __LINE__,
+				code		=> 5200010,
+				severity	=> $Amanda::Message::INFO,
+				slot		=> $res->{'this_slot'},
+				label		=> $label,
+				storage_name	=> $storage->{'storage_name'}));
+	    #print "Volume '$label' is writeable.\n";
 	}
 
 	$steps->{'release'}->();
@@ -315,11 +346,16 @@ sub do_check {
 
     step released => sub {
 	my ($err) = @_;
-	return failure($err, $finished_cb) if $err;
+	return failure("C $err", $finished_cb) if $err;
 
 	$finished_cb->();
     };
 }
+
+select(STDERR);
+$| = 1;
+select(STDOUT); # default
+$| = 1;
 
 Amanda::MainLoop::call_later(\&do_check, \&Amanda::MainLoop::quit);
 Amanda::MainLoop::run();

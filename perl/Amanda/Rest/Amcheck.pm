@@ -214,6 +214,7 @@ sub check {
     my $ret = decode_json $buf;
 
     # add the exit_message at the beginning.
+    $exit_message = { %$exit_message }; # unbless
     unshift @{$ret}, $exit_message;
 
     #return perl object

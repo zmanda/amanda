@@ -89,7 +89,10 @@ sub new {
 
     unless (scalar @slots != 0) {
 	return Amanda::Changer->make_error("fatal", undef,
-	    message => "no devices specified");
+		source_filename	=> __FILE__,
+		source_line	=> __LINE__,
+		code		=> 1100028,
+		severity	=> $Amanda::Message::Message);
     }
 
     my $properties = $config->{'properties'};
@@ -119,8 +122,12 @@ sub new {
     if (!defined $config->{changerfile} ||
 	$config->{changerfile} eq "") {
 	return Amanda::Changer->make_error("fatal", undef,
-	    reason => "invalid",
-	    message => "no changerfile specified for changer '$config->{name}'");
+		source_filename	=> __FILE__,
+		source_line	=> __LINE__,
+		code		=> 1100028,
+		severity	=> $Amanda::Message::Message,
+		reason		=> "invalid",
+		changer_name	=> $config->{name});
     }
 
     my $state_filename = Amanda::Config::config_dir_relative($config->{'changerfile'});
@@ -154,19 +161,27 @@ sub create {
     my $device = Amanda::Device->new($slot_name);
     if ($device->status != $DEVICE_STATUS_SUCCESS) {
 	return $self->make_error("failed", $params{'finished_cb'},
-		reason => "device",
-		message => "opening '$slot_name': " . $device->error_or_status());
+		source_filename	=> __FILE__,
+		source_line	=> __LINE__,
+		code		=> 1100038,
+		severity	=> $Amanda::Message::Message,
+		reason		=> "device",
+		device_name	=> $slot_name,
+		device_error	=> $device->error_or_status());
     }
     if (my $err = $self->{'config'}->configure_device($device, $self->{'storage'})) {
-	return $self->make_error("failed", $params{'finisehd_cb'},
-		reason => "device",
-		message => $err);
+	return $params{'finisehd_cb'}->($err);
     }
 
     if (!$device->create()) {
 	return $self->make_error("failed", $params{'finished_cb'},
-		reason => "device",
-		message => $device->error_or_status());
+		source_filename	=> __FILE__,
+		source_line	=> __LINE__,
+		code		=> 1100075,
+		severity	=> $Amanda::Message::Message,
+		reason		=> "device",
+		device_name	=> $slot_name,
+		device_error	=> $device->error_or_status());
     }
     $params{'finished_cb'}->(undef, Amanda::Changer::Message->new(
 		source_filename => __FILE__,
@@ -265,27 +280,39 @@ sub eject {
 	}
 	if (!defined $self->{unaliased}->{$drive}) {
 	    return $self->make_error("failed", $finished_cb,
-		reason => "invalid",
-		message => "Invalid slot '$drive'");
+		source_filename	=> __FILE__,
+		source_line	=> __LINE__,
+		code		=> 1100068,
+		severity	=> $Amanda::Message::Message,
+		reason		=> "invalid",
+		slot		=> $drive);
 	}
 
 	Amanda::Debug::debug("ejecting drive $drive");
 	my $device = Amanda::Device->new($self->{slot_name}->{$drive});
 	if ($device->status() != $DEVICE_STATUS_SUCCESS) {
 	    return $self->make_error("failed", $finished_cb,
-		reason => "device",
-		message => $device->error_or_status);
+		source_filename	=> __FILE__,
+		source_line	=> __LINE__,
+		code		=> 1100038,
+		severity	=> $Amanda::Message::Message,
+		reason		=> "device",
+		device_name	=> $self->{slot_name}->{$drive},
+		device_error	=> $device->error_or_status);
 	}
 	if (my $err = $self->{'config'}->configure_device($device, $self->{'storage'})) {
-	    return $self->make_error("failed", $params{'res_cb'},
-			reason => "device",
-			message => $err);
+	    return $params{'res_cb'}->($err);
 	}
 	$device->eject();
 	if ($device->status() != $DEVICE_STATUS_SUCCESS) {
 	    return $self->make_error("failed", $finished_cb,
-		reason => "invalid",
-		message => $device->error_or_status);
+		source_filename	=> __FILE__,
+		source_line	=> __LINE__,
+		code		=> 1100038,
+		severity	=> $Amanda::Message::Message,
+		reason		=> "invalid",
+		device_name	=> $self->{slot_name}->{$drive},
+		device_error	=> $device->error_or_status);
 	}
 	undef $device;
 
@@ -440,13 +467,14 @@ sub update {
     step update_slot => sub {
 	return $steps->{'done'}->() if (!@slots_to_check);
 	my $slot = shift @slots_to_check;
-	if ($self->_is_slot_in_use($state, $slot)) {
+	if (my $pid = $self->_is_slot_in_use($state, $slot)) {
 	     $user_msg_fn->(Amanda::Changer::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code  => 1100022,
 				severity => $Amanda::Message::WARNING,
-				slot  => $slot));
+				slot  => $slot,
+				pid   => $pid));
 	    return $steps->{'update_slot'}->();
 	}
 
@@ -538,7 +566,7 @@ sub inventory {
 	    my $unaliased = $self->{unaliased}->{$slot};
 	    my $s = { slot => $slot,
 		      state => $state->{slots}->{$unaliased}->{state} || Amanda::Changer::SLOT_UNKNOWN,
-		      reserved => $self->_is_slot_in_use($state, $slot) };
+		      reserved => ($self->_is_slot_in_use($state, $slot)?1:0) };
 	    if (defined $state->{slots}->{$unaliased} and
 		exists $state->{slots}->{$unaliased}->{device_status}) {
 		$s->{'device_status'} =
@@ -608,8 +636,12 @@ sub _load_by_slot {
 	    $self->_set_current($params{state}, $slot) if ($params{'set_current'});
 	} else {
 	    return $self->make_error("failed", $params{'res_cb'},
-		reason => "invalid",
-		message => "Invalid relative slot '$params{relative_slot}'");
+		source_filename	=> __FILE__,
+		source_line	=> __LINE__,
+		code		=> 1100031,
+		severity	=> $Amanda::Message::Message,
+		reason		=> "invalid",
+		relative_slot	=> $params{relative_slot});
 	}
     } else {
 	$slot = $params{'slot'};
@@ -617,22 +649,33 @@ sub _load_by_slot {
 
     if (exists $params{'except_slots'} and exists $params{'except_slots'}->{$slot}) {
 	return $self->make_error("failed", $params{'res_cb'},
-	    reason => "notfound",
-	    message => "all slots have been loaded");
+			    source_filename => __FILE__,
+			    source_line     => __LINE__,
+			    severity        => $Amanda::Message::MESSAGE,
+			    code	    => 1100032,
+			    reason => "notfound");
     }
 
     if (!$self->_slot_exists($slot)) {
 	return $self->make_error("failed", $params{'res_cb'},
-	    reason => "notfound",
-	    message => "Slot $slot not defined");
+		source_filename	=> __FILE__,
+		source_line	=> __LINE__,
+		code		=> 1100038,
+		severity	=> $Amanda::Message::Message,
+		reason		=> "notfound",
+		slot		=> $slot);
     }
 
-    if ($self->_is_slot_in_use($params{state}, $slot)) {
+    if (my $pid = $self->_is_slot_in_use($params{state}, $slot)) {
 	my $unaliased = $self->{unaliased}->{$slot};
 	return $self->make_error("failed", $params{'res_cb'},
-	    reason => "volinuse",
-	    slot => $slot,
-	    message => "Slot $slot is already in use by process '$params{state}->{slots}->{$unaliased}->{pid}'");
+		source_filename	=> __FILE__,
+		source_line	=> __LINE__,
+		code		=> 1100022,
+		severity	=> $Amanda::Message::Message,
+		reason		=> "volinuse",
+		slot		=> $slot,
+		pid		=> $pid);
     }
 
     $self->{slot} = $slot if ($params{'set_current'});
@@ -667,8 +710,12 @@ sub _load_by_label {
 	$self->_load_by_slot(%params);
     } else {
 	return $self->make_error("failed", $params{'res_cb'},
-				reason => "notfound",
-				message => "Label '$label' not found");
+		source_filename	=> __FILE__,
+		source_line	=> __LINE__,
+		code		=> 1100035,
+		severity	=> $Amanda::Message::Message,
+		reason		=> "notfound",
+		label		=> $label);
     }
 }
 
@@ -683,14 +730,17 @@ sub _make_res {
     my $device = Amanda::Device->new($slot_name);
     if ($device->status != $DEVICE_STATUS_SUCCESS) {
 	return $self->make_error("failed", $res_cb,
-		reason => "device",
-		message => "opening '$slot': " . $device->error_or_status());
+		source_filename	=> __FILE__,
+		source_line	=> __LINE__,
+		code		=> 1100035,
+		severity	=> $Amanda::Message::Message,
+		reason		=> "device",
+		device_name	=> $slot,
+		device_error	=> $device->error_or_status());
     }
 
     if (my $err = $self->{'config'}->configure_device($device, $self->{'storage'})) {
-	return $self->make_error("failed", $res_cb,
-		reason => "device",
-		message => $err);
+	return $res_cb->($err);
     }
 
     $res = Amanda::Changer::multi::Reservation->new($self, $device, $slot);
@@ -769,7 +819,7 @@ sub _is_slot_in_use {
     #check if PID is still alive
     my $pid = $state->{slots}->{$unaliased}->{pid};
     if (Amanda::Util::is_pid_alive($pid) == 1) {
-	return 1;
+	return $pid;
     }
 
     delete $state->{slots}->{$unaliased}->{pid};
@@ -856,14 +906,17 @@ sub set_reuse {
 	    my $device = Amanda::Device->new($slot_name);
 	    if ($device->status != $DEVICE_STATUS_SUCCESS) {
 		return $self->make_error("failed", $finished_cb,
-		    reason => "device",
-		    message => "opening '$match_slot': " . $device->error_or_status());
+			source_filename	=> __FILE__,
+			source_line	=> __LINE__,
+			code		=> 1100038,
+			severity	=> $Amanda::Message::Message,
+			reason		=> "device",
+			device_name	=> $match_slot,
+			device_error	=> $device->error_or_status());
 	    }
 
 	    if (my $err = $self->{'config'}->configure_device($device)) {
-		return $self->make_error("failed", $finished_cb,
-		    reason => "device",
-		    message => $err);
+		return $finished_cb-->($err);
 	    }
 
 	    if ($device->have_set_reuse()) {
@@ -909,14 +962,17 @@ sub set_no_reuse {
 	    my $device = Amanda::Device->new($slot_name);
 	    if ($device->status != $DEVICE_STATUS_SUCCESS) {
 		return $self->make_error("failed", $finished_cb,
-		    reason => "device",
-		    message => "opening '$match_slot': " . $device->error_or_status());
+			source_filename	=> __FILE__,
+			source_line	=> __LINE__,
+			code		=> 1100038,
+			severity	=> $Amanda::Message::Message,
+			reason		=> "device",
+			device_name	=> $match_slot,
+			device_error	=> $device->error_or_status());
 	    }
 
 	    if (my $err = $self->{'config'}->configure_device($device)) {
-		return $self->make_error("failed", $finished_cb,
-		    reason => "device",
-		    message => $err);
+		return $finished_cb->($err);
 	    }
 
 	    if ($device->have_set_reuse()) {

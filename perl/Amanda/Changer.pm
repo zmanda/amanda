@@ -26,6 +26,29 @@ use Amanda::Message;
 use vars qw( @ISA );
 @ISA = qw( Amanda::Message );
 
+sub new {
+    my $class = shift @_;
+    my %params = @_;
+
+    my $chg = $params{'chg'};
+    delete $params{'chg'};
+
+    $params{'storage_name'} = $chg->{'storage'}->{'storage_name'} if !defined $params{'storage_name'} && defined $chg->{'storage'}->{'storage_name'};
+    $params{'chg_name'} = $chg->{'chg_name'} if !defined $params{'changer_name'} && defined $chg->{'chg_name'};
+
+    my $self = $class->SUPER::new(%params);
+    bless $self, $class;
+
+    $self->{'changer_message'} = $self->message() if !defined $self->{'changer_message'};
+    if (defined $self->{'storage_name'}) {
+	$self->{'message'} = "Storage '$self->{'storage_name'}': $self->{'changer_message'}";
+    } else {
+	$self->{'message'} = $self->{'changer_message'};
+    }
+
+    return $self;
+}
+
 sub local_message {
     my $self = shift;
 
@@ -78,7 +101,7 @@ sub local_message {
     } elsif ($self->{'code'} == 1100021) {
 	return "Slot $self->{'slot'}: Now in unknown state";
     } elsif ($self->{'code'} == 1100022) {
-	return "Slot $self->{'slot'} is already in use";
+	return "Slot $self->{'slot'} is already in use by process '$self->{'pid'}'";
     } elsif ($self->{'code'} == 1100023) {
 	return "Recording device error '$self->{'dev_status'}' in slot $self->{'slot'}";
     } elsif ($self->{'code'} == 1100024) {
@@ -106,11 +129,11 @@ sub local_message {
     } elsif ($self->{'code'} == 1100035) {
 	return "Label '$self->{'label'}' not found";
     } elsif ($self->{'code'} == 1100036) {
-	return "Slot $self->{'slot'}, containing '$self->{'label'}', is already in use by drive '$self->{'drive'}'";
+	return "Slot $self->{'slot'}, containing '$self->{'label'}', is already in use by drive '$self->{'drive'}' and process '$self->{'pid'}'";
     } elsif ($self->{'code'} == 1100037) {
 	return "Can't find label for slot '$self->{'slot'}'";
     } elsif ($self->{'code'} == 1100038) {
-	return "opening '$self->{'device'}': $self->{'device_error'}";
+	return "opening device '$self->{'device_name'}': $self->{'device_error'}";
     } elsif ($self->{'code'} == 1100039) {
 	return "directory '$self->{'dir'}' does not exist";
     } elsif ($self->{'code'} == 1100040) {
@@ -126,7 +149,7 @@ sub local_message {
     } elsif ($self->{'code'} == 1100045) {
 	return "property 'auto-create-slot' set but property 'num-slot' is not set";
     } elsif ($self->{'code'} == 1100046) {
-	return "Timeout trying to lock '$self->{'lock_file'}': $self->{'errno'}";
+	return "Timeout trying to lock '$self->{'lock_file'}'";
     } elsif ($self->{'code'} == 1100047) {
 	return "Error locking '$self->{'lock_file'}': $self->{'errno'}";
     } elsif ($self->{'code'} == 1100048) {
@@ -177,18 +200,158 @@ sub local_message {
 	return "slot '$self->{'slot'}': No slot in error";
     } elsif ($self->{'code'} == 1100071) {
 	return "";
+    } elsif ($self->{'code'} == 1100072) {
+	return "all slots are empty";
+    } elsif ($self->{'code'} == 1100073) {
+	return "Error setting device property '$self->{'propname'}' to value '$self->{'propvalue'}' on device '$self->{'device_name'}': $self->{'err'}";
+    } elsif ($self->{'code'} == 1100073) {
+	return "no devices specified";
+    } elsif ($self->{'code'} == 1100074) {
+	return "no changerfile specified for changer '$self->{'changer_name'}'";
+    } elsif ($self->{'code'} == 1100075) {
+	return "create '$self->{'device_name'}': $self->{'device_error'}";
+    } elsif ($self->{'code'} == 1100076) {
+	return "Slot '$self->{'slot'}': not defined";
+    } elsif ($self->{'code'} == 1100077) {
+	return "invalid chg-ndmp specification '$self->{'device_name'}'";
+    } elsif ($self->{'code'} == 1100078) {
+	return "only one value allowed for '$self->{'propname'}'";
+    } elsif ($self->{'code'} == 1100079) {
+	return "$self->{'err'}";
+    } elsif ($self->{'code'} == 1100080) {
+	return "'changerdev' is not allowed with $self->{'class_name'}";
+    } elsif ($self->{'code'} == 1100081) {
+	return "must specify a tape-device property";
+    } elsif ($self->{'code'} == 1100082) {
+	return "no 'tape-device' property specified";
+    } elsif ($self->{'code'} == 1100083) {
+	return "invalid 'tape-device' property '$self->{'prop_value'}'";
+    } elsif ($self->{'code'} == 1100084) {
+	return "tape-device drive $self->{'drivei'} defined more than once";
+    } elsif ($self->{'code'} == 1100085) {
+	return "invalid 'eject-before-unload' value";
+    } elsif ($self->{'code'} == 1100086) {
+	return "slot $self->{'slot'} is empty";
+    } elsif ($self->{'code'} == 1100087) {
+	return "invalid 'fast-search' value";
+    } elsif ($self->{'code'} == 1100088) {
+	return "invalid 'use-slots' value '$self->{use_slots}'";
+    } elsif ($self->{'code'} == 1100089) {
+	return "invalid 'drive-choice' value '$self->{'prop_value'}'";
+    } elsif ($self->{'code'} == 1100090) {
+	return "invalid 'broken-drive-loaded-slot' value";
+    } elsif ($self->{'code'} == 1100091) {
+	return "only one value allowed for '$self->{'prop_name'}'";
+    } elsif ($self->{'code'} == 1100092) {
+	return "invalid delay value '$self->{'prop_value'}' for 'load-poll'"
+    } elsif ($self->{'code'} == 1100093) {
+	return "invalid time value '$self->{'prop_value'}' for '$self->{'prop_name'}'";
+    } elsif ($self->{'code'} == 1100094) {
+	return "invalid 'ignore-barcodes' value";
+    } elsif ($self->{'code'} == 1100095) {
+	return "invalid slot '$self->{slot}'";
+    } elsif ($self->{'code'} == 1100096) {
+	return "could not find next slot";
+    } elsif ($self->{'code'} == 1100097) {
+	return "no current slot";
+    } elsif ($self->{'code'} == 1100098) {
+	return "label '$self->{'label'}' not recognized or not found";
+    } elsif ($self->{'code'} == 1100099) {
+	return "no 'slot' or 'label' specified to load()";
+    } elsif ($self->{'code'} == 1100100) {
+	return "label '$self->{'label'}' is in slot $self->{'slot'}', which is not in use-slots ($self->{'use_slots'})";
+    } elsif ($self->{'code'} == 1100101) {
+	return "slot $self->{'slot'} not in use-slots ($self->{use_slots})";
+    } elsif ($self->{'code'} == 1100102) {
+	return "the requested volume is in use (drive $self->{'drive'})";
+    } elsif ($self->{'code'} == 1100103) {
+	return "the requested volume is in drive $self->{'drive'}, which this changer instance cannot access";
+    } elsif ($self->{'code'} == 1100104) {
+	return "no drives available";
+    } elsif ($self->{'code'} == 1100105) {
+	return "failed toload: $self->{'err'}";
+    } elsif ($self->{'code'} == 1100106) {
+	return "Found unexpected tape '$self->{'label'}' while looking " .
+                               "for '$self->{'expected_label'}'";
+    } elsif ($self->{'code'} == 1100107) {
+	return "Found unlabeled tape while looking for '$self->{'expected_label'}'";
+    } elsif ($self->{'code'} == 1100108) {
+	return "Slot $self->{'slot'} label '$self->{'label'}', mismatch barcode between changer '$self->{'state_barcode'}' and tapelist file '$self->{'tle_barcode'}'";
+    } elsif ($self->{'code'} == 1100109) {
+	return "$self->{'err'}";
+    } elsif ($self->{'code'} == 1100110) {
+	return "only one value allowed for property 'mtx'";
+    } elsif ($self->{'code'} == 1100111) {
+	return "no default value for property 'mtx'";
+    } elsif ($self->{'code'} == 1100112) {
+	return "reservation belongs to another instance";
+    } elsif ($self->{'code'} == 1100113) {
+	return "no drive specified";
+    } elsif ($self->{'code'} == 1100114) {
+	return "invalid drive '$self->{'drive'}'";
+    } elsif ($self->{'code'} == 1100115) {
+	return "this changer instance is not configured to access drive $self->{'drive'}";
+    } elsif ($self->{'code'} == 1100116) {
+	return "tape in drive '$self->{'drive'}' is in use";
+    } elsif ($self->{'code'} == 1100117) {
+	return "drive '$self->{'drive'}' is empty";
+    } elsif ($self->{'code'} == 1100118) {
+	return "while ejecting volume: $self->{'device_error'}";
+    } elsif ($self->{'code'} == 1100119) {
+	return "slot $self->{'slot'} does not exist";
+    } elsif ($self->{'code'} == 1100120) {
+	return "slot $self->{'slot'} is not used by this changer";
+    } elsif ($self->{'code'} == 1100121) {
+	return "slot $self->{'slot'} is empty";
+    } elsif ($self->{'code'} == 1100122) {
+	return "slot $self->{'slot'} is currently loaded";
+    } elsif ($self->{'code'} == 1100123) {
+	return "slot $self->{'slot'} is currently loaded and reserved";
+    } elsif ($self->{'code'} == 1100124) {
+	return "slot $self->{'slot'} is not empty";
+    } elsif ($self->{'code'} == 1100125) {
+	return "Can't unload all drives: $self->{'err'}";
+    } elsif ($self->{'code'} == 1100126) {
+	return "'$self->{'device_name'}' not found";
+    } elsif ($self->{'code'} == 1100127) {
+	return "";
+    } elsif ($self->{'code'} == 1100128) {
+	return "'$self->{device_name}' is already reserved";
+    } elsif ($self->{'code'} == 1100129) {
+	return "";
+    } elsif ($self->{'code'} == 1100130) {
+    } elsif ($self->{'code'} == 1100131) {
+    } elsif ($self->{'code'} == 1100132) {
+    } elsif ($self->{'code'} == 1100133) {
+    } elsif ($self->{'code'} == 1100134) {
+    } elsif ($self->{'code'} == 1100135) {
+    } elsif ($self->{'code'} == 1100136) {
+    } elsif ($self->{'code'} == 1100137) {
+    } elsif ($self->{'code'} == 1100138) {
+    } elsif ($self->{'code'} == 1100139) {
+	return "";
+
+    } elsif ($self->{'code'} == 1110000) {
+	return "Interactivity failed to read from $self->{'dev'}";
+    } elsif ($self->{'code'} == 1110001) {
+	return "Interactivity aborted by user";
+    } elsif ($self->{'code'} == 1110002) {
+	return "Failed to open $self->{'dev'}: $self->{'err'}"
 
     } elsif ($self->{'code'} == 1150000) {
 	return "changer_name argument of the storage is empty";
     } elsif ($self->{'code'} == 1150001) {
 	return "No storage_name provided";
     } elsif ($self->{'code'} == 1150002) {
-	return "Storage '$self->{'storage'}' not found";
+	return "not found";
     } elsif ($self->{'code'} == 1150003) {
-	return "You must specify the 'tapedev' or 'tpchanger' in the '$self->{'storage'}' storage section";
+	return "You must specify the 'tapedev' or 'tpchanger'";
+
     } else {
 	return "No message for code $self->{'code'}";
     }
+
+
 }
 
 package Amanda::Changer;
@@ -1197,7 +1360,10 @@ sub _new_from_uri { # (note: this sub is patched by the installcheck)
 
     if (!$params{'no_validate'} && $rv->can('_validate')) {
         my $err = $rv->_validate();
-	return $err if $err;
+	if ($err) {
+	    $rv->quit();
+	    return $err;
+	}
     }
 
     return $rv;
@@ -1212,6 +1378,7 @@ sub _stubop {
     my $class = ref($self);
     my $chg_foo = "chg-" . ($class =~ /Amanda::Changer::(.*)/)[0];
     return $self->make_error("failed", $params{$cbname},
+	chg => $self,
 	source_filename => __FILE__,
 	source_line     => __LINE__,
 	code   => 1100048,
@@ -1331,11 +1498,14 @@ sub make_error {
 
     my $classmeth = $self eq "Amanda::Changer";
 
-    if ($classmeth and $type ne 'fatal') {
-	cluck("type must be fatal when calling make_error as a class method");
-	$type = 'fatal';
+    if ($classmeth) {
+	if ($type ne 'fatal') {
+	    cluck("type must be fatal when calling make_error as a class method");
+	    $type = 'fatal';
+	}
+    } else {
+	$args{'storage'} = $self->{'storage'}->{'storage_name'} if !defined $args{'storage'};
     }
-
     my $err = Amanda::Changer::Error->new($type, %args);
 
     if (!$classmeth) {
@@ -1368,7 +1538,8 @@ sub make_combined_error {
 	$err = Amanda::Changer::Error->new(
 	    $err->{'type'},
 	    reason => $err->{'reason'},
-	    message => $suberrors->[0][0] . ": " . $err->{'message'});
+	    storage => $self->{'storage'}->{'storage_name'},
+	    message => $suberrors->[0][0] . ": " . $err->{'changer_message'});
     } else {
 	my $fatal = $classmeth or grep { $_->[1]{'fatal'} } @$suberrors;
 
@@ -1386,14 +1557,18 @@ sub make_combined_error {
 	}
 
 	my $message = join("; ",
-	    map { sprintf("%s: %s", @$_) }
+	    map { sprintf("%s: %s", $_->[0],$_->[1]->{'changer_message'}) }
 	    @$suberrors);
 
+Amanda::Debug::debug("suberrors: " . Data::Dumper::Dumper($suberrors));
+Amanda::Debug::debug("message: $message");
 	my %errargs = ( message => $message, %extra_args );
 	$errargs{'reason'} = $reason unless ($fatal);
+	$errargs{'storage'} = $self->{'storage'}->{'storage_name'} if !defined $self ne 'Amanda::Changer' && $errargs{'storage'};
 	$err = Amanda::Changer::Error->new(
 	    $fatal? "fatal" : "failed",
 	    %errargs);
+Amanda::Debug::debug("err " . Data::Dumper::Dumper($err));
     }
 
     if (!$classmeth) {
@@ -1533,6 +1708,7 @@ sub label_to_slot {
     die ("label_to_slot: no tapelist") if !$tl;
     if (!defined $self->{'autolabel'}) {
 	return (undef, Amanda::Changer::Message->new(
+					chg => $self,
 					source_filename => __FILE__,
 					source_line => __LINE__,
 					code   => 1100049,
@@ -1541,6 +1717,7 @@ sub label_to_slot {
     if (!defined $self->{'autolabel'}->{'template'} ||
 	$self->{'autolabel'}->{'template'} eq "") {
 	return (undef, Amanda::Changer::Message->new(
+					chg => $self,
 					source_filename => __FILE__,
 					source_line => __LINE__,
 					code   => 1100050,
@@ -1561,6 +1738,7 @@ sub label_to_slot {
 	$template =~ s/\$[0-9]*s/SUBSTITUTE_SLOT/g;
     } else {
 	return (undef, Amanda::Changer::Message->new(
+					chg => $self,
 					source_filename => __FILE__,
 					source_line => __LINE__,
 					code   => 1100051,
@@ -1590,6 +1768,7 @@ sub label_to_slot {
 
     if (!defined $slot) {
 	return (undef, Amanda::Changer::Message->new(
+					chg => $self,
 					source_filename => __FILE__,
 					source_line => __LINE__,
 					label  => $params{'label'},
@@ -1608,6 +1787,7 @@ sub make_new_tape_label {
     if (!defined $self->{'autolabel'}) {
 	return (undef, "autolabel not set");
 	return (undef, Amanda::Changer::Message->new(
+					chg => $self,
 					source_filename => __FILE__,
 					source_line => __LINE__,
 					code   => 1100049,
@@ -1616,6 +1796,7 @@ sub make_new_tape_label {
     if (!defined $self->{'autolabel'}->{'template'} ||
 	$self->{'autolabel'}->{'template'} eq "") {
 	return (undef, Amanda::Changer::Message->new(
+					chg => $self,
 					source_filename => __FILE__,
 					source_line => __LINE__,
 					code   => 1100050,
@@ -1663,6 +1844,7 @@ sub make_new_tape_label {
     my $label;
     if ($npercents > 0 and $nexclamations > 0) {
 	return (undef, Amanda::Changer::Message->new(
+					chg => $self,
 					source_filename => __FILE__,
 					source_line => __LINE__,
 					code   => 1100053,
@@ -1680,24 +1862,28 @@ sub make_new_tape_label {
 	}
 	if ($template =~ /SUBSTITUTE_BARCODE/ && !defined $barcode) {
 	    return (undef, Amanda::Changer::Message->new(
+					chg => $self,
 					source_filename => __FILE__,
 					source_line => __LINE__,
 					code   => 1100054,
 					severity => $Amanda::Message::ERROR));
 	} elsif ($template =~ /SUBSTITUTE_SLOT/ && !defined $slot) {
 	    return (undef, Amanda::Changer::Message->new(
+					chg => $self,
 					source_filename => __FILE__,
 					source_line => __LINE__,
 					code   => 1100055,
 					severity => $Amanda::Message::ERROR));
 	} elsif ($label eq $template) {
 	    return (undef, Amanda::Changer::Message->new(
+					chg => $self,
 					source_filename => __FILE__,
 					source_line => __LINE__,
 					code   => 1100056,
 					severity => $Amanda::Message::ERROR));
 	} elsif (!$params{'label_exist'} and $tl->lookup_tapelabel($label)) {
 	    return (undef, Amanda::Changer::Message->new(
+					chg => $self,
 					source_filename => __FILE__,
 					source_line => __LINE__,
 					label  => $label,
@@ -1762,6 +1948,7 @@ sub make_new_tape_label {
 
 	# bail out if we didn't find an unused label
 	return (undef, Amanda::Changer::Message->new(
+					chg => $self,
 					source_filename => __FILE__,
 					source_line => __LINE__,
 					code   => 1100058,
@@ -1771,6 +1958,7 @@ sub make_new_tape_label {
 
     if (!$label) {
 	return (undef, Amanda::Changer::Message->new(
+					chg => $self,
 					source_filename => __FILE__,
 					source_line => __LINE__,
 					code   => 1100059,
@@ -1793,6 +1981,7 @@ sub make_new_meta_label {
 
     if (!$template) {
 	return (undef, Amanda::Changer::Message->new(
+					chg => $self,
 					source_filename => __FILE__,
 					source_line => __LINE__,
 					code   => 1100060,
@@ -1819,6 +2008,7 @@ sub make_new_meta_label {
     my $meta;
     if ($npercents > 0 and $nexclamations > 0) {
 	return (undef, Amanda::Changer::Message->new(
+					chg => $self,
 					source_filename => __FILE__,
 					source_line => __LINE__,
 					code   => 1100061,
@@ -1826,6 +2016,7 @@ sub make_new_meta_label {
     }
     if ($npercents == 0 and $nexclamations == 0) {
 	return (undef, Amanda::Changer::Message->new(
+					chg => $self,
 					source_filename => __FILE__,
 					source_line => __LINE__,
 					code   => 1100062,
@@ -1872,6 +2063,7 @@ sub make_new_meta_label {
 
 	# bail out if we didn't find an unused label
 	return (undef, Amanda::Changer::Message->new(
+					chg => $self,
 					source_filename => __FILE__,
 					source_line => __LINE__,
 					code   => 1100063,
@@ -1881,6 +2073,7 @@ sub make_new_meta_label {
 
     if (!$meta) {
 	return (undef, Amanda::Changer::Message->new(
+					chg => $self,
 					source_filename => __FILE__,
 					source_line => __LINE__,
 					code   => 1100064,
@@ -1936,6 +2129,7 @@ sub show {
 	if (!$use_slots) {
 	    my $num_slots = scalar @{$info{'slots'}};
 	    $params{'user_msg'}->(Amanda::Changer::Message->new(
+					chg => $self,
 					source_filename => __FILE__,
 					source_line => __LINE__,
 					code   => 1100010,
@@ -1951,6 +2145,7 @@ sub show {
 			   res_cb => $steps->{'loaded'});
 	} else {
 	    $params{'user_msg'}->(Amanda::Changer::Message->new(
+					chg => $self,
 					source_filename => __FILE__,
 					source_line => __LINE__,
 					code   => 1100010,
@@ -1971,6 +2166,7 @@ sub show {
 	    } elsif ($err->volinuse and defined $err->{'slot'}) {
 		$last_slot = $err->{'slot'};
 		$params{'user_msg'}->(Amanda::Changer::Message->new(
+					chg => $self,
 					source_filename => __FILE__,
 					source_line => __LINE__,
 					code   => 1100011,
@@ -1979,6 +2175,7 @@ sub show {
 	   } elsif ($err->empty and defined $err->{'slot'}) {
 		$last_slot = $err->{'slot'};
 		$params{'user_msg'}->(Amanda::Changer::Message->new(
+					chg => $self,
 					source_filename => __FILE__,
 					source_line => __LINE__,
 					code   => 1100012,
@@ -1987,6 +2184,7 @@ sub show {
 	    } elsif ($err->invalid and defined $err->{'slot'}) {
 		$last_slot = $err->{'slot'};
 		$params{'user_msg'}->(Amanda::Changer::Message->new(
+					chg => $self,
 					source_filename => __FILE__,
 					source_line => __LINE__,
 					code   => 1100013,
@@ -1995,6 +2193,7 @@ sub show {
 					err    => $err));
 	    } else {
 		$params{'user_msg'}->(Amanda::Changer::Message->new(
+					chg => $self,
 					source_filename => __FILE__,
 					source_line => __LINE__,
 					code   => 1100014,
@@ -2023,6 +2222,7 @@ sub show {
 					$res->{'meta'},
 					$self->{'storage'}->{'storage_name'});
 		$params{'user_msg'}->(Amanda::Changer::Message->new(
+					chg => $self,
 					source_filename => __FILE__,
 					source_line => __LINE__,
 					code   => 1100015,
@@ -2034,6 +2234,7 @@ sub show {
 					label_match => $label_match));
 	    } elsif ($st == $DEVICE_STATUS_VOLUME_UNLABELED) {
 		$params{'user_msg'}->(Amanda::Changer::Message->new(
+					chg => $self,
 					source_filename => __FILE__,
 					source_line => __LINE__,
 					code   => 1100016,
@@ -2042,6 +2243,7 @@ sub show {
 					write_protected => $write_protected));
 	    } else {
 		$params{'user_msg'}->(Amanda::Changer::Message->new(
+					chg => $self,
 					source_filename => __FILE__,
 					source_line => __LINE__,
 					code   => 1100017,
@@ -2098,6 +2300,8 @@ sub new {
     my ($type, %info) = @_;
 
     my $self = \%info;
+    my $chg = $self->{'chg'};
+    delete $self->{'chg'};
     #bless ($self, "Amanda::Changer::Message");
     bless ($self, $class);
     my $reason = "";
@@ -2110,7 +2314,13 @@ sub new {
     $self->{'component'} = Amanda::Util::get_pcomponent() if !defined $self->{'component'};
     $self->{'module'} = Amanda::Util::get_pmodule() if !defined $self->{'module'};
     $self->{'code'} = 3 if !$self->{'code'};
-    $self->{'message'} = $self->message() if !defined $self->{'message'};
+    $self->{'storage_name'} = $chg->{'storage'}->{'storage_name'} if !defined $self->{'storage_name'} && defined $chg->{'storage'}->{'storage_name'};
+    $self->{'chg_name'} = $chg->{'chg_name'} if !defined $self->{'changer_name'} && defined $chg->{'chg_name'};
+    $self->{'storage'} = $self->{'storage_name'} if !defined $self->{'storage'};
+    $self->{'storage'} = Amanda::Config::get_config_name() if !defined $self->{'storage'};
+    $self->{'storage_name'} = $self->{'storage'} if !defined $self->{'storage_name'};
+    $self->{'changer_message'} = $self->message() if !defined $self->{'changer_message'};
+    $self->{'message'} = "Storage '$self->{'storage'}': $self->{'changer_message'}";
     $self->{'severity'} = $Amanda::Message::ERROR if !defined $self->{'severity'};
     $self->{'type'} = $type;
     Amanda::Debug::debug("new Amanda::Changer::Error: type='$type'$reason, message='$self->{message}'");
@@ -2344,10 +2554,21 @@ sub configure_device {
 	for my $value (@{$propinfo->{'values'}}) {
 	    my $r = $device->property_set($propname, $value);
 	    if ($r) {
-		my $msg = "Error setting device property '$propname' to value '$value' on device '".$device->device_name."': $r";
+		my $msg = Amanda::Changer::Error->new("fatal",
+			source_filename => __FILE__,
+			source_line     => __LINE__,
+			code    => 1100073,
+			severity => $Amanda::Message::ERROR,
+			storage_name => $storage->{'storage_name'},
+			reason => "device",
+			propname => $propname,
+			propvalue => $value,
+			device_name => $device->device_name,
+			err => $r);
+
 		if (exists $propinfo->{'optional'}) {
 		    if ($propinfo->{'optional'} eq 'warn') {
-			warn("$msg (ignored)");
+			warn($msg->changer_message() . " (ignored)");
 		    }
 		} else {
 		    return $msg;

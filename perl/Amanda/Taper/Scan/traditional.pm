@@ -41,6 +41,7 @@ use Amanda::Header;
 use Amanda::Debug qw( :logging );
 use Amanda::MainLoop;
 use Amanda::Util qw( match_labelstr );
+use Amanda::ScanInventory; # for Amanda::ScanInventory::Message
 
 sub new {
     my $class = shift;
@@ -64,6 +65,7 @@ sub scan {
     die "Can only run one scan at a time" if $self->{'scanning'};
     $self->{'scanning'} = 1;
     $self->{'user_msg_fn'} = $params{'user_msg_fn'} || sub {};
+    $self->{'user_message_fn'} = $params{'user_message_fn'};
 
     # refresh the tapelist at every scan
     $self->read_tapelist();
@@ -77,9 +79,9 @@ sub scan {
 
 sub _user_msg {
     my $self = shift;
-    my %params = @_;
+    my $message = shift;
 
-    $self->{'user_msg_fn'}->(%params);
+    $self->{'user_msg_fn'}->($message);
 }
 
 sub scan_result {
@@ -117,10 +119,23 @@ sub scan_result {
 	# the changer is not fast-searchable.  But we'll tell the user about it
 	# anyway.
 	my $oldest_reusable = $self->oldest_reusable_volume();
-	$self->_user_msg(scan_failed => 1,
-			 expected_label => $oldest_reusable,
-			 expected_new => 1);
-	@result = ("No acceptable volumes found");
+	$self->_user_msg(Amanda::ScanInventory::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code            => 5100002,
+				severity        => $Amanda::Message::ERROR,
+				storage_name    => $self->{'changer'}->{'storage'}->{'storage_name'},
+				scan_failed     => 1,
+				expected_label  => $oldest_reusable,
+				expected_new    => 1));
+	my $err = Amanda::Changer::Error->new('failed',
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				severity        => $Amanda::Message::ERROR,
+				reason => 'notfound',
+				storage_name => $self->{'changer'}->{'storage'}->{'storage_name'},
+				message => "No acceptable volumes found");
+	@result = ($err)
     }
 
     $self->{'scanning'} = 0;
@@ -142,7 +157,7 @@ sub stage_1 {
 	debug("Amanda::Taper::Scan::traditional stage 1: search for oldest reusable volume");
 	$oldest_reusable = $self->oldest_reusable_volume(
 	);
-
+$oldest_reusable = undef;
 	if (!defined $oldest_reusable) {
 	    debug("Amanda::Taper::Scan::traditional no oldest reusable volume");
 	    return $self->stage_2($result_cb);
@@ -169,8 +184,14 @@ sub stage_1 {
         if ($results{'fast_search'}) {
 	    debug("Amanda::Taper::Scan::traditional stage 1: searching oldest reusable " .
 		  "volume '$oldest_reusable'");
-	    $self->_user_msg(search_label => 1,
-			     label        => $oldest_reusable);
+	    $self->_user_msg(Amanda::ScanInventory::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code            => 5101011,
+				severity        => $Amanda::Message::MESSAGE,
+				storage_name    => $self->{'changer'}->{'storage'}->{'storage_name'},
+				search_label	=> 1,
+				label           => $oldest_reusable));
 
 	    $steps->{'do_load'}->();
 	} else {
@@ -190,7 +211,15 @@ sub stage_1 {
     step load_done => sub {
 	my ($err, $res) = @_;
 
-	$self->_user_msg(search_result => 1, res => $res, err => $err);
+	$self->_user_msg(Amanda::ScanInventory::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code            => 5101010,
+				severity        => $Amanda::Message::MESSAGE,
+				storage_name    => $self->{'changer'}->{'storage'}->{'storage_name'},
+				search_result   => 1,
+				res             => $res,
+				err             => $err));
 	if ($err) {
 	    if ($err->failed and $err->notfound) {
 		debug("Amanda::Taper::Scan::traditional oldest reusable volume not found");
@@ -230,7 +259,7 @@ sub stage_1 {
 	my $barcode = $res->{'barcode'} || "";
 	my $meta = $res->{'meta'} || "";
 	if (!match_labelstr($labelstr, $autolabel, $label,
-			    $barcode, $meta, $self->{'chg'}->{'storage'})) {
+			    $barcode, $meta, $self->{'changer'}->{'storage'}->{'storage_name'})) {
             warning "Oldest reusable volume '$oldest_reusable' do not match the labelstr '" .
 				$labelstr->{'match_autolabel'} ? $autolabel->{'template'} : $labelstr->{'template'} . "'";
             return $self->release_and_stage_2($res, $result_cb);
@@ -309,18 +338,39 @@ sub stage_2 {
 
 	# bail out immediately if the scan is complete
 	if ($err and $err->failed and $err->notfound) {
-	    $self->_user_msg(search_result => 1, res => $res, err => $err);
+	    $self->_user_msg($err);
 	    # no error, no reservation -> end of the scan
             return $self->scan_result(result_cb => $result_cb);
 	}
 
 	# tell user_msg which slot we're looking at..
 	if (defined $res) {
-	    $self->_user_msg(scan_slot => 1, slot => $res->{'this_slot'});
+	    $self->_user_msg(Amanda::ScanInventory::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code            => 5100000,
+				severity        => $Amanda::Message::MESSAGE,
+				storage_name    => $self->{'changer'}->{'storage'}->{'storage_name'},
+				scan_slot       => 1,
+				slot            => $res->{'this_slot'}));
 	} elsif (defined $err->{'slot'}) {
-	    $self->_user_msg(scan_slot => 1, slot => $err->{'slot'});
+	    $self->_user_msg(Amanda::ScanInventory::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code            => 5100000,
+				severity        => $Amanda::Message::MESSAGE,
+				storage_name    => $self->{'changer'}->{'storage'}->{'storage_name'},
+				scan_slot       => 1,
+				slot            => $err->{'slot'}));
 	} else {
-	    $self->_user_msg(scan_slot => 1, slot => "?");
+	    $self->_user_msg(Amanda::ScanInventory::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code            => 5100000,
+				severity        => $Amanda::Message::MESSAGE,
+				storage_name    => $self->{'changer'}->{'storage'}->{'storage_name'},
+				scan_slot       => 1,
+				slot            => "?"));
 	}
 
 	# and then tell it the result if already known (error) or try
@@ -336,8 +386,8 @@ sub stage_2 {
 	    $ignore_error = 1 if (defined($err->{'slot'}) && $err->invalid);
 	    $ignore_error = 1 if ($err->empty);
 
+	    $self->_user_msg($err);
 	    if ($ignore_error) {
-		$self->_user_msg(slot_result => 1, err => $err);
 		if ($err->{'slot'}) {
 		    $last_slot = $err->{slot};
 		    $self->{'seen'}->{$last_slot} = 1;
@@ -346,7 +396,6 @@ sub stage_2 {
 	    } else {
 		# if we have a fatal error or something other than "notfound"
 		# or "volinuse", bail out.
-		$self->_user_msg(slot_result => 1, err => $err);
 		return $self->scan_result(error => $err, res => $res,
 					result_cb => $result_cb);
 	    }
@@ -374,72 +423,111 @@ sub stage_2 {
 	    my $tle = $self->{'tapelist'}->lookup_tapelabel($label);
 	    if (!$tle) {
 		if (!match_labelstr($labelstr, $autolabel, $label, $barcode,
-                                    $meta, $self->{'chg'}->{'storage'})) {
+                                    $meta, $self->{'changer'}->{'storage'}->{'storage_name'})) {
 		    if (!$autolabel->{'other_config'}) {
-		        $self->_user_msg(slot_result             => 1,
-				         does_not_match_labelstr => 1,
-				         labelstr                => $labelstr->{'match_autolabel'} ? $autolabel->{'template'} : $labelstr->{'template'},,
-				         slot                    => $slot,
-				         label                   => $label,
-				         res                     => $res);
+			$self->_user_msg(Amanda::ScanInventory::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code            => 5101003,
+				severity        => $Amanda::Message::MESSAGE,
+				storage_name    => $self->{'changer'}->{'storage'}->{'storage_name'},
+				slot_result     => 1,
+				does_not_match_labelstr => 1,
+				labelstr                => $labelstr->{'match_autolabel'} ? $autolabel->{'template'} : $labelstr->{'template'},,
+				slot                    => $slot,
+				label                   => $label));
 		        return $steps->{'try_continue'}->();
 		    }
 		} else {
-		    $self->_user_msg(slot_result     => 1,
-				     not_in_tapelist => 1,
-				     slot            => $slot,
-				     label           => $label,
-				     res             => $res);
+		    $self->_user_msg(Amanda::ScanInventory::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code            => 5101004,
+				severity        => $Amanda::Message::MESSAGE,
+				storage_name    => $self->{'changer'}->{'storage'}->{'storage_name'},
+				slot_result     => 1,
+				not_in_tapelist => 1,
+				slot            => $slot,
+				label           => $label));
 		    return $steps->{'try_continue'}->();
 		}
 	    } else {
 		if ($tle->{'config'} &&
 		    $tle->{'config'} ne Amanda::Config::get_config_name()) {
-		    $self->_user_msg(slot_result     => 1,
-				     other_config    => 1,
-				     config          => $tle->{'config'},
-				     slot            => $slot,
-				     label           => $label,
-				     res             => $res);
+		    $self->_user_msg(Amanda::ScanInventory::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code            => 5101015,
+				severity        => $Amanda::Message::MESSAGE,
+				storage_name    => $self->{'changer'}->{'storage'}->{'storage_name'},
+				slot_result     => 1,
+				other_config    => 1,
+				config          => $tle->{'config'},
+				slot            => $slot,
+				label           => $label,
+				res             => $res));
 		    return $steps->{'try_continue'}->();
 		}
 
 		if ($tle->{'pool'} &&
 		    $tle->{'pool'} ne $self->{'tapepool'}) {
-		    $self->_user_msg(slot_result     => 1,
-				     other_pool      => 1,
-				     pool            => $tle->{'pool'},
-				     slot            => $slot,
-				     label           => $label,
-				     res             => $res);
+		    $self->_user_msg(Amanda::ScanInventory::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code            => 5101016,
+				severity        => $Amanda::Message::MESSAGE,
+				storage_name    => $self->{'changer'}->{'storage'}->{'storage_name'},
+				slot_result     => 1,
+				other_pool      => 1,
+				pool            => $tle->{'pool'},
+				slot            => $slot,
+				label           => $label,
+				res             => $res));
 		    return $steps->{'try_continue'}->();
 		}
 
 		if (!$tle->{'pool'} &&
 		    !match_labelstr($labelstr, $autolabel, $label, $barcode,
-				    $meta, $self->{'chg'}->{'storage'})) {
-		    $self->_user_msg(slot_result             => 1,
-				     does_not_match_labelstr => 1,
-				     labelstr                => $labelstr->{'match_autolabel'} ? $autolabel->{'template'} : $labelstr->{'template'},
-				     slot                    => $slot,
-				     label                   => $label,
-				     res                     => $res);
+				    $meta, $self->{'changer'}->{'storage'}->{'storage_name'})) {
+		    $self->_user_msg(Amanda::ScanInventory::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code            => 5101003,
+				severity        => $Amanda::Message::MESSAGE,
+				storage_name    => $self->{'changer'}->{'storage'}->{'storage_name'},
+				slot_result     => 1,
+				does_not_match_labelstr => 1,
+				labelstr                => $labelstr->{'match_autolabel'} ? $autolabel->{'template'} : $labelstr->{'template'},
+				slot                    => $slot,
+				label                   => $label));
 		    return $steps->{'try_continue'}->();
 		}
 
 		# see if it's reusable
 		if (!$self->is_reusable_volume(label => $label, new_label_ok => 1)) {
-		    $self->_user_msg(slot_result => 1,
-				 active      => 1,
-				 slot        => $slot,
-				 label       => $label,
-				 res         => $res);
+		    $self->_user_msg(Amanda::ScanInventory::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code            => 5101002,
+				severity        => $Amanda::Message::MESSAGE,
+				storage_name    => $self->{'changer'}->{'storage'}->{'storage_name'},
+				slot_result     => 1,
+				storage_name    => $self->{'changer'}->{'storage'}->{'storage_name'},
+				active      => 1,
+				slot        => $slot,
+				label       => $label));
 		    return $steps->{'try_continue'}->();
 		} else {
-	            $self->_user_msg(slot_result => 1,
-			         slot        => $slot,
-			         label       => $label,
-			         res         => $res);
+		    $self->_user_msg(Amanda::ScanInventory::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code            => 5101011,
+				severity        => $Amanda::Message::MESSAGE,
+				storage_name    => $self->{'changer'}->{'storage'}->{'storage_name'},
+				slot_result     => 1,
+			        slot        => $slot,
+			        label       => $label,
+			        res         => $res));
 	            $self->scan_result(res => $res, label => $label,
 				   mode => $ACCESS_WRITE, is_new => 0,
 				   result_cb => $result_cb);
@@ -453,38 +541,68 @@ sub stage_2 {
 	    if ($status & $DEVICE_STATUS_VOLUME_UNLABELED and
 		(!$dev->volume_header or
 		 $dev->volume_header->{'type'} == $Amanda::Header::F_EMPTY)) {
-		$self->_user_msg(slot_result   => 1,
-			         not_autolabel => 1,
-				 empty         => 1,
-			         slot          => $slot,
-			         res           => $res);
+		$self->_user_msg(Amanda::ScanInventory::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code            => 5101009,
+				severity        => $Amanda::Message::MESSAGE,
+				storage_name    => $self->{'changer'}->{'storage'}->{'storage_name'},
+				slot_result     => 1,
+			        not_autolabel => 1,
+				empty         => 1,
+			        slot          => $slot,
+			        res           => $res));
 	    } elsif ($status & $DEVICE_STATUS_VOLUME_UNLABELED and
 		$dev->volume_header and
 		$dev->volume_header->{'type'} == $Amanda::Header::F_WEIRD) {
-		$self->_user_msg(slot_result   => 1,
-			         not_autolabel => 1,
-				 non_amanda    => 1,
-			         slot          => $slot,
-			         res           => $res);
+		$self->_user_msg(Amanda::ScanInventory::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code            => 5101005,
+				severity        => $Amanda::Message::MESSAGE,
+				storage_name    => $self->{'changer'}->{'storage'}->{'storage_name'},
+				slot_result     => 1,
+			        not_autolabel => 1,
+				non_amanda    => 1,
+			        slot          => $slot,
+			        res           => $res));
 	    } elsif ($status & $DEVICE_STATUS_VOLUME_ERROR) {
-		$self->_user_msg(slot_result   => 1,
-			         not_autolabel => 1,
-				 volume_error  => 1,
-				 err           => $dev->error_or_status(),
-			         slot          => $slot,
-			         res           => $res);
+		$self->_user_msg(Amanda::ScanInventory::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code            => 5101006,
+				severity        => $Amanda::Message::MESSAGE,
+				storage_name    => $self->{'changer'}->{'storage'}->{'storage_name'},
+				slot_result     => 1,
+			        not_autolabel => 1,
+				volume_error  => 1,
+				err           => $dev->error_or_status(),
+			        slot          => $slot,
+			        res           => $res));
 	    } elsif ($status != $DEVICE_STATUS_SUCCESS) {
-		$self->_user_msg(slot_result   => 1,
-			         not_autolabel => 1,
-				 not_success   => 1,
-				 err           => $dev->error_or_status(),
-			         slot          => $slot,
-			         res           => $res);
+		$self->_user_msg(Amanda::ScanInventory::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code            => 5101010,
+				severity        => $Amanda::Message::MESSAGE,
+				storage_name    => $self->{'changer'}->{'storage'}->{'storage_name'},
+				slot_result     => 1,
+			        not_autolabel => 1,
+				not_success   => 1,
+				err           => $dev->error_or_status(),
+			        slot          => $slot,
+			        res           => $res));
 	    } else {
-		$self->_user_msg(slot_result   => 1,
-			         not_autolabel => 1,
-			         slot          => $slot,
-			         res           => $res);
+		$self->_user_msg(Amanda::ScanInventory::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code            => 5101008,
+				severity        => $Amanda::Message::MESSAGE,
+				storage_name    => $self->{'changer'}->{'storage'}->{'storage_name'},
+				slot_result     => 1,
+				not_autolabel	=> 1,
+				label		=> $dev->volume_label,
+			        slot		=> $slot));
 	    }
 	    return $steps->{'try_continue'}->();
 	}
@@ -493,41 +611,70 @@ sub stage_2 {
 	    (!$dev->volume_header or
 	     $dev->volume_header->{'type'} == $Amanda::Header::F_EMPTY)) {
 	    if (!$autolabel->{'empty'}) {
-	        $self->_user_msg(slot_result  => 1,
-			         empty        => 1,
-			         slot         => $slot,
-			         res          => $res);
+		$self->_user_msg(Amanda::ScanInventory::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code            => 5101009,
+				severity        => $Amanda::Message::MESSAGE,
+				storage_name    => $self->{'changer'}->{'storage'}->{'storage_name'},
+				slot_result     => 1,
+			        empty        => 1,
+			        slot         => $slot,
+			        res          => $res));
 	        return $steps->{'try_continue'}->();
 	    }
 	} elsif ($status & $DEVICE_STATUS_VOLUME_UNLABELED and
 	    $dev->volume_header and
 	    $dev->volume_header->{'type'} == $Amanda::Header::F_WEIRD) {
 	    if (!$autolabel->{'non_amanda'}) {
-	        $self->_user_msg(slot_result  => 1,
-			         non_amanda   => 1,
-			         slot         => $slot,
-			         res          => $res);
+		$self->_user_msg(Amanda::ScanInventory::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code            => 5101005,
+				severity        => $Amanda::Message::MESSAGE,
+				storage_name    => $self->{'changer'}->{'storage'}->{'storage_name'},
+				slot_result     => 1,
+			        non_amanda   => 1,
+			        slot         => $slot,
+			        res          => $res));
 	        return $steps->{'try_continue'}->();
 	    }
 	} elsif ($status & $DEVICE_STATUS_VOLUME_ERROR) {
 	    if (!$autolabel->{'volume_error'}) {
-	        $self->_user_msg(slot_result  => 1,
-			         volume_error => 1,
-			         err          => $dev->error_or_status(),
-			         slot         => $slot,
-			         res          => $res);
+		$self->_user_msg(Amanda::ScanInventory::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code            => 5101006,
+				severity        => $Amanda::Message::MESSAGE,
+				storage_name    => $self->{'changer'}->{'storage'}->{'storage_name'},
+				slot_result     => 1,
+			        volume_error => 1,
+			        err          => $dev->error_or_status(),
+			        slot         => $slot));
 	        return $steps->{'try_continue'}->();
 	    }
 	} elsif ($status != $DEVICE_STATUS_SUCCESS) {
-	    $self->_user_msg(slot_result  => 1,
-			     not_success  => 1,
-			     err          => $dev->error_or_status(),
-			     slot         => $slot,
-			     res          => $res);
+	    $self->_user_msg(Amanda::ScanInventory::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code            => 5101010,
+				severity        => $Amanda::Message::MESSAGE,
+				storage_name    => $self->{'changer'}->{'storage'}->{'storage_name'},
+				slot_result     => 1,
+				not_success	=> 1,
+				err		=> $dev->error_or_status(),
+				slot		=> $slot));
 	    return $steps->{'try_continue'}->();
 	}
 
-	$self->_user_msg(slot_result => 1, slot => $slot, res => $res);
+	$self->_user_msg(Amanda::ScanInventory::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code            => 5101017,
+				severity        => $Amanda::Message::MESSAGE,
+				storage_name    => $self->{'changer'}->{'storage'}->{'storage_name'},
+				slot_result	=> 1,
+				slot		=> $slot));
 	$res->get_meta_label(finished_cb => $steps->{'got_meta_label'});
 	return;
     };

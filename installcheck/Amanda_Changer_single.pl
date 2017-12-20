@@ -110,6 +110,6 @@ $chg->quit();
 
 $chg = Amanda::Changer->new("chg-single:bogus:device");
 is("$chg",
-    "chg-single: error opening device 'bogus:device': Device type \"bogus\" is not known",
+    "Storage 'TESTCONF': opening device 'bogus:device': Device type \"bogus\" is not known",
     "bogus device name detected early");
 $chg->quit();

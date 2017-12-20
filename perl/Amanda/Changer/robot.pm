@@ -156,7 +156,11 @@ sub new {
 
     if (defined $config->{'changerdev'} and $config->{'changerdev'} ne '') {
 	return Amanda::Changer->make_error("fatal", undef,
-	    message => "'changerdev' is not allowed with $self->{class_name}");
+			source_filename	=> __FILE__,
+			source_line	=> __LINE__,
+			severity	=> $Amanda::Message::MESSAGE,
+			code		=> 1100080,
+			class_name	=> $self->{class_name});
     }
 
     if ($config->{'changerfile'}) {
@@ -176,24 +180,38 @@ sub new {
 	# if the tapedev points to us (the changer), then give an error
 	if ($config->{'tapedev'} eq $tpchanger) {
             return Amanda::Changer->make_error("fatal", undef,
-                message => "must specify a tape-device property");
+			source_filename	=> __FILE__,
+			source_line	=> __LINE__,
+			severity	=> $Amanda::Message::MESSAGE,
+			code		=> 1100081);
         }
         $self->{'drive2device'} = { '0' => $config->{'tapedev'} };
 	push @{$self->{'driveorder'}}, '0';
     } else {
         if (!exists $properties->{'tape-device'}) {
             return Amanda::Changer->make_error("fatal", undef,
-                message => "no 'tape-device' property specified");
+			source_filename	=> __FILE__,
+			source_line	=> __LINE__,
+			severity	=> $Amanda::Message::MESSAGE,
+			code		=> 1100082);
         }
         for my $pval (@{$properties->{'tape-device'}->{'values'}}) {
             my ($drive, $device);
             unless (($drive, $device) = ($pval =~ /(\d+)=(.*)/)) {
                 return Amanda::Changer->make_error("fatal", undef,
-                    message => "invalid 'tape-device' property '$pval'");
+			source_filename	=> __FILE__,
+			source_line	=> __LINE__,
+			severity	=> $Amanda::Message::MESSAGE,
+			code		=> 1100083,
+			prop_value	=> $pval);
             }
 	    if (exists $self->{'drive2device'}->{$drive}) {
                 return Amanda::Changer->make_error("fatal", undef,
-                    message => "tape-device drive $drive defined more than once");
+			source_filename	=> __FILE__,
+			source_line	=> __LINE__,
+			severity	=> $Amanda::Message::MESSAGE,
+			code		=> 1100084,
+			drive		=> $drive);
 	    }
             $self->{'drive2device'}->{$drive} = $device;
 	    push @{$self->{'driveorder'}}, $drive;
@@ -205,7 +223,10 @@ sub new {
 					    "eject-before-unload", 0);
     if (!defined $ebu) {
 	return Amanda::Changer->make_error("fatal", undef,
-	    message => "invalid 'eject-before-unload' value");
+			source_filename	=> __FILE__,
+			source_line	=> __LINE__,
+			severity	=> $Amanda::Message::MESSAGE,
+			code		=> 1100085);
     }
     $self->{'eject_before_unload'} = $ebu;
 
@@ -214,7 +235,10 @@ sub new {
 						"fast-search", 1);
     if (!defined $fast_search) {
 	return Amanda::Changer->make_error("fatal", undef,
-	    message => "invalid 'fast-search' value");
+			source_filename	=> __FILE__,
+			source_line	=> __LINE__,
+			severity	=> $Amanda::Message::MESSAGE,
+			code		=> 1100087);
     }
     $self->{'fast_search'} = $fast_search;
 
@@ -223,7 +247,11 @@ sub new {
 	$self->{'use_slots'} = join ",", @{$properties->{'use-slots'}->{'values'}};
 	if ($self->{'use_slots'} !~ /\d+(-\d+)?(,\d+(-\d+)?)*/) {
 	    return Amanda::Changer->make_error("fatal", undef,
-		message => "invalid 'use-slots' value '$self->{use_slots}'");
+			source_filename	=> __FILE__,
+			source_line	=> __LINE__,
+			severity	=> $Amanda::Message::MESSAGE,
+			code		=> 1100088,
+			use_slots	=> $self->{use_slots});
 	}
     }
 
@@ -232,7 +260,11 @@ sub new {
 	my $pval = $properties->{'drive-choice'}->{'values'}->[0];
 	if (!grep { lc($_) eq $pval } ('lru', 'firstavail')) {
 	    return Amanda::Changer->make_error("fatal", undef,
-		message => "invalid 'drive-choice' value '$pval'");
+			source_filename	=> __FILE__,
+			source_line	=> __LINE__,
+			severity	=> $Amanda::Message::MESSAGE,
+			code		=> 1100089,
+			prop_value	=> $pval);
 	}
 	$self->{'drive_choice'} = $pval;
     }
@@ -242,7 +274,10 @@ sub new {
 					    "broken-drive-loaded-slot", 0);
     if (!defined $broken_drive_loaded_slot) {
 	return Amanda::Changer->make_error("fatal", undef,
-	    message => "invalid 'broken-drive-loaded-slot' value");
+			source_filename	=> __FILE__,
+			source_line	=> __LINE__,
+			severity	=> $Amanda::Message::MESSAGE,
+			code		=> 1100090);
     }
     $self->{'broken_drive_loaded_slot'} = $broken_drive_loaded_slot;
 
@@ -251,7 +286,11 @@ sub new {
 	next unless exists $config->{'properties'}->{'load-poll'};
 	if (@{$config->{'properties'}->{'load-poll'}->{'values'}} > 1) {
 	    return Amanda::Changer->make_error("fatal", undef,
-		message => "only one value allowed for 'load-poll'");
+			source_filename	=> __FILE__,
+			source_line	=> __LINE__,
+			severity	=> $Amanda::Message::MESSAGE,
+			code		=> 1100091,
+			prop_name	=> 'load-poll');
 	}
 	my $propval = $config->{'properties'}->{'load-poll'}->{'values'}->[0];
 	my ($delay, $delayu, $poll, $pollu, $until, $untilu) = ($propval =~ /^
@@ -268,7 +307,11 @@ sub new {
 
 	if (!defined $delay) {
 	    return Amanda::Changer->make_error("fatal", undef,
-		message => "invalid delay value '$propval' for 'load-poll'");
+			source_filename	=> __FILE__,
+			source_line	=> __LINE__,
+			severity	=> $Amanda::Message::MESSAGE,
+			code		=> 1100092,
+			prop_value	=> $propval);
 	}
 
 	$delay *= 60 if (defined $delayu and $delayu =~ /m/i);
@@ -287,14 +330,23 @@ sub new {
 	next unless exists $config->{'properties'}->{$propname};
 	if (@{$config->{'properties'}->{$propname}->{'values'}} > 1) {
 	    return Amanda::Changer->make_error("fatal", undef,
-		message => "only one value allowed for $propname");
+			source_filename	=> __FILE__,
+			source_line	=> __LINE__,
+			severity	=> $Amanda::Message::MESSAGE,
+			code		=> 1100091,
+			prop_name	=> $propname);
 	}
 	my $propval = $config->{'properties'}->{$propname}->{'values'}->[0];
 	my ($time, $timeu) = ($propval =~ /^(\d+)([ms]?)/ix);
 
 	if (!defined $time) {
 	    return Amanda::Changer->make_error("fatal", undef,
-		message => "invalid time value '$propval' for '$propname'");
+			source_filename	=> __FILE__,
+			source_line	=> __LINE__,
+			severity	=> $Amanda::Message::MESSAGE,
+			code		=> 1100093,
+			prop_name	=> $propname,
+			prop_value	=> $propval);
 	}
 
 	$time *= 60 if (defined $timeu and $timeu =~ /m/i);
@@ -308,7 +360,10 @@ sub new {
 					    "ignore-barcodes", 0);
     if (!defined $ignore_barcodes) {
 	return Amanda::Changer->make_error("fatal", undef,
-	    message => "invalid 'ignore-barcodes' value");
+			source_filename	=> __FILE__,
+			source_line	=> __LINE__,
+			severity	=> $Amanda::Message::MESSAGE,
+			code		=> 1100094);
     }
 
     # get the interface, returning an error if we get one
@@ -390,8 +445,12 @@ sub load_unlocked {
 		$params{'slot'} = $params{'slot'}+0;
 	    } else {
 		return $self->make_error("failed", $params{'res_cb'},
-			reason => "invalid",
-			message => "invalid slot '$params{slot}'");
+			source_filename	=> __FILE__,
+			source_line	=> __LINE__,
+			severity	=> $Amanda::Message::MESSAGE,
+			code		=> 1100095,
+			reason		=> "invalid",
+			slot		=> $slot);
 	    }
 	}
 
@@ -415,8 +474,11 @@ sub load_unlocked {
 		}
 		if (defined $slot && $slot == -1) {
 		    return $self->make_error("failed", $params{'res_cb'},
-			    reason => "invalid",
-			    message => "could not find next slot");
+			source_filename	=> __FILE__,
+			source_line	=> __LINE__,
+			severity	=> $Amanda::Message::MESSAGE,
+			code		=> 1100096,
+			reason		=> "invalid");
 		}
             } elsif ($params{'relative_slot'} eq "current") {
 		my $current_slot = $self->_get_current(state => $state);
@@ -426,14 +488,21 @@ sub load_unlocked {
 		}
 		if (defined $current_slot && $current_slot == -1) {
 		    return $self->make_error("failed", $params{'res_cb'},
-			    reason => "invalid",
-			    message => "no current slot");
+			source_filename	=> __FILE__,
+			source_line	=> __LINE__,
+			severity	=> $Amanda::Message::MESSAGE,
+			code		=> 1100096,
+			reason		=> "invalid");
 		}
 		$slot = $current_slot;
 	    } else {
 		return $self->make_error("failed", $params{'res_cb'},
-			reason => "invalid",
-			message => "invalid relative_slot '$params{relative_slot}'");
+			source_filename	=> __FILE__,
+			source_line	=> __LINE__,
+			severity	=> $Amanda::Message::MESSAGE,
+			code		=> 1100031,
+			reason		=> "invalid",
+			relative_slot	=> $params{relative_slot});
 	    }
 
         } elsif (exists $params{'slot'}) {
@@ -442,8 +511,12 @@ sub load_unlocked {
 
             if (!defined $slot or !exists $state->{'slots'}->{$slot}) {
                 return $self->make_error("failed", $params{'res_cb'},
-                        reason => "invalid",
-                        message => "invalid slot '$slot'");
+			source_filename	=> __FILE__,
+			source_line	=> __LINE__,
+			severity	=> $Amanda::Message::MESSAGE,
+			code		=> 1100095,
+			reason		=> "invalid",
+			slot		=> $slot);
             }
 
         } elsif (exists $params{'label'}) {
@@ -457,21 +530,31 @@ sub load_unlocked {
 
             if (!defined $slot) {
                 return $self->make_error("failed", $params{'res_cb'},
-                        reason => "notfound",
-                        message => "label '$params{label}' not recognized or not found");
+			source_filename	=> __FILE__,
+			source_line	=> __LINE__,
+			severity	=> $Amanda::Message::MESSAGE,
+			code		=> 1100095,
+			reason		=> "notfound",
+			label		=> $params{label});
             }
 
         } else {
             return $self->make_error("failed", $params{'res_cb'},
-                    reason => "invalid",
-                    message => "no 'slot' or 'label' specified to load()");
+			source_filename	=> __FILE__,
+			source_line	=> __LINE__,
+			severity	=> $Amanda::Message::MESSAGE,
+			code		=> 1100099,
+			reason		=> "invalid");
         }
 
         if (defined $slot and !exists $state->{'slots'}->{$slot}) {
             return $self->make_error("failed", $params{'res_cb'},
-                    reason => "invalid",
-		    slot   => $slot,
-                    message => "invalid slot '$slot'");
+			source_filename	=> __FILE__,
+			source_line	=> __LINE__,
+			severity	=> $Amanda::Message::MESSAGE,
+			code		=> 1100095,
+			reason		=> "invalid",
+			slot		=> $slot);
         }
 
 	if (!defined $slot) {
@@ -484,26 +567,40 @@ sub load_unlocked {
 		}
 		if ($all_empty) {
 		    return $self->make_error("failed", $params{'res_cb'},
-		        reason => "notfound",
-		        message => "all slots are empty");
+			source_filename	=> __FILE__,
+			source_line	=> __LINE__,
+			severity	=> $Amanda::Message::MESSAGE,
+			code		=> 1100032,
+			reason		=> "notfound");
 	        }
 	    }
 	    return $self->make_error("failed", $params{'res_cb'},
-		    reason => "notfound",
-		    message => "all slots have been loaded");
+			source_filename	=> __FILE__,
+			source_line	=> __LINE__,
+			severity	=> $Amanda::Message::MESSAGE,
+			code		=> 1100032,
+			reason		=> "notfound");
 	}
 	if (!$self->_is_slot_allowed($slot)) {
 	    if (exists $params{'label'}) {
 		return $self->make_error("failed", $params{'res_cb'},
-			reason => "invalid",
-			slot   => $slot,
-			message => "label '$params{label}' is in slot $slot, which is " .
-				   "not in use-slots ($self->{use_slots})");
+			source_filename	=> __FILE__,
+			source_line	=> __LINE__,
+			severity	=> $Amanda::Message::MESSAGE,
+			code		=> 1100100,
+			reason		=> "invalid",
+			slot		=> $slot,
+			label		=> $params{label},
+			use_slots	=> $self->{use_slots});
 	    } else {
 		return $self->make_error("failed", $params{'res_cb'},
-			reason => "invalid",
-			slot   => $slot,
-			message => "slot $slot not in use-slots ($self->{use_slots})");
+			source_filename	=> __FILE__,
+			source_line	=> __LINE__,
+			severity	=> $Amanda::Message::MESSAGE,
+			code		=> 1100101,
+			reason		=> "invalid",
+			slot		=> $slot,
+			use_slots	=> $self->{use_slots});
 	    }
 	}
 
@@ -517,20 +614,29 @@ sub load_unlocked {
 	    }
 	    if ($all_empty) {
 	        return $self->make_error("failed", $params{'res_cb'},
-		    reason => "notfound",
-		    message => "all slots are empty");
+			    source_filename => __FILE__,
+			    source_line     => __LINE__,
+			    severity        => $Amanda::Message::MESSAGE,
+			    code	    => 1100072,
+			    reason => "notfound");
 	    } else {
 	        return $self->make_error("failed", $params{'res_cb'},
-		    reason => "notfound",
-		    message => "all slots have been loaded");
+			    source_filename => __FILE__,
+			    source_line     => __LINE__,
+			    severity        => $Amanda::Message::MESSAGE,
+			    code	    => 1100032,
+			    reason => "notfound");
 	    }
 	}
 
 	if ($state->{'slots'}->{$slot}->{'state'} eq Amanda::Changer::SLOT_EMPTY) {
 	    return $self->make_error("failed", $params{'res_cb'},
-		    reason => "empty",
-		    slot   => $slot,
-		    message => "slot $slot is empty");
+			source_filename	=> __FILE__,
+			source_line	=> __LINE__,
+			severity	=> $Amanda::Message::MESSAGE,
+			code		=> 1100032,
+			reason		=> "empty",
+			slot		=> $slot);
 	}
 
 	return $steps->{'calculate_drive'}->();
@@ -549,9 +655,12 @@ sub load_unlocked {
 	    # if it's reserved, it can't be used
 	    if ($info->{'res_info'} and $self->_res_info_verify($info->{'res_info'})) {
 		return $self->make_error("failed", $params{'res_cb'},
-			reason => "volinuse",
-			slot => $slot,
-			message => "the requested volume is in use (drive $drive)");
+			source_filename	=> __FILE__,
+			source_line	=> __LINE__,
+			severity	=> $Amanda::Message::MESSAGE,
+			code		=> 1100102,
+			reason		=> "volinuse",
+			drive		=> $drive);
 	    }
 
 	    # if it's not reserved, but not in our list of drives, well, it still
@@ -560,10 +669,12 @@ sub load_unlocked {
 		return $self->make_error("failed", $params{'res_cb'},
 			# not 'volinuse' because we can't expect the tape to be magically
 			# unloaded any time soon -- it's not actually in use, just inaccessible
-			reason => "invalid",
-			slot => $slot,
-			message => "the requested volume is in drive $drive, which this " .
-				   "changer instance cannot access");
+			source_filename	=> __FILE__,
+			source_line	=> __LINE__,
+			severity	=> $Amanda::Message::MESSAGE,
+			code		=> 1100103,
+			reason		=> "invalid",
+			drive		=> $drive);
 	    }
 
 	    # otherwise, we can jump all the way to the end of this process
@@ -622,8 +733,11 @@ sub load_unlocked {
 
         if (!defined $drive) {
             return $self->make_error("failed", $params{'res_cb'},
-                    reason => "driveinuse",
-                    message => "no drives available");
+			source_filename	=> __FILE__,
+			source_line	=> __LINE__,
+			severity	=> $Amanda::Message::MESSAGE,
+			code		=> 1100104,
+			reason		=> "driveinuse");
         }
 
 	# remove this drive from the lru and put it at the end
@@ -683,8 +797,12 @@ sub load_unlocked {
 
         if ($err) {
             return $self->make_error("failed", $params{'res_cb'},
-                    reason => "unknown",
-                    message => $err);
+			source_filename	=> __FILE__,
+			source_line	=> __LINE__,
+			severity	=> $Amanda::Message::MESSAGE,
+			code		=> 1100105,
+			reason		=> "unknown",
+			err		=> $err);
         }
 
 	$steps->{'start_polling'}->();
@@ -773,10 +891,14 @@ sub load_unlocked {
 	    }
 
 	    return $self->make_error("failed", $params{'res_cb'},
-		    reason => "notfound",
-		    slot   => $slot,
-		    message => "Found unexpected tape '$label' while looking " .
-			       "for '$params{label}'");
+			source_filename	=> __FILE__,
+			source_line	=> __LINE__,
+			severity	=> $Amanda::Message::MESSAGE,
+			code		=> 1100106,
+			reason		=> "notfound",
+			slot		=> $slot,
+			label		=> $label,
+			expected_label	=> $params{label});
 	}
 
 	if (!$label) {
@@ -801,9 +923,13 @@ sub load_unlocked {
 	    if (defined $params{'label'}) {
 		$self->_debug("Expected label '$params{label}', but got an unlabeled tape");
 		return $self->make_error("failed", $params{'res_cb'},
-		    reason => "notfound",
-		    slot   => $slot,
-		    message => "Found unlabeled tape while looking for '$params{label}'");
+			source_filename	=> __FILE__,
+			source_line	=> __LINE__,
+			severity	=> $Amanda::Message::MESSAGE,
+			code		=> 1100107,
+			reason		=> "notfound",
+			slot		=> $slot,
+			expected_label	=> $params{label});
 	    }
 	}
 
@@ -845,9 +971,15 @@ sub load_unlocked {
 		defined $state->{'slots'}->{$slot}->{'barcode'} and
 		$state->{'slots'}->{$slot}->{'barcode'} ne $tle->{'barcode'}) {
 		return $self->make_error("failed", $params{'res_cb'},
-		    reason => "device",
-		    slot   => $slot,
-		    message => "Slot $slot, label '$label', mismatch barcode between changer '$state->{'slots'}->{$slot}->{'barcode'}' and tapelist file '$tle->{'barcode'}'");
+			source_filename	=> __FILE__,
+			source_line	=> __LINE__,
+			severity	=> $Amanda::Message::MESSAGE,
+			code		=> 1100108,
+			reason		=> "notfound",
+			slot		=> $slot,
+			label		=> $label,
+			state_barcode	=> $$state->{'slots'}->{$slot}->{'barcode'},
+			tle_barcode	=> $tle->{'barcode'});
 	    }
 	}
         my $res = Amanda::Changer::robot::Reservation->new($self, $slot, $drive,
@@ -890,8 +1022,15 @@ sub info_key_vendor_string {
 
     $self->{'interface'}->inquiry(make_cb(inquiry_cb => sub {
 	my ($err, $info) = @_;
-	return $self->make_error("fatal", $params{'info_cb'},
-		message => "$err") if $err;
+	if ($err) {
+	    return $self->make_error("fatal", $params{'info_cb'},
+			source_filename	=> __FILE__,
+			source_line	=> __LINE__,
+			severity	=> $Amanda::Message::MESSAGE,
+			code		=> 1100109,
+			err		=> $err,
+		message => "$err")
+	}
 
 	my $vendor_string = sprintf "%s %s",
 	    ($info->{'vendor id'} or "<unknown>"),
@@ -949,7 +1088,10 @@ sub get_interface { # (overridden by subclasses)
     if (exists $self->{'config'}->{'properties'}->{'mtx'}) {
 	if (@{$self->{'config'}->{'properties'}->{'mtx'}->{'values'}} > 1) {
 	    return Amanda::Changer->make_error("fatal", undef,
-		message => "only one value allowed for 'mtx'");
+			source_filename	=> __FILE__,
+			source_line	=> __LINE__,
+			severity	=> $Amanda::Message::MESSAGE,
+			code		=> 1100110);
 	}
 	$mtx = $self->{'config'}->{'properties'}->{'mtx'}->{'values'}->[0];
     } else {
@@ -958,6 +1100,10 @@ sub get_interface { # (overridden by subclasses)
 
     if (!$mtx) {
 	return Amanda::Changer->make_error("fatal", undef,
+			source_filename	=> __FILE__,
+			source_line	=> __LINE__,
+			severity	=> $Amanda::Message::MESSAGE,
+			code		=> 1100111,
 	    message => "no default value for property MTX");
     }
 
@@ -972,14 +1118,16 @@ sub get_device { # (overridden by subclasses)
     my $device = Amanda::Device->new($device_name);
     if ($device->status != $DEVICE_STATUS_SUCCESS) {
 	return Amanda::Changer->make_error("fatal", undef,
-		reason => "device",
-		message => "opening '$device_name': " . $device->error_or_status());
+			source_filename	=> __FILE__,
+			source_line	=> __LINE__,
+			severity	=> $Amanda::Message::MESSAGE,
+			code		=> 1100038,
+			device_name	=> $device_name,
+			device_error	=> $device->error_or_status());
     }
 
     if (my $err = $self->{'config'}->configure_device($device, $self->{'storage'})) {
-	return Amanda::Changer->make_error("fatal", undef,
-		reason => "device",
-		message => $err);
+	#return $res_cb->($err);
     }
 
     return $device;
@@ -1089,7 +1237,10 @@ sub _release_unlocked {
     if (!$self->_res_info_is_mine($state->{'drives'}->{$drive}->{'res_info'})) {
 	# this should *never* happen
 	return $self->make_error("fatal", $params{'finished_cb'},
-		message => "reservation belongs to another instance");
+			source_filename	=> __FILE__,
+			source_line	=> __LINE__,
+			severity	=> $Amanda::Message::MESSAGE,
+			code		=> 1100112);
     }
     $state->{'drives'}->{$drive}->{'res_info'} = undef;
 
@@ -1157,8 +1308,11 @@ sub eject_unlocked {
 		$params{'drive'} = (keys %{$self->{'drive2device'}})[0];
 	    } else {
 		return $self->make_error("failed", $params{'finished_cb'},
-			reason => "invalid",
-			message => "no drive specified");
+			source_filename	=> __FILE__,
+			source_line	=> __LINE__,
+			severity	=> $Amanda::Message::MESSAGE,
+			code		=> 1100113,
+			reason		=> "invalid");
 	    }
 	}
 	$drive = $params{'drive'};
@@ -1167,31 +1321,46 @@ sub eject_unlocked {
 	$drive_info = $state->{'drives'}->{$drive};
 	if (!$drive_info) {
 	    return $self->make_error("failed", $params{'finished_cb'},
-		    reason => "invalid",
-		    message => "invalid drive '$drive'");
+			source_filename	=> __FILE__,
+			source_line	=> __LINE__,
+			severity	=> $Amanda::Message::MESSAGE,
+			code		=> 1100114,
+			reason		=> "invalid",
+			drive		=> $drive);
 	}
 
 	# if the drive exists, but not configured in this changer, then
 	# bail out.
 	if (!defined $self->{'drive2device'}->{$drive}) {
 	    return $self->make_error("failed", $params{'finished_cb'},
-		    reason => "invalid",
-		    message => "this changer instance is not configured to access drive $drive");
+			source_filename	=> __FILE__,
+			source_line	=> __LINE__,
+			severity	=> $Amanda::Message::MESSAGE,
+			code		=> 1100115,
+			reason		=> "invalid",
+			drive		=> $drive);
 	}
-
 
 	# check for a reservation
 	if ($drive_info->{'res_info'}
 		    and $self->_res_info_verify($drive_info->{'res_info'})) {
 	    return $self->make_error("failed", $params{'finished_cb'},
-		    reason => "volinuse",
-		    message => "tape in drive '$drive' is in use");
+			source_filename	=> __FILE__,
+			source_line	=> __LINE__,
+			severity	=> $Amanda::Message::MESSAGE,
+			code		=> 1100116,
+			reason		=> "volinuse",
+			drive		=> $drive);
 	}
 
 	if (!defined $drive_info->{'orig_slot'}) {
 	    return $self->make_error("failed", $params{'finished_cb'},
-			reason => "invalid",
-			message => "drive '$drive' is empty");
+			source_filename	=> __FILE__,
+			source_line	=> __LINE__,
+			severity	=> $Amanda::Message::MESSAGE,
+			code		=> 1100117,
+			reason		=> "invalid",
+			drive		=> $drive);
 	}
 
 	if ($self->{'eject_before_unload'}) {
@@ -1214,8 +1383,12 @@ sub eject_unlocked {
 
 	if (!$device->eject()) {
 	    return $self->make_error("failed", $params{'finished_cb'},
-		    reason => "unknown",
-		    message => "while ejecting volume: " . $device->error_or_status);
+			source_filename	=> __FILE__,
+			source_line	=> __LINE__,
+			severity	=> $Amanda::Message::MESSAGE,
+			code		=> 1100118,
+			reason		=> "unknown",
+			device_error	=> $device->error_or_status);
 	}
 	undef $device;
 
@@ -1240,8 +1413,12 @@ sub eject_unlocked {
 
         if ($err) {
             return $self->make_error("failed", $params{'finished_cb'},
-                    reason => "unknown",
-                    message => $err);
+			source_filename	=> __FILE__,
+			source_line	=> __LINE__,
+			severity	=> $Amanda::Message::MESSAGE,
+			code		=> 1100109,
+			reason		=> "unknown",
+			err		=> $err);
         }
 
 	$self->_debug("unload complete");
@@ -1291,21 +1468,39 @@ sub update_unlocked {
 	    my ($slot, $label) = ($params{'changed'} =~ /^(\d+)=(\S+)$/);
 
 	    # let's list the reasons we *can't* do what the user has asked
-	    my $whynot;
 	    if (!exists $state->{'slots'}) {
-		$whynot = "slot $slot does not exist";
+		return $self->make_error("failed", $params{'finished_cb'},
+			source_filename	=> __FILE__,
+			source_line	=> __LINE__,
+			severity	=> $Amanda::Message::MESSAGE,
+			code		=> 1100119,
+			reason		=> "unknown",
+			slot		=> $slot);
 	    } elsif (!$self->_is_slot_allowed($slot)) {
-		$whynot = "slot $slot is not used by this changer";
+		return $self->make_error("failed", $params{'finished_cb'},
+			source_filename	=> __FILE__,
+			source_line	=> __LINE__,
+			severity	=> $Amanda::Message::MESSAGE,
+			code		=> 1100120,
+			reason		=> "unknown",
+			slot		=> $slot);
 	    } elsif ($state->{'slots'}->{$slot}->{'state'} ==
 		     Amanda::Changer::SLOT_EMPTY) {
-		$whynot = "slot $slot is empty";
-	    } elsif (defined $state->{'slots'}->{$slot}->{'loaded_in'}) {
-		$whynot = "slot $slot is currently loaded";
-	    }
-
-	    if ($whynot) {
 		return $self->make_error("failed", $params{'finished_cb'},
-			reason => "unknown", message => $whynot);
+			source_filename	=> __FILE__,
+			source_line	=> __LINE__,
+			severity	=> $Amanda::Message::MESSAGE,
+			code		=> 1100121,
+			reason		=> "unknown",
+			slot		=> $slot);
+	    } elsif (defined $state->{'slots'}->{$slot}->{'loaded_in'}) {
+		return $self->make_error("failed", $params{'finished_cb'},
+			source_filename	=> __FILE__,
+			source_line	=> __LINE__,
+			severity	=> $Amanda::Message::MESSAGE,
+			code		=> 1100122,
+			reason		=> "unknown",
+			slot		=> $slot);
 	    }
 
 	    $user_msg_fn->(Amanda::Changer::Message->new(
@@ -1593,15 +1788,23 @@ sub move_unlocked {
     for ($from_slot, $to_slot) {
 	if (!$self->_is_slot_allowed($_)) {
 	    return $self->make_error("failed", $params{'finished_cb'},
-		    reason => "invalid",
-		    message => "invalid slot $_");
+			source_filename	=> __FILE__,
+			source_line	=> __LINE__,
+			code		=> 1100095,
+			severity	=> $Amanda::Message::INFO,
+			reason		=> "invalid",
+			slot		=> $_);
 	}
     }
 
     if ($state->{'slots'}->{$from_slot}->{'state'} == Amanda::Changer::SLOT_EMPTY) {
 	return $self->make_error("failed", $params{'finished_cb'},
-		reason => "invalid",
-		message => "slot $from_slot is empty");
+			source_filename	=> __FILE__,
+			source_line	=> __LINE__,
+			code		=> 1100121,
+			severity	=> $Amanda::Message::INFO,
+			reason		=> "invalid",
+			slot		=> $from_slot);
     }
 
     my $in_drive = $state->{'slots'}->{$from_slot}->{'loaded_in'};
@@ -1609,15 +1812,23 @@ sub move_unlocked {
 	my $info = $state->{'drives'}->{$in_drive};
 	if ($info->{'res_info'} and $self->_res_info_verify($info->{'res_info'})) {
 	    return $self->make_error("failed", $params{'finished_cb'},
-		    reason => "invalid",
-		    message => "slot $from_slot is currently loaded and reserved");
+			source_filename	=> __FILE__,
+			source_line	=> __LINE__,
+			code		=> 1100123,
+			severity	=> $Amanda::Message::INFO,
+			reason		=> "invalid",
+			slot		=> $from_slot);
 	}
     }
 
     if ($state->{'slots'}->{$to_slot}->{'state'} == Amanda::Changer::SLOT_FULL) {
 	return $self->make_error("failed", $params{'finished_cb'},
-		reason => "invalid",
-		message => "slot $to_slot is not empty");
+			source_filename	=> __FILE__,
+			source_line	=> __LINE__,
+			code		=> 1100124,
+			severity	=> $Amanda::Message::INFO,
+			reason		=> "invalid",
+			slot		=> $to_slot);
     }
 
     # if the destination slot is loaded, then we could do an "exchange", but
@@ -1743,9 +1954,12 @@ sub verify_unlocked {
 	}
 	if (@loaded_drive) {
 	    return $self->make_error("failed", $params{'finished_cb'},
-			reason => "invalid",
-			message => "Can't unload all drives: " .
-				   join(" ", @loaded_drive));
+			source_filename	=> __FILE__,
+			source_line	=> __LINE__,
+			code		=> 1100125,
+			severity	=> $Amanda::Message::INFO,
+			reason		=> "invalid",
+			err		=> join(" ", @loaded_drive));
 	}
 	$steps->{'eject_devices'}->();
     };
@@ -2148,8 +2362,12 @@ sub _get_state {
 	my ($err, $status) = @_;
 	if ($err) {
 	    return $self->make_error("failed", $params{'finished_get_state_cb'},
-		reason => "invalid",
-		message => $err);
+			source_filename	=> __FILE__,
+			source_line	=> __LINE__,
+			code		=> 1100109,
+			severity	=> $Amanda::Message::INFO,
+			reason		=> "invalid",
+			err		=> $err);
 	}
 
 	$state->{'last_status'} = time;
@@ -2557,7 +2775,11 @@ sub new {
 
     unless (-e $device_name) {
 	return Amanda::Changer->make_error("fatal", undef,
-	    message => "'$device_name' not found");
+			source_filename	=> __FILE__,
+			source_line	=> __LINE__,
+			code		=> 1100126,
+			severity	=> $Amanda::Message::INFO,
+			device_name	=> $device_name);
     }
 
     return bless {

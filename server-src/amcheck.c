@@ -49,6 +49,7 @@
 #include "timestamp.h"
 #include "amxml.h"
 #include "ammessage.h"
+#include "event.h"
 #include "physmem.h"
 #include <getopt.h>
 
@@ -104,13 +105,34 @@ amcheck_print_message(
     return amcheck_fprint_message(stdout, message);
 }
 
+static void
+amcheck_fprint_message_prefix(
+    FILE      *file,
+    char      *prefix,
+    message_t *message)
+{
+    char *hint;
+
+    if (message_get_no_eol(message)) {
+	g_fprintf(file, "%s%s", prefix, get_message(message));
+	if ((hint = message_get_hint(message)) != NULL) {
+	    int len = strlen(prefix);
+	    g_fprintf(file, "\n%*c%s", len, ' ', hint);
+	}
+    } else {
+	g_fprintf(file, "%s%s\n", prefix, get_message(message));
+	if ((hint = message_get_hint(message)) != NULL) {
+	    int len = strlen(prefix);
+	    g_fprintf(file, "%*c%s\n", len, ' ', hint);
+	}
+    }
+}
+
 static message_t *
 amcheck_fprint_message(
     FILE      *file,
     message_t *message)
 {
-    char *hint;
-
     if (opt_message) {
 	fprint_message(file, message);
     } else {
@@ -150,11 +172,7 @@ amcheck_fprint_message(
 		prefix = g_strdup("BAD: ");
 	    }
 	}
-	g_fprintf(file, "%s%s\n", prefix, get_message(message));
-	if ((hint = message_get_hint(message)) != NULL) {
-	    int len = strlen(prefix);
-	    g_fprintf(file, "%*c%s\n", len, ' ', hint);
-	}
+	amcheck_fprint_message_prefix(file, prefix, message);
 	g_free(prefix);
     }
     return message;
@@ -205,6 +223,8 @@ main(
     guint i;
     config_overrides_t *cfg_ovr;
     char *mailer;
+
+    setvbuf(stdout,NULL,_IONBF,0);
 
     glib_init();
 
@@ -823,19 +843,135 @@ test_server_pgm(
     return pgmbad;
 }
 
+typedef struct amc_dev_s {
+    int   fd;
+    FILE  *outf;
+    pid_t pid;
+    char  buf[32769];
+    int   buf_count;
+    event_handle_t *ev_read;
+} amc_dev_t;
+
+gboolean success = TRUE;
+static char *latest_device_output = NULL;
+
+static void
+handle_amcheck_device(
+        void *cookie)
+{
+    amc_dev_t *amc_dev;
+    ssize_t n;
+    amwait_t wait_status;
+
+    assert(cookie != NULL);
+    amc_dev = cookie;
+
+    if (latest_device_output == amc_dev->buf) {
+	latest_device_output = NULL;
+    }
+
+    n = read(amc_dev->fd, amc_dev->buf + amc_dev->buf_count, 32768 - amc_dev->buf_count);
+    if (n > 0) {
+	char *p, *s;
+	amc_dev->buf_count += n;
+	amc_dev->buf[amc_dev->buf_count] = '\0'; // NUL terminate
+	p = amc_dev->buf;
+	while ((s = strstr(p, "\n}\n"))) {
+	    s += 2;
+	    *s = '\0';
+	    if (strncmp(p, "DATA-PATH", 9) == 0) {
+		char *c = p;
+		dev_amanda_data_path = FALSE;
+		dev_directtcp_data_path = FALSE;
+		while ((c = strchr(c, ' ')) != NULL) {
+		    c++;
+		    if (strncmp(c, "AMANDA", 6) == 0) {
+			dev_amanda_data_path = TRUE;
+		    } else if (strncmp(c, "DIRECTTCP", 9) == 0) {
+			dev_directtcp_data_path = TRUE;
+		    }
+		}
+	    } else {
+		GPtrArray *messages = parse_json_message(p);
+		message_t *message;
+
+		//printf("MESSAGE: %s :\n", p);
+		message = g_ptr_array_index(messages, 0);
+		if (opt_message) {
+		    if (message_get_code(message) != 5100000) {
+			fprint_message(amc_dev->outf, message);
+		    }
+		} else {
+		    if (isatty(fileno(amc_dev->outf))) {
+			fprintf(amc_dev->outf, "\r\033[K");
+		    }
+		    if (isatty(fileno(amc_dev->outf)) ||
+			message_get_code(message) != 5100000) {
+			amcheck_fprint_message_prefix(amc_dev->outf, "", message);
+		    }
+		    delete_message(message);
+		    g_ptr_array_free(messages, TRUE);
+		}
+	    }
+	    amc_dev->buf_count -= ((s+1)-p);
+	    p = s+1;
+	}
+	if (amc_dev->buf != p) {
+	    memmove(amc_dev->buf, p, amc_dev->buf_count+1);
+	}
+	if (amc_dev->buf_count) {
+	    if (!opt_message && isatty(fileno(amc_dev->outf))) {
+		fprintf(amc_dev->outf, "\r\033[K%s", amc_dev->buf);
+		latest_device_output = amc_dev->buf;
+	    }
+	} else if (!opt_message && latest_device_output) {
+	    if (isatty(fileno(amc_dev->outf))) {
+		fprintf(amc_dev->outf, "\r\033[K%s", latest_device_output);
+	    }
+	}
+	return;
+    }
+
+    if (!opt_message && amc_dev->buf_count) {
+	if (isatty(fileno(amc_dev->outf))) {
+	    fprintf(amc_dev->outf, "\r\033[K%s\n", amc_dev->buf);
+	}
+    } else if (!opt_message && latest_device_output) {
+	if (isatty(fileno(amc_dev->outf))) {
+	    fprintf(amc_dev->outf, "\r\033[K%s", latest_device_output);
+	}
+    }
+
+    /* and immediately wait for it to die */
+    waitpid(amc_dev->pid, &wait_status, 0);
+
+    if (WIFSIGNALED(wait_status)) {
+	char *str_signal = g_strdup_printf("%d", WTERMSIG(wait_status));
+	delete_message(amcheck_fprint_message(amc_dev->outf, build_message(
+					AMANDA_FILE, __LINE__, 2800026, MSG_ERROR, 1,
+					"signal", str_signal)));
+	g_free(str_signal);
+	success = FALSE;
+    } else if (WIFEXITED(wait_status)) {
+	if (WEXITSTATUS(wait_status) != 0)
+	    success = FALSE;
+    } else {
+	success = FALSE;
+    }
+
+    event_release(amc_dev->ev_read);
+    aclose(amc_dev->fd);
+    g_free(amc_dev);
+}
+
 /* check that the tape is a valid amanda tape
    Returns TRUE if all tests passed; FALSE otherwise. */
 static gboolean test_tape_status(FILE * outf) {
-    int dev_outfd = -1;
-    FILE *dev_outf = NULL;
     int outfd;
     int nullfd = -1;
     pid_t devpid;
     char *amcheck_device = NULL;
-    char *line;
     gchar **args;
-    amwait_t wait_status;
-    gboolean success = TRUE;
     identlist_t il;
     int i;
 
@@ -861,6 +997,8 @@ static gboolean test_tape_status(FILE * outf) {
 	args[i++] = g_strdup("-w");
 
     for (il = getconf_identlist(CNF_STORAGE); il != NULL; il = il->next) {
+	amc_dev_t *amc_dev = g_new0(amc_dev_t, 1);
+	int dev_outfd;
 
 	args[2] = (char *)il->data;
 	/* run libexecdir/amcheck-device.pl, capturing STDERR and STDOUT to outf */
@@ -868,52 +1006,17 @@ static gboolean test_tape_status(FILE * outf) {
 	    &nullfd, &dev_outfd, &outfd,
 	    (char **)args);
 
-	dev_outf = fdopen(dev_outfd, "r");
-	if (dev_outf == NULL) {
-	    g_debug("Can't fdopen amcheck-device stdout: %s", strerror(errno));
-	    aclose(dev_outfd);
-	} else {
-	    while ((line = agets(dev_outf)) != NULL) {
-		if (strncmp(line, "DATA-PATH", 9) == 0) {
-		    char *c = line;
-		    dev_amanda_data_path = FALSE;
-		    dev_directtcp_data_path = FALSE;
-		    while ((c = strchr(c, ' ')) != NULL) {
-			c++;
-			if (strncmp(c, "AMANDA", 6) == 0) {
-			    dev_amanda_data_path = TRUE;
-			} else if (strncmp(c, "DIRECTTCP", 9) == 0) {
-			    dev_directtcp_data_path = TRUE;
-			}
-		    }
-		} else {
-		    delete_message(amcheck_fprint_message(outf, build_message(
-					AMANDA_FILE, __LINE__, 123, MSG_MESSAGE, 1,
-					"errstr", line)));
-		}
-		g_free(line);
-	    }
-	    fclose(dev_outf);
-	}
+	amc_dev->fd = dev_outfd;
+	amc_dev->outf = outf;
+	amc_dev->pid = devpid;
+	amc_dev->ev_read = event_create(dev_outfd, EV_READFD,
+				handle_amcheck_device, amc_dev);
+	event_activate(amc_dev->ev_read);
 
-	/* and immediately wait for it to die */
-	waitpid(devpid, &wait_status, 0);
-
-	if (WIFSIGNALED(wait_status)) {
-	    char *str_signal = g_strdup_printf("%d", WTERMSIG(wait_status));
-	    delete_message(amcheck_fprint_message(outf, build_message(
-					AMANDA_FILE, __LINE__, 2800026, MSG_ERROR, 1,
-					"signal", str_signal)));
-	    g_free(str_signal);
-	    success = FALSE;
-	} else if (WIFEXITED(wait_status)) {
-	    if (WEXITSTATUS(wait_status) != 0)
-		success = FALSE;
-	} else {
-	    success = FALSE;
-	}
 	args[2] = NULL;
     }
+
+    event_loop(0);
 
     g_strfreev(args);
     close(nullfd);

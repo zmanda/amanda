@@ -130,6 +130,7 @@ sub new {
 		source_filename => __FILE__,
 		source_line     => __LINE__,
 		code            => 1150000,
+		storage		=> $storage_name,
 		severity	=> $Amanda::Message::ERROR);
     }
 
@@ -146,6 +147,7 @@ sub new {
 		source_filename => __FILE__,
 		source_line     => __LINE__,
 		code            => 1150001,
+		storage		=> $storage_name,
 		severity	=> $Amanda::Message::ERROR);
     }
     my $st = Amanda::Config::lookup_storage($storage_name);
@@ -155,7 +157,7 @@ sub new {
 		source_line     => __LINE__,
 		code            => 1150002,
 		severity	=> $Amanda::Message::ERROR,
-		storage    => $storage_name);
+		storage		=> $storage_name);
     }
 
     my $tpchanger = storage_getconf($st, $STORAGE_TPCHANGER);
@@ -169,7 +171,7 @@ sub new {
 		    source_line     => __LINE__,
 		    code            => 1150003,
 		    severity	    => $Amanda::Message::ERROR,
-		    storage         => $storage_name);
+		    storage	    => $storage_name);
 	    }
 	    $changer_name = $tapedev;
 	}

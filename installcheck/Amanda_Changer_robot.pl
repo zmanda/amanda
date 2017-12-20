@@ -322,19 +322,19 @@ Amanda::MainLoop::run();
     # test the changer constructor and properties
     my $err = Amanda::Changer->new("bum-scsi-dev");
     chg_err_like($err,
-	{ message => "'does/not/exist' not found",
+	{ message => "Storage 'TESTCONF': 'does/not/exist' not found",
 	  type => 'fatal' },
 	"check for device existence works");
 
     $err = Amanda::Changer->new("no-tape-device");
     chg_err_like($err,
-	{ message => "no 'tape-device' property specified",
+	{ message => "Storage 'TESTCONF': no 'tape-device' property specified",
 	  type => 'fatal' },
 	"tape-device property is required");
 
     $err = Amanda::Changer->new("bad-property");
     chg_err_like($err,
-	{ message => "invalid 'fast-search' value",
+	{ message => "Storage 'TESTCONF': invalid 'fast-search' value",
 	  type => 'fatal' },
 	"invalid boolean value handled correctly");
 
@@ -598,7 +598,7 @@ sub test_changer {
 	my ($err, $no_res) = @_;
 
 	chg_err_like($err,
-	    { message => "no drives available",
+	    { message => "Storage 'TESTCONF': no drives available",
 	      reason => 'driveinuse',
 	      type => 'failed' },
 	    "$pfx: trying to load a third slot fails with 'no drives available'");
@@ -712,7 +712,7 @@ sub test_changer {
 	my ($err, $res) = @_;
 
 	chg_err_like($err,
-	    { message => "the requested volume is in use (drive 0)",
+	    { message => "Storage 'TESTCONF': the requested volume is in use (drive 0)",
 	      reason => 'volinuse',
 	      type => 'failed' },
 	    "$pfx: loading 'current' when set_current hasn't been used yet gets slot 1 (which is in use)");
@@ -1005,7 +1005,7 @@ sub test_changer {
 	(my $err, $res1) = @_;
 
 	chg_err_like($err,
-	    { message => "slot 6 not in use-slots (1-5)",
+	    { message => "Storage 'TESTCONF': slot 6 not in use-slots (1-5)",
 	      reason => 'invalid',
 	      type => 'failed' },
 	    "$pfx: loading a disallowed slot fails propertly");
@@ -1118,7 +1118,7 @@ sub test_changer {
     step update_finished3 => sub {
 	my ($err) = @_;
 	chg_err_like($err,
-	    { message => "slot 5 is empty",
+	    { message => "Storage 'TESTCONF': slot 5 is empty",
 	      reason => 'unknown',
 	      type => 'failed' },
 	    "$pfx: assignment-style update of an empty slot gives error");
@@ -1165,7 +1165,7 @@ sub test_changer {
 	my ($err) = @_;
 
 	chg_err_like($err,
-	    { message => "slot 1 is not empty",
+	    { message => "Storage 'TESTCONF': slot 1 is not empty",
 	      reason => 'invalid',
 	      type => 'failed' },
 	    "$pfx: moving to a full slot is an error");
@@ -1183,7 +1183,7 @@ sub test_changer {
 	my ($err) = @_;
 
 	chg_err_like($err,
-	    { message => "slot 3 is not empty",
+	    { message => "Storage 'TESTCONF': slot 3 is not empty",
 	      reason => 'invalid',
 	      type => 'failed' },
 	    "$pfx: moving to a full slot is an error even if that slot is loaded");
@@ -1200,7 +1200,7 @@ sub test_changer {
 	my ($err) = @_;
 
 	chg_err_like($err,
-	    { message => "slot 5 is empty", # note that this depends on the order of checks..
+	    { message => "Storage 'TESTCONF': slot 5 is empty", # note that this depends on the order of checks..
 	      reason => 'invalid',
 	      type => 'failed' },
 	    "$pfx: moving from an empty slot is an error");

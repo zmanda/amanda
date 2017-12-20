@@ -128,17 +128,17 @@ is($reply->{'body'}->[0]->{'report'}->{'head'}->{'org'}, 'DailySet1' , 'org is c
 is($reply->{'body'}->[0]->{'report'}->{'head'}->{'config_name'}, 'TESTCONF' , 'config_name is correct');
 is($reply->{'body'}->[0]->{'report'}->{'head'}->{'timestamp'}, $timestamp , 'timestamp is correct');
 is($reply->{'body'}->[0]->{'report'}->{'notes'}->[1], '  planner: Adding new disk localhost:diskname2.' , 'notes[1] is correct') || diag("notes: " . Data::Dumper::Dumper($reply->{'body'}->[0]->{'report'}->{'notes'}));
-is($reply->{'body'}->[0]->{'report'}->{'notes'}->[2], '  taper: Slot 1 without label can be labeled' , 'notes[2] is correct') || diag("notes: " . Data::Dumper::Dumper($reply->{'body'}->[0]->{'report'}->{'notes'}));
-#is($reply->{'body'}->[0]->{'report'}->{'notes'}->[3], '  taper: tape TESTCONF01 kb 94 fm 1 [OK]' , 'notes[3] is correct') || diag("notes: " . Data::Dumper::Dumper($reply->{'body'}->[0]->{'report'}->{'notes'}));
+is($reply->{'body'}->[0]->{'report'}->{'notes'}->[2], '  taper: Storage \'TESTCONF\': slot 1: without label can be labeled' , 'notes[2] is correct') || diag("notes: " . Data::Dumper::Dumper($reply->{'body'}->[0]->{'report'}->{'notes'}));
+#is($reply->{'body'}->[0]->{'report'}->{'notes'}->[3], '  taper: tape TESTCONF01 kb 96 fm 1 [OK]' , 'notes[3] is correct') || diag("notes: " . Data::Dumper::Dumper($reply->{'body'}->[0]->{'report'}->{'notes'}));
 ok(!exists $reply->{'body'}->[0]->{'report'}->{'notes'}->[4], 'no notes[4]') || diag("notes: " . Data::Dumper::Dumper($reply->{'body'}->[0]->{'report'}->{'notes'}));
 is($reply->{'body'}->[0]->{'report'}->{'usage_by_tape'}->[0]->{'nb'}, '1' , 'one dle on tape 0');
 is($reply->{'body'}->[0]->{'report'}->{'usage_by_tape'}->[0]->{'nc'}, '1' , 'one part on tape 0');
 is($reply->{'body'}->[0]->{'report'}->{'usage_by_tape'}->[0]->{'tape_label'}, 'TESTCONF01' , 'label tape_label on tape 0');
-#is($reply->{'body'}->[0]->{'report'}->{'usage_by_tape'}->[0]->{'size'}, '94' , 'size 94  on tape 0');
+#is($reply->{'body'}->[0]->{'report'}->{'usage_by_tape'}->[0]->{'size'}, '96' , 'size 96  on tape 0');
 ok(!exists $reply->{'body'}->[0]->{'report'}->{'usage_by_tape'}->[1], 'only one tape');
 is_deeply($reply->{'body'}->[0]->{'report'}->{'tapeinfo'}->{'storage'}->{'TESTCONF'}->{'use'}, [ 'TESTCONF01'], 'use TESTCONF');
-#is_deeply($reply->{'body'}->[0]->{'report'}->{'statistic'}->{'tape_size'}, { 'full' => '94',
-#									     'total' => '94',
+#is_deeply($reply->{'body'}->[0]->{'report'}->{'statistic'}->{'tape_size'}, { 'full' => '96',
+#									     'total' => '96',
 #									     'incr' => '0' }, 'tape_size is correct');
 is_deeply($reply->{'body'}->[0]->{'report'}->{'statistic'}->{'parts_taped'}, { 'full' => '1',
 									       'total' => '1',
@@ -152,8 +152,8 @@ is_deeply($reply->{'body'}->[0]->{'report'}->{'statistic'}->{'dles_dumped'}, { '
 is_deeply($reply->{'body'}->[0]->{'report'}->{'statistic'}->{'original_size'}, { 'full' => '256',
 									         'total' => '256',
 									         'incr' => '0' }, 'original_size is correct');
-#is_deeply($reply->{'body'}->[0]->{'report'}->{'statistic'}->{'output_size'}, { 'full' => '94',
-#									       'total' => '94',
+#is_deeply($reply->{'body'}->[0]->{'report'}->{'statistic'}->{'output_size'}, { 'full' => '96',
+#									       'total' => '96',
 #									       'incr' => '0' }, 'output_size is correct');
 is($reply->{'body'}->[0]->{'report'}->{'statistic'}->{'dumpdisks'}, '', 'dumpdisks is correct');
 is($reply->{'body'}->[0]->{'report'}->{'statistic'}->{'tapedisks'}, '', 'tapedisks is correct');
@@ -162,7 +162,7 @@ is($reply->{'body'}->[0]->{'report'}->{'summary'}->[0]->{'backup_level'}, '0', '
 is($reply->{'body'}->[0]->{'report'}->{'summary'}->[0]->{'disk_name'}, 'diskname2', 'disk_name is correct');
 is($reply->{'body'}->[0]->{'report'}->{'summary'}->[0]->{'hostname'}, 'localhost', 'hostname is correct');
 is($reply->{'body'}->[0]->{'report'}->{'summary'}->[0]->{'dump_orig_kb'}, '256', 'dump_orig_kb is correct');
-#is($reply->{'body'}->[0]->{'report'}->{'summary'}->[0]->{'dump_out_kb'}, '94', 'dump_out_kb is correct');
+#is($reply->{'body'}->[0]->{'report'}->{'summary'}->[0]->{'dump_out_kb'}, '96', 'dump_out_kb is correct');
 is($reply->{'body'}->[0]->{'report'}->{'summary'}->[0]->{'dle_status'}, 'full', 'dle_status is correct');
 ok(!exists $reply->{'body'}->[0]->{'report'}->{'summary'}->[1], 'Only one summary');
 

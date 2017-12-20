@@ -59,8 +59,12 @@ sub new {
     my $tmpdev = Amanda::Device->new($device_name);
     if ($tmpdev->status() != $DEVICE_STATUS_SUCCESS) {
 	return Amanda::Changer->make_error("fatal", undef,
-	    message => "chg-single: error opening device '$device_name': " .
-			$tmpdev->error_or_status());
+			source_filename	=> __FILE__,
+			source_line	=> __LINE__,
+			code		=> 1100038,
+			severity	=> $Amanda::Message::INFO,
+			device_name	=> $device_name,
+			device_error	=> $tmpdev->error_or_status());
     }
 
     my $self = {
@@ -93,19 +97,30 @@ sub load {
 	    ($self->{'slot'} and $params{'slot'} and
 	     $self->{'slot'} eq $params{'slot'})) {
 	    return $self->make_error("failed", $params{'res_cb'},
-		reason => "volinuse",
-		message => "'$self->{device_name}' is already reserved");
+			source_filename	=> __FILE__,
+			source_line	=> __LINE__,
+			code		=> 1100128,
+			severity	=> $Amanda::Message::INFO,
+			reason		=> "volinuse",
+			device_name	=> $self->{device_name});
 	} else {
 	    return $self->make_error("failed", $params{'res_cb'},
-		reason => "driveinuse",
-		message => "'$self->{device_name}' is already reserved");
+			source_filename	=> __FILE__,
+			source_line	=> __LINE__,
+			code		=> 1100128,
+			severity	=> $Amanda::Message::INFO,
+			reason		=> "driveinuse",
+			device_name	=> $self->{device_name});
 	}
     }
 
     if (keys %{$params{'except_slots'}} > 0) {
 	return $self->make_error("failed", $params{'res_cb'},
-		reason => "notfound",
-		message => "all slots have been loaded");
+			source_filename	=> __FILE__,
+			source_line	=> __LINE__,
+			severity	=> $Amanda::Message::MESSAGE,
+			code		=> 1100032,
+			reason		=> "notfound");
     }
 
     my $device = Amanda::Device->new($self->{'device_name'});
@@ -115,15 +130,19 @@ sub load {
     $self->{'label'} = undef;
     if ($device->status() != $DEVICE_STATUS_SUCCESS) {
 	return $self->make_error("fatal", $params{'res_cb'},
-	    message => "error opening device '$self->{device_name}': " . $device->error_or_status());
+			source_filename	=> __FILE__,
+			source_line	=> __LINE__,
+			severity	=> $Amanda::Message::MESSAGE,
+			code		=> 1100038,
+			device_name	=> $self->{device_name},
+			device_error	=> $device->error_or_status());
     }
 
     if (my $msg = $self->{'config'}->configure_device($device, $self->{'storage'})) {
 	# a failure to configure a device is fatal, since it's probably
 	# a user configuration error (and thus unlikely to work for the
 	# next device, either)
-	return $self->make_error("fatal", $params{'res_cb'},
-	    message => $msg);
+	return $params{'res_cb'}->($msg);
     }
 
     my $res = Amanda::Changer::single::Reservation->new($self, $device);

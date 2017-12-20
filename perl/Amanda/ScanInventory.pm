@@ -18,6 +18,85 @@
 # Contact information: Carbonite Inc., 756 N Pastoria Ave
 # Sunnyvale, CA 94085, or: http://www.zmanda.com
 
+use strict;
+use warnings;
+
+package Amanda::ScanInventory::Message;
+use Amanda::Changer;
+use Amanda::Device qw( :constants );
+use Amanda::Config qw( :getconf );
+use vars qw( @ISA );
+@ISA = qw( Amanda::Changer::Message );
+
+sub local_message {
+    my $self = shift;
+
+    if ($self->{'code'} == 5100000) {  # scan_slot
+	$self->{'no_eol'} = 1;
+        return "Slot $self->{'slot'}:";
+    } elsif ($self->{'code'} == 5101001) {
+	return "slot $self->{'err'}->{'this_slot'}: ";
+    } elsif ($self->{'code'} == 5101002) { # active
+	return "slot $self->{'slot'}: label '$self->{'label'}' is still active and cannot be overwritten";
+    } elsif ($self->{'code'} == 5101003) { # does_not_match_labelstr
+	return "slot $self->{'slot'}: label '$self->{'label'}' does not match labelstr '$self->{'labelstr'}'";
+    } elsif ($self->{'code'} == 5101004) { # not_in_tapelist
+	return "slot $self->{'slot'}: label '$self->{'label'}' is not in the tapelist";
+    } elsif ($self->{'code'} == 5101005) { # non_amanda
+	return "slot $self->{'slot'}: not an amanda volume" . ($self->{'not_autolabel'}?", autolabel disabled":"");
+    } elsif ($self->{'code'} == 5101006) { # volume_error
+	return "slot $self->{'slot'}: $self->{'err'}" . ($self->{'not_autolabel'}?", autolabel disabled":"");
+#    } elsif ($self->{'code'} == 5101007) { # err
+#	return "$self->{'err'}";
+#	#return "slot $self->{'slot'}: $self->{'err'}";
+    } elsif ($self->{'code'} == 5101008) { # not_autolabel
+	return "slot $self->{'slot'}: the volume '$self->{'label'}' can't be labelled" . ($self->{'not_autolabel'}?", autolabel disabled":"");
+    } elsif ($self->{'code'} == 5101009) { # empty
+	return "slot $self->{'slot'}: the volume is empty" . ($self->{'not_autolabel'}?", autolabel disabled":"");
+    } elsif ($self->{'code'} == 5101010) { # not_success
+	return "slot $self->{'slot'}: $self->{'err'}" . ($self->{'not_autolabel'}?", autolabel disabled":"");
+    } elsif ($self->{'code'} == 5101011) { # label
+	return "slot $self->{'slot'}: label '$self->{'label'}' is usable";
+    } elsif ($self->{'code'} == 5101012) { # !label
+	return "slot $self->{'slot'}: without label can be labeled";
+    } elsif ($self->{'code'} == 5101013) { # relabeled
+	return "slot $self->{'slot'}: label '$self->{'label'} will be relabeled";
+    } elsif ($self->{'code'} == 5101014) {
+	return "slot $self->{'slot'}: with label $self->{'label'} is usable";
+    } elsif ($self->{'code'} == 5101015) { # other_config
+	return "slot $self->{'slot'}: label '$self->{'label'}' is use by config $self->{'config'}";
+    } elsif ($self->{'code'} == 5101016) { # other_pool
+	return "slot $self->{'slot'}: label '$self->{'label'}' is use in pool $self->{'pool'}";
+    } elsif ($self->{'code'} == 5101017) {
+	return "slot $self->{'slot'}: without label can be labeled";
+	#return "slot $self->{'slot'}: label '$self->{'label'}'";
+    } elsif ($self->{'code'} == 5101018) {
+	return "slot $self->{'slot'}: without label can be labeled";
+    } elsif ($self->{'code'} == 5101019) {
+	return "slot $self->{'slot'}: YYYYYY";
+    } elsif ($self->{'code'} == 5101020) {
+	return "slot $self->{'slot'}: ";
+
+    } elsif ($self->{'code'} == 5100002) { # scan_failed
+	my $msg;
+	$msg .= "Taper scan algorithm did not find an acceptable volume";
+	if ($self->{'expected_label'} or $self->{'expected_new'}) {
+	    my @exp;
+	    if ($self->{'expected_label'}) {
+		push @exp, "volume '$self->{expected_label}'";
+	    }
+	    if ($self->{'expected_new'}) {
+		push @exp, "a new volume";
+	    }
+	    my $exp = join(" or ", @exp);
+	    $msg .= ", (expecting $exp)";
+	}
+	return $msg;
+    } else {
+	return "No mesage for code '$self->{'code'}'";
+    }
+}
+
 package Amanda::ScanInventory;
 
 =head1 NAME
@@ -107,8 +186,9 @@ sub scan {
 
 sub _user_msg {
     my $self = shift;
-    my %params = @_;
-    $self->{'user_msg_fn'}->(%params);
+    my $message = shift;
+
+    $self->{'user_msg_fn'}->($message);
 }
 
 sub _scan {
@@ -296,8 +376,14 @@ sub _scan {
     step released => sub {
 	if ($action == Amanda::ScanInventory::SCAN_LOAD) {
 	    $slot_scanned = $action_slot;
-	    $self->_user_msg(scan_slot => 1,
-			     slot => $slot_scanned);
+	    $self->_user_msg(Amanda::ScanInventory::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code            => 5100000,
+				severity	=> $Amanda::Message::MESSAGE,
+				storage_name => $self->{'chg'}->{'storage'}->{'storage_name'},
+				scan_slot       => 1,
+				slot            => $slot_scanned));
 	    $self->{'slot-error-message'} = $self->{seen}->{$slot_scanned}->{'device_error'};
 
 	    return $self->{'chg'}->load(
@@ -317,6 +403,7 @@ sub _scan {
 	} else {
 	    $err = Amanda::Changer::Error->new('failed',
 				reason => 'notfound',
+				storage_name => $self->{'chg'}->{'storage'}->{'storage_name'},
 				message => "No acceptable volumes found");
 	}
 
@@ -370,12 +457,28 @@ sub _scan {
 	    $label = $res->{device}->volume_label;
 	}
 	my $relabeled = !defined($label) || !match_labelstr($self->{'labelstr'}, $self->{'autolabel'}, $label, $res->{'barcode'}, $res->{'meta'}, $self->{'chg'}->{'storage'}->{'storage_name'});
-	$self->_user_msg(slot_result => 1,
-			 slot => $slot_scanned,
-			 label => $label,
-			 err  => $err,
-			 relabeled => $relabeled,
-			 res  => $res);
+	if ($relabeled) {
+	    $self->_user_msg(Amanda::ScanInventory::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code            => 5101018,
+				slot_result => 1,
+				storage_name => $self->{'chg'}->{'storage'}->{'storage_name'},
+				slot => $slot_scanned,
+				label => $label,
+				err  => $err,
+				relabeled => $relabeled));
+	} else {
+	    $self->_user_msg(Amanda::ScanInventory::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code            => 5101011,
+				slot_result => 1,
+				storage_name => $self->{'chg'}->{'storage'}->{'storage_name'},
+				slot => $slot_scanned,
+				label => $label,
+				err  => $err));
+	}
 	if ($res) {
 	    my $f_type;
 	    if (defined $res->{device}->volume_header) {
@@ -396,6 +499,7 @@ sub _scan {
 		$last_err = undef;
 	    } else {
 		$last_err = Amanda::Changer::Error->new('fatal',
+				storage_name => $self->{'chg'}->{'storage'}->{'storage_name'},
 				message => $res->{device}->error_or_status());
 	    }
 	} else {
@@ -536,6 +640,7 @@ sub _scan {
 				label       => $self->{'most_prefered_label'},
 				new_volume  => !$self->{'most_prefered_label'},
 				err         => "$err_message",
+				storage_name => $self->{'chg'}->{'storage'}->{'storage_name'},
 				chg_name    => $self->{'chg'}->{'chg_name'},
 				request_cb  => $steps->{'scan_interactivity_cb'});
 	}
@@ -634,9 +739,15 @@ sub _scan {
 	if (!defined $label) {
 	    if ($not_fatal) {
 		# must be logged
-		$self->_user_msg(slot_result => 1,
-				 slot => $slot_scanned,
-				 err => "Can't label slot $slot_scanned: $make_err");
+		$self->_user_msg(Amanda::ScanInventory::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code            => 5101019,
+				slot_result => 1,
+				storage => $self->{'chg'}->{'storage'},
+				storage_name => $self->{'chg'}->{'storage'}->{'storage_name'},
+				slot => $slot_scanned,
+				err => "Can't label slot $slot_scanned: $make_err"));
 		my $res1 = $res;
 		$res = undef;
 		return $res1->release(need_another => 1, finished_cb => $steps->{'get_inventory'});

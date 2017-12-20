@@ -411,7 +411,7 @@ EODLE
                                                     '  planner: Adding new disk localhost:diskname2.',
                                                     '  planner: Adding new disk localhost:diskname3.',
                                                     '  driver: WARNING: got empty schedule from planner',
-                                                    '  taper: Slot 1 without label can be labeled'
+                                                    '  taper: Storage \'TESTCONF\': slot 1: without label can be labeled'
                                                   ],
                                        'failure_summary' => [
                                                               '  planner: ERROR localhost:  "Script \'script-fail\' command \'PRE-HOST-ESTIMATE\': stderr error:  PRE-HOST-ESTIMATE"',
@@ -538,7 +538,7 @@ EODLE
                                                     '  planner: tapecycle (2) <= runspercycle (10)',
                                                     '  planner: Adding new disk localhost:diskname2.',
                                                     '  planner: Adding new disk localhost:diskname3.',
-                                                    '  taper: Slot 1 without label can be labeled',
+                                                    '  taper: Storage \'TESTCONF\': slot 1: without label can be labeled',
                                                     '  taper: tape TESTCONF01 kb 1050 fm 1 [OK]'
                                                   ],
                                        'tapeinfo' => {
@@ -741,7 +741,7 @@ EODLE
                                                     '  planner: tapecycle (2) <= runspercycle (10)',
                                                     '  planner: Adding new disk localhost:diskname2.',
                                                     '  planner: Adding new disk localhost:diskname3.',
-                                                    '  taper: Slot 1 without label can be labeled',
+                                                    '  taper: Storage \'TESTCONF\': slot 1: without label can be labeled',
                                                     '  taper: tape TESTCONF01 kb 1050 fm 1 [OK]'
                                                   ],
                                        'tapeinfo' => {

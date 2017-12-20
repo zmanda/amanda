@@ -144,13 +144,13 @@ is($reply->{'body'}->[0]->{'report'}->{'head'}->{'config_name'}, 'TESTCONF' , 'c
 is($reply->{'body'}->[0]->{'report'}->{'head'}->{'timestamp'}, $timestamp , 'timestamp is correct');
 is($reply->{'body'}->[0]->{'report'}->{'notes'}->[1], "  planner: Adding new disk localhost:$diskname2." , 'notes[1] is correct') || diag("notes: " . Data::Dumper::Dumper($reply->{'body'}->[0]->{'report'}->{'notes'}));
 is($reply->{'body'}->[0]->{'report'}->{'notes'}->[2], "  planner: Adding new disk localhost:$diskname3." , 'notes[2] is correct') || diag("notes: " . Data::Dumper::Dumper($reply->{'body'}->[0]->{'report'}->{'notes'}));
-is($reply->{'body'}->[0]->{'report'}->{'notes'}->[3], '  taper: Slot 1 without label can be labeled' , 'notes[3] is correct') || diag("notes: " . Data::Dumper::Dumper($reply->{'body'}->[0]->{'report'}->{'notes'}));
+is($reply->{'body'}->[0]->{'report'}->{'notes'}->[3], '  taper: Storage \'storage-1\': slot 1: without label can be labeled' , 'notes[3] is correct') || diag("notes: " . Data::Dumper::Dumper($reply->{'body'}->[0]->{'report'}->{'notes'}));
 is($reply->{'body'}->[0]->{'report'}->{'notes'}->[4], '  taper: tape STO-1-00001 kb 1050 fm 1 [OK]' , 'notes[4] is correct') || diag("notes: " . Data::Dumper::Dumper($reply->{'body'}->[0]->{'report'}->{'notes'}));
-is($reply->{'body'}->[0]->{'report'}->{'notes'}->[5], '  taper: Slot 2 without label can be labeled' , 'notes[5] is correct') || diag("notes: " . Data::Dumper::Dumper($reply->{'body'}->[0]->{'report'}->{'notes'}));
+is($reply->{'body'}->[0]->{'report'}->{'notes'}->[5], '  taper: Storage \'storage-1\': slot 2: without label can be labeled' , 'notes[5] is correct') || diag("notes: " . Data::Dumper::Dumper($reply->{'body'}->[0]->{'report'}->{'notes'}));
 is($reply->{'body'}->[0]->{'report'}->{'notes'}->[6], '  taper: tape STO-1-00002 kb 1050 fm 1 [OK]' , 'notes[6] is correct') || diag("notes: " . Data::Dumper::Dumper($reply->{'body'}->[0]->{'report'}->{'notes'}));
-is($reply->{'body'}->[0]->{'report'}->{'notes'}->[7], '  taper: Slot 1 without label can be labeled' , 'notes[7] is correct') || diag("notes: " . Data::Dumper::Dumper($reply->{'body'}->[0]->{'report'}->{'notes'}));
+is($reply->{'body'}->[0]->{'report'}->{'notes'}->[7], '  taper: Storage \'storage-2\': slot 1: without label can be labeled' , 'notes[7] is correct') || diag("notes: " . Data::Dumper::Dumper($reply->{'body'}->[0]->{'report'}->{'notes'}));
 is($reply->{'body'}->[0]->{'report'}->{'notes'}->[8], '  taper: tape STO-2-00001 kb 1050 fm 1 [OK]' , 'notes[8] is correct') || diag("notes: " . Data::Dumper::Dumper($reply->{'body'}->[0]->{'report'}->{'notes'}));
-is($reply->{'body'}->[0]->{'report'}->{'notes'}->[9], '  taper: Slot 2 without label can be labeled' , 'notes[9] is correct') || diag("notes: " . Data::Dumper::Dumper($reply->{'body'}->[0]->{'report'}->{'notes'}));
+is($reply->{'body'}->[0]->{'report'}->{'notes'}->[9], '  taper: Storage \'storage-2\': slot 2: without label can be labeled' , 'notes[9] is correct') || diag("notes: " . Data::Dumper::Dumper($reply->{'body'}->[0]->{'report'}->{'notes'}));
 is($reply->{'body'}->[0]->{'report'}->{'notes'}->[10], '  taper: tape STO-2-00002 kb 1050 fm 1 [OK]' , 'notes[10] is correct') || diag("notes: " . Data::Dumper::Dumper($reply->{'body'}->[0]->{'report'}->{'notes'}));
 ok(!exists $reply->{'body'}->[0]->{'report'}->{'notes'}->[11], 'no notes[11]') || diag("notes: " . Data::Dumper::Dumper($reply->{'body'}->[0]->{'report'}->{'notes'}));
 ok(!exists $reply->{'body'}->[0]->{'report'}->{'failure_summary'}, 'no failure_summary');
@@ -534,13 +534,13 @@ NOTES:
   planner: tapecycle (2) <= runspercycle (10)
   planner: Adding new disk localhost:$diskname2.
   planner: Adding new disk localhost:$diskname3.
-  taper: Slot 1 without label can be labeled
+  taper: Storage 'storage-1': slot 1: without label can be labeled
   taper: tape STO-1-00001 kb 1050 fm 1 [OK]
-  taper: Slot 2 without label can be labeled
+  taper: Storage 'storage-1': slot 2: without label can be labeled
   taper: tape STO-1-00002 kb 1050 fm 1 [OK]
-  taper: Slot 1 without label can be labeled
+  taper: Storage 'storage-2': slot 1: without label can be labeled
   taper: tape STO-2-00001 kb 1050 fm 1 [OK]
-  taper: Slot 2 without label can be labeled
+  taper: Storage 'storage-2': slot 2: without label can be labeled
   taper: tape STO-2-00002 kb 1050 fm 1 [OK]
 
 

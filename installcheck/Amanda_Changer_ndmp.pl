@@ -489,7 +489,7 @@ sub test_changer {
 	my ($err, $no_res) = @_;
 
 	chg_err_like($err,
-	    { message => "no drives available",
+	    { message => "Storage 'TESTCONF': no drives available",
 	      reason => 'driveinuse',
 	      type => 'failed' },
 	    "$pfx: trying to load a third slot fails with 'no drives available'");
@@ -605,7 +605,7 @@ sub test_changer {
 	my ($err, $res) = @_;
 
 	chg_err_like($err,
-	    { message => "the requested volume is in use (drive 0)",
+	    { message => "Storage 'TESTCONF': the requested volume is in use (drive 0)",
 	      reason => 'volinuse',
 	      type => 'failed' },
 	    "$pfx: loading 'current' when set_current hasn't been used yet gets slot 1 (which is in use)");

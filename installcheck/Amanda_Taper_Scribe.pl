@@ -362,8 +362,8 @@ is_deeply([ @events ], [
 
       [ 'get_volume' ],
       [ 'request_volume_permission', 'answer:', { allow => 1} ],
-      [ 'scan-finished', "Slot bogus not found", "slot: none" ],
-      [ 'got_volume', 'Slot bogus not found', undef, undef, undef ],
+      [ 'scan-finished', 'Storage \'TESTCONF\': Slot bogus not found', 'slot: none' ],
+      [ 'got_volume', 'Storage \'TESTCONF\': Slot bogus not found', undef, undef, undef ],
 
       [ 'quit' ],
     ], "correct event sequence for a run with a changer error")
@@ -377,8 +377,8 @@ is_deeply([ @events ], [
 
       [ 'get_volume' ],
       [ 'request_volume_permission', 'answer:', {cause => 'config', message =>'not this time'} ],
-      [ 'scan-finished', "Slot bogus not found", "slot: none" ],
-      [ 'got_volume', 'Slot bogus not found', 'not this time', undef, undef ],
+      [ 'scan-finished', 'Storage \'TESTCONF\': Slot bogus not found', "slot: none" ],
+      [ 'got_volume', 'Storage \'TESTCONF\': Slot bogus not found', 'not this time', undef, undef ],
 
       [ 'quit' ],
     ], "correct event sequence for a run with no permission AND a changer config denial")
@@ -391,8 +391,8 @@ is_deeply([ @events ], [
 
       [ 'get_volume' ],
       [ 'request_volume_permission', 'answer:', {cause => 'error', message => "frobnicator exploded!"} ],
-      [ 'scan-finished', "Slot bogus not found", "slot: none" ],
-      [ 'got_volume', 'Slot bogus not found', undef, "frobnicator exploded!", undef ],
+      [ 'scan-finished', 'Storage \'TESTCONF\': Slot bogus not found', "slot: none" ],
+      [ 'got_volume', 'Storage \'TESTCONF\': Slot bogus not found', undef, "frobnicator exploded!", undef ],
 
       [ 'quit' ],
     ], "correct event sequence for a run with no permission AND a changer error")
@@ -656,7 +656,7 @@ run_scribe_xfer($volume_length + $volume_length / 4, $main::scribe,
 
 quit_scribe($main::scribe);
 
-$experr = 'Slot bogus not found';
+$experr = 'Storage \'TESTCONF\': Slot bogus not found';
 is_deeply([ @events ], [
       [ 'scan' ],
       [ 'scan-finished', undef, 'slot: 1' ],
@@ -691,7 +691,7 @@ run_scribe_xfer($volume_length + $volume_length / 4, $main::scribe,
 
 quit_scribe($main::scribe);
 
-$experr = 'Slot bogus not found';
+$experr = 'Storage \'TESTCONF\': Slot bogus not found';
 is_deeply([ @events ], [
       [ 'scan' ],
       [ 'scan-finished', undef, 'slot: 1' ],

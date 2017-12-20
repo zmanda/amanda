@@ -453,7 +453,7 @@ Amanda::Debug::debug("YY: $retention_type");
 				source_line     => __LINE__,
 				code            => 1100000,
 				severity	=> $Amanda::Message::SUCCESS,
-				storage_name    => $storage->{'storage_name'},
+				storage_name	=> $storage->{'storage_name'},
 				chg_name        => $chg->{'chg_name'},
 				inventory => $inventory) if $inventory;
 

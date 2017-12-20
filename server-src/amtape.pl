@@ -201,6 +201,7 @@ sub {
     my $inventory_cb = make_cb(inventory_cb => sub {
 	my ($err, $inv) = @_;
 	if ($err) {
+	    print STDERR "Storage '$storage->{'storage_name'}': ";
 	    if ($err->notimpl) {
 		if ($err->{'message'}) {
 		    print STDERR "inventory not supported by this changer: $err->{'message'}\n";
@@ -217,7 +218,7 @@ sub {
 	}
 
 	for my $sl (@$inv) {
-	    my $line = "slot $sl->{slot}:";
+	    my $line = "Storage '$storage->{'storage_name'}': slot $sl->{slot}:";
 	    my $tle;
 	    my $meta;
 	    if ($sl->{'state'} == Amanda::Changer::SLOT_EMPTY) {
@@ -495,7 +496,9 @@ sub {
 	    }
 	};
 
-	$interactivity = Amanda::Interactivity->new(name => 'stdin');
+	$interactivity = Amanda::Interactivity->new(name => 'stdin',
+						    storage_name => $storage->{'storage_name'},
+						    changer_name => $chg->{'chg_name'});
 	($storage, $chg) = load_changer($finished_cb) or return;
 	$scan = Amanda::Recovery::Scan->new(chg => $chg,
 					    interactivity => $interactivity);
@@ -536,79 +539,15 @@ sub {
 
     my ($storage, $chg) = load_changer($finished_cb) or return;
 
-    my $taper_user_msg_fn = sub {
-	my %params = @_;
-	if (exists($params{'text'})) {
-	    print STDERR "$params{'text'}\n";
-	} elsif (exists($params{'scan_slot'})) {
-	    print STDERR "slot $params{'slot'}:";
-	} elsif (exists($params{'search_label'})) {
-	    print STDERR "Searching for label '$params{'label'}':";
-	} elsif (exists($params{'slot_result'}) ||
-		 exists($params{'search_result'})) {
-	    if (defined($params{'err'})) {
-		if (exists($params{'search_result'}) &&
-		    defined($params{'err'}->{'slot'})) {
-		    print STDERR "slot $params{'err'}->{'slot'}:";
-		}
-		print STDERR " $params{'err'}\n";
-	    } elsif (!$params{'res'}) {
-		my $volume_label = $params{'label'};
-		if ($params{'active'}) {
-		    print STDERR " volume '$volume_label' is still active and cannot be overwritten\n";
-		} elsif ($params{'does_not_match_labelstr'}) {
-		    print STDERR " volume '$volume_label' does not match labelstr '$params{'labelstr'}'\n";
-		} elsif ($params{'not_in_tapelist'}) {
-		    print STDERR " volume '$volume_label' is not in the tapelist\n"
-		} else {
-		    print STDERR " volume '$volume_label'\n";
-		}
-	    } else { # res must be defined
-                my $res = $params{'res'};
-                my $dev = $res->{'device'};
-                if (exists($params{'search_result'})) {
-                    print STDERR " found in slot $res->{'this_slot'}:";
-                }
-                if ($dev->status == $DEVICE_STATUS_SUCCESS) {
-                    my $volume_label = $res->{device}->volume_label;
-                    if ($params{'active'}) {
-                        print STDERR " volume '$volume_label' is still active and cannot be overwritten\n";
-                    } elsif ($params{'does_not_match_labelstr'}) {
-                        print STDERR " volume '$volume_label' does not match labelstr '$params{'labelstr'}'\n";
-                    } elsif ($params{'not_in_tapelist'}) {
-                        print STDERR " volume '$volume_label' is not in the tapelist\n"
-                    } elsif ($params{'relabeled'}) {
-                        print STDERR " volume '$volume_label' from another config will be relabeled\n";
-                    } else {
-                        print STDERR " volume '$volume_label'\n";
-                    }
-                } elsif ($dev->status & $DEVICE_STATUS_VOLUME_UNLABELED and
-                         $dev->volume_header and
-                         $dev->volume_header->{'type'} == $Amanda::Header::F_EMPTY) {
-                    print STDERR " contains an empty volume\n";
-                } elsif ($dev->status & $DEVICE_STATUS_VOLUME_UNLABELED and
-                         $dev->volume_header and
-                         $dev->volume_header->{'type'} == $Amanda::Header::F_WEIRD) {
-                    my $autolabel = storage_getconf($storage, $STORAGE_AUTOLABEL);
-                    if ($autolabel->{'non_amanda'}) {
-                        print STDERR " contains a non-Amanda volume\n";
-                    } else {
-                        print STDERR " contains a non-Amanda volume; check and relabel it with 'amlabel -f'\n";
-                    }
-                } elsif ($dev->status & $DEVICE_STATUS_VOLUME_ERROR) {
-                    my $message = $dev->error_or_status();
-                    print STDERR " can't read label: $message\n";
-                } else {
-                    my $errmsg = $res->{device}->error_or_status();
-                    print STDERR " $errmsg\n";
-                }
-	    }
-	} else {
-	    print STDERR "UNKNOWN\n";
-	}
+    my $taper_user_message_fn = sub {
+	my $message = shift;
+
+	print STDERR "$message\n";
     };
 
-    my $interactivity = Amanda::Interactivity->new(name => 'tty');
+    my $interactivity = Amanda::Interactivity->new(name => 'tty',
+						   storage_name => $storage->{'storage_name'},
+						   changer_name => $chg->{'chg_name'});
     my $scan_name = $chg->{'storage'}->{'taperscan_name'};
     my $taperscan = Amanda::Taper::Scan->new(algorithm => $scan_name,
 					     storage => $chg->{'storage'},
@@ -658,7 +597,7 @@ sub {
 
     $taperscan->scan(
 	result_cb => $result_cb,
-	user_msg_fn => $taper_user_msg_fn,
+	user_message_fn => $taper_user_message_fn,
     );
 });
 
@@ -750,6 +689,9 @@ sub failure {
 sub show_slot {
     my ($res) = @_;
 
+    if (defined $res->{'chg'}->{'storage'}) {
+	print STDERR "Storage '$res->{'chg'}->{'storage'}->{'storage_name'}': ";
+    }
     printf STDERR "slot %3s: ", $res->{'this_slot'};
     my $dev = $res->{'device'};
     if ($dev->status != $DEVICE_STATUS_SUCCESS) {

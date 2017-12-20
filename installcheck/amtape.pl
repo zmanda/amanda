@@ -177,19 +177,19 @@ like($Installcheck::Run::stderr,
 ok(run('amtape', 'TESTCONF', 'show'),
     "'amtape TESTCONF show'");
 like($Installcheck::Run::stderr,
-    qr/slot +2:.*label MyTape \(label do not match labelstr\)\nslot +3/,
+    qr/Storage 'TESTCONF': slot +2:.*label MyTape \(label do not match labelstr\)\nStorage 'TESTCONF': slot +3/,
     "'amtape TESTCONF show' ..result correct");
 
 ok(run('amtape', 'TESTCONF', 'show', '2'),
     "'amtape TESTCONF show'");
 like($Installcheck::Run::stderr,
-    qr/^slot +2:.*label MyTape \(label do not match labelstr\)$/,
+    qr/^Storage 'TESTCONF': slot +2:.*label MyTape \(label do not match labelstr\)$/,
     "'amtape TESTCONF show 2' ..result correct");
 
 ok(run('amtape', 'TESTCONF', 'show', '1,3'),
     "'amtape TESTCONF show'");
 like($Installcheck::Run::stderr,
-    qr/^slot +1: unlabeled volume\nslot +3: date \d{14} label TESTCONF13$/,
+    qr/^Storage 'TESTCONF': slot +1: unlabeled volume\nStorage 'TESTCONF': slot +3: date \d{14} label TESTCONF13$/,
 #    qr/slot +1: unlabeled volume\nslot +3: date 20111121133419 label TESTCONF13/,
     "'amtape TESTCONF show 1,3' ..result correct");
 
@@ -252,13 +252,13 @@ like(run_err('amtape', 'TESTCONF', 'update'),
 ok(run('amtape', 'TESTCONF', 'show'),
     "'amtape TESTCONF show'");
 like($Installcheck::Run::stderr,
-    qr/slot +2:.*label MyTape \(label do not match labelstr\)\nslot +3/,
+    qr/Storage 'TESTCONF': slot +2:.*label MyTape \(label do not match labelstr\)\nStorage 'TESTCONF': slot +3/,
     "..result correct");
 
 ok(run('amtape', 'TESTCONF', 'inventory'),
     "'amtape TESTCONF inventory'");
 like($Installcheck::Run::stdout,
-    qr/slot +1: blank\nslot +2: label MyTape \(current\) \(label do not match labelstr\)\nslot +3/,
+    qr/Storage 'TESTCONF': slot +1: blank\nStorage 'TESTCONF': slot +2: label MyTape \(current\) \(label do not match labelstr\)\nStorage 'TESTCONF': slot +3/,
     "..result correct");
 
 ok(run('amtape', 'TESTCONF', 'taper'),

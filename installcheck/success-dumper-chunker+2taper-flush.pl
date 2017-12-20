@@ -405,9 +405,9 @@ is($reply->{'body'}->[0]->{'report'}->{'head'}->{'org'}, 'DailySet1' , 'org is c
 is($reply->{'body'}->[0]->{'report'}->{'head'}->{'config_name'}, 'TESTCONF' , 'config_name is correct');
 is($reply->{'body'}->[0]->{'report'}->{'head'}->{'timestamp'}, $timestamp , 'timestamp is correct');
 is_sort_array($reply->{'body'}->[0]->{'report'}->{'notes'},
-	[ '  taper: Slot 1 without label can be labeled',
+	[ '  taper: Storage \'storage-1\': slot 1: without label can be labeled',
 	  '  taper: tape STO-1-00001 kb 1050 fm 1 [OK]',
-	  '  taper: Slot 1 without label can be labeled',
+	  '  taper: Storage \'storage-2\': slot 1: without label can be labeled',
 	  '  taper: tape STO-2-00001 kb 1050 fm 1 [OK]' ],
 	'notes are correct' );
 ok(!exists $reply->{'body'}->[0]->{'report'}->{'notes'}->[4], 'no notes[4]');
@@ -703,8 +703,8 @@ USAGE BY TAPE:
 
 
 NOTES:
-  taper: Slot 1 without label can be labeled
-  taper: Slot 1 without label can be labeled
+  taper: Storage 'storage-1': slot 1: without label can be labeled
+  taper: Storage 'storage-2': slot 1: without label can be labeled
   taper: tape STO-1-00001 kb 1050 fm 1 [OK]
   taper: tape STO-2-00001 kb 1050 fm 1 [OK]
 

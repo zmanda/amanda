@@ -226,7 +226,7 @@ $taperscan = Amanda::Taper::Scan->new(
     storage => $storage);
 @results = run_scan($taperscan);
 is_deeply([ @results ],
-	  [ "No acceptable volumes found", undef, undef ],
+	  [ "Storage 'disk': No acceptable volumes found", undef, undef ],
 	  "no reusable tapes -> error")
 	  or diag(Dumper(\@results));
 $taperscan->quit();

@@ -166,7 +166,9 @@ sub start {
     }
 
     my $interactivity = Amanda::Interactivity->new(
-					name => $storage->{'interactivity'});
+					name => $storage->{'interactivity'},
+					storage_name => $storage->{'storage'},
+					changer_name => $changer->{'chg_name'});
     my $scan_name = $storage->{'taperscan_name'};
     $self->{'storage'} = $storage;
     $self->{'taperscan'} = Amanda::Taper::Scan->new(algorithm => $scan_name,

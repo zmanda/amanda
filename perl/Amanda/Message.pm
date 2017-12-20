@@ -119,6 +119,8 @@ not handled by Amanda::Message):
  4800000  Amanda::Extract::Message
  4900000  Amanda::Restore::Message
  5000000  ambackupd
+ 5100000  Amanda::ScanInventory::Message
+ 5200000  Amanda::Amcheck_Device::Message;
 
 general keys:
   code            =>

@@ -48,11 +48,15 @@ Amanda::Interactivity class to write user request by email
 
 sub new {
     my $class = shift;
+    my $storage_name = shift;
+    my $changer_name = shift;
     my $properties = shift;
 
     my $self = {
 	send_email_src => undef,
 	check_file_src => undef,
+	storage_name   => $storage_name,
+	changer_name   => $changer_name,
 	properties     => $properties,
     };
 
@@ -83,6 +87,7 @@ sub user_request {
     my $label      = $params{'label'};
     my $new_volume = $params{'new_volume'};
     my $err        = $params{'err'};
+    my $storage_name = $params{'storage_name'};
     my $chg_name   = $params{'chg_name'};
 
     my $resend_delay;
@@ -217,7 +222,9 @@ sub user_request {
 			if ($line =~ /^abort$/i) {
 			    return $params{'request_cb'}->(
 				Amanda::Changer::Error->new('fatal',
-					message => "Aborted by user"));
+					storage => $storage_name,
+					changer_name => $chg_name,
+					code => 1110001));
 			} else {
 			    return $params{'request_cb'}->(undef, $line);
 			}

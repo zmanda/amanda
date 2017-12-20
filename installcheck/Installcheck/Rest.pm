@@ -241,6 +241,20 @@ sub remove_source_line {
 		}
 	    }
 	}
+    } elsif (ref $reply eq "ARRAY") {
+	foreach my $msg (@$reply) {
+	    if (ref $msg eq "HASH") {
+		delete $msg->{'source_line'};
+		if ($msg->{'error'} and ref $msg->{'error'} eq "HASH") {
+		    delete $msg->{'error'}->{'source_line'};
+		}
+	    }
+	}
+    } elsif (ref $reply eq "HASH") {
+	delete $reply->{'source_line'};
+	if ($reply->{'error'} and ref $reply->{'error'} eq "HASH") {
+	    delete $reply->{'error'}->{'source_line'};
+	}
     }
 
     return $reply;

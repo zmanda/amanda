@@ -421,7 +421,7 @@ is($reply->{'body'}->[0]->{'report'}->{'head'}->{'status'}, 'done' , 'status is 
 is($reply->{'body'}->[0]->{'report'}->{'head'}->{'org'}, 'DailySet1' , 'org is correct');
 is($reply->{'body'}->[0]->{'report'}->{'head'}->{'config_name'}, 'TESTCONF' , 'config_name is correct');
 is($reply->{'body'}->[0]->{'report'}->{'head'}->{'timestamp'}, $timestamp , 'timestamp is correct');
-is($reply->{'body'}->[0]->{'report'}->{'notes'}->[0], '  taper: Slot 1 without label can be labeled' , 'notes[0] is correct');
+is($reply->{'body'}->[0]->{'report'}->{'notes'}->[0], '  taper: Storage \'TESTCONF\': slot 1: without label can be labeled' , 'notes[0] is correct');
 is($reply->{'body'}->[0]->{'report'}->{'notes'}->[1], '  taper: tape TESTCONF01 kb 1050 fm 1 [OK]' , 'notes[1] is correct');
 ok(!exists $reply->{'body'}->[0]->{'report'}->{'notes'}->[2], 'no notes[2]');
 is($reply->{'body'}->[0]->{'report'}->{'usage_by_tape'}->[0]->{'nb'}, '1' , 'one dle on tape 0');
@@ -654,7 +654,7 @@ USAGE BY TAPE:
 
 
 NOTES:
-  taper: Slot 1 without label can be labeled
+  taper: Storage 'TESTCONF': slot 1: without label can be labeled
   taper: tape TESTCONF01 kb 1050 fm 1 [OK]
 
 

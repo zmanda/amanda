@@ -33,6 +33,7 @@ Amanda::Interactivity -- Parent class for user interactivity modules
 	message => "Insert Volume labelled 'MY_LABEL-001' in changer DLT",
 	label => 'MY_LABEL-001',
 	new_volume => 0,
+	storage => 'DLT',
 	chg_name => 'DLT',
 	err => "Not found in the library",
 	request_cb => sub {
@@ -71,12 +72,13 @@ in the config file.
 
 =head3 user_request
 
-  $inter->user_request(message     => $message,
-                       label       => $label,
-                       new_volume  => 0|1,
-                       err         => $err,
-                       chg_name    => $chg_name,
-                       request_cb  => $request_cb);
+  $inter->user_request(message      => $message,
+                       label        => $label,
+                       new_volume   => 0|1,
+                       err          => $err,
+                       storage      => $storage_name,
+                       chg_name     => $chg_name,
+                       request_cb   => $request_cb);
 
 This method return immediately.  It sends a message to the user and waits for a
 reply.
@@ -141,7 +143,7 @@ sub new {
 	}
     }
 
-    my $self = eval {$pkgname->new($property);};
+    my $self = eval {$pkgname->new($params{'storage_name'}, $params{'changer_name'}, $property);};
     if ($@) {
 	my $err = $@;
 	print STDERR "Can't instantiate $pkgname: $err\n";

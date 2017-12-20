@@ -170,6 +170,7 @@ sub create {
 
     if (!mkdir($self->{'dir'}, 0700)) {
 	return $self->make_error("failed", $params{'finished_cb'},
+		chg => $self,
 		source_filename => __FILE__,
 		source_line     => __LINE__,
 		code    => 1100026,
@@ -179,6 +180,7 @@ sub create {
 		reason  => "unknown");
     }
     return $params{'finished_cb'}->(undef, Amanda::Changer::Message->new(
+		chg => $self,
 		source_filename => __FILE__,
 		source_line     => __LINE__,
 		code    => 1100027,
@@ -478,6 +480,7 @@ sub _load_by_label {
 		slot  => $slot,
 		label => $label,
 		drive => $drive,
+		pid   => $params{state}->{drives}->{$drive}->{pid},
 		reason => "volinuse");
     }
 
@@ -530,7 +533,7 @@ sub _make_res {
 		code    => 1100038,
 		severity => $Amanda::Message::ERROR,
 		reason => "device",
-		device => $device_name,
+		device_name => $device_name,
 		device_error =>  $device->error_or_status());
     }
     my ($use_data, $surety, $source) = $device->property_get("USE-DATA");
@@ -539,9 +542,7 @@ sub _make_res {
 	$use_data = !$r;
     }
     if (my $err = $self->{'config'}->configure_device($device, $self->{'storage'})) {
-	return $self->make_error("failed", $res_cb,
-		reason => "device",
-		message => $err);
+	return $res_cb->($err);
     }
 
     $res = Amanda::Changer::diskflat::Reservation->new($self, $device, $drive, $slot, $state->{'meta'});
@@ -885,7 +886,8 @@ sub try_lock {
 		source_line     => __LINE__,
 		code    => 1100047,
 		severity => $Amanda::Message::ERROR,
-		lock_file => $self->{'umount_lockfile'});
+		lock_file => $self->{'umount_lockfile'},
+		errno => $!);
 	} elsif ($rv == 0) {
 	    if (defined $self->{'umount_src'}) {
 		$self->{'umount_src'}->remove();

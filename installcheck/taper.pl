@@ -360,7 +360,7 @@ taper_cmd("QUIT");
 wait_for_exit();
 
 check_logs([
-    qr(^INFO taper Slot 1 without label can be labeled$),
+    qr(^INFO taper Storage 'TESTCONF': slot 1: without label can be labeled$),
     qr(^START taper datestamp $datestamp "ST:TESTCONF" "POOL:TESTCONF" label TESTCONF01 tape 1$),
     qr(^PART taper "ST:TESTCONF" "POOL:TESTCONF" TESTCONF01 1 localhost /home $datestamp 1/-1 0 \[sec [\d.]+ bytes 1048576 kps [\d.]+ orig-kb 12\]$),
     qr(^DONE taper "ST:TESTCONF" "POOL:TESTCONF" localhost /home $datestamp 1 0 00000000:0 00000000:0 02929ca0:1048576 \[sec [\d.]+ bytes 1048576 kps [\d.]+ orig-kb 12\]$),
@@ -452,7 +452,7 @@ taper_cmd("QUIT");
 wait_for_exit();
 
 check_logs([
-    qr(^INFO taper Slot 1 without label can be labeled$),
+    qr(^INFO taper Storage 'TESTCONF': slot 1: without label can be labeled$),
     qr(^START taper datestamp $datestamp "ST:TESTCONF" "POOL:TESTCONF" label TESTCONF01 tape 1$),
     qr(^PART taper "ST:TESTCONF" "POOL:TESTCONF" TESTCONF01 1 localhost /usr $datestamp 1/-1 0 \[sec [\d.]+ bytes 524288 kps [\d.]+ orig-kb 512\]$),
     qr(^PART taper "ST:TESTCONF" "POOL:TESTCONF" TESTCONF01 2 localhost /usr $datestamp 2/-1 0 \[sec [\d.]+ bytes 524288 kps [\d.]+ orig-kb 512\]$),
@@ -501,7 +501,7 @@ taper_cmd("QUIT");
 wait_for_exit();
 
 check_logs([
-    qr(^INFO taper Slot 1 without label can be labeled$),
+    qr(^INFO taper Storage 'TESTCONF': slot 1: without label can be labeled$),
     qr(^START taper datestamp $datestamp "ST:TESTCONF" "POOL:TESTCONF" label TESTCONF01 tape 1$),
     qr(^PART taper "ST:TESTCONF" "POOL:TESTCONF" TESTCONF01 1 localhost /var $datestamp 1/-1 0 \[sec [\d.]+ bytes 393216 kps [\d.]+\]$),
     qr(^PART taper "ST:TESTCONF" "POOL:TESTCONF" TESTCONF01 2 localhost /var $datestamp 2/-1 0 \[sec [\d.]+ bytes 393216 kps [\d.]+\]$),
@@ -532,7 +532,7 @@ taper_cmd("QUIT");
 wait_for_exit();
 
 check_logs([
-    qr(^INFO taper Slot 1 without label can be labeled$),
+    qr(^INFO taper Storage 'TESTCONF': slot 1: without label can be labeled$),
     qr(^ERROR taper no-tape config \[sorry\]$),
     qr(^FAIL taper "ST:TESTCONF" "POOL:TESTCONF" localhost /home $datestamp 0 config sorry$),
 ], "NO-NEW-TAPE logged correctly");
@@ -577,13 +577,13 @@ taper_cmd("QUIT");
 wait_for_exit();
 
 check_logs([
-    qr(^INFO taper Slot 1 without label can be labeled$),
+    qr(^INFO taper Storage 'TESTCONF': slot 1: without label can be labeled$),
     qr(^START taper datestamp $datestamp "ST:TESTCONF" "POOL:TESTCONF" label TESTCONF01 tape 1$),
     qr(^PART taper "ST:TESTCONF" "POOL:TESTCONF" TESTCONF01 1 localhost /usr/local $datestamp 1/-1 0 \[sec [\d.]+ bytes 786432 kps [\d.]+\]$),
     qr(^PARTPARTIAL taper "ST:TESTCONF" "POOL:TESTCONF" TESTCONF01 2 localhost /usr/local $datestamp 2/-1 0 \[sec [\d.]+ bytes 163840 kps [\d.]+\] "No space left on device"$),
     qr(^INFO taper Will request retry of failed split part\.$),
     qr(^INFO taper tape TESTCONF01 kb 768 fm 2 \[OK\]$),
-    qr(^INFO taper Slot 2 without label can be labeled$),
+    qr(^INFO taper Storage 'TESTCONF': slot 2: without label can be labeled$),
     qr(^START taper datestamp $datestamp "ST:TESTCONF" "POOL:TESTCONF" label TESTCONF02 tape 2$),
     qr(^PART taper "ST:TESTCONF" "POOL:TESTCONF" TESTCONF02 1 localhost /usr/local $datestamp 2/-1 0 \[sec [\d.]+ bytes 786432 kps [\d.]+\]$),
     qr(^PART taper "ST:TESTCONF" "POOL:TESTCONF" TESTCONF02 2 localhost /usr/local $datestamp 3/-1 0 \[sec [\d.]+ bytes 3072 kps [\d.]+\]$),
@@ -626,13 +626,13 @@ taper_cmd("QUIT");
 wait_for_exit();
 
 check_logs([
-    qr(^INFO taper Slot 1 without label can be labeled$),
+    qr(^INFO taper Storage 'TESTCONF': slot 1: without label can be labeled$),
     qr(^START taper datestamp $datestamp "ST:TESTCONF" "POOL:TESTCONF" label TESTCONF01 tape 1$),
     qr(^PART taper "ST:TESTCONF" "POOL:TESTCONF" TESTCONF01 1 localhost /usr $datestamp 1/-1 0 \[sec [\d.]+ bytes 786432 kps [\d.]+ orig-kb 1112\]$),
     qr(^PARTPARTIAL taper "ST:TESTCONF" "POOL:TESTCONF" TESTCONF01 2 localhost /usr $datestamp 2/-1 0 \[sec [\d.]+ bytes 163840 kps [\d.]+ orig-kb 1112\] "No space left on device"$),
     qr(^INFO taper Will request retry of failed split part\.$),
     qr(^INFO taper tape TESTCONF01 kb 768 fm 2 \[OK\]$),
-    qr(^INFO taper Slot 2 without label can be labeled$),
+    qr(^INFO taper Storage 'TESTCONF': slot 2: without label can be labeled$),
     qr(^START taper datestamp $datestamp "ST:TESTCONF" "POOL:TESTCONF" label TESTCONF02 tape 2$),
     qr(^PART taper "ST:TESTCONF" "POOL:TESTCONF" TESTCONF02 1 localhost /usr $datestamp 2/-1 0 \[sec [\d.]+ bytes 786432 kps [\d.]+ orig-kb 1112\]$),
     qr(^PART taper "ST:TESTCONF" "POOL:TESTCONF" TESTCONF02 2 localhost /usr $datestamp 3/-1 0 \[sec [\d.]+ bytes 3072 kps [\d.]+ orig-kb 1112\]$),
@@ -680,13 +680,13 @@ taper_cmd("QUIT");
 wait_for_exit();
 
 check_logs([
-    qr(^INFO taper Slot 1 without label can be labeled$),
+    qr(^INFO taper Storage 'TESTCONF': slot 1: without label can be labeled$),
     qr(^START taper datestamp $datestamp "ST:TESTCONF" "POOL:TESTCONF" label TESTCONF01 tape 1$),
     qr(^PART taper "ST:TESTCONF" "POOL:TESTCONF" TESTCONF01 1 localhost /usr/local $datestamp 1/-1 0 \[sec [\d.]+ bytes 786432 kps [\d.]+\]$),
     qr(^PARTPARTIAL taper "ST:TESTCONF" "POOL:TESTCONF" TESTCONF01 2 localhost /usr/local $datestamp 2/-1 0 \[sec [\d.]+ bytes 163840 kps [\d.]+\] "No space left on device"$),
     qr(^INFO taper Will request retry of failed split part\.$),
     qr(^INFO taper tape TESTCONF01 kb 768 fm 2 \[OK\]$),
-    qr(^INFO taper Slot 2 without label can be labeled$),
+    qr(^INFO taper Storage 'TESTCONF': slot 2: without label can be labeled$),
     qr(^START taper datestamp $datestamp "ST:TESTCONF" "POOL:TESTCONF" label TESTCONF02 tape 2$),
     qr(^PART taper "ST:TESTCONF" "POOL:TESTCONF" TESTCONF02 1 localhost /usr/local $datestamp 2/-1 0 \[sec [\d.]+ bytes 786432 kps [\d.]+\]$),
     qr(^PART taper "ST:TESTCONF" "POOL:TESTCONF" TESTCONF02 2 localhost /usr/local $datestamp 3/-1 0 \[sec [\d.]+ bytes 3072 kps [\d.]+\]$),
@@ -740,12 +740,12 @@ taper_cmd("QUIT");
 wait_for_exit();
 
 check_logs([
-    qr(^INFO taper Slot 1 without label can be labeled$),
+    qr(^INFO taper Storage 'TESTCONF': slot 1: without label can be labeled$),
     qr(^START taper datestamp $datestamp "ST:TESTCONF" "POOL:TESTCONF" label TESTCONF01 tape 1$),
     qr(^PARTPARTIAL taper "ST:TESTCONF" "POOL:TESTCONF" TESTCONF01 1 localhost /var/log $datestamp 1/-1 0 \[sec [\d.]+ bytes 983040 kps [\d.]+\] "No space left on device"$),
     qr(^PARTIAL taper "ST:TESTCONF" "POOL:TESTCONF" localhost /var/log $datestamp 1 0 00000000:0 00000000:0 [0-9a-f]{8}:\d+ \[sec [\d.]+ bytes 0 kps [\d.]+\] "No space left on device: more than MAX_VOLUME_USAGE bytes written, splitting not enabled"$),
     qr(^INFO taper tape TESTCONF01 kb 0 fm 1 \[OK\]$),
-    qr(^INFO taper Slot 2 without label can be labeled$),
+    qr(^INFO taper Storage 'TESTCONF': slot 2: without label can be labeled$),
     qr(^START taper datestamp $datestamp "ST:TESTCONF" "POOL:TESTCONF" label TESTCONF02 tape 2$),
     qr(^PART taper "ST:TESTCONF" "POOL:TESTCONF" TESTCONF02 1 localhost /boot $datestamp 1/-1 0 \[sec [\d.]+ bytes 65536 kps [\d.]+\]$),
     qr(^DONE taper "ST:TESTCONF" "POOL:TESTCONF" localhost /boot $datestamp 1 0 00000000:0 00000000:0 b73fa77c:65536 \[sec [\d.]+ bytes 65536 kps [\d.]+ orig-kb 64\]$),
@@ -780,7 +780,7 @@ taper_cmd("QUIT");
 wait_for_exit();
 
 check_logs([
-    qr(^INFO taper Slot 1 without label can be labeled$),
+    qr(^INFO taper Storage 'TESTCONF': slot 1: without label can be labeled$),
     qr(^START taper datestamp $datestamp "ST:TESTCONF" "POOL:TESTCONF" label TESTCONF01 tape 1$),
     qr(^PART taper "ST:TESTCONF" "POOL:TESTCONF" TESTCONF01 1 localhost /music $datestamp 1/-1 0 \[sec [\d.]+ bytes 262144 kps [\d.]+ orig-kb 1312\]$),
     qr(^PARTPARTIAL taper "ST:TESTCONF" "POOL:TESTCONF" TESTCONF01 2 localhost /music $datestamp 2/-1 0 \[sec [\d.]+ bytes 163840 kps [\d.]+ orig-kb 1312\] "No space left on device"$),
@@ -826,7 +826,7 @@ taper_cmd("QUIT");
 wait_for_exit();
 
 check_logs([
-    qr(^INFO taper Slot 1 without label can be labeled$),
+    qr(^INFO taper Storage 'TESTCONF': slot 1: without label can be labeled$),
     qr(^START taper datestamp $datestamp "ST:TESTCONF" "POOL:TESTCONF" label TESTCONF01 tape 1$),
     qr(^PART taper "ST:TESTCONF" "POOL:TESTCONF" TESTCONF01 1 localhost /sbin $datestamp 1/-1 0 \[sec [\d.]+ bytes 655360 kps [\d.]+\]$),
     qr(^PART taper "ST:TESTCONF" "POOL:TESTCONF" TESTCONF01 2 localhost /sbin $datestamp 2/-1 0 \[sec [\d.]+ bytes 655360 kps [\d.]+\]$),
@@ -881,7 +881,7 @@ taper_cmd("QUIT");
 wait_for_exit();
 
 check_logs([
-    qr(^INFO taper Slot 1 without label can be labeled$),
+    qr(^INFO taper Storage 'TESTCONF': slot 1: without label can be labeled$),
     qr(^START taper datestamp $datestamp "ST:TESTCONF" "POOL:TESTCONF" label TESTCONF01 tape 1$),
     qr(^PART taper "ST:TESTCONF" "POOL:TESTCONF" TESTCONF01 1 localhost /u01 $datestamp 1/-1 0 \[sec [\d.]+ bytes 262144 kps [\d.]+ orig-kb 1412\]$),
     qr(^PART taper "ST:TESTCONF" "POOL:TESTCONF" TESTCONF01 2 localhost /u01 $datestamp 2/-1 0 \[sec [\d.]+ bytes 237856 kps [\d.]+ orig-kb 1412\]$),
@@ -890,7 +890,7 @@ check_logs([
     qr(^PARTPARTIAL taper "ST:TESTCONF" "POOL:TESTCONF" TESTCONF01 4 localhost /u02 $datestamp 2/-1 0 \[sec [\d.]+ bytes 98304 kps [\d.]+ orig-kb 1512\] "No space left on device"$),
     qr(^INFO taper Will request retry of failed split part\.$),
     qr(^INFO taper tape TESTCONF01 kb 744 fm 4 \[OK\]$),
-    qr(^INFO taper Slot 2 without label can be labeled$),
+    qr(^INFO taper Storage 'TESTCONF': slot 2: without label can be labeled$),
     qr(^START taper datestamp $datestamp "ST:TESTCONF" "POOL:TESTCONF" label TESTCONF02 tape 2$),
     qr(^PART taper "ST:TESTCONF" "POOL:TESTCONF" TESTCONF02 1 localhost /u02 $datestamp 2/-1 0 \[sec [\d.]+ bytes 262144 kps [\d.]+ orig-kb 1512\]$),
     qr(^PART taper "ST:TESTCONF" "POOL:TESTCONF" TESTCONF02 2 localhost /u02 $datestamp 3/-1 0 \[sec [\d.]+ bytes 90112 kps [\d.]+ orig-kb 1512\]$),
@@ -942,8 +942,8 @@ taper_cmd("QUIT");
 wait_for_exit();
 
 check_logs([
-    qr(^INFO taper Slot 2 with label TESTCONF02 is not reusable$),
-    qr(^INFO taper Slot 3 without label can be labeled$),
+    qr(^INFO taper Storage 'TESTCONF': slot 2: label 'TESTCONF02' is still active and cannot be overwritten$),
+    qr(^INFO taper Storage 'TESTCONF': slot 3: without label can be labeled$),
     qr(^START taper datestamp $datestamp "ST:TESTCONF" "POOL:TESTCONF" label TESTCONF03 tape 1$),
     qr(^PART taper "ST:TESTCONF" "POOL:TESTCONF" TESTCONF03 1 localhost /u01 $datestamp 1/-1 0 \[sec [\d.]+ bytes 262144 kps [\d.]+ orig-kb 1612\]$),
     qr(^PART taper "ST:TESTCONF" "POOL:TESTCONF" TESTCONF03 2 localhost /u01 $datestamp 2/-1 0 \[sec [\d.]+ bytes 37856 kps [\d.]+ orig-kb 1612\]$),
@@ -953,7 +953,7 @@ check_logs([
     qr(^PARTPARTIAL taper "ST:TESTCONF" "POOL:TESTCONF" TESTCONF03 5 localhost /u02 $datestamp 3/-1 0 \[sec [\d.]+ bytes 0 kps [\d.]+ orig-kb 1712\] "No space left on device"$),
     qr(^INFO taper Will request retry of failed split part\.$),
     qr(^INFO taper tape TESTCONF03 kb 804 fm 5 \[OK\]$),
-#    qr(^INFO taper Slot 1 with label TESTCONF01 is usable$),
+    qr(^INFO taper Storage 'TESTCONF': slot 1: label 'TESTCONF01' is usable$),
     qr(^START taper datestamp $datestamp "ST:TESTCONF" "POOL:TESTCONF" label TESTCONF01 tape 2$),
     qr(^PART taper "ST:TESTCONF" "POOL:TESTCONF" TESTCONF01 1 localhost /u02 $datestamp 3/-1 0 \[sec [\d.]+ bytes 90112 kps [\d.]+ orig-kb 1712\]$),
     qr(^DONE taper "ST:TESTCONF" "POOL:TESTCONF" localhost /u02 $datestamp 3 0 00000000:0 00000000:0 a6f09c00:614400 \[sec [\d.]+ bytes 614400 kps [\d.]+ orig-kb 1712\]$),
@@ -1001,7 +1001,7 @@ wait_for_exit();
 $handle = "44-11111";
 $datestamp = "20070102030405";
 run_taper(4096, "Yno tapedev", notapedev => 1);
-like(taper_reply, qr/^TAPE-ERROR SETUP "You must specify the 'tapedev' or 'tpchanger' in the 'TESTCONF' storage section"$/,
+like(taper_reply, qr/^TAPE-ERROR SETUP "Storage 'TESTCONF': You must specify the 'tapedev' or 'tpchanger'"$/,
 	"got TAPE-ERROR") or die;
 wait_for_exit();
 
@@ -1052,8 +1052,8 @@ taper_cmd("QUIT");
 wait_for_exit();
 
 check_logs([
-    qr(^INFO taper Slot 1 without label can be labeled$),
-    qr(^INFO taper Slot 2 without label can be labeled$),
+    qr(^INFO taper Storage 'TESTCONF': slot 1: without label can be labeled$),
+    qr(^INFO taper Storage 'TESTCONF': slot 2: without label can be labeled$),
     qr(^START taper datestamp $datestamp "ST:TESTCONF" "POOL:TESTCONF" label TESTCONF01 tape 1$),
     qr(^PART taper "ST:TESTCONF" "POOL:TESTCONF" TESTCONF01 1 localhost /u01 $datestamp 1/-1 0 \[sec [\d.]+ bytes 262144 kps [\d.]+ orig-kb 1612\]$),
     qr(^PART taper "ST:TESTCONF" "POOL:TESTCONF" TESTCONF01 2 localhost /u01 $datestamp 2/-1 0 \[sec [\d.]+ bytes 37856 kps [\d.]+ orig-kb 1612\]$),
@@ -1111,8 +1111,8 @@ taper_cmd("QUIT");
 wait_for_exit();
 
 check_logs([
-    qr(^INFO taper Slot 1 without label can be labeled$),
-    qr(^INFO taper Slot 2 without label can be labeled$),
+    qr(^INFO taper Storage 'TESTCONF': slot 1: without label can be labeled$),
+    qr(^INFO taper Storage 'TESTCONF': slot 2: without label can be labeled$),
     qr(^START taper datestamp $datestamp "ST:TESTCONF" "POOL:TESTCONF" label TESTCONF01 tape 1$),
     qr(^PART taper "ST:TESTCONF" "POOL:TESTCONF" TESTCONF01 1 localhost /u01 $datestamp 1/-1 0 \[sec [\d.]+ bytes 262144 kps [\d.]+ orig-kb 1612\]$),
     qr(^PART taper "ST:TESTCONF" "POOL:TESTCONF" TESTCONF01 2 localhost /u01 $datestamp 2/-1 0 \[sec [\d.]+ bytes 262144 kps [\d.]+ orig-kb 1612\]$),
@@ -1195,14 +1195,14 @@ SKIP : {
     wait_for_exit();
 
     check_logs([
-        qr(^INFO taper Slot 3 without label can be labeled$),
+	qr(^INFO taper Storage 'TESTCONF': slot 3: without label can be labeled$),
 	qr(^START taper datestamp $datestamp "ST:TESTCONF" "POOL:TESTCONF" label TESTCONF01 tape 1$),
 	qr(^PART taper "ST:TESTCONF" "POOL:TESTCONF" TESTCONF01 1 localhost /var $datestamp 1/-1 0 \[sec [\d.]+ bytes 393216 kps [\d.]+\]$),
 	qr(^PART taper "ST:TESTCONF" "POOL:TESTCONF" TESTCONF01 2 localhost /var $datestamp 2/-1 0 \[sec [\d.]+ bytes 393216 kps [\d.]+\]$),
 	qr(^PART taper "ST:TESTCONF" "POOL:TESTCONF" TESTCONF01 3 localhost /var $datestamp 3/-1 0 \[sec [\d.]+ bytes 65536 kps [\d.]+\]$),
 	# note no "Will retry.."
 	qr(^INFO taper tape TESTCONF01 kb 832 fm 3 \[OK\]$),
-        qr(^INFO taper Slot 4 without label can be labeled$),
+	qr(^INFO taper Storage 'TESTCONF': slot 4: without label can be labeled$),
 	qr(^START taper datestamp $datestamp "ST:TESTCONF" "POOL:TESTCONF" label TESTCONF02 tape 2$),
 	qr(^PART taper "ST:TESTCONF" "POOL:TESTCONF" TESTCONF02 1 localhost /var $datestamp 4/-1 0 \[sec [\d.]+ bytes 393216 kps [\d.]+\]$),
 	qr(^PART taper "ST:TESTCONF" "POOL:TESTCONF" TESTCONF02 2 localhost /var $datestamp 5/-1 0 \[sec [\d.]+ bytes 32768 kps [\d.]+\]$),
@@ -1254,13 +1254,13 @@ SKIP : {
     wait_for_exit();
 
     check_logs([
-        qr(^INFO taper Slot 3 without label can be labeled$),
+	qr(^INFO taper Storage 'TESTCONF': slot 3: without label can be labeled$),
 	qr(^START taper datestamp $datestamp "ST:TESTCONF" "POOL:TESTCONF" label TESTCONF01 tape 1$),
 	qr(^PART taper "ST:TESTCONF" "POOL:TESTCONF" TESTCONF01 1 localhost /var $datestamp 1/-1 0 \[sec [\d.]+ bytes 425984 kps [\d.]+\]$),
 	qr(^PART taper "ST:TESTCONF" "POOL:TESTCONF" TESTCONF01 2 localhost /var $datestamp 2/-1 0 \[sec [\d.]+ bytes 425984 kps [\d.]+\]$),
 	# Note: zero-byte part is not logged, but is counted in this INFO line's 'fm' field
 	qr(^INFO taper tape TESTCONF01 kb 832 fm 3 \[OK\]$),
-        qr(^INFO taper Slot 4 without label can be labeled$),
+	qr(^INFO taper Storage 'TESTCONF': slot 4: without label can be labeled$),
 	qr(^START taper datestamp $datestamp "ST:TESTCONF" "POOL:TESTCONF" label TESTCONF02 tape 2$),
 	qr(^PART taper "ST:TESTCONF" "POOL:TESTCONF" TESTCONF02 1 localhost /var $datestamp 3/-1 0 \[sec [\d.]+ bytes 425984 kps [\d.]+\]$),
 	qr(^PART taper "ST:TESTCONF" "POOL:TESTCONF" TESTCONF02 2 localhost /var $datestamp 4/-1 0 \[sec [\d.]+ bytes 393216 kps [\d.]+\]$),
@@ -1294,7 +1294,7 @@ taper_cmd("QUIT");
 wait_for_exit();
 
 check_logs([
-    qr(^INFO taper Slot 1 without label can be labeled$),
+    qr(^INFO taper Storage 'TESTCONF': slot 1: without label can be labeled$),
     qr(^START taper datestamp $datestamp "ST:TESTCONF" "POOL:TESTCONF" label TESTCONF01 tape 1$),
     qr(^PARTPARTIAL taper "ST:TESTCONF" "POOL:TESTCONF" TESTCONF01 1 localhost /usr $datestamp 1/-1 0 \[sec [\d.]+ bytes 983040 kps [\d.]+ orig-kb 1612\] \"No space left on device\"$),
     qr(^PARTIAL taper "ST:TESTCONF" "POOL:TESTCONF" localhost /usr $datestamp 1 0 00000000:0 00000000:0 [0-9a-f]{8}:\d+ \[sec [\d.]+ bytes 0 kps [\d.]+ orig-kb 1612\] "No space left on device: more than MAX_VOLUME_USAGE bytes written, splitting not enabled"$),
@@ -1326,7 +1326,7 @@ taper_cmd("QUIT");
 wait_for_exit();
 
 check_logs([
-    qr(^INFO taper Slot 1 without label can be labeled$),
+    qr(^INFO taper Storage 'TESTCONF': slot 1: without label can be labeled$),
     qr(^START taper datestamp $datestamp "ST:TESTCONF" "POOL:TESTCONF" label TESTCONF01 tape 1$),
     qr(^PART taper "ST:TESTCONF" "POOL:TESTCONF" TESTCONF01 1 localhost /usr $datestamp 1/-1 0 \[sec [\d.]+ bytes 884736 kps [\d.]+ orig-kb 1612\]$),
     qr(^PARTIAL taper "ST:TESTCONF" "POOL:TESTCONF" localhost /usr $datestamp 1 0 00000000:0 00000000:0 [0-9a-f]{8}:\d+ \[sec [\d.]+ bytes 884736 kps [\d.]+ orig-kb 1612\] "No space left on device, splitting not enabled"$),
@@ -1377,7 +1377,7 @@ taper_cmd("QUIT");
 wait_for_exit();
 
 check_logs([
-    qr(^INFO taper Slot 1 without label can be labeled$),
+    qr(^INFO taper Storage 'TESTCONF': slot 1: without label can be labeled$),
     qr(^START taper datestamp $datestamp "ST:TESTCONF" "POOL:TESTCONF" label TESTCONF01 tape 1$),
     qr(^PART taper "ST:TESTCONF" "POOL:TESTCONF" TESTCONF01 1 localhost /home $datestamp 1/-1 0 \[sec [\d.]+ bytes 1048576 kps [\d.]+ orig-kb 12\]$),
     qr(^DONE taper "ST:TESTCONF" "POOL:TESTCONF" localhost /home $datestamp 1 0 00000000:0 00000000:0 02929ca0:1048576 \[sec [\d.]+ bytes 1048576 kps [\d.]+ orig-kb 12\]$),
@@ -1433,7 +1433,7 @@ taper_cmd("QUIT");
 wait_for_exit();
 
 check_logs([
-    qr(^INFO taper Slot 1 without label can be labeled$),
+    qr(^INFO taper Storage 'TESTCONF': slot 1: without label can be labeled$),
     qr(^START taper datestamp $datestamp "ST:TESTCONF" "POOL:TESTCONF" label TESTCONF01 tape 1$),
     qr(^PART taper "ST:TESTCONF" "POOL:TESTCONF" TESTCONF01 1 localhost /u01 $datestamp 1/-1 0 \[sec [\d.]+ bytes 262144 kps [\d.]+ orig-kb 1412\]$),
     qr(^PART taper "ST:TESTCONF" "POOL:TESTCONF" TESTCONF01 2 localhost /u01 $datestamp 2/-1 0 \[sec [\d.]+ bytes 237856 kps [\d.]+ orig-kb 1412\]$),
@@ -1442,7 +1442,7 @@ check_logs([
     qr(^PARTPARTIAL taper "ST:TESTCONF" "POOL:TESTCONF" TESTCONF01 4 localhost /u02 $datestamp 2/-1 0 \[sec [\d.]+ bytes 98304 kps [\d.]+ orig-kb 1512\] "No space left on device"$),
     qr(^INFO taper Will request retry of failed split part\.$),
     qr(^INFO taper tape TESTCONF01 kb 744 fm 4 \[OK\]$),
-    qr(^INFO taper Slot 2 without label can be labeled$),
+    qr(^INFO taper Storage 'TESTCONF': slot 2: without label can be labeled$),
     qr(^START taper datestamp $datestamp "ST:TESTCONF" "POOL:TESTCONF" label TESTCONF02 tape 2$),
     qr(^PART taper "ST:TESTCONF" "POOL:TESTCONF" TESTCONF02 1 localhost /u02 $datestamp 2/-1 0 \[sec [\d.]+ bytes 262144 kps [\d.]+ orig-kb 1512\]$),
     qr(^PART taper "ST:TESTCONF" "POOL:TESTCONF" TESTCONF02 2 localhost /u02 $datestamp 3/-1 0 \[sec [\d.]+ bytes 90112 kps [\d.]+ orig-kb 1512\]$),
@@ -1493,8 +1493,7 @@ taper_cmd("QUIT");
 wait_for_exit();
 
 check_logs([
-#    qr(^INFO taper Slot 2 with label TESTCONF02 is not reusable),
-    qr(^INFO taper Slot 3 without label can be labeled$),
+    qr(^INFO taper Storage 'TESTCONF': slot 3: without label can be labeled$),
     qr(^START taper datestamp $datestamp "ST:TESTCONF" "POOL:TESTCONF" label TESTCONF03 tape 1$),
     qr(^PART taper "ST:TESTCONF" "POOL:TESTCONF" TESTCONF03 1 localhost /u01 $datestamp 1/-1 0 \[sec [\d.]+ bytes 262144 kps [\d.]+ orig-kb 1612\]$),
     qr(^PART taper "ST:TESTCONF" "POOL:TESTCONF" TESTCONF03 2 localhost /u01 $datestamp 2/-1 0 \[sec [\d.]+ bytes 37856 kps [\d.]+ orig-kb 1612\]$),
@@ -1504,7 +1503,7 @@ check_logs([
     qr(^PARTPARTIAL taper "ST:TESTCONF" "POOL:TESTCONF" TESTCONF03 5 localhost /u02 $datestamp 3/-1 0 \[sec [\d.]+ bytes 0 kps [\d.]+ orig-kb 1712\] "No space left on device"$),
     qr(^INFO taper Will request retry of failed split part\.$),
     qr(^INFO taper tape TESTCONF03 kb 804 fm 5 \[OK\]$),
-    qr(^INFO taper Slot 1 with label TESTCONF01 is usable$),
+    qr(^INFO taper Storage 'TESTCONF': slot 1: label 'TESTCONF01' is usable$),
     qr(^START taper datestamp $datestamp "ST:TESTCONF" "POOL:TESTCONF" label TESTCONF01 tape 2$),
     qr(^PART taper "ST:TESTCONF" "POOL:TESTCONF" TESTCONF01 1 localhost /u02 $datestamp 3/-1 0 \[sec [\d.]+ bytes 90112 kps [\d.]+ orig-kb 1712\]$),
     qr(^DONE taper "ST:TESTCONF" "POOL:TESTCONF" localhost /u02 $datestamp 3 0 00000000:0 00000000:0 a6f09c00:614400 \[sec [\d.]+ bytes 614400 kps [\d.]+ orig-kb 1712\]$),
@@ -1517,7 +1516,7 @@ cleanup_log();
 $handle = "44-11111";
 $datestamp = "20070102030405";
 run_taper(4096, "Xno tapedev", notapedev => 1, taperscan => "lexical");
-like(taper_reply, qr/^TAPE-ERROR SETUP "You must specify the 'tapedev' or 'tpchanger' in the 'TESTCONF' storage section"$/,
+like(taper_reply, qr/^TAPE-ERROR SETUP "Storage 'TESTCONF': You must specify the 'tapedev' or 'tpchanger'"$/,
 	"got TAPE-ERROR") or die;
 wait_for_exit();
 
@@ -1568,8 +1567,8 @@ taper_cmd("QUIT");
 wait_for_exit();
 
 check_logs([
-    qr(^INFO taper Slot 1 without label can be labeled$),
-    qr(^INFO taper Slot 2 without label can be labeled$),
+    qr(^INFO taper Storage 'TESTCONF': slot 1: without label can be labeled$),
+    qr(^INFO taper Storage 'TESTCONF': slot 2: without label can be labeled$),
     qr(^START taper datestamp $datestamp "ST:TESTCONF" "POOL:TESTCONF" label TESTCONF01 tape 1$),
     qr(^PART taper "ST:TESTCONF" "POOL:TESTCONF" TESTCONF01 1 localhost /u01 $datestamp 1/-1 0 \[sec [\d.]+ bytes 262144 kps [\d.]+ orig-kb 1612\]$),
     qr(^PART taper "ST:TESTCONF" "POOL:TESTCONF" TESTCONF01 2 localhost /u01 $datestamp 2/-1 0 \[sec [\d.]+ bytes 37856 kps [\d.]+ orig-kb 1612\]$),

@@ -127,8 +127,8 @@ is($reply->{'body'}->[0]->{'report'}->{'head'}->{'timestamp'}, $timestamp , 'tim
 my @sorted_notes = sort @{$reply->{'body'}->[0]->{'report'}->{'notes'}};
 is($sorted_notes[0], '  planner: Adding new disk localhost:diskname2.' , 'notes[0] is correct');
 is($sorted_notes[1], '  planner: tapecycle (2) <= runspercycle (10)', 'notes[1] is correct');
-is($sorted_notes[2], '  taper: Slot 1 without label can be labeled' , 'notes[2] is correct');
-is($sorted_notes[3], '  taper: Slot 1 without label can be labeled' , 'notes[3] is correct');
+is($sorted_notes[2], '  taper: Storage \'storage-1\': slot 1: without label can be labeled' , 'notes[2] is correct');
+is($sorted_notes[3], '  taper: Storage \'storage-2\': slot 1: without label can be labeled' , 'notes[3] is correct');
 is($sorted_notes[4], '  taper: tape STO-1-00001 kb 1050 fm 1 [OK]' , 'notes[4] is correct');
 is($sorted_notes[5], '  taper: tape STO-2-00001 kb 1050 fm 1 [OK]' , 'notes[5] is correct');
 ok(!exists $reply->{'body'}->[0]->{'report'}->{'notes'}->[6], 'no notes[6]');
@@ -422,8 +422,8 @@ USAGE BY TAPE:
 NOTES:
   planner: Adding new disk localhost:diskname2.
   planner: tapecycle (2) <= runspercycle (10)
-  taper: Slot 1 without label can be labeled
-  taper: Slot 1 without label can be labeled
+  taper: Storage 'storage-1': slot 1: without label can be labeled
+  taper: Storage 'storage-2': slot 1: without label can be labeled
   taper: tape STO-1-00001 kb 1050 fm 1 [OK]
   taper: tape STO-2-00001 kb 1050 fm 1 [OK]
 

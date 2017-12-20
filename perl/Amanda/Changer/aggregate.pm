@@ -257,8 +257,11 @@ sub load {
 	    }
 	}
 	return $self->make_error("failed", $res_cb,
-		reason => "notfound",
-		message => "all slots have been loaded");
+			    source_filename => __FILE__,
+			    source_line     => __LINE__,
+			    severity        => $Amanda::Message::MESSAGE,
+			    code	    => 1100032,
+			    reason => "notfound");
     };
 
     step got_inventory_label => sub {

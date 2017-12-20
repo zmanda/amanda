@@ -46,16 +46,18 @@ Amanda::Interactivity class combining tty (when it is available) and email (othe
 
 sub new {
     my $class = shift;
-    my $property = shift;
+    my $storage_name = shift;
+    my $changer_name = shift;
+    my $properties = shift;
 
     my $input;
 
     my $r = open($input, '>', "/dev/tty");
     if ($r) {
 	close($input);
-	return Amanda::Interactivity::tty->new($property);
+	return Amanda::Interactivity::tty->new($storage_name, $changer_name, $properties);
     } else {
-	return Amanda::Interactivity::email->new($property);
+	return Amanda::Interactivity::email->new($storage_name, $changer_name, $properties);
     }
 }
 

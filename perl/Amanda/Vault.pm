@@ -600,7 +600,9 @@ sub setup_dst {
     $dst->{'chg'} = $chg;
 
     my $interactivity = Amanda::Interactivity->new(
-					name => $storage->{'interactivity'});
+					name => $storage->{'interactivity'},
+					storage_name => $storage->{'storage'},
+					changer_name => $chg->{'chg_name'});
     my $scan_name = $storage->{'taperscan_name'};
     $dst->{'scan'} = Amanda::Taper::Scan->new(
 	algorithm => $scan_name,

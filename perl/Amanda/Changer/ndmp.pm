@@ -57,7 +57,11 @@ sub get_interface {
     my ($host, $port, $scsi_dev) = ($device_name =~ /([^:@]*)(?::(\d*))?@(.*)/);
     if (!$host) {
 	return Amanda::Changer->make_error("fatal", undef,
-	    message => "invalid chg-ndmp specification '$device_name'");
+			source_filename	=> __FILE__,
+			source_line	=> __LINE__,
+			severity	=> $Amanda::Message::MESSAGE,
+			code		=> 1100077,
+			device_name	=> $device_name);
     }
     $port = $port? ($port+0) : 0; # 0 => default port
 
@@ -69,7 +73,11 @@ sub get_interface {
 	if (exists $self->{'config'}->{'properties'}->{$propname}) {
 	    if (@{$self->{'config'}->{'properties'}->{$propname}->{'values'}} > 1) {
 		return Amanda::Changer->make_error("fatal", undef,
-		    message => "only one value allowed for '$propname'");
+			source_filename	=> __FILE__,
+			source_line	=> __LINE__,
+			severity	=> $Amanda::Message::MESSAGE,
+			code		=> 1100078,
+			propname	=> $propname);
 	    }
 	    $self->{$propname} = $self->{'config'}->{'properties'}->{$propname}->{'values'}->[0];
 	}
@@ -533,7 +541,11 @@ sub _get_scsi_conn {
 	if (!$result) {
 	    if (!$args[0]) { # only report an error if one hasn't already occurred
 		my $err = Amanda::Changer->make_error("fatal", undef,
-		    message => "".$conn->err_msg());
+			source_filename	=> __FILE__,
+			source_line	=> __LINE__,
+			severity	=> $Amanda::Message::MESSAGE,
+			code		=> 1100079,
+			err		=> "".$conn->err_msg());
 		return $orig_cb->($err);
 	    }
 	}
