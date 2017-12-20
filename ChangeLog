@@ -1,4 +1,8 @@
 2017-12-20  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* installcheck/success-dumper-chunker+dumper-chunker-taper-flush.pl:
+	  fix
+
+2017-12-20  Jean-Louis Martineau <JMartineau@carbonite.com>
 	All Changer message get their own code and the storage
 	* perl/Amanda/Interactivity.pm (new): Get storage_name and changer_name
 	  as argument

@@ -411,9 +411,9 @@ is($reply->{'body'}->[0]->{'report'}->{'head'}->{'org'}, 'DailySet1' , 'org is c
 is($reply->{'body'}->[0]->{'report'}->{'head'}->{'config_name'}, 'TESTCONF' , 'config_name is correct');
 is($reply->{'body'}->[0]->{'report'}->{'head'}->{'timestamp'}, $timestamp , 'timestamp is correct');
 is($reply->{'body'}->[0]->{'report'}->{'notes'}->[0], '  planner: tapecycle (2) <= runspercycle (10)', 'notes[0] is correct');
-is($reply->{'body'}->[0]->{'report'}->{'notes'}->[1], '  taper: Slot 1 without label can be labeled' , 'notes[1] is correct');
+is($reply->{'body'}->[0]->{'report'}->{'notes'}->[1], '  taper: Storage \'TESTCONF\': slot 1: without label can be labeled' , 'notes[1] is correct');
 is($reply->{'body'}->[0]->{'report'}->{'notes'}->[2], '  taper: tape TESTCONF01 kb 1050 fm 1 [OK]' , 'notes[2] is correct');
-is($reply->{'body'}->[0]->{'report'}->{'notes'}->[3], '  taper: Slot 2 without label can be labeled' , 'notes[3] is correct');
+is($reply->{'body'}->[0]->{'report'}->{'notes'}->[3], '  taper: Storage \'TESTCONF\': slot 2: without label can be labeled' , 'notes[3] is correct');
 is($reply->{'body'}->[0]->{'report'}->{'notes'}->[4], '  taper: tape TESTCONF02 kb 10 fm 1 [OK]' , 'notes[4] is correct');
 ok(!exists $reply->{'body'}->[0]->{'report'}->{'notes'}->[5], 'no notes[5]');
 is($reply->{'body'}->[0]->{'report'}->{'usage_by_tape'}->[0]->{'nb'}, '1' , 'one dle on tape 0');
@@ -698,9 +698,9 @@ USAGE BY TAPE:
 
 NOTES:
   planner: tapecycle (2) <= runspercycle (10)
-  taper: Slot 1 without label can be labeled
+  taper: Storage 'TESTCONF': slot 1: without label can be labeled
   taper: tape TESTCONF01 kb 1050 fm 1 [OK]
-  taper: Slot 2 without label can be labeled
+  taper: Storage 'TESTCONF': slot 2: without label can be labeled
   taper: tape TESTCONF02 kb 10 fm 1 [OK]
 
 
