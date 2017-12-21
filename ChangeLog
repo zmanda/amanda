@@ -1,3 +1,7 @@
+2017-12-21  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Status.pm: Call File::Path::mkpath instead ofi
+	  File::Path::make_path
+
 2017-12-20  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* installcheck/success-dumper-chunker+dumper-chunker-taper-flush.pl:
 	  fix

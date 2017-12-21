@@ -2114,7 +2114,7 @@ sub current {
     my %params = @_;
 
     my $cache_dir = $Amanda::Paths::AMANDA_TMPDIR . '/cache_status/' . Amanda::Config::get_config_name();
-    File::Path::make_path $cache_dir;
+    File::Path::mkpath($cache_dir, { mode => 0700 });
     my $basefile = $self->{'filename'};
     $basefile = readlink $basefile if -l $basefile;
     $basefile = basename $basefile;
