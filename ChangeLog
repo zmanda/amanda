@@ -1,4 +1,7 @@
 2017-12-22  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* installcheck/Amanda_Changer_disk.pl: Fix
+
+2017-12-22  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/ammessage.c, installcheck/Amanda_Changer_*.pl
 	  installcheck/Amanda_Rest_*.pl, installcheck/Amanda_Taper_Scan_*.pl,
 	  perl/Amanda/Changer.pm perl/Amanda/Changer/*.pm,

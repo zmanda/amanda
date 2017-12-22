@@ -366,7 +366,7 @@ Amanda::MainLoop::run();
 		'reason'=> 'notimpl',
 		'storage_name' => 'TESTCONF',
 		'chg_type' => 'chg-disk',
-		'chg_name' => 'chg-disk:/tmp/amanda/installchecks/Amanda_Changer_Disk_test',
+		'chg_name' => "chg-disk:$taperoot",
 		'op' => 'eject',
 		'changer_message' => '\'chg-disk\' does not support eject',
 		'message' => 'Storage \'TESTCONF\': \'chg-disk\' does not support eject' },
