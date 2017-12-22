@@ -158,7 +158,8 @@ sub new {
 	return Amanda::Changer->make_error("fatal", undef,
 			source_filename	=> __FILE__,
 			source_line	=> __LINE__,
-			severity	=> $Amanda::Message::MESSAGE,
+			module		=> ref $self,
+			severity	=> $Amanda::Message::ERROR,
 			code		=> 1100080,
 			class_name	=> $self->{class_name});
     }
@@ -182,7 +183,8 @@ sub new {
             return Amanda::Changer->make_error("fatal", undef,
 			source_filename	=> __FILE__,
 			source_line	=> __LINE__,
-			severity	=> $Amanda::Message::MESSAGE,
+			module		=> ref $self,
+			severity	=> $Amanda::Message::ERROR,
 			code		=> 1100081);
         }
         $self->{'drive2device'} = { '0' => $config->{'tapedev'} };
@@ -192,7 +194,8 @@ sub new {
             return Amanda::Changer->make_error("fatal", undef,
 			source_filename	=> __FILE__,
 			source_line	=> __LINE__,
-			severity	=> $Amanda::Message::MESSAGE,
+			module		=> ref $self,
+			severity	=> $Amanda::Message::ERROR,
 			code		=> 1100082);
         }
         for my $pval (@{$properties->{'tape-device'}->{'values'}}) {
@@ -201,7 +204,8 @@ sub new {
                 return Amanda::Changer->make_error("fatal", undef,
 			source_filename	=> __FILE__,
 			source_line	=> __LINE__,
-			severity	=> $Amanda::Message::MESSAGE,
+			module		=> ref $self,
+			severity	=> $Amanda::Message::ERROR,
 			code		=> 1100083,
 			prop_value	=> $pval);
             }
@@ -209,7 +213,8 @@ sub new {
                 return Amanda::Changer->make_error("fatal", undef,
 			source_filename	=> __FILE__,
 			source_line	=> __LINE__,
-			severity	=> $Amanda::Message::MESSAGE,
+			module		=> ref $self,
+			severity	=> $Amanda::Message::ERROR,
 			code		=> 1100084,
 			drive		=> $drive);
 	    }
@@ -225,7 +230,8 @@ sub new {
 	return Amanda::Changer->make_error("fatal", undef,
 			source_filename	=> __FILE__,
 			source_line	=> __LINE__,
-			severity	=> $Amanda::Message::MESSAGE,
+			module		=> ref $self,
+			severity	=> $Amanda::Message::ERROR,
 			code		=> 1100085);
     }
     $self->{'eject_before_unload'} = $ebu;
@@ -237,7 +243,8 @@ sub new {
 	return Amanda::Changer->make_error("fatal", undef,
 			source_filename	=> __FILE__,
 			source_line	=> __LINE__,
-			severity	=> $Amanda::Message::MESSAGE,
+			module		=> ref $self,
+			severity	=> $Amanda::Message::ERROR,
 			code		=> 1100087);
     }
     $self->{'fast_search'} = $fast_search;
@@ -249,7 +256,8 @@ sub new {
 	    return Amanda::Changer->make_error("fatal", undef,
 			source_filename	=> __FILE__,
 			source_line	=> __LINE__,
-			severity	=> $Amanda::Message::MESSAGE,
+			module		=> ref $self,
+			severity	=> $Amanda::Message::ERROR,
 			code		=> 1100088,
 			use_slots	=> $self->{use_slots});
 	}
@@ -262,6 +270,7 @@ sub new {
 	    return Amanda::Changer->make_error("fatal", undef,
 			source_filename	=> __FILE__,
 			source_line	=> __LINE__,
+			module		=> ref $self,
 			severity	=> $Amanda::Message::MESSAGE,
 			code		=> 1100089,
 			prop_value	=> $pval);
@@ -276,6 +285,7 @@ sub new {
 	return Amanda::Changer->make_error("fatal", undef,
 			source_filename	=> __FILE__,
 			source_line	=> __LINE__,
+			module		=> ref $self,
 			severity	=> $Amanda::Message::MESSAGE,
 			code		=> 1100090);
     }
@@ -288,6 +298,7 @@ sub new {
 	    return Amanda::Changer->make_error("fatal", undef,
 			source_filename	=> __FILE__,
 			source_line	=> __LINE__,
+			module		=> ref $self,
 			severity	=> $Amanda::Message::MESSAGE,
 			code		=> 1100091,
 			prop_name	=> 'load-poll');
@@ -309,6 +320,7 @@ sub new {
 	    return Amanda::Changer->make_error("fatal", undef,
 			source_filename	=> __FILE__,
 			source_line	=> __LINE__,
+			module		=> ref $self,
 			severity	=> $Amanda::Message::MESSAGE,
 			code		=> 1100092,
 			prop_value	=> $propval);
@@ -332,6 +344,7 @@ sub new {
 	    return Amanda::Changer->make_error("fatal", undef,
 			source_filename	=> __FILE__,
 			source_line	=> __LINE__,
+			module		=> ref $self,
 			severity	=> $Amanda::Message::MESSAGE,
 			code		=> 1100091,
 			prop_name	=> $propname);
@@ -343,6 +356,7 @@ sub new {
 	    return Amanda::Changer->make_error("fatal", undef,
 			source_filename	=> __FILE__,
 			source_line	=> __LINE__,
+			module		=> ref $self,
 			severity	=> $Amanda::Message::MESSAGE,
 			code		=> 1100093,
 			prop_name	=> $propname,
@@ -362,6 +376,7 @@ sub new {
 	return Amanda::Changer->make_error("fatal", undef,
 			source_filename	=> __FILE__,
 			source_line	=> __LINE__,
+			module		=> ref $self,
 			severity	=> $Amanda::Message::MESSAGE,
 			code		=> 1100094);
     }
@@ -389,9 +404,10 @@ sub _get_current {
     my %params = @_;
     my $state = $params{'state'};
 
-    my $storage = $self->{'storage'}->{'storage_name'};
-    my $changer = $self->{'chg_name'};
-    my $current_slot = $state->{'current_slot'}->{'config'}->{get_config_name()}->{'storage'}->{$storage}->{'changer'}->{$changer};
+    my $storage_name = $self->{'storage'}->{'storage_name'};
+    $storage_name = get_config_name() if !defined $storage_name;
+    my $changer_name = $self->{'chg_name'};
+    my $current_slot = $state->{'current_slot'}->{'config'}->{get_config_name()}->{'storage'}->{$storage_name}->{'changer'}->{$changer_name};
     return $current_slot if defined $current_slot;
     return $state->{'current_slot'}{get_config_name()};
 }
@@ -402,9 +418,10 @@ sub _set_current {
     my $state = $params{'state'};
     my $slot = $params{'slot'};
 
-    my $storage = $self->{'storage'}->{'storage_name'};
-    my $changer = $self->{'chg_name'};
-    $state->{'current_slot'}->{'config'}->{get_config_name()}->{'storage'}->{$storage}->{'changer'}->{$changer} = $slot;
+    my $storage_name = $self->{'storage'}->{'storage_name'};
+    $storage_name = get_config_name() if !defined $storage_name;
+    my $changer_name = $self->{'chg_name'};
+    $state->{'current_slot'}->{'config'}->{get_config_name()}->{'storage'}->{$storage_name}->{'changer'}->{$changer_name} = $slot;
     #$state->{'current_slot'}{get_config_name()} = $slot;
 }
 
@@ -447,6 +464,7 @@ sub load_unlocked {
 		return $self->make_error("failed", $params{'res_cb'},
 			source_filename	=> __FILE__,
 			source_line	=> __LINE__,
+			module		=> ref $self,
 			severity	=> $Amanda::Message::MESSAGE,
 			code		=> 1100095,
 			reason		=> "invalid",
@@ -476,6 +494,7 @@ sub load_unlocked {
 		    return $self->make_error("failed", $params{'res_cb'},
 			source_filename	=> __FILE__,
 			source_line	=> __LINE__,
+			module		=> ref $self,
 			severity	=> $Amanda::Message::MESSAGE,
 			code		=> 1100096,
 			reason		=> "invalid");
@@ -490,6 +509,7 @@ sub load_unlocked {
 		    return $self->make_error("failed", $params{'res_cb'},
 			source_filename	=> __FILE__,
 			source_line	=> __LINE__,
+			module		=> ref $self,
 			severity	=> $Amanda::Message::MESSAGE,
 			code		=> 1100096,
 			reason		=> "invalid");
@@ -499,6 +519,7 @@ sub load_unlocked {
 		return $self->make_error("failed", $params{'res_cb'},
 			source_filename	=> __FILE__,
 			source_line	=> __LINE__,
+			module		=> ref $self,
 			severity	=> $Amanda::Message::MESSAGE,
 			code		=> 1100031,
 			reason		=> "invalid",
@@ -513,6 +534,7 @@ sub load_unlocked {
                 return $self->make_error("failed", $params{'res_cb'},
 			source_filename	=> __FILE__,
 			source_line	=> __LINE__,
+			module		=> ref $self,
 			severity	=> $Amanda::Message::MESSAGE,
 			code		=> 1100095,
 			reason		=> "invalid",
@@ -532,6 +554,7 @@ sub load_unlocked {
                 return $self->make_error("failed", $params{'res_cb'},
 			source_filename	=> __FILE__,
 			source_line	=> __LINE__,
+			module		=> ref $self,
 			severity	=> $Amanda::Message::MESSAGE,
 			code		=> 1100095,
 			reason		=> "notfound",
@@ -542,6 +565,7 @@ sub load_unlocked {
             return $self->make_error("failed", $params{'res_cb'},
 			source_filename	=> __FILE__,
 			source_line	=> __LINE__,
+			module		=> ref $self,
 			severity	=> $Amanda::Message::MESSAGE,
 			code		=> 1100099,
 			reason		=> "invalid");
@@ -551,6 +575,7 @@ sub load_unlocked {
             return $self->make_error("failed", $params{'res_cb'},
 			source_filename	=> __FILE__,
 			source_line	=> __LINE__,
+			module		=> ref $self,
 			severity	=> $Amanda::Message::MESSAGE,
 			code		=> 1100095,
 			reason		=> "invalid",
@@ -569,6 +594,7 @@ sub load_unlocked {
 		    return $self->make_error("failed", $params{'res_cb'},
 			source_filename	=> __FILE__,
 			source_line	=> __LINE__,
+			module		=> ref $self,
 			severity	=> $Amanda::Message::MESSAGE,
 			code		=> 1100032,
 			reason		=> "notfound");
@@ -577,6 +603,7 @@ sub load_unlocked {
 	    return $self->make_error("failed", $params{'res_cb'},
 			source_filename	=> __FILE__,
 			source_line	=> __LINE__,
+			module		=> ref $self,
 			severity	=> $Amanda::Message::MESSAGE,
 			code		=> 1100032,
 			reason		=> "notfound");
@@ -586,6 +613,7 @@ sub load_unlocked {
 		return $self->make_error("failed", $params{'res_cb'},
 			source_filename	=> __FILE__,
 			source_line	=> __LINE__,
+			module		=> ref $self,
 			severity	=> $Amanda::Message::MESSAGE,
 			code		=> 1100100,
 			reason		=> "invalid",
@@ -596,6 +624,7 @@ sub load_unlocked {
 		return $self->make_error("failed", $params{'res_cb'},
 			source_filename	=> __FILE__,
 			source_line	=> __LINE__,
+			module		=> ref $self,
 			severity	=> $Amanda::Message::MESSAGE,
 			code		=> 1100101,
 			reason		=> "invalid",
@@ -616,6 +645,7 @@ sub load_unlocked {
 	        return $self->make_error("failed", $params{'res_cb'},
 			    source_filename => __FILE__,
 			    source_line     => __LINE__,
+			    module		=> ref $self,
 			    severity        => $Amanda::Message::MESSAGE,
 			    code	    => 1100072,
 			    reason => "notfound");
@@ -623,6 +653,7 @@ sub load_unlocked {
 	        return $self->make_error("failed", $params{'res_cb'},
 			    source_filename => __FILE__,
 			    source_line     => __LINE__,
+			    module		=> ref $self,
 			    severity        => $Amanda::Message::MESSAGE,
 			    code	    => 1100032,
 			    reason => "notfound");
@@ -633,6 +664,7 @@ sub load_unlocked {
 	    return $self->make_error("failed", $params{'res_cb'},
 			source_filename	=> __FILE__,
 			source_line	=> __LINE__,
+			module		=> ref $self,
 			severity	=> $Amanda::Message::MESSAGE,
 			code		=> 1100032,
 			reason		=> "empty",
@@ -657,6 +689,7 @@ sub load_unlocked {
 		return $self->make_error("failed", $params{'res_cb'},
 			source_filename	=> __FILE__,
 			source_line	=> __LINE__,
+			module		=> ref $self,
 			severity	=> $Amanda::Message::MESSAGE,
 			code		=> 1100102,
 			reason		=> "volinuse",
@@ -671,6 +704,7 @@ sub load_unlocked {
 			# unloaded any time soon -- it's not actually in use, just inaccessible
 			source_filename	=> __FILE__,
 			source_line	=> __LINE__,
+			module		=> ref $self,
 			severity	=> $Amanda::Message::MESSAGE,
 			code		=> 1100103,
 			reason		=> "invalid",
@@ -735,6 +769,7 @@ sub load_unlocked {
             return $self->make_error("failed", $params{'res_cb'},
 			source_filename	=> __FILE__,
 			source_line	=> __LINE__,
+			module		=> ref $self,
 			severity	=> $Amanda::Message::MESSAGE,
 			code		=> 1100104,
 			reason		=> "driveinuse");
@@ -799,6 +834,7 @@ sub load_unlocked {
             return $self->make_error("failed", $params{'res_cb'},
 			source_filename	=> __FILE__,
 			source_line	=> __LINE__,
+			module		=> ref $self,
 			severity	=> $Amanda::Message::MESSAGE,
 			code		=> 1100105,
 			reason		=> "unknown",
@@ -893,6 +929,7 @@ sub load_unlocked {
 	    return $self->make_error("failed", $params{'res_cb'},
 			source_filename	=> __FILE__,
 			source_line	=> __LINE__,
+			module		=> ref $self,
 			severity	=> $Amanda::Message::MESSAGE,
 			code		=> 1100106,
 			reason		=> "notfound",
@@ -925,6 +962,7 @@ sub load_unlocked {
 		return $self->make_error("failed", $params{'res_cb'},
 			source_filename	=> __FILE__,
 			source_line	=> __LINE__,
+			module		=> ref $self,
 			severity	=> $Amanda::Message::MESSAGE,
 			code		=> 1100107,
 			reason		=> "notfound",
@@ -973,6 +1011,7 @@ sub load_unlocked {
 		return $self->make_error("failed", $params{'res_cb'},
 			source_filename	=> __FILE__,
 			source_line	=> __LINE__,
+			module		=> ref $self,
 			severity	=> $Amanda::Message::MESSAGE,
 			code		=> 1100108,
 			reason		=> "notfound",
@@ -1026,6 +1065,7 @@ sub info_key_vendor_string {
 	    return $self->make_error("fatal", $params{'info_cb'},
 			source_filename	=> __FILE__,
 			source_line	=> __LINE__,
+			module		=> ref $self,
 			severity	=> $Amanda::Message::MESSAGE,
 			code		=> 1100109,
 			err		=> $err,
@@ -1090,6 +1130,7 @@ sub get_interface { # (overridden by subclasses)
 	    return Amanda::Changer->make_error("fatal", undef,
 			source_filename	=> __FILE__,
 			source_line	=> __LINE__,
+			module		=> ref $self,
 			severity	=> $Amanda::Message::MESSAGE,
 			code		=> 1100110);
 	}
@@ -1102,6 +1143,7 @@ sub get_interface { # (overridden by subclasses)
 	return Amanda::Changer->make_error("fatal", undef,
 			source_filename	=> __FILE__,
 			source_line	=> __LINE__,
+			module		=> ref $self,
 			severity	=> $Amanda::Message::MESSAGE,
 			code		=> 1100111,
 	    message => "no default value for property MTX");
@@ -1120,6 +1162,7 @@ sub get_device { # (overridden by subclasses)
 	return Amanda::Changer->make_error("fatal", undef,
 			source_filename	=> __FILE__,
 			source_line	=> __LINE__,
+			module		=> ref $self,
 			severity	=> $Amanda::Message::MESSAGE,
 			code		=> 1100038,
 			device_name	=> $device_name,
@@ -1239,6 +1282,7 @@ sub _release_unlocked {
 	return $self->make_error("fatal", $params{'finished_cb'},
 			source_filename	=> __FILE__,
 			source_line	=> __LINE__,
+			module		=> ref $self,
 			severity	=> $Amanda::Message::MESSAGE,
 			code		=> 1100112);
     }
@@ -1310,6 +1354,7 @@ sub eject_unlocked {
 		return $self->make_error("failed", $params{'finished_cb'},
 			source_filename	=> __FILE__,
 			source_line	=> __LINE__,
+			module		=> ref $self,
 			severity	=> $Amanda::Message::MESSAGE,
 			code		=> 1100113,
 			reason		=> "invalid");
@@ -1323,6 +1368,7 @@ sub eject_unlocked {
 	    return $self->make_error("failed", $params{'finished_cb'},
 			source_filename	=> __FILE__,
 			source_line	=> __LINE__,
+			module		=> ref $self,
 			severity	=> $Amanda::Message::MESSAGE,
 			code		=> 1100114,
 			reason		=> "invalid",
@@ -1335,6 +1381,7 @@ sub eject_unlocked {
 	    return $self->make_error("failed", $params{'finished_cb'},
 			source_filename	=> __FILE__,
 			source_line	=> __LINE__,
+			module		=> ref $self,
 			severity	=> $Amanda::Message::MESSAGE,
 			code		=> 1100115,
 			reason		=> "invalid",
@@ -1347,6 +1394,7 @@ sub eject_unlocked {
 	    return $self->make_error("failed", $params{'finished_cb'},
 			source_filename	=> __FILE__,
 			source_line	=> __LINE__,
+			module		=> ref $self,
 			severity	=> $Amanda::Message::MESSAGE,
 			code		=> 1100116,
 			reason		=> "volinuse",
@@ -1357,6 +1405,7 @@ sub eject_unlocked {
 	    return $self->make_error("failed", $params{'finished_cb'},
 			source_filename	=> __FILE__,
 			source_line	=> __LINE__,
+			module		=> ref $self,
 			severity	=> $Amanda::Message::MESSAGE,
 			code		=> 1100117,
 			reason		=> "invalid",
@@ -1385,6 +1434,7 @@ sub eject_unlocked {
 	    return $self->make_error("failed", $params{'finished_cb'},
 			source_filename	=> __FILE__,
 			source_line	=> __LINE__,
+			module		=> ref $self,
 			severity	=> $Amanda::Message::MESSAGE,
 			code		=> 1100118,
 			reason		=> "unknown",
@@ -1415,6 +1465,7 @@ sub eject_unlocked {
             return $self->make_error("failed", $params{'finished_cb'},
 			source_filename	=> __FILE__,
 			source_line	=> __LINE__,
+			module		=> ref $self,
 			severity	=> $Amanda::Message::MESSAGE,
 			code		=> 1100109,
 			reason		=> "unknown",
@@ -1472,6 +1523,7 @@ sub update_unlocked {
 		return $self->make_error("failed", $params{'finished_cb'},
 			source_filename	=> __FILE__,
 			source_line	=> __LINE__,
+			module		=> ref $self,
 			severity	=> $Amanda::Message::MESSAGE,
 			code		=> 1100119,
 			reason		=> "unknown",
@@ -1480,6 +1532,7 @@ sub update_unlocked {
 		return $self->make_error("failed", $params{'finished_cb'},
 			source_filename	=> __FILE__,
 			source_line	=> __LINE__,
+			module		=> ref $self,
 			severity	=> $Amanda::Message::MESSAGE,
 			code		=> 1100120,
 			reason		=> "unknown",
@@ -1489,6 +1542,7 @@ sub update_unlocked {
 		return $self->make_error("failed", $params{'finished_cb'},
 			source_filename	=> __FILE__,
 			source_line	=> __LINE__,
+			module		=> ref $self,
 			severity	=> $Amanda::Message::MESSAGE,
 			code		=> 1100121,
 			reason		=> "unknown",
@@ -1497,6 +1551,7 @@ sub update_unlocked {
 		return $self->make_error("failed", $params{'finished_cb'},
 			source_filename	=> __FILE__,
 			source_line	=> __LINE__,
+			module		=> ref $self,
 			severity	=> $Amanda::Message::MESSAGE,
 			code		=> 1100122,
 			reason		=> "unknown",
@@ -1506,6 +1561,7 @@ sub update_unlocked {
 	    $user_msg_fn->(Amanda::Changer::Message->new(
 			source_filename => __FILE__,
 			source_line     => __LINE__,
+			module		=> ref $self,
 			code  => 1100020,
 			severity => $Amanda::Message::INFO,
 			slot  => $slot,
@@ -1550,6 +1606,7 @@ sub update_unlocked {
 	    $user_msg_fn->(Amanda::Changer::Message->new(
 			source_filename => __FILE__,
 			source_line     => __LINE__,
+			module		=> ref $self,
 			code  => 1100068,
 			severity => $Amanda::Message::ERROR,
 			slot => $slot));
@@ -1579,6 +1636,7 @@ sub update_unlocked {
 			$user_msg_fn->(Amanda::Changer::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
+				module		=> ref $self,
 				code  => 1100070,
 				severity => $Amanda::Message::SUCCESS,
 				reason => "unknown",
@@ -1596,6 +1654,7 @@ sub update_unlocked {
 			$user_msg_fn->(Amanda::Changer::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
+				module		=> ref $self,
 				code  => ($range =~ /\-/ ? 1100069 : 1100068),
 				severity => $Amanda::Message::ERROR,
 				slot => $range));
@@ -1629,6 +1688,7 @@ sub update_unlocked {
 	$user_msg_fn->(Amanda::Changer::Message->new(
 			source_filename => __FILE__,
 			source_line     => __LINE__,
+			module		=> ref $self,
 			code  => 1100021,
 			severity => $Amanda::Message::SUCCESS,
 			slot  => $slot));
@@ -1654,6 +1714,7 @@ sub update_unlocked {
 	$user_msg_fn->(Amanda::Changer::Message->new(
 			source_filename => __FILE__,
 			source_line     => __LINE__,
+			module		=> ref $self,
 			code => 1100019,
 			severity => $Amanda::Message::INFO,
 			slot => $slot));
@@ -1680,6 +1741,7 @@ sub update_unlocked {
 	    $user_msg_fn->(Amanda::Changer::Message->new(
 			source_filename => __FILE__,
 			source_line     => __LINE__,
+			module		=> ref $self,
 			code  => 1100020,
 			severity => $Amanda::Message::SUCCESS,
 			slot  => $slot,
@@ -1689,6 +1751,7 @@ sub update_unlocked {
 	    $user_msg_fn->(Amanda::Changer::Message->new(
 			source_filename => __FILE__,
 			source_line     => __LINE__,
+			module		=> ref $self,
 			code  => 1100023,
 			severity => $Amanda::Message::SUCCESS,
 			slot  => $slot,
@@ -1790,6 +1853,7 @@ sub move_unlocked {
 	    return $self->make_error("failed", $params{'finished_cb'},
 			source_filename	=> __FILE__,
 			source_line	=> __LINE__,
+			module		=> ref $self,
 			code		=> 1100095,
 			severity	=> $Amanda::Message::INFO,
 			reason		=> "invalid",
@@ -1801,6 +1865,7 @@ sub move_unlocked {
 	return $self->make_error("failed", $params{'finished_cb'},
 			source_filename	=> __FILE__,
 			source_line	=> __LINE__,
+			module		=> ref $self,
 			code		=> 1100121,
 			severity	=> $Amanda::Message::INFO,
 			reason		=> "invalid",
@@ -1814,6 +1879,7 @@ sub move_unlocked {
 	    return $self->make_error("failed", $params{'finished_cb'},
 			source_filename	=> __FILE__,
 			source_line	=> __LINE__,
+			module		=> ref $self,
 			code		=> 1100123,
 			severity	=> $Amanda::Message::INFO,
 			reason		=> "invalid",
@@ -1825,6 +1891,7 @@ sub move_unlocked {
 	return $self->make_error("failed", $params{'finished_cb'},
 			source_filename	=> __FILE__,
 			source_line	=> __LINE__,
+			module		=> ref $self,
 			code		=> 1100124,
 			severity	=> $Amanda::Message::INFO,
 			reason		=> "invalid",
@@ -1956,6 +2023,7 @@ sub verify_unlocked {
 	    return $self->make_error("failed", $params{'finished_cb'},
 			source_filename	=> __FILE__,
 			source_line	=> __LINE__,
+			module		=> ref $self,
 			code		=> 1100125,
 			severity	=> $Amanda::Message::INFO,
 			reason		=> "invalid",
@@ -2067,6 +2135,7 @@ sub verify_unlocked {
 	    push @results, Amanda::Changer::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
+				module		=> ref $self,
 				code => 1100009,
 				severity => $Amanda::Message::WARNING,
 				drive => $drive,
@@ -2076,6 +2145,7 @@ sub verify_unlocked {
 	    push @results, Amanda::Changer::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
+				module		=> ref $self,
 				code => 1100025,
 				severity => $Amanda::Message::INFO,
 				drive => $drive,
@@ -2086,6 +2156,7 @@ sub verify_unlocked {
 	    push @results, Amanda::Changer::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
+				module		=> ref $self,
 				code => 1100006,
 				severity => $Amanda::Message::INFO,
 				drive => $drive,
@@ -2097,6 +2168,7 @@ sub verify_unlocked {
 	    push @results, Amanda::Changer::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
+				module		=> ref $self,
 				code => 1100007,
 				severity => $Amanda::Message::INFO,
 				drive => $drive,
@@ -2146,6 +2218,7 @@ sub verify_unlocked {
 		push @results, Amanda::Changer::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
+				module		=> ref $self,
 				code => 1100024,
 				severity => $Amanda::Message::WARNING,
 				drive => $drive);
@@ -2159,6 +2232,7 @@ sub verify_unlocked {
 	    push @results, Amanda::Changer::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
+				module		=> ref $self,
 				code => 1100008,
 				severity => $Amanda::Message::INFO,
 				tape_devices => $tape_devices);
@@ -2166,6 +2240,7 @@ sub verify_unlocked {
 	    push @results, Amanda::Changer::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
+				module		=> ref $self,
 				code => 1100065,
 				severity => $Amanda::Message::ERROR);
 	}
@@ -2364,6 +2439,7 @@ sub _get_state {
 	    return $self->make_error("failed", $params{'finished_get_state_cb'},
 			source_filename	=> __FILE__,
 			source_line	=> __LINE__,
+			module		=> ref $self,
 			code		=> 1100109,
 			severity	=> $Amanda::Message::INFO,
 			reason		=> "invalid",
@@ -2777,8 +2853,9 @@ sub new {
 	return Amanda::Changer->make_error("fatal", undef,
 			source_filename	=> __FILE__,
 			source_line	=> __LINE__,
+			module		=> $class,
 			code		=> 1100126,
-			severity	=> $Amanda::Message::INFO,
+			severity	=> $Amanda::Message::ERROR,
 			device_name	=> $device_name);
     }
 

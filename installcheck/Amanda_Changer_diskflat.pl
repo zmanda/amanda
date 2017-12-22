@@ -18,7 +18,7 @@
 # Contact information: Carbonite Inc., 756 N Pastoria Ave
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 19;
+use Test::More tests => 24;
 use File::Path;
 use strict;
 use warnings;
@@ -27,6 +27,7 @@ use lib '@amperldir@';
 use Installcheck;
 use Installcheck::Config;
 use Installcheck::Changer;
+use Installcheck::Rest;
 use Amanda::Paths;
 use Amanda::Device qw( :constants );
 use Amanda::Debug;
@@ -42,7 +43,8 @@ Installcheck::log_test_output();
 # and disable Debug's die() and warn() overrides
 Amanda::Debug::disable_die_override();
 
-my $taperoot = "$Installcheck::TMP/Amanda_Changer_Diskflat_test";
+my $rtaperoot = "$Installcheck::TMP/Amanda_Changer_Diskflat_test";
+my $taperoot = "$rtaperoot/flat";
 
 sub reset_taperoot {
     my ($nslots) = @_;
@@ -92,14 +94,110 @@ close AA;
 my ($tl, $message) = Amanda::Tapelist->new($tlf);
 reset_taperoot(5);
 
-File::Path::rmtree($taperoot);
+File::Path::rmtree($rtaperoot);
 # first try an error
 my $chg = Amanda::Changer->new("flat",
 			       tapelist => $tl);
-chg_err_like($chg,
-    { message => qr/directory '.*' does not exist/,
-      type => 'fatal' },
-    "detects nonexistent directory");
+$chg = { %$chg }; #unbless
+is_deeply(Installcheck::Rest::remove_source_line($chg),
+      { 'source_filename' => "$amperldir/Amanda/Changer/diskflat.pm",
+	'process' => 'Amanda_Changer_diskflat',
+	'running_on' => 'amanda-server',
+	'component' => 'changer',
+	'module' => 'Amanda::Changer::diskflat',
+	'code' => 1100039,
+	'severity' => $Amanda::Message::ERROR,
+	'type' => 'fatal',
+	'storage_name' => 'TESTCONF',
+	'changer_message' => "directory '$taperoot' does not exist",
+	'dir' => $taperoot,
+	'message' => "Storage 'TESTCONF': directory '$taperoot' does not exist" },
+    "detects nonexistent directory") or diag(Data::Dumper::Dumper($chg));
+
+mkpath($rtaperoot);
+$chg = Amanda::Changer->new("flat",
+			    tapelist => $tl,
+			    no_validate => 1);
+rmtree($rtaperoot);
+sub test_create {
+    my ($finished_cb) = @_;
+    my $steps = define_steps
+        cb_ref => \$finished_cb;
+
+    step one => sub {
+	$chg->create(finished_cb => make_cb($finished_cb));
+    }
+}
+
+test_create( sub { my ($err, $rv) = @_;
+		   is($rv, undef, "create return undef");
+		   $err = { %$err }; #unbless
+		   is_deeply(Installcheck::Rest::remove_source_line($err),
+		      { 'source_filename' => "$amperldir/Amanda/Changer/diskflat.pm",
+			'process' => 'Amanda_Changer_diskflat',
+			'running_on' => 'amanda-server',
+			'component' => 'changer',
+			'module' => 'Amanda::Changer::diskflat',
+			'type' => 'failed',
+			'reason' => 'unknown',
+			'code' => 1100026,
+			'severity' => $Amanda::Message::ERROR,
+			'storage_name' => 'TESTCONF',
+			'chg_name' => 'flat',
+			'dir' => $taperoot,
+			'error' => 'No such file or directory',
+			'changer_message' => "Can't create vtape root '$taperoot': No such file or directory",
+			'message' => "Storage 'TESTCONF': Can't create vtape root '$taperoot': No such file or directory" },
+		    "create succeed") or diag(Data::Dumper::Dumper($err));
+		   Amanda::MainLoop::quit();
+		 });
+
+
+Amanda::MainLoop::run();
+mkpath($rtaperoot);
+die($chg) if $chg->isa("Amanda::Changer::Error");
+test_create( sub { my ($err, $rv) = @_;
+		   is($err, undef, "create return undef");
+		   $rv = { %$rv }; #unbless
+		   is_deeply(Installcheck::Rest::remove_source_line($rv),
+		      { 'source_filename' => "$amperldir/Amanda/Changer/diskflat.pm",
+			'process' => 'Amanda_Changer_diskflat',
+			'running_on' => 'amanda-server',
+			'component' => 'changer',
+			'module' => 'Amanda::Changer::diskflat',
+			'code' => 1100027,
+			'severity' => $Amanda::Message::SUCCESS,
+			'storage_name' => 'TESTCONF',
+			'chg_name' => 'flat',
+			'dir' => $taperoot,
+			'changer_message' => "Created vtape root '$taperoot'",
+			'message' => "Storage 'TESTCONF': Created vtape root '$taperoot'" },
+		    "create succeed") or diag(Data::Dumper::Dumper($rv));
+		   Amanda::MainLoop::quit();
+		 });
+Amanda::MainLoop::run();
+
+reset_taperoot(5);
+
+File::Path::rmtree($taperoot);
+# first try an error
+$chg = Amanda::Changer->new("flat",
+			       tapelist => $tl);
+$chg = { %$chg }; #unbless
+is_deeply(Installcheck::Rest::remove_source_line($chg),
+      { 'source_filename' => "$amperldir/Amanda/Changer/diskflat.pm",
+	'process' => 'Amanda_Changer_diskflat',
+	'running_on' => 'amanda-server',
+	'component' => 'changer',
+	'module' => 'Amanda::Changer::diskflat',
+	'code' => 1100039,
+	'severity' => $Amanda::Message::ERROR,
+	'type' => 'fatal',
+	'storage_name' => 'TESTCONF',
+	'changer_message' => "directory '$taperoot' does not exist",
+	'dir' => $taperoot,
+	'message' => "Storage 'TESTCONF': directory '$taperoot' does not exist" },
+    "detects nonexistent directory") or diag(Data::Dumper::Dumper($chg));
 
 reset_taperoot(5);
 $chg = Amanda::Changer->new("flat",
@@ -145,11 +243,26 @@ sub test_reserved {
 	$chg->load(slot => 3,
 		   res_cb => sub {
 	    my ($err, $reservation) = @_;
-	    chg_err_like($err,
-		{ message => qr/Slot 3 is already in use by drive/,
-		  type => 'failed',
-		  reason => 'volinuse' },
-		"error when requesting already-reserved slot");
+	    $err = { %$err }; #unbless
+	    my $pid = $err->{'pid'};
+	    my $drive = $err->{'drive'};
+	    is_deeply(Installcheck::Rest::remove_source_line($err),
+	      { 'source_filename' => "$amperldir/Amanda/Changer/diskflat.pm",
+		'process' => 'Amanda_Changer_diskflat',
+		'running_on' => 'amanda-server',
+		'component' => 'changer',
+		'module' => 'Amanda::Changer::diskflat',
+		'code' => 1100034,
+		'severity' => $Amanda::Message::ERROR,
+		'type' => 'failed',
+		'reason'=> 'volinuse',
+		'storage_name' => 'TESTCONF',
+		'slot' => 3,
+		'drive' => $drive,
+		'pid'=> $pid,
+		'changer_message' => "Slot 3 is already in use by drive '$drive' and process '$pid'",
+		'message' => "Storage 'TESTCONF': Slot 3 is already in use by drive '$drive' and process '$pid'" },
+		"error when requesting already-reserved slot") || diag(Data::Dumper::Dumper($err));
 	    $steps->{'release'}->();
 	});
     };
@@ -344,9 +457,24 @@ Amanda::MainLoop::run();
     my $try_eject = make_cb('try_eject' => sub {
         $chg->eject(finished_cb => make_cb(sub {
 	    my ($err, $res) = @_;
-	    chg_err_like($err,
-		{ type => 'failed', reason => 'notimpl' },
-		"eject returns a failed/notimpl error");
+	    $err = { %$err }; #unbless
+	    is_deeply(Installcheck::Rest::remove_source_line($err),
+	      { 'source_filename' => "$amperldir/Amanda/Changer.pm",
+		'process' => 'Amanda_Changer_diskflat',
+		'running_on' => 'amanda-server',
+		'component' => 'changer',
+		'module' => 'Amanda::Changer::diskflat',
+		'code' => 1100048,
+		'severity' => $Amanda::Message::ERROR,
+		'type' => 'failed',
+		'reason'=> 'notimpl',
+		'storage_name' => 'TESTCONF',
+		'chg_type' => 'chg-diskflat',
+		'chg_name' => 'flat',
+		'op' => 'eject',
+		'changer_message' => '\'chg-diskflat\' does not support eject',
+		'message' => 'Storage \'TESTCONF\': \'chg-diskflat\' does not support eject' },
+		"eject returns a failed/notimpl error") || diag(Data::Dumper::Dumper($err));
 
 	    Amanda::MainLoop::quit();
 	}));

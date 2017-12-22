@@ -91,8 +91,9 @@ sub new {
 	return Amanda::Changer->make_error("fatal", undef,
 		source_filename	=> __FILE__,
 		source_line	=> __LINE__,
+		module		=> $class,
 		code		=> 1100028,
-		severity	=> $Amanda::Message::Message);
+		severity	=> $Amanda::Message::MESSAGE);
     }
 
     my $properties = $config->{'properties'};
@@ -124,8 +125,9 @@ sub new {
 	return Amanda::Changer->make_error("fatal", undef,
 		source_filename	=> __FILE__,
 		source_line	=> __LINE__,
+		module		=> $class,
 		code		=> 1100028,
-		severity	=> $Amanda::Message::Message,
+		severity	=> $Amanda::Message::MESSAGE,
 		reason		=> "invalid",
 		changer_name	=> $config->{name});
     }
@@ -163,8 +165,9 @@ sub create {
 	return $self->make_error("failed", $params{'finished_cb'},
 		source_filename	=> __FILE__,
 		source_line	=> __LINE__,
+		module		=> ref $self,
 		code		=> 1100038,
-		severity	=> $Amanda::Message::Message,
+		severity	=> $Amanda::Message::MESSAGE,
 		reason		=> "device",
 		device_name	=> $slot_name,
 		device_error	=> $device->error_or_status());
@@ -177,8 +180,9 @@ sub create {
 	return $self->make_error("failed", $params{'finished_cb'},
 		source_filename	=> __FILE__,
 		source_line	=> __LINE__,
+		module		=> ref $self,
 		code		=> 1100075,
-		severity	=> $Amanda::Message::Message,
+		severity	=> $Amanda::Message::MESSAGE,
 		reason		=> "device",
 		device_name	=> $slot_name,
 		device_error	=> $device->error_or_status());
@@ -186,6 +190,7 @@ sub create {
     $params{'finished_cb'}->(undef, Amanda::Changer::Message->new(
 		source_filename => __FILE__,
 		source_line     => __LINE__,
+		module		=> ref $self,
 		code    => 1100028,
 		severity => $Amanda::Message::SUCCESS));
 }
@@ -282,8 +287,9 @@ sub eject {
 	    return $self->make_error("failed", $finished_cb,
 		source_filename	=> __FILE__,
 		source_line	=> __LINE__,
+		module		=> ref $self,
 		code		=> 1100068,
-		severity	=> $Amanda::Message::Message,
+		severity	=> $Amanda::Message::MESSAGE,
 		reason		=> "invalid",
 		slot		=> $drive);
 	}
@@ -294,8 +300,9 @@ sub eject {
 	    return $self->make_error("failed", $finished_cb,
 		source_filename	=> __FILE__,
 		source_line	=> __LINE__,
+		module		=> ref $self,
 		code		=> 1100038,
-		severity	=> $Amanda::Message::Message,
+		severity	=> $Amanda::Message::MESSAGE,
 		reason		=> "device",
 		device_name	=> $self->{slot_name}->{$drive},
 		device_error	=> $device->error_or_status);
@@ -308,8 +315,9 @@ sub eject {
 	    return $self->make_error("failed", $finished_cb,
 		source_filename	=> __FILE__,
 		source_line	=> __LINE__,
+		module		=> ref $self,
 		code		=> 1100038,
-		severity	=> $Amanda::Message::Message,
+		severity	=> $Amanda::Message::MESSAGE,
 		reason		=> "invalid",
 		device_name	=> $self->{slot_name}->{$drive},
 		device_error	=> $device->error_or_status);
@@ -356,6 +364,7 @@ sub update {
 		$user_msg_fn->(Amanda::Changer::Message->new(
 			source_filename => __FILE__,
 			source_line     => __LINE__,
+			module		=> ref $self,
 			code  => 1100067,
 			severity => $Amanda::Message::ERROR,
 			reason => "unknown",
@@ -366,6 +375,7 @@ sub update {
 	    $user_msg_fn->(Amanda::Changer::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
+				module		=> ref $self,
 				code  => 1100020,
 				severity => $Amanda::Message::INFO,
 				slot  => $slot,
@@ -396,6 +406,7 @@ sub update {
 	    $user_msg_fn->(Amanda::Changer::Message->new(
 			source_filename => __FILE__,
 			source_line     => __LINE__,
+			module		=> ref $self,
 			code  => 1100068,
 			severity => $Amanda::Message::ERROR,
 			slot => $slot));
@@ -426,6 +437,7 @@ sub update {
 			$user_msg_fn->(Amanda::Changer::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
+				module		=> ref $self,
 				code  => 1100070,
 				severity => $Amanda::Message::SUCCESS,
 				reason => "unknown",
@@ -443,6 +455,7 @@ sub update {
 			$user_msg_fn->(Amanda::Changer::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
+				module		=> ref $self,
 				code  => ($range =~ /\-/ ? 1100069 : 1100068),
 				severity => $Amanda::Message::ERROR,
 				slot => $range));
@@ -471,8 +484,9 @@ sub update {
 	     $user_msg_fn->(Amanda::Changer::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
+				module		=> ref $self,
 				code  => 1100022,
-				severity => $Amanda::Message::WARNING,
+				severity => $Amanda::Message::MESSAGE,
 				slot  => $slot,
 				pid   => $pid));
 	    return $steps->{'update_slot'}->();
@@ -482,6 +496,7 @@ sub update {
 	    $user_msg_fn->(Amanda::Changer::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
+				module		=> ref $self,
 				code  => 1100021,
 				severity => $Amanda::Message::SUCCESS,
 				slot  => $slot));
@@ -492,6 +507,7 @@ sub update {
 	    $user_msg_fn->(Amanda::Changer::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
+				module		=> ref $self,
 				code => 1100019,
 				severity => $Amanda::Message::INFO,
 				slot => $slot));
@@ -515,6 +531,7 @@ sub update {
 	    $user_msg_fn->(Amanda::Changer::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
+				module		=> ref $self,
 				code  => 1100020,
 				severity => $Amanda::Message::SUCCESS,
 				slot  => $slot,
@@ -524,6 +541,7 @@ sub update {
 	    $user_msg_fn->(Amanda::Changer::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
+				module		=> ref $self,
 				code  => 1100023,
 				severity => $Amanda::Message::SUCCESS,
 				slot  => $slot,
@@ -638,8 +656,9 @@ sub _load_by_slot {
 	    return $self->make_error("failed", $params{'res_cb'},
 		source_filename	=> __FILE__,
 		source_line	=> __LINE__,
+		module		=> ref $self,
 		code		=> 1100031,
-		severity	=> $Amanda::Message::Message,
+		severity	=> $Amanda::Message::MESSAGE,
 		reason		=> "invalid",
 		relative_slot	=> $params{relative_slot});
 	}
@@ -649,19 +668,21 @@ sub _load_by_slot {
 
     if (exists $params{'except_slots'} and exists $params{'except_slots'}->{$slot}) {
 	return $self->make_error("failed", $params{'res_cb'},
-			    source_filename => __FILE__,
-			    source_line     => __LINE__,
-			    severity        => $Amanda::Message::MESSAGE,
-			    code	    => 1100032,
-			    reason => "notfound");
+		source_filename => __FILE__,
+		source_line     => __LINE__,
+		module		=> ref $self,
+		severity        => $Amanda::Message::MESSAGE,
+		code	    => 1100032,
+		reason => "notfound");
     }
 
     if (!$self->_slot_exists($slot)) {
 	return $self->make_error("failed", $params{'res_cb'},
 		source_filename	=> __FILE__,
 		source_line	=> __LINE__,
+		module		=> ref $self,
 		code		=> 1100038,
-		severity	=> $Amanda::Message::Message,
+		severity	=> $Amanda::Message::MESSAGE,
 		reason		=> "notfound",
 		slot		=> $slot);
     }
@@ -671,8 +692,9 @@ sub _load_by_slot {
 	return $self->make_error("failed", $params{'res_cb'},
 		source_filename	=> __FILE__,
 		source_line	=> __LINE__,
+		module		=> ref $self,
 		code		=> 1100022,
-		severity	=> $Amanda::Message::Message,
+		severity	=> $Amanda::Message::MESSAGE,
 		reason		=> "volinuse",
 		slot		=> $slot,
 		pid		=> $pid);
@@ -712,8 +734,9 @@ sub _load_by_label {
 	return $self->make_error("failed", $params{'res_cb'},
 		source_filename	=> __FILE__,
 		source_line	=> __LINE__,
+		module		=> ref $self,
 		code		=> 1100035,
-		severity	=> $Amanda::Message::Message,
+		severity	=> $Amanda::Message::MESSAGE,
 		reason		=> "notfound",
 		label		=> $label);
     }
@@ -732,8 +755,9 @@ sub _make_res {
 	return $self->make_error("failed", $res_cb,
 		source_filename	=> __FILE__,
 		source_line	=> __LINE__,
+		module		=> ref $self,
 		code		=> 1100035,
-		severity	=> $Amanda::Message::Message,
+		severity	=> $Amanda::Message::MESSAGE,
 		reason		=> "device",
 		device_name	=> $slot,
 		device_error	=> $device->error_or_status());
@@ -844,10 +868,11 @@ sub _get_current {
     my $slot;
 
     return $self->{slot} if defined $self->{slot};
-    my $storage = $self->{'storage'}->{'storage_name'};
-    my $changer = $self->{'chg_name'};
-    if (defined $state->{'current_slot_csc'}->{get_config_name()}->{'storage'}->{$storage}->{'changer'}->{$changer}) {
-	$slot = $self->{number}->{$state->{'current_slot_csc'}->{get_config_name()}->{'storage'}->{$storage}->{'changer'}->{$changer}};
+    my $storage_name = $self->{'storage'}->{'storage_name'};
+    $storage_name = get_config_name() if !defined $storage_name;
+    my $changer_name = $self->{'chg_name'};
+    if (defined $state->{'current_slot_csc'}->{get_config_name()}->{'storage'}->{$storage_name}->{'changer'}->{$changer_name}) {
+	$slot = $self->{number}->{$state->{'current_slot_csc'}->{get_config_name()}->{'storage'}->{$storage_name}->{'changer'}->{$changer_name}};
     } elsif (defined $state->{current_slot_by_config}{Amanda::Config::get_config_name()}) {
 	$slot = $self->{number}->{$state->{current_slot_by_config}{Amanda::Config::get_config_name()}};
     } elsif (defined $state->{current_slot}) {
@@ -869,9 +894,10 @@ sub _set_current {
     my ($self, $state, $slot) = @_;
 
     $self->{slot} = $slot;
-    my $storage = $self->{'storage'}->{'storage_name'};
-    my $changer = $self->{'chg_name'};
-    $state->{'current_slot_csc'}->{get_config_name()}->{'storage'}->{$storage}->{'changer'}->{$changer} = $self->{unaliased}->{$slot};
+    my $storage_name = $self->{'storage'}->{'storage_name'};
+    $storage_name = get_config_name() if !defined $storage_name;
+    my $changer_name = $self->{'chg_name'};
+    $state->{'current_slot_csc'}->{get_config_name()}->{'storage'}->{$storage_name}->{'changer'}->{$changer_name} = $self->{unaliased}->{$slot};
     $state->{current_slot_by_config}{Amanda::Config::get_config_name()} = $self->{unaliased}->{$slot};
 }
 
@@ -908,8 +934,9 @@ sub set_reuse {
 		return $self->make_error("failed", $finished_cb,
 			source_filename	=> __FILE__,
 			source_line	=> __LINE__,
+			module		=> ref $self,
 			code		=> 1100038,
-			severity	=> $Amanda::Message::Message,
+			severity	=> $Amanda::Message::MESSAGE,
 			reason		=> "device",
 			device_name	=> $match_slot,
 			device_error	=> $device->error_or_status());
@@ -964,8 +991,9 @@ sub set_no_reuse {
 		return $self->make_error("failed", $finished_cb,
 			source_filename	=> __FILE__,
 			source_line	=> __LINE__,
+			module		=> ref $self,
 			code		=> 1100038,
-			severity	=> $Amanda::Message::Message,
+			severity	=> $Amanda::Message::MESSAGE,
 			reason		=> "device",
 			device_name	=> $match_slot,
 			device_error	=> $device->error_or_status());

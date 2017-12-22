@@ -379,6 +379,7 @@ sub _scan {
 	    $self->_user_msg(Amanda::ScanInventory::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
+				module		=> ref $self,
 				code            => 5100000,
 				severity	=> $Amanda::Message::MESSAGE,
 				storage_name => $self->{'chg'}->{'storage'}->{'storage_name'},
@@ -402,9 +403,14 @@ sub _scan {
 	    $err = $last_err;
 	} else {
 	    $err = Amanda::Changer::Error->new('failed',
-				reason => 'notfound',
-				storage_name => $self->{'chg'}->{'storage'}->{'storage_name'},
-				message => "No acceptable volumes found");
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				module		=> ref $self,
+				code            => 5100000,
+				severity	=> $Amanda::Message::ERROR,
+				reason		=> 'notfound',
+				code		=> 1120000,
+				storage_name	=> $self->{'chg'}->{'storage'}->{'storage_name'});
 	}
 
 	if ($action == Amanda::ScanInventory::SCAN_FAIL) {
@@ -461,6 +467,7 @@ sub _scan {
 	    $self->_user_msg(Amanda::ScanInventory::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
+				module		=> ref $self,
 				code            => 5101018,
 				slot_result => 1,
 				storage_name => $self->{'chg'}->{'storage'}->{'storage_name'},
@@ -472,6 +479,7 @@ sub _scan {
 	    $self->_user_msg(Amanda::ScanInventory::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
+				module		=> ref $self,
 				code            => 5101011,
 				slot_result => 1,
 				storage_name => $self->{'chg'}->{'storage'}->{'storage_name'},
@@ -742,6 +750,7 @@ sub _scan {
 		$self->_user_msg(Amanda::ScanInventory::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
+				module		=> ref $self,
 				code            => 5101019,
 				slot_result => 1,
 				storage => $self->{'chg'}->{'storage'},

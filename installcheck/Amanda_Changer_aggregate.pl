@@ -27,6 +27,7 @@ use lib '@amperldir@';
 use Installcheck;
 use Installcheck::Config;
 use Installcheck::Changer;
+use Installcheck::Rest;
 use Amanda::Paths;
 use Amanda::Device qw( :constants );
 use Amanda::Debug;
@@ -99,10 +100,21 @@ reset_taperoot($taperoot1, 3);
 
 # first try an error
 my $chg = Amanda::Changer->new("chg-aggregate:foo");
-chg_err_like($chg,
-    { message => qr/chg-aggregate needs at least two child changers/,
-      type => 'fatal' },
-    "error with one child changer");
+$chg = { %$chg }; #unbless
+is_deeply(Installcheck::Rest::remove_source_line($chg),
+      { 'source_filename' => "$amperldir/Amanda/Changer/aggregate.pm",
+	'process' => 'Amanda_Changer_aggregate',
+	'running_on' => 'amanda-server',
+	'component' => 'changer',
+	'module' => 'Amanda::Changer::aggregate',
+	'code' => 1100129,
+	'severity' => $Amanda::Message::ERROR,
+	'type' => 'fatal',
+	'reason' => 'device',
+	'storage_name' => 'TESTCONF',
+	'changer_message' => 'chg-aggregate needs at least two child changers',
+	'message' => 'Storage \'TESTCONF\': chg-aggregate needs at least two child changers' },
+    "error with one child changer") || diag(Data::Dumper::Dumper($chg));
 
 $chg = Amanda::Changer->new("aggregate");
 die($chg) if $chg->isa("Amanda::Changer::Error");
@@ -146,11 +158,26 @@ sub test_reserved {
 	$chg->load(slot => "0:3",
 		   res_cb => sub {
 	    my ($err, $reservation) = @_;
-	    chg_err_like($err,
-		{ message => qr/Slot 3 is already in use by drive/,
-		  type => 'failed',
-		  reason => 'volinuse' },
-		"error when requesting already-reserved slot");
+	    $err = { %$err }; #unbless
+	    my $pid = $err->{'pid'};
+	    my $drive = $err->{'drive'};
+	    is_deeply(Installcheck::Rest::remove_source_line($err),
+	      { 'source_filename' => "$amperldir/Amanda/Changer/disk.pm",
+		'process' => 'Amanda_Changer_aggregate',
+		'running_on' => 'amanda-server',
+		'component' => 'changer',
+		'module' => 'Amanda::Changer::disk',
+		'code' => 1100034,
+		'severity' => $Amanda::Message::MESSAGE,
+		'type' => 'failed',
+		'reason' => 'volinuse',
+		'storage_name' => 'TESTCONF',
+		'pid' => $pid,
+		'drive' => $drive,
+		'slot' => '3',
+		'changer_message' => "Slot 3 is already in use by drive '$drive' and process '$pid'",
+		'message' => "Storage 'TESTCONF': Slot 3 is already in use by drive '$drive' and process '$pid'" },
+		"error when requesting already-reserved slot") || diag(Data::Dumper::Dumper($err));
 	    $steps->{'release'}->();
 	});
     };
@@ -345,9 +372,22 @@ Amanda::MainLoop::run();
     my $try_eject = make_cb('try_eject' => sub {
         $chg->eject(finished_cb => make_cb(sub {
 	    my ($err, $res) = @_;
-	    chg_err_like($err,
-		{ type => 'failed', reason => 'notimpl' },
-		"eject returns a failed/notimpl error");
+	    $err = { %$err }; #unbless
+	    is_deeply(Installcheck::Rest::remove_source_line($err),
+	      { 'source_filename' => "$amperldir/Amanda/Changer/aggregate.pm",
+		'process' => 'Amanda_Changer_aggregate',
+		'running_on' => 'amanda-server',
+		'component' => 'changer',
+		'module' => 'Amanda::Changer::aggregate',
+		'code' => 1190000,
+		'severity' => $Amanda::Message::ERROR,
+		'type' => 'failed',
+		'reason' => 'notimpl',
+		'storage_name' => 'TESTCONF',
+		'op' => 'eject',
+		'changer_message' => 'disk0: \'chg-disk\' does not support eject; disk1: \'chg-disk\' does not support eject',
+		'message' => 'Storage \'TESTCONF\': disk0: \'chg-disk\' does not support eject; disk1: \'chg-disk\' does not support eject' },
+		"error when requesting already-reserved slot") || diag(Data::Dumper::Dumper($err));
 
 	    Amanda::MainLoop::quit();
 	}));

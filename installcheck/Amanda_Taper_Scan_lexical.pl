@@ -882,7 +882,9 @@ if ($cfg_result != $CFGERR_OK) {
 	die(join "\n", @errors);
 }
 
-$chg = Amanda::Changer->new("robo2", tapelist => $tapelist);
+$storage = Amanda::Storage->new(storage_name => "robo2",
+                                tapelist => $tapelist);
+$chg = $storage->{'chg'};
 die "$chg" if $chg->isa("Amanda::Changer::Error");
 
 sub test_robot {
@@ -909,6 +911,7 @@ sub test_robot {
         $chg->quit();
 	$storage = Amanda::Storage->new(storage_name => "robo1",
 					tapelist => $tapelist);
+	$chg = $storage->{'chg'};
         $taperscan = Amanda::Taper::Scan->new(
 	    tapelist  => $tapelist,
 	    algorithm => "lexical",

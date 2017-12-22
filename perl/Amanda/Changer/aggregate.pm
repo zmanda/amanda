@@ -61,7 +61,12 @@ sub new {
     my @kidspecs = Amanda::Util::expand_braced_alternates($kidspecs);
     if (@kidspecs < 2) {
 	return Amanda::Changer->make_error("fatal", undef,
-	    message => "chg-aggregate needs at least two child changers");
+		source_filename => __FILE__,
+		source_line     => __LINE__,
+		severity        => $Amanda::Message::ERROR,
+		module		=> $class,
+		code            => 1100129,
+		reason          => "device");
     }
 
     my @children = map {
@@ -88,7 +93,10 @@ sub new {
 	}
 	if ($valid == 0 || !$allow_missing_changer) {
 	    return Amanda::Changer->make_combined_error(
-		"fatal", [ @annotated_errs ]);
+		"fatal", [ @annotated_errs ],
+		source_filename => __FILE__,
+		source_line => __LINE__,
+		module => $class);
 	}
     }
 
@@ -141,9 +149,10 @@ sub _get_current_slot
 
     $self->with_locked_state($self->{'state_filename'}, $cb, sub {
 	my ($state, $cb) = @_;
-	my $storage = $self->{'storage'}->{'storage_name'};
-	my $changer = $self->{'chg_name'};
-	$self->{'current_slot'} = $state->{'current_slot_csc'}->{get_config_name()}->{'storage'}->{$storage}->{'changer'}->{$changer};
+	my $storage_name = $self->{'storage'}->{'storage_name'};
+	$storage_name = get_config_name() if !defined $storage_name;
+	my $changer_name = $self->{'chg_name'};
+	$self->{'current_slot'} = $state->{'current_slot_csc'}->{get_config_name()}->{'storage'}->{$storage_name}->{'changer'}->{$changer_name};
 	$self->{'current_slot'} = $state->{'current_slot'} if !defined $self->{'current_slot'};
 	$self->{'current_slot'} = "0:1" if !defined $self->{'current_slot'};
 	$cb->();
@@ -157,9 +166,10 @@ sub _set_current_slot
 
     $self->with_locked_state($self->{'state_filename'}, $cb, sub {
 	my ($state, $cb) = @_;
-	my $storage = $self->{'storage'}->{'storage_name'};
-	my $changer = $self->{'chg_name'};
-	$state->{'current_slot_csc'}->{get_config_name()}->{'storage'}->{$storage}->{'changer'}->{$changer} = $self->{'current_slot'};
+	my $storage_name = $self->{'storage'}->{'storage_name'};
+	$storage_name = get_config_name() if !defined $storage_name;
+	my $changer_name = $self->{'chg_name'};
+	$state->{'current_slot_csc'}->{get_config_name()}->{'storage'}->{$storage_name}->{'changer'}->{$changer_name} = $self->{'current_slot'};
 	$state->{'current_slot'} = $self->{'current_slot'};
 	$cb->();
     });
@@ -257,11 +267,12 @@ sub load {
 	    }
 	}
 	return $self->make_error("failed", $res_cb,
-			    source_filename => __FILE__,
-			    source_line     => __LINE__,
-			    severity        => $Amanda::Message::MESSAGE,
-			    code	    => 1100032,
-			    reason => "notfound");
+			source_filename => __FILE__,
+			source_line     => __LINE__,
+			severity        => $Amanda::Message::MESSAGE,
+			module		=> ref $self,
+			code		=> 1100032,
+			reason => "notfound");
     };
 
     step got_inventory_label => sub {
@@ -279,8 +290,12 @@ sub load {
 	    }
 	}
 	return $self->make_error("failed", $res_cb,
+		source_filename => __FILE__,
+		source_line     => __LINE__,
+		severity        => $Amanda::Message::MESSAGE,
+		module		=> ref $self,
 		reason => "notfound",
-		message => "label $params{'label'} not found");
+		code => 1100035);
     };
 
     step set_from_current => sub {
@@ -293,8 +308,13 @@ sub load {
 	my $child = $self->{'children'}[$kid];
 	if (!defined $child) {
 	    return $self->make_error("failed", $res_cb,
+		source_filename => __FILE__,
+		source_line     => __LINE__,
+		severity        => $Amanda::Message::ERROR,
+		module		=> ref $self,
 		reason => "invalid",
-		message => "no changer $kid");
+		kid => $kid,
+		code => 1100130);
 	}
 	delete $params{'relative_slot'};
 	$params{'slot'} = $slot;
@@ -303,8 +323,14 @@ sub load {
 	    if ($res) {
 		if ($slot ne "first" && $res->{'this_slot'} != $slot) {
 		    return $self->make_error("failed", $res_cb,
+			source_filename => __FILE__,
+			source_line     => __LINE__,
+			severity        => $Amanda::Message::ERROR,
+			module		=> ref $self,
 			reason => "invalid",
-			message => "slot doesn't match: $res->{'this_slot'} != $slot");
+			res_slot => $res->{'this_slot'},
+			slot => $slot,
+			code => 1100131);
 		} else {
 		    $self->{'current_slot'} = "$kid:$res->{'this_slot'}";
 		    $aggregate_res = Amanda::Changer::aggregate::Reservation->new($self, $res, $self->{'current_slot'});
@@ -315,8 +341,13 @@ sub load {
 	};
 	if ($child eq "ERROR") {
 	    return $self->make_error("failed", $res_cb,
+		source_filename => __FILE__,
+		source_line     => __LINE__,
+		severity        => $Amanda::Message::ERROR,
+		module		=> ref $self,
 		reason => "invalid",
-		message => "no changer $kid");
+		kid => $kid,
+		code => 1100130);
 	}
 
 	return $child->load(%params);
@@ -354,6 +385,7 @@ sub info_key {
 		@slotarg = (slot => collapse_braced_alternates([@err_slots]));
 	    }
 
+	    push @slotarg, (source_filename => __FILE__, source_line => __LINE__, module => ref $self);
 	    $self->make_combined_error(
 		$params{'info_cb'}, [ @annotated_errs ],
 		@slotarg);
@@ -484,8 +516,13 @@ sub _mk_simple_op {
 
 	if (exists $params{'drive'}) {
 	    return $self->make_error("failed", $params{'finished_cb'},
-		    reason => "notimpl",
-		    message => "Can't specify drive fo $op command");
+		source_filename => __FILE__,
+		source_line     => __LINE__,
+		severity        => $Amanda::Message::ERROR,
+		module		=> ref $self,
+		reason => "notimpl",
+		op => $op,
+		code => 1100132);
 	}
 
 	my $all_kids_done_cb = sub {
@@ -500,7 +537,11 @@ sub _mk_simple_op {
 			[ $self->{'child_names'}[$i], $kr->[0] ];
 		}
 		$self->make_combined_error(
-		    $params{'finished_cb'}, [ @annotated_errs ]);
+		    $params{'finished_cb'}, [ @annotated_errs ],
+			source_filename => __FILE__,
+			source_line => __LINE__,
+			module => ref $self,
+			op => $op );
 		return 1;
 	    }
 	    $params{'finished_cb'}->() if $params{'finished_cb'};
@@ -597,7 +638,10 @@ sub update {
 		    [ $self->{'child_names'}[$i], $kr->[0] ];
 	    }
 	    $self->make_combined_error(
-		$params{'finished_cb'}, [ @annotated_errs ]);
+		$params{'finished_cb'}, [ @annotated_errs ],
+			source_filename => __FILE__,
+			source_line => __LINE__,
+			module => ref $self);
 	    return 1;
 	}
 	$params{'finished_cb'}->() if $params{'finished_cb'};
@@ -656,14 +700,21 @@ sub inventory {
 		    [ $self->{'child_names'}[$i], $kr->[0] ];
 	    }
 	    return $self->make_combined_error(
-		$params{'inventory_cb'}, [ @annotated_errs ]);
+		$params{'inventory_cb'}, [ @annotated_errs ],
+			source_filename => __FILE__,
+			source_line => __LINE__,
+			module => ref $self);
 	}
 
 	my $inv = $self->_merge_inventories($kid_results);
 	if (!defined $inv) {
 	    return $self->make_error("failed", $params{'inventory_cb'},
-		    reason => "notimpl",
-		    message => "could not generate consistent inventory from aggregate child changers");
+		source_filename => __FILE__,
+		source_line     => __LINE__,
+		severity        => $Amanda::Message::ERROR,
+		module		=> ref $self,
+		reason => "notimpl",
+		code => 1100133);
 	}
 
 	$params{'inventory_cb'}->(undef, $inv);
@@ -683,22 +734,34 @@ sub set_meta_label {
 
     if (!defined $params{'slot'}) {
 	return $self->make_error("failed", $finished_cb,
-	    reason => "invalid",
-	    message => "no 'slot' params set.");
+		source_filename => __FILE__,
+		source_line     => __LINE__,
+		severity        => $Amanda::Message::ERROR,
+		module		=> ref $self,
+		reason => "invalid",
+		code => 1100134);
     }
 
     if (!defined $params{'meta'}) {
 	return $self->make_error("failed", $finished_cb,
-	    reason => "invalid",
-	    message => "no 'meta' params set.");
+		source_filename => __FILE__,
+		source_line     => __LINE__,
+		severity        => $Amanda::Message::ERROR,
+		module		=> ref $self,
+		reason => "invalid",
+		code => 1100135);
     }
 
     my ($kid, $slot) = split(':', $orig_slot, 2);
     my $child = $self->{'children'}[$kid];
     if (!defined $child || $child eq "ERROR") {
 	return $self->make_error("failed", $finished_cb,
-	    reason => "invalid",
-	    message => "no changer $kid");
+		source_filename => __FILE__,
+		source_line     => __LINE__,
+		severity        => $Amanda::Message::ERROR,
+		module		=> ref $self,
+		kid => $kid,
+		code => 1100130);
     }
 
     $params{'slot'} = $slot;
@@ -717,16 +780,25 @@ sub get_meta_label {
 
     if (!defined $params{'slot'}) {
 	return $self->make_error("failed", $finished_cb,
-	    reason => "invalid",
-	    message => "no 'slot' params set.");
+		source_filename => __FILE__,
+		source_line     => __LINE__,
+		severity        => $Amanda::Message::ERROR,
+		module		=> ref $self,
+		reason => "invalid",
+		code => 1100134);
     }
 
     my ($kid, $slot) = split(':', $orig_slot, 2);
     my $child = $self->{'children'}[$kid];
     if (!defined $child || $child eq "ERROR") {
 	return $self->make_error("failed", $finished_cb,
-	    reason => "invalid",
-	    message => "no changer $kid");
+		source_filename => __FILE__,
+		source_line     => __LINE__,
+		severity        => $Amanda::Message::ERROR,
+		module		=> ref $self,
+		reason => "invalid",
+		kid => $kid,
+		code => 1100130);
     }
 
     $params{'slot'} = $slot;

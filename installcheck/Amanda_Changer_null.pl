@@ -26,6 +26,7 @@ use warnings;
 use lib '@amperldir@';
 use Installcheck::Config;
 use Installcheck::Changer;
+use Installcheck::Rest;
 use Amanda::Paths;
 use Amanda::Device;
 use Amanda::Debug;
@@ -97,9 +98,24 @@ is($chg->have_inventory(), '', "changer have inventory");
     my $try_eject = make_cb('try_eject' => sub {
         $chg->eject(finished_cb => sub {
 	    my ($err, $res) = @_;
-	    chg_err_like($err,
-		{ type => 'failed', reason => 'notimpl' },
-		"eject returns a failed/notimpl error");
+	    $err = { %$err }; #unbless
+	    is_deeply(Installcheck::Rest::remove_source_line($err),
+	      { 'source_filename' => "$amperldir/Amanda/Changer.pm",
+		'process' => 'Amanda_Changer_null',
+		'running_on' => 'amanda-server',
+		'component' => 'changer',
+		'module' => 'Amanda::Changer::null',
+		'code' => 1100048,
+		'severity' => $Amanda::Message::ERROR,
+		'type' => 'failed',
+		'reason'=> 'notimpl',
+		'storage_name' => 'TESTCONF',
+		'chg_type' => 'chg-null',
+		'chg_name' => 'chg-null:',
+		'op' => 'eject',
+		'changer_message' => '\'chg-null\' does not support eject',
+		'message' => 'Storage \'TESTCONF\': \'chg-null\' does not support eject' },
+		"eject returns a failed/notimpl error") || diag(Data::Dumper::Dumper($err));
 
 	    Amanda::MainLoop::quit();
 	});

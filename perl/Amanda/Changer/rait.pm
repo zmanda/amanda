@@ -56,7 +56,11 @@ sub new {
     my @kidspecs = Amanda::Util::expand_braced_alternates($kidspecs);
     if (@kidspecs < 2) {
 	return Amanda::Changer->make_error("fatal", undef,
-	    message => "chg-rait needs at least two child changers");
+		source_filename => __FILE__,
+		source_line     => __LINE__,
+		severity        => $Amanda::Message::ERROR,
+		module          => $class,
+		code            => 1100136);
     }
 
     my @children = map {
@@ -75,7 +79,10 @@ sub new {
 	    }
 	}
 	return Amanda::Changer->make_combined_error(
-		"fatal", [ @annotated_errs ]);
+		"fatal", [ @annotated_errs ],
+		source_filename => __FILE__,
+		source_line => __LINE__,
+		module => $class);
     }
 
     my $self = {
@@ -110,9 +117,14 @@ sub _kid_slots_ok {
         return 1;
     }
     ${$err_ref} = $self->make_error("failed", $res_cb,
-                                    reason => "invalid",
-                                    message => "slot string '$slot' does not specify " .
-                                    "$self->{num_children} child slots");
+			source_filename	=> __FILE__,
+			source_line	=> __LINE__,
+			severity	=> $Amanda::Message::MESSAGE,
+			module		=> ref $self,
+			code		=> 1100137,
+			reason		=> "invalid",
+			slot		=> $slot,
+			num_children	=> $self->{num_children});
     return 0;
 }
 
@@ -152,7 +164,10 @@ sub load {
 	    }
 
 	    return $self->make_combined_error(
-		$params{'res_cb'}, [ @annotated_errs ]);
+		$params{'res_cb'}, [ @annotated_errs ],
+		source_filename => __FILE__,
+                source_line => __LINE__,
+                module => ref $self);
 	};
 
 	for my $i (0 .. $self->{'num_children'}-1) {
@@ -208,9 +223,14 @@ sub load {
 		@kid_slots = ( $slot ) x $self->{'num_children'};
 	    } else {
 		return $self->make_error("failed", $params{'res_cb'},
-			reason => "invalid",
-			message => "slot '$slot' does not specify " .
-				    "$self->{num_children} child slots");
+			source_filename	=> __FILE__,
+			source_line	=> __LINE__,
+			severity	=> $Amanda::Message::MESSAGE,
+			module		=> ref $self,
+			code		=> 1100137,
+			reason		=> "invalid",
+			slot		=> $slot,
+			num_children	=> $self->{num_children});
 	    }
 	}
 	for (0 .. $self->{'num_children'}-1) {
@@ -258,8 +278,13 @@ sub _make_res {
     my $rait_device = Amanda::Device->new_rait_from_children(@kid_devices);
     if ($rait_device->status() != $DEVICE_STATUS_SUCCESS) {
 	return $self->make_error("failed", $res_cb,
-		reason => "device",
-		message => $rait_device->error_or_status());
+		source_filename	=> __FILE__,
+		source_line	=> __LINE__,
+		severity	=> $Amanda::Message::MESSAGE,
+		module		=> ref $self,
+		code		=> 1100138,
+		reason		=> "device",
+		device_error	=> $rait_device->error_or_status());
     }
 
     if (my $err = $self->{'config'}->configure_device($rait_device, $self->{'storage'})) {
@@ -301,6 +326,7 @@ sub info_key {
 		@slotarg = (slot => collapse_braced_alternates([@err_slots]));
 	    }
 
+	    push @slotarg, (source_filename => __FILE__, source_line => __LINE__, module => ref $self);
 	    $self->make_combined_error(
 		$params{'info_cb'}, [ @annotated_errs ],
 		@slotarg);
@@ -445,7 +471,11 @@ sub _mk_simple_op {
 			[ $self->{'child_names'}[$i], $kr->[0] ];
 		}
 		$self->make_combined_error(
-		    $params{'finished_cb'}, [ @annotated_errs ]);
+		    $params{'finished_cb'}, [ @annotated_errs ],
+		    source_filename => __FILE__,
+		    source_line => __LINE__,
+		    module => ref $self,
+		    op => $op);
 		return 1;
 	    }
 	    $params{'finished_cb'}->() if $params{'finished_cb'};
@@ -463,9 +493,14 @@ sub _mk_simple_op {
 
 	    if (@kid_drives != $self->{'num_children'}) {
 		return $self->make_error("failed", $params{'finished_cb'},
-			reason => "invalid",
-			message => "drive string '$drive' does not specify " .
-			"$self->{num_children} child drives");
+			source_filename	=> __FILE__,
+			source_line	=> __LINE__,
+			severity	=> $Amanda::Message::MESSAGE,
+			module		=> ref $self,
+			code		=> 1100139,
+			reason		=> "invalid",
+			drive		=> $drive,
+			num_children	=> $self->{num_children});
 	    }
 
 	    @kid_args = map { { drive => $_ } } @kid_drives;
@@ -514,14 +549,21 @@ sub inventory {
 		    [ $self->{'child_names'}[$i], $kr->[0] ];
 	    }
 	    return $self->make_combined_error(
-		$params{'inventory_cb'}, [ @annotated_errs ]);
+		$params{'inventory_cb'}, [ @annotated_errs ],
+		    source_filename => __FILE__,
+		    source_line => __LINE__,
+		    module => ref $self);
 	}
 
 	my $inv = $self->_merge_inventories($kid_results);
 	if (!defined $inv) {
 	    return $self->make_error("failed", $params{'inventory_cb'},
-		    reason => "notimpl",
-		    message => "could not generate consistent inventory from rait child changers");
+			source_filename	=> __FILE__,
+			source_line	=> __LINE__,
+			severity	=> $Amanda::Message::MESSAGE,
+			module		=> ref $self,
+			code		=> 1100140,
+			reason		=> "notimpl");
 	}
 
 	$params{'inventory_cb'}->(undef, $inv);

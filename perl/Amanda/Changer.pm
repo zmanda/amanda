@@ -33,7 +33,9 @@ sub new {
     my $chg = $params{'chg'};
     delete $params{'chg'};
 
+    $params{'component'} = 'changer' if !defined $params{'component'};
     $params{'storage_name'} = $chg->{'storage'}->{'storage_name'} if !defined $params{'storage_name'} && defined $chg->{'storage'}->{'storage_name'};
+    $params{'storage_name'} = Amanda::Config::get_config_name() if !defined $params{'storage_name'};
     $params{'chg_name'} = $chg->{'chg_name'} if !defined $params{'changer_name'} && defined $chg->{'chg_name'};
 
     my $self = $class->SUPER::new(%params);
@@ -318,17 +320,46 @@ sub local_message {
     } elsif ($self->{'code'} == 1100128) {
 	return "'$self->{device_name}' is already reserved";
     } elsif ($self->{'code'} == 1100129) {
-	return "";
+	return "chg-aggregate needs at least two child changers";
     } elsif ($self->{'code'} == 1100130) {
+	return "no changer $self->{'kid'}";
     } elsif ($self->{'code'} == 1100131) {
+	return "slot doesn't match: $self->{'res_slot'} != $self->{'slot'}";
     } elsif ($self->{'code'} == 1100132) {
+	return "Can't specify drive for $self->{'op'} command";
     } elsif ($self->{'code'} == 1100133) {
+	return "could not generate consistent inventory from aggregate child changers";
     } elsif ($self->{'code'} == 1100134) {
+	return "no 'slot' params set";
     } elsif ($self->{'code'} == 1100135) {
+	return "no 'meta' params set";
     } elsif ($self->{'code'} == 1100136) {
+	return "chg-rait needs at least two child changers";
     } elsif ($self->{'code'} == 1100137) {
+	return "slot string '$self->{'slot'}' does not specify $self->{'num_children'} child slots";
     } elsif ($self->{'code'} == 1100138) {
+	return "$self->{'device_error'}";
     } elsif ($self->{'code'} == 1100139) {
+	return "drive string '$self->{'drive'}' does not specify $self->{'num_children'} child drives";
+    } elsif ($self->{'code'} == 1100140) {
+	return "could not generate consistent inventory from rait child changers";
+    } elsif ($self->{'code'} == 1100141) {
+	return "";
+    } elsif ($self->{'code'} == 1100142) {
+	return "";
+    } elsif ($self->{'code'} == 1100143) {
+	return "";
+    } elsif ($self->{'code'} == 1100144) {
+	return "";
+    } elsif ($self->{'code'} == 1100145) {
+	return "";
+    } elsif ($self->{'code'} == 1100146) {
+	return "";
+    } elsif ($self->{'code'} == 1100147) {
+	return "";
+    } elsif ($self->{'code'} == 1100148) {
+	return "";
+    } elsif ($self->{'code'} == 1100149) {
 	return "";
 
     } elsif ($self->{'code'} == 1110000) {
@@ -338,6 +369,9 @@ sub local_message {
     } elsif ($self->{'code'} == 1110002) {
 	return "Failed to open $self->{'dev'}: $self->{'err'}"
 
+    } elsif ($self->{'code'} == 1120000) {
+	return "No acceptable volumes found";
+
     } elsif ($self->{'code'} == 1150000) {
 	return "changer_name argument of the storage is empty";
     } elsif ($self->{'code'} == 1150001) {
@@ -346,6 +380,9 @@ sub local_message {
 	return "not found";
     } elsif ($self->{'code'} == 1150003) {
 	return "You must specify the 'tapedev' or 'tpchanger'";
+
+    } elsif ($self->{'code'} == 1190009) {
+	return "combined error";
 
     } else {
 	return "No message for code $self->{'code'}";
@@ -1082,11 +1119,14 @@ sub new {
     Amanda::Util::push_component_module("changer", "changer");
     my %params = @_;
     my ($uri, $cc);
+Amanda::Debug::debug("paramsY: " . Data::Dumper::Dumper(\%params));
+    my $storage_name = $params{'storage'}->{'storage_name'};
+    $storage_name = Amanda::Config::get_config_name() if !defined $storage_name;
 
     # creating a named changer is a bit easier
     if (defined($name)) {
 	# first, is it a changer alias?
-	if (($uri,$cc) = _changer_alias_to_uri($name)) {
+	if (($uri,$cc) = _changer_alias_to_uri($name, $storage_name)) {
 	    my $chg = _new_from_uri($uri, $cc, $name, %params);
 	    Amanda::Util::pop_component_module();
 	    return $chg;
@@ -1108,7 +1148,7 @@ sub new {
 	    defined $params{'storage'}->{'tpchanger'}) {
 	    my $tpchanger = $params{'storage'}->{'tpchanger'};
 	    # maybe a changer alias?
-	    if (($uri,$cc) = _changer_alias_to_uri($tpchanger)) {
+	    if (($uri,$cc) = _changer_alias_to_uri($tpchanger, $storage_name)) {
 		my $chg = _new_from_uri($uri, $cc, $tpchanger, %params);
 		Amanda::Util::pop_component_module();
 		return $chg;
@@ -1146,7 +1186,7 @@ sub new {
 	    }
 
 	    # maybe a changer alias?
-	    if (($uri,$cc) = _changer_alias_to_uri($tpchanger)) {
+	    if (($uri,$cc) = _changer_alias_to_uri($tpchanger, $storage_name)) {
 		my $chg = _new_from_uri($uri, $cc, $tpchanger, %params);
 		Amanda::Util::pop_component_module();
 		return $chg;
@@ -1167,7 +1207,7 @@ sub new {
 	    my $tapedev = getconf($CNF_TAPEDEV);
 
 	    # first, is it a changer alias?
-	    if (($uri,$cc) = _changer_alias_to_uri($tapedev)) {
+	    if (($uri,$cc) = _changer_alias_to_uri($tapedev, $storage_name)) {
 		my $chg = _new_from_uri($uri, $cc, $tapedev, %params);
 		Amanda::Util::pop_component_module();
 		return $chg;
@@ -1189,6 +1229,7 @@ sub new {
 		source_filename => __FILE__,
                 source_line     => __LINE__,
                 code            => 1100029,
+		storage_name	=> $params{'storage'}->{'storage_name'},
 		severity	=> $Amanda::Message::ERROR);
 	    Amanda::Util::pop_component_module();
 	    return $error;
@@ -1214,7 +1255,7 @@ sub quit {
 # helper functions for new
 
 sub _changer_alias_to_uri {
-    my ($name) = @_;
+    my ($name, $storage_name) = @_;
 
     my $cc = Amanda::Config::lookup_changer_config($name);
     if ($cc) {
@@ -1227,6 +1268,7 @@ sub _changer_alias_to_uri {
 		source_filename => __FILE__,
 	        source_line     => __LINE__,
 	        code            => 1100030,
+		storage_name	=> $storage_name,
 		severity	=> $Amanda::Message::ERROR);
 	}
 	if (!$seen_tpchanger and !$seen_tapedev) {
@@ -1234,6 +1276,7 @@ sub _changer_alias_to_uri {
 		source_filename => __FILE__,
                 source_line     => __LINE__,
                 code            => 1100029,
+		storage_name	=> $storage_name,
 		severity	=> $Amanda::Message::ERROR);
 	}
 	$tpchanger ||= changer_config_getconf($cc, $CHANGER_CONFIG_TAPEDEV);
@@ -1470,7 +1513,10 @@ sub info {
 
 	if (@annotated_errs) {
 	    return $self->make_combined_error(
-		$params{'info_cb'}, [ @annotated_errs ]);
+		$params{'info_cb'}, [ @annotated_errs ],
+		source_filename => __FILE__,
+		source_line => __LINE__,
+		module => ref $self);
 	}
 
 	# no errors, so combine the results and return them
@@ -1504,8 +1550,9 @@ sub make_error {
 	    $type = 'fatal';
 	}
     } else {
-	$args{'storage'} = $self->{'storage'}->{'storage_name'} if !defined $args{'storage'};
+	$args{'storage_name'} = $self->{'storage'}->{'storage_name'} if !defined $args{'storage_name'};
     }
+    $args{'module'} = ref $self if !defined $args{'module'};
     my $err = Amanda::Changer::Error->new($type, %args);
 
     if (!$classmeth) {
@@ -1537,9 +1584,11 @@ sub make_combined_error {
 
 	$err = Amanda::Changer::Error->new(
 	    $err->{'type'},
+	    code => 1190001,
 	    reason => $err->{'reason'},
-	    storage => $self->{'storage'}->{'storage_name'},
-	    message => $suberrors->[0][0] . ": " . $err->{'changer_message'});
+	    storage_name => $self->{'storage'}->{'storage_name'},
+	    message => $suberrors->[0][0] . ": " . $err->{'changer_message'},
+	    %extra_args);
     } else {
 	my $fatal = $classmeth or grep { $_->[1]{'fatal'} } @$suberrors;
 
@@ -1563,8 +1612,9 @@ sub make_combined_error {
 Amanda::Debug::debug("suberrors: " . Data::Dumper::Dumper($suberrors));
 Amanda::Debug::debug("message: $message");
 	my %errargs = ( message => $message, %extra_args );
+	$errargs{'code'} = 1190000;
 	$errargs{'reason'} = $reason unless ($fatal);
-	$errargs{'storage'} = $self->{'storage'}->{'storage_name'} if !defined $self ne 'Amanda::Changer' && $errargs{'storage'};
+	$errargs{'storage_name'} = $self->{'storage'}->{'storage_name'} if !defined $self ne 'Amanda::Changer' && $errargs{'storage'};
 	$err = Amanda::Changer::Error->new(
 	    $fatal? "fatal" : "failed",
 	    %errargs);
@@ -2311,16 +2361,18 @@ sub new {
     $self->{'source_line'} = 0 if !$self->{'source_line'};
     $self->{'process'} = Amanda::Util::get_pname() if !defined $self->{'process'};
     $self->{'running_on'} = Amanda::Config::get_running_on() if !defined $self->{'running_on'};
+    $self->{'component'} = 'changer' if !defined $self->{'component'};
     $self->{'component'} = Amanda::Util::get_pcomponent() if !defined $self->{'component'};
     $self->{'module'} = Amanda::Util::get_pmodule() if !defined $self->{'module'};
     $self->{'code'} = 3 if !$self->{'code'};
     $self->{'storage_name'} = $chg->{'storage'}->{'storage_name'} if !defined $self->{'storage_name'} && defined $chg->{'storage'}->{'storage_name'};
+    $self->{'storage_name'} = Amanda::Config::get_config_name() if !defined $self->{'storage_name'};
     $self->{'chg_name'} = $chg->{'chg_name'} if !defined $self->{'changer_name'} && defined $chg->{'chg_name'};
-    $self->{'storage'} = $self->{'storage_name'} if !defined $self->{'storage'};
-    $self->{'storage'} = Amanda::Config::get_config_name() if !defined $self->{'storage'};
+#    $self->{'storage'} = $self->{'storage_name'} if !defined $self->{'storage'};
+#    $self->{'storage'} = Amanda::Config::get_config_name() if !defined $self->{'storage'};
     $self->{'storage_name'} = $self->{'storage'} if !defined $self->{'storage_name'};
     $self->{'changer_message'} = $self->message() if !defined $self->{'changer_message'};
-    $self->{'message'} = "Storage '$self->{'storage'}': $self->{'changer_message'}";
+    $self->{'message'} = "Storage '$self->{'storage_name'}': $self->{'changer_message'}";
     $self->{'severity'} = $Amanda::Message::ERROR if !defined $self->{'severity'};
     $self->{'type'} = $type;
     Amanda::Debug::debug("new Amanda::Changer::Error: type='$type'$reason, message='$self->{message}'");

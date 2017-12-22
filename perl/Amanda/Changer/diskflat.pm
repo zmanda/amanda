@@ -173,6 +173,7 @@ sub create {
 		chg => $self,
 		source_filename => __FILE__,
 		source_line     => __LINE__,
+		module		=> ref $self,
 		code    => 1100026,
 		severity => $Amanda::Message::ERROR,
 		dir     => $self->{'dir'},
@@ -183,6 +184,7 @@ sub create {
 		chg => $self,
 		source_filename => __FILE__,
 		source_line     => __LINE__,
+		module		=> ref $self,
 		code    => 1100027,
 		severity => $Amanda::Message::SUCCESS,
 		dir     => $self->{'dir'}));
@@ -406,6 +408,7 @@ sub _load_by_slot {
 	    return $self->make_error("failed", $params{'res_cb'},
 		source_filename => __FILE__,
 		source_line     => __LINE__,
+		module		=> ref $self,
 		code    => 1100031,
 		severity => $Amanda::Message::ERROR,
 		relative_slot => $params{relative_slot},
@@ -419,6 +422,7 @@ sub _load_by_slot {
 	return $self->make_error("failed", $params{'res_cb'},
 		source_filename => __FILE__,
 		source_line     => __LINE__,
+		module		=> ref $self,
 		code    => 1100032,
 		severity => $Amanda::Message::ERROR,
 		reason => "notfound");
@@ -428,6 +432,7 @@ sub _load_by_slot {
 	return $self->make_error("failed", $params{'res_cb'},
 		source_filename => __FILE__,
 		source_line     => __LINE__,
+		module		=> ref $self,
 		code    => 1100033,
 		severity => $Amanda::Message::ERROR,
 		reason => "invalid",
@@ -438,6 +443,7 @@ sub _load_by_slot {
 	return $self->make_error("failed", $params{'res_cb'},
 		source_filename => __FILE__,
 		source_line     => __LINE__,
+		module		=> ref $self,
 		code    => 1100034,
 		severity => $Amanda::Message::ERROR,
 		reason => "volinuse",
@@ -465,6 +471,7 @@ sub _load_by_label {
 	return $self->make_error("failed", $params{'res_cb'},
 		source_filename => __FILE__,
 		source_line     => __LINE__,
+		module		=> ref $self,
 		code    => 1100035,
 		severity => $Amanda::Message::ERROR,
 		label => $label,
@@ -475,6 +482,7 @@ sub _load_by_label {
 	return $self->make_error("failed", $params{'res_cb'},
 		source_filename => __FILE__,
 		source_line     => __LINE__,
+		module		=> ref $self,
 		code    => 1100036,
 		severity => $Amanda::Message::ERROR,
 		slot  => $slot,
@@ -503,6 +511,7 @@ sub _make_res {
 	return $self->make_error("failed", $res_cb,
 		source_filename => __FILE__,
 		source_line     => __LINE__,
+		module		=> ref $self,
 		code    => 1100037,
 		severity => $Amanda::Message::ERROR,
 		reason => "device",
@@ -514,6 +523,7 @@ sub _make_res {
 	    return $self->make_error("failed", $res_cb,
 			source_filename => __FILE__,
 			source_line     => __LINE__,
+			module		=> ref $self,
 			code      => 1100066,
 			severity  => $Amanda::Message::ERROR,
 			reason    => "invalid",
@@ -530,6 +540,7 @@ sub _make_res {
 	return $self->make_error("failed", $res_cb,
 		source_filename => __FILE__,
 		source_line     => __LINE__,
+		module		=> ref $self,
 		code    => 1100038,
 		severity => $Amanda::Message::ERROR,
 		reason => "device",
@@ -730,9 +741,10 @@ sub _get_current {
     my $self = shift;
     my $state = shift;
 
-    my $storage = $self->{'storage'}->{'storage_name'};
-    my $changer = $self->{'chg_name'};
-    my $current_slot = $state->{'current_slot'}->{'config'}->{get_config_name()}->{'storage'}->{$storage}->{'changer'}->{$changer};
+    my $storage_name = $self->{'storage'}->{'storage_name'};
+    $storage_name = get_config_name() if !defined $storage_name;
+    my $changer_name = $self->{'chg_name'};
+    my $current_slot = $state->{'current_slot'}->{'config'}->{get_config_name()}->{'storage'}->{$storage_name}->{'changer'}->{$changer_name};
     if (defined $current_slot) {
 	if ($current_slot =~ "^slot([0-9]+)/?") {
 	    return $1;
@@ -758,9 +770,10 @@ sub _set_current {
     my $slot  = shift;
 
     $state->{'current'} = "slot$slot";
-    my $storage = $self->{'storage'}->{'storage_name'};
-    my $changer = $self->{'chg_name'};
-    $state->{'current_slot'}->{'config'}->{get_config_name()}->{'storage'}->{$storage}->{'changer'}->{$changer} = "slot$slot";
+    my $storage_name = $self->{'storage'}->{'storage_name'};
+    $storage_name = get_config_name() if !defined $storage_name;
+    my $changer_name = $self->{'chg_name'};
+    $state->{'current_slot'}->{'config'}->{get_config_name()}->{'storage'}->{$storage_name}->{'changer'}->{$changer_name} = "slot$slot";
 }
 
 # utility function
@@ -778,6 +791,7 @@ sub _validate() {
 	return $self->make_error("fatal", undef,
 		source_filename => __FILE__,
 		source_line     => __LINE__,
+		module		=> ref $self,
 		code    => 1100039,
 		severity => $Amanda::Message::ERROR,
 		dir     => $dir);
@@ -786,6 +800,7 @@ sub _validate() {
 	return $self->make_error("fatal", undef,
 		source_filename => __FILE__,
 		source_line     => __LINE__,
+		module		=> ref $self,
 		code    => 1100040,
 		severity => $Amanda::Message::ERROR,
 		dir     => $dir,
@@ -806,6 +821,7 @@ sub _validate() {
 	    return $self->make_error("failed", undef,
 		source_filename => __FILE__,
 		source_line     => __LINE__,
+		module		=> ref $self,
 		code    => 1100041,
 		severity => $Amanda::Message::ERROR,
 		reason => "notfound",
@@ -825,6 +841,7 @@ sub _validate() {
 		return $self->make_error("fatal", undef,
 				source_filename => __FILE__,
 				source_line     => __LINE__,
+				module		=> ref $self,
 				code    => 1100044,
 				severity => $Amanda::Message::ERROR,
 				slot_file => $slot_file,
@@ -836,6 +853,7 @@ sub _validate() {
 	    return $self->make_error("fatal", undef,
 				source_filename => __FILE__,
 				source_line     => __LINE__,
+				module		=> ref $self,
 				code    => 1100045,
 				severity => $Amanda::Message::ERROR);
 	}
@@ -877,6 +895,7 @@ sub try_lock {
 	    return $self->make_error("fatal", $cb,
 		source_filename => __FILE__,
 		source_line     => __LINE__,
+		module		=> ref $self,
 		code    => 1100046,
 		severity => $Amanda::Message::ERROR,
 		lock_file => $self->{'umount_lockfile'});
@@ -884,6 +903,7 @@ sub try_lock {
 	    return $self->make_error("fatal", $cb,
 		source_filename => __FILE__,
 		source_line     => __LINE__,
+		module		=> ref $self,
 		code    => 1100047,
 		severity => $Amanda::Message::ERROR,
 		lock_file => $self->{'umount_lockfile'},

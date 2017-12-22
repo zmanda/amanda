@@ -1,3 +1,10 @@
+2017-12-22  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/ammessage.c, installcheck/Amanda_Changer_*.pl
+	  installcheck/Amanda_Rest_*.pl, installcheck/Amanda_Taper_Scan_*.pl,
+	  perl/Amanda/Changer.pm perl/Amanda/Changer/*.pm,
+	  perl/Amanda/ScanInventory.pm perl/Amanda/Storage.pm
+	  perl/Amanda/Taper/Scan/traditional.pm: Fix Message
+
 2017-12-21  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/Status.pm: Call File::Path::mkpath instead ofi
 	  File::Path::make_path

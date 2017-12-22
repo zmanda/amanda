@@ -1497,10 +1497,10 @@ set_message(
 	msg = "STAR program not available";
     } else if (message->code == 3701008) {
 	msg = "bad SPARSE property value '%{value}'";
+    } else if (message->code == 3701009) {
+	msg = "bad ACL property value '%{value}'";
     } else if (message->code == 3701014) {
 	msg = "Invalid '%{command-options}' COMMAND-OPTIONS";
-    } else if (message->code == 3701016) {
-	msg = "bad ACL property value '%{value}'";
     } else if (message->code == 3701017) {
 	msg = "Can't use include and exclude simultaneously";
     } else if (message->code == 3701018) {

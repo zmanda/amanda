@@ -154,6 +154,7 @@ sub create {
 	return $self->make_error("failed", $params{'finished_cb'},
 		source_filename => __FILE__,
 		source_line     => __LINE__,
+		module		=> ref $self,
 		code    => 1100026,
 		severity => $Amanda::Message::ERROR,
 		dir     => $self->{'dir'},
@@ -163,6 +164,7 @@ sub create {
     return $params{'finished_cb'}->(undef, Amanda::Changer::Message->new(
 		source_filename => __FILE__,
 		source_line     => __LINE__,
+		module		=> ref $self,
 		code    => 1100027,
 		severity => $Amanda::Message::SUCCESS,
 		storage_name => $self->{storage}->{storage_name},
@@ -369,6 +371,7 @@ sub _load_by_slot {
 	    return $self->make_error("failed", $params{'res_cb'},
 		source_filename => __FILE__,
 		source_line     => __LINE__,
+		module		=> ref $self,
 		severity        => $Amanda::Message::MESSAGE,
 		code	    => 1100031,
 		reason => "invalid",
@@ -382,6 +385,7 @@ sub _load_by_slot {
 	return $self->make_error("failed", $params{'res_cb'},
 	    source_filename => __FILE__,
 	    source_line     => __LINE__,
+	    module	    => ref $self,
 	    severity        => $Amanda::Message::MESSAGE,
 	    code	    => 1100032,
 	    reason => "notfound");
@@ -391,6 +395,7 @@ sub _load_by_slot {
 	return $self->make_error("failed", $params{'res_cb'},
 		source_filename => __FILE__,
 		source_line     => __LINE__,
+		module		=> ref $self,
 		severity        => $Amanda::Message::MESSAGE,
 		code	    => 1100033,
 		reason => "invalid",
@@ -401,6 +406,7 @@ sub _load_by_slot {
 	return $self->make_error("failed", $params{'res_cb'},
 		source_filename => __FILE__,
 		source_line     => __LINE__,
+		module		=> ref $self,
 		severity        => $Amanda::Message::MESSAGE,
 		code		=> 1100034,
 		reason		=> "volinuse",
@@ -428,6 +434,7 @@ sub _load_by_label {
 	return $self->make_error("failed", $params{'res_cb'},
 		source_filename	=> __FILE__,
 		source_line	=> __LINE__,
+		module		=> ref $self,
 		severity	=> $Amanda::Message::MESSAGE,
 		code		=> 1100035,
 		reason		=> "notfound",
@@ -438,6 +445,7 @@ sub _load_by_label {
 	return $self->make_error("failed", $params{'res_cb'},
 		source_filename	=> __FILE__,
 		source_line	=> __LINE__,
+		module		=> ref $self,
 		severity	=> $Amanda::Message::MESSAGE,
 		code		=> 1100036,
 		reason		=> "volinuse",
@@ -465,6 +473,7 @@ sub _make_res {
 	return $self->make_error("failed", $res_cb,
 		source_filename	=> __FILE__,
 		source_line	=> __LINE__,
+		module		=> ref $self,
 		severity	=> $Amanda::Message::MESSAGE,
 		code		=> 1100038,
 		reason		=> "device",
@@ -629,9 +638,10 @@ sub _get_current {
     my $self = shift;
     my $state = shift;
 
-    my $storage = $self->{'storage'}->{'storage_name'};
-    my $changer = $self->{'chg_name'};
-    my $current_slot = $state->{'current_slot'}->{'config'}->{get_config_name()}->{'storage'}->{$storage}->{'changer'}->{$changer};
+    my $storage_name = $self->{'storage'}->{'storage_name'};
+    $storage_name = get_config_name() if !defined $storage_name;
+    my $changer_name = $self->{'chg_name'};
+    my $current_slot = $state->{'current_slot'}->{'config'}->{get_config_name()}->{'storage'}->{$storage_name}->{'changer'}->{$changer_name};
     if (defined $current_slot) {
 	if ($current_slot =~ "^slot([0-9]+)/?") {
 	    return $1;
@@ -672,9 +682,10 @@ sub _set_current {
     my $slot  = shift;
 
     $state->{'current'} = "slot$slot";
-    my $storage = $self->{'storage'}->{'storage_name'};
-    my $changer = $self->{'chg_name'};
-    $state->{'current_slot'}->{'config'}->{get_config_name()}->{'storage'}->{$storage}->{'changer'}->{$changer} = "slot$slot";
+    my $storage_name = $self->{'storage'}->{'storage_name'};
+    $storage_name = get_config_name() if !defined $storage_name;
+    my $changer_name = $self->{'chg_name'};
+    $state->{'current_slot'}->{'config'}->{get_config_name()}->{'storage'}->{$storage_name}->{'changer'}->{$changer_name} = "slot$slot";
     my $curlink = $self->{'dir'} . "/data";
 
     if (-l $curlink or -e $curlink) {
@@ -701,6 +712,7 @@ sub _validate() {
 	return $self->make_error("fatal", undef,
 		source_filename	=> __FILE__,
 		source_line	=> __LINE__,
+		module		=> ref $self,
 		severity	=> $Amanda::Message::ERROR,
 		code		=> 1100039,
 		reason		=> "device",
@@ -721,6 +733,7 @@ sub _validate() {
 	    return $self->make_error("failed", undef,
 		source_filename	=> __FILE__,
 		source_line	=> __LINE__,
+		module		=> ref $self,
 		severity	=> $Amanda::Message::ERROR,
 		code		=> 1100041,
 		reason		=> "device",
@@ -733,6 +746,7 @@ sub _validate() {
 	    return $self->make_error("fatal", undef,
 		source_filename	=> __FILE__,
 		source_line	=> __LINE__,
+		module		=> ref $self,
 		severity	=> $Amanda::Message::ERROR,
 		code		=> 1100045);
 	}
@@ -774,6 +788,7 @@ sub try_lock {
 	    return $self->make_error("fatal", $cb,
 		source_filename	=> __FILE__,
 		source_line	=> __LINE__,
+		module		=> ref $self,
 		severity	=> $Amanda::Message::ERROR,
 		code		=> 1100046,
 		lock_file	=> $self->{'umount_lockfile'});
@@ -781,6 +796,7 @@ sub try_lock {
 	    return $self->make_error("fatal", $cb,
 		source_filename	=> __FILE__,
 		source_line	=> __LINE__,
+		module		=> ref $self,
 		severity	=> $Amanda::Message::ERROR,
 		code		=> 1100047,
 		lock_file	=> $self->{'umount_lockfile'},

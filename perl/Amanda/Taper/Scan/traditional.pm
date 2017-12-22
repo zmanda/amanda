@@ -122,6 +122,7 @@ sub scan_result {
 	$self->_user_msg(Amanda::ScanInventory::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
+				module		=> ref $self,
 				code            => 5100002,
 				severity        => $Amanda::Message::ERROR,
 				storage_name    => $self->{'changer'}->{'storage'}->{'storage_name'},
@@ -131,10 +132,11 @@ sub scan_result {
 	my $err = Amanda::Changer::Error->new('failed',
 				source_filename => __FILE__,
 				source_line     => __LINE__,
+				module		=> ref $self,
 				severity        => $Amanda::Message::ERROR,
-				reason => 'notfound',
-				storage_name => $self->{'changer'}->{'storage'}->{'storage_name'},
-				message => "No acceptable volumes found");
+				reason		=> 'notfound',
+				code		=> 1120000,
+				storage_name	=> $self->{'changer'}->{'storage'}->{'storage_name'});
 	@result = ($err)
     }
 
@@ -187,6 +189,7 @@ $oldest_reusable = undef;
 	    $self->_user_msg(Amanda::ScanInventory::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
+				module		=> ref $self,
 				code            => 5101011,
 				severity        => $Amanda::Message::MESSAGE,
 				storage_name    => $self->{'changer'}->{'storage'}->{'storage_name'},
@@ -214,6 +217,7 @@ $oldest_reusable = undef;
 	$self->_user_msg(Amanda::ScanInventory::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
+				module		=> ref $self,
 				code            => 5101010,
 				severity        => $Amanda::Message::MESSAGE,
 				storage_name    => $self->{'changer'}->{'storage'}->{'storage_name'},
@@ -348,6 +352,7 @@ sub stage_2 {
 	    $self->_user_msg(Amanda::ScanInventory::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
+				module		=> ref $self,
 				code            => 5100000,
 				severity        => $Amanda::Message::MESSAGE,
 				storage_name    => $self->{'changer'}->{'storage'}->{'storage_name'},
@@ -357,6 +362,7 @@ sub stage_2 {
 	    $self->_user_msg(Amanda::ScanInventory::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
+				module		=> ref $self,
 				code            => 5100000,
 				severity        => $Amanda::Message::MESSAGE,
 				storage_name    => $self->{'changer'}->{'storage'}->{'storage_name'},
@@ -366,6 +372,7 @@ sub stage_2 {
 	    $self->_user_msg(Amanda::ScanInventory::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
+				module		=> ref $self,
 				code            => 5100000,
 				severity        => $Amanda::Message::MESSAGE,
 				storage_name    => $self->{'changer'}->{'storage'}->{'storage_name'},
@@ -428,6 +435,7 @@ sub stage_2 {
 			$self->_user_msg(Amanda::ScanInventory::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
+				module		=> ref $self,
 				code            => 5101003,
 				severity        => $Amanda::Message::MESSAGE,
 				storage_name    => $self->{'changer'}->{'storage'}->{'storage_name'},
@@ -442,6 +450,7 @@ sub stage_2 {
 		    $self->_user_msg(Amanda::ScanInventory::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
+				module		=> ref $self,
 				code            => 5101004,
 				severity        => $Amanda::Message::MESSAGE,
 				storage_name    => $self->{'changer'}->{'storage'}->{'storage_name'},
@@ -457,6 +466,7 @@ sub stage_2 {
 		    $self->_user_msg(Amanda::ScanInventory::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
+				module		=> ref $self,
 				code            => 5101015,
 				severity        => $Amanda::Message::MESSAGE,
 				storage_name    => $self->{'changer'}->{'storage'}->{'storage_name'},
@@ -474,6 +484,7 @@ sub stage_2 {
 		    $self->_user_msg(Amanda::ScanInventory::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
+				module		=> ref $self,
 				code            => 5101016,
 				severity        => $Amanda::Message::MESSAGE,
 				storage_name    => $self->{'changer'}->{'storage'}->{'storage_name'},
@@ -492,6 +503,7 @@ sub stage_2 {
 		    $self->_user_msg(Amanda::ScanInventory::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
+				module		=> ref $self,
 				code            => 5101003,
 				severity        => $Amanda::Message::MESSAGE,
 				storage_name    => $self->{'changer'}->{'storage'}->{'storage_name'},
@@ -508,6 +520,7 @@ sub stage_2 {
 		    $self->_user_msg(Amanda::ScanInventory::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
+				module		=> ref $self,
 				code            => 5101002,
 				severity        => $Amanda::Message::MESSAGE,
 				storage_name    => $self->{'changer'}->{'storage'}->{'storage_name'},
@@ -521,6 +534,7 @@ sub stage_2 {
 		    $self->_user_msg(Amanda::ScanInventory::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
+				module		=> ref $self,
 				code            => 5101011,
 				severity        => $Amanda::Message::MESSAGE,
 				storage_name    => $self->{'changer'}->{'storage'}->{'storage_name'},
@@ -544,6 +558,7 @@ sub stage_2 {
 		$self->_user_msg(Amanda::ScanInventory::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
+				module		=> ref $self,
 				code            => 5101009,
 				severity        => $Amanda::Message::MESSAGE,
 				storage_name    => $self->{'changer'}->{'storage'}->{'storage_name'},
@@ -558,6 +573,7 @@ sub stage_2 {
 		$self->_user_msg(Amanda::ScanInventory::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
+				module		=> ref $self,
 				code            => 5101005,
 				severity        => $Amanda::Message::MESSAGE,
 				storage_name    => $self->{'changer'}->{'storage'}->{'storage_name'},
@@ -570,6 +586,7 @@ sub stage_2 {
 		$self->_user_msg(Amanda::ScanInventory::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
+				module		=> ref $self,
 				code            => 5101006,
 				severity        => $Amanda::Message::MESSAGE,
 				storage_name    => $self->{'changer'}->{'storage'}->{'storage_name'},
@@ -583,6 +600,7 @@ sub stage_2 {
 		$self->_user_msg(Amanda::ScanInventory::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
+				module		=> ref $self,
 				code            => 5101010,
 				severity        => $Amanda::Message::MESSAGE,
 				storage_name    => $self->{'changer'}->{'storage'}->{'storage_name'},
@@ -596,6 +614,7 @@ sub stage_2 {
 		$self->_user_msg(Amanda::ScanInventory::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
+				module		=> ref $self,
 				code            => 5101008,
 				severity        => $Amanda::Message::MESSAGE,
 				storage_name    => $self->{'changer'}->{'storage'}->{'storage_name'},
@@ -614,6 +633,7 @@ sub stage_2 {
 		$self->_user_msg(Amanda::ScanInventory::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
+				module		=> ref $self,
 				code            => 5101009,
 				severity        => $Amanda::Message::MESSAGE,
 				storage_name    => $self->{'changer'}->{'storage'}->{'storage_name'},
@@ -630,6 +650,7 @@ sub stage_2 {
 		$self->_user_msg(Amanda::ScanInventory::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
+				module		=> ref $self,
 				code            => 5101005,
 				severity        => $Amanda::Message::MESSAGE,
 				storage_name    => $self->{'changer'}->{'storage'}->{'storage_name'},
@@ -644,6 +665,7 @@ sub stage_2 {
 		$self->_user_msg(Amanda::ScanInventory::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
+				module		=> ref $self,
 				code            => 5101006,
 				severity        => $Amanda::Message::MESSAGE,
 				storage_name    => $self->{'changer'}->{'storage'}->{'storage_name'},
@@ -657,6 +679,7 @@ sub stage_2 {
 	    $self->_user_msg(Amanda::ScanInventory::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
+				module		=> ref $self,
 				code            => 5101010,
 				severity        => $Amanda::Message::MESSAGE,
 				storage_name    => $self->{'changer'}->{'storage'}->{'storage_name'},
@@ -670,6 +693,7 @@ sub stage_2 {
 	$self->_user_msg(Amanda::ScanInventory::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
+				module		=> ref $self,
 				code            => 5101017,
 				severity        => $Amanda::Message::MESSAGE,
 				storage_name    => $self->{'changer'}->{'storage'}->{'storage_name'},

@@ -27,6 +27,7 @@ use lib '@amperldir@';
 use Installcheck;
 use Installcheck::Config;
 use Installcheck::Changer;
+use Installcheck::Rest;
 use Amanda::Paths;
 use Amanda::Device qw( :constants );
 use Amanda::Debug;
@@ -111,11 +112,24 @@ is($chg->have_inventory(), '1', "changer have inventory");
 	$chg->load(slot => 3,
 		   res_cb => sub {
 	    my ($err, $reservation) = @_;
-	    chg_err_like($err,
-		{ message => qr/Slot 3 is already in use by process/,
-		  type => 'failed',
-		  reason => 'volinuse' },
-		"error when requesting already-reserved slot");
+	    $err = { %$err }; #unbless
+	    my $pid = $err->{'pid'};
+	    is_deeply(Installcheck::Rest::remove_source_line($err),
+	      { 'source_filename' => "$amperldir/Amanda/Changer/multi.pm",
+		'process' => 'Amanda_Changer_multi',
+		'running_on' => 'amanda-server',
+		'component' => 'changer',
+		'module' => 'Amanda::Changer::multi',
+		'code' => 1100022,
+		'severity' => $Amanda::Message::MESSAGE,
+		'type' => 'failed',
+		'reason'=> 'volinuse',
+		'storage_name' => 'TESTCONF',
+		'slot' => 3,
+		'pid' => $pid,
+		'changer_message' => "Slot 3 is already in use by process '$pid'",
+		'message' => "Storage \'TESTCONF\': Slot 3 is already in use by process '$pid'" },
+		"error when requesting already-reserved slot") || diag(Data::Dumper::Dumper($err));
 	    $release->();
 	});
     });

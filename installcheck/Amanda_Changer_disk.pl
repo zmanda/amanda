@@ -27,6 +27,7 @@ use lib '@amperldir@';
 use Installcheck;
 use Installcheck::Config;
 use Installcheck::Changer;
+use Installcheck::Rest;
 use Amanda::Paths;
 use Amanda::Device qw( :constants );
 use Amanda::Debug;
@@ -79,10 +80,22 @@ reset_taperoot(5);
 
 # first try an error
 my $chg = Amanda::Changer->new("chg-disk:$taperoot/foo");
-chg_err_like($chg,
-    { message => qr/directory '.*' does not exist/,
-      type => 'fatal' },
-    "detects nonexistent directory");
+$chg = { %$chg }; #unbless
+is_deeply(Installcheck::Rest::remove_source_line($chg),
+      { 'source_filename' => "$amperldir/Amanda/Changer/disk.pm",
+	'process' => 'Amanda_Changer_disk',
+	'running_on' => 'amanda-server',
+	'component' => 'changer',
+	'module' => 'Amanda::Changer::disk',
+	'code' => 1100039,
+	'severity' => $Amanda::Message::ERROR,
+	'type' => 'fatal',
+	'reason' => 'device',
+	'storage_name' => 'TESTCONF',
+	'dir' => "$taperoot/foo",
+	'changer_message' => "directory '$taperoot/foo' does not exist",
+	'message' => "Storage 'TESTCONF': directory '$taperoot/foo' does not exist" },
+	"eject returns a failed/notimpl error");
 
 $chg = Amanda::Changer->new("chg-disk:$taperoot");
 die($chg) if $chg->isa("Amanda::Changer::Error");
@@ -126,10 +139,25 @@ sub test_reserved {
 	$chg->load(slot => 3,
 		   res_cb => sub {
 	    my ($err, $reservation) = @_;
-	    chg_err_like($err,
-		{ message => qr/Slot 3 is already in use by drive/,
-		  type => 'failed',
-		  reason => 'volinuse' },
+	    $err = { %$err }; #unbless
+	    my $pid = $err->{'pid'};
+	    my $drive = $err->{'drive'};
+	    is_deeply(Installcheck::Rest::remove_source_line($err),
+	      { 'source_filename' => "$amperldir/Amanda/Changer/disk.pm",
+                'process' => 'Amanda_Changer_disk',
+                'running_on' => 'amanda-server',
+                'component' => 'changer',
+                'module' => 'Amanda::Changer::disk',
+                'code' => 1100034,
+                'severity' => $Amanda::Message::MESSAGE,
+                'type' => 'failed',
+                'reason'=> 'volinuse',
+                'storage_name' => 'TESTCONF',
+                'slot' => 3,
+		'drive' => $drive,
+		'pid' => $pid,
+                'changer_message' => "Slot 3 is already in use by drive '$drive' and process '$pid'",
+                'message' => "Storage \'TESTCONF\': Slot 3 is already in use by drive '$drive' and process '$pid'" },
 		"error when requesting already-reserved slot");
 	    $steps->{'release'}->();
 	});
@@ -325,8 +353,23 @@ Amanda::MainLoop::run();
     my $try_eject = make_cb('try_eject' => sub {
         $chg->eject(finished_cb => make_cb(sub {
 	    my ($err, $res) = @_;
-	    chg_err_like($err,
-		{ type => 'failed', reason => 'notimpl' },
+	    $err = { %$err }; #unbless
+	    is_deeply(Installcheck::Rest::remove_source_line($err),
+	      { 'source_filename' => "$amperldir/Amanda/Changer.pm",
+		'process' => 'Amanda_Changer_disk',
+		'running_on' => 'amanda-server',
+		'component' => 'changer',
+		'module' => 'Amanda::Changer::disk',
+		'code' => 1100048,
+		'severity' => $Amanda::Message::ERROR,
+		'type' => 'failed',
+		'reason'=> 'notimpl',
+		'storage_name' => 'TESTCONF',
+		'chg_type' => 'chg-disk',
+		'chg_name' => 'chg-disk:/tmp/amanda/installchecks/Amanda_Changer_Disk_test',
+		'op' => 'eject',
+		'changer_message' => '\'chg-disk\' does not support eject',
+		'message' => 'Storage \'TESTCONF\': \'chg-disk\' does not support eject' },
 		"eject returns a failed/notimpl error");
 
 	    Amanda::MainLoop::quit();

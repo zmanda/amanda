@@ -26,6 +26,7 @@ use warnings;
 use lib '@amperldir@';
 use Installcheck::Config;
 use Installcheck::Changer;
+use Installcheck::Rest;
 use Amanda::Paths;
 use Amanda::Device;
 use Amanda::Debug;
@@ -87,11 +88,22 @@ die "$chg" if $chg->isa("Amanda::Changer::Error");
 
     $got_second_res = make_cb('got_second_res' => sub {
 	my ($err, $res) = @_;
-	chg_err_like($err,
-	    { message => qr{'null:/foo' is already reserved},
-	      type => 'failed',
-	      reason => 'driveinuse' },
-	    "second simultaneous reservation rejected");
+	$err = { %$err }; #unbless
+	is_deeply(Installcheck::Rest::remove_source_line($err),
+	     { 'source_filename' => "$amperldir/Amanda/Changer/single.pm",
+		'process' => 'Amanda_Changer_single',
+		'running_on' => 'amanda-server',
+		'component' => 'changer',
+		'module' => 'Amanda::Changer::single',
+		'code' => 1100128,
+		'severity' => $Amanda::Message::INFO,
+		'type' => 'failed',
+		'reason'=> 'driveinuse',
+		'storage_name' => 'TESTCONF',
+		'device_name' => 'null:/foo',
+		'changer_message' => '\'null:/foo\' is already reserved',
+		'message' => 'Storage \'TESTCONF\': \'null:/foo\' is already reserved' },
+		"second simultaneous reservation rejected") || diag(Data::Dumper::Dumper($err));
 
 	# release the first reservation
 	$held_res->release(finished_cb => sub {

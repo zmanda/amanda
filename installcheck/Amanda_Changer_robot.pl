@@ -27,6 +27,7 @@ use lib '@amperldir@';
 use Installcheck;
 use Installcheck::Config;
 use Installcheck::Changer;
+use Installcheck::Rest;
 use Installcheck::Mock qw( setup_mock_mtx $mock_mtx_path );
 use Amanda::Device qw( :constants );
 use Amanda::Debug;
@@ -321,22 +322,53 @@ Amanda::MainLoop::run();
 
     # test the changer constructor and properties
     my $err = Amanda::Changer->new("bum-scsi-dev");
-    chg_err_like($err,
-	{ message => "Storage 'TESTCONF': 'does/not/exist' not found",
-	  type => 'fatal' },
-	"check for device existence works");
+    $err = { %$err }; #unbless
+    is_deeply(Installcheck::Rest::remove_source_line($err),
+      { 'source_filename' => "$amperldir/Amanda/Changer/robot.pm",
+	'process' => 'Amanda_Changer_robot',
+	'running_on' => 'amanda-server',
+	'component' => 'changer',
+	'module' => 'Amanda::Changer::robot::Interface::MTX',
+	'code' => 1100126,
+	'severity' => $Amanda::Message::ERROR,
+	'type' => 'fatal',
+	'storage_name' => 'TESTCONF',
+	'device_name'=> 'does/not/exist',
+	'changer_message' => "'does/not/exist' not found",
+	'message' => "Storage 'TESTCONF': 'does/not/exist' not found" },
+      "check for device existence works") || diag(Data::Dumper::Dumper($err));
 
     $err = Amanda::Changer->new("no-tape-device");
-    chg_err_like($err,
-	{ message => "Storage 'TESTCONF': no 'tape-device' property specified",
-	  type => 'fatal' },
-	"tape-device property is required");
+    $err = { %$err }; #unbless
+    is_deeply(Installcheck::Rest::remove_source_line($err),
+      { 'source_filename' => "$amperldir/Amanda/Changer/robot.pm",
+	'process' => 'Amanda_Changer_robot',
+	'running_on' => 'amanda-server',
+	'component' => 'changer',
+	'module' => 'Amanda::Changer::robot',
+	'code' => 1100082,
+	'severity' => $Amanda::Message::ERROR,
+	'type' => 'fatal',
+	'storage_name' => 'TESTCONF',
+	'changer_message' => "no 'tape-device' property specified",
+	'message' => "Storage 'TESTCONF': no 'tape-device' property specified" },
+      "tape-device property is required") || diag(Data::Dumper::Dumper($err));
 
     $err = Amanda::Changer->new("bad-property");
-    chg_err_like($err,
-	{ message => "Storage 'TESTCONF': invalid 'fast-search' value",
-	  type => 'fatal' },
-	"invalid boolean value handled correctly");
+    $err = { %$err }; #unbless
+    is_deeply(Installcheck::Rest::remove_source_line($err),
+      { 'source_filename' => "$amperldir/Amanda/Changer/robot.pm",
+	'process' => 'Amanda_Changer_robot',
+	'running_on' => 'amanda-server',
+	'component' => 'changer',
+	'module' => 'Amanda::Changer::robot',
+	'code' => 1100087,
+	'severity' => $Amanda::Message::ERROR,
+	'type' => 'fatal',
+	'storage_name' => 'TESTCONF',
+	'changer_message' => "invalid 'fast-search' value",
+	'message' => "Storage 'TESTCONF': invalid 'fast-search' value" },
+      "invalid boolean value handled correctly") || diag(Data::Dumper::Dumper($err));
 
     my $chg = Amanda::Changer->new("delays");
     die "$chg" if $chg->isa("Amanda::Changer::Error");
@@ -597,11 +629,21 @@ sub test_changer {
     step loaded_slot_3 => sub {
 	my ($err, $no_res) = @_;
 
-	chg_err_like($err,
-	    { message => "Storage 'TESTCONF': no drives available",
-	      reason => 'driveinuse',
-	      type => 'failed' },
-	    "$pfx: trying to load a third slot fails with 'no drives available'");
+	$err = { %$err }; #unbless
+	is_deeply(Installcheck::Rest::remove_source_line($err),
+	      { 'source_filename' => "$amperldir/Amanda/Changer/robot.pm",
+		'process' => 'Amanda_Changer_robot',
+		'running_on' => 'amanda-server',
+		'component' => 'changer',
+		'module' => 'Amanda::Changer::robot',
+		'code' => 1100104,
+		'severity' => $Amanda::Message::MESSAGE,
+		'type' => 'failed',
+		'reason' => 'driveinuse',
+		'storage_name' => 'TESTCONF',
+		'changer_message' => "no drives available",
+		'message' => "Storage 'TESTCONF': no drives available" },
+	      "$pfx: trying to load a third slot fails with 'no drives available'") || diag(Data::Dumper::Dumper($err));
 
 	$steps->{'label_tape_1'}->();
     };
@@ -711,11 +753,22 @@ sub test_changer {
     step loaded_current_1 => sub {
 	my ($err, $res) = @_;
 
-	chg_err_like($err,
-	    { message => "Storage 'TESTCONF': the requested volume is in use (drive 0)",
-	      reason => 'volinuse',
-	      type => 'failed' },
-	    "$pfx: loading 'current' when set_current hasn't been used yet gets slot 1 (which is in use)");
+	$err = { %$err }; #unbless
+	is_deeply(Installcheck::Rest::remove_source_line($err),
+	      { 'source_filename' => "$amperldir/Amanda/Changer/robot.pm",
+		'process' => 'Amanda_Changer_robot',
+		'running_on' => 'amanda-server',
+		'component' => 'changer',
+		'module' => 'Amanda::Changer::robot',
+		'code' => 1100102,
+		'severity' => $Amanda::Message::MESSAGE,
+		'type' => 'failed',
+		'reason' => 'volinuse',
+		'drive'=> '0',
+		'storage_name' => 'TESTCONF',
+		'changer_message' => "the requested volume is in use (drive 0)",
+		'message' => "Storage 'TESTCONF': the requested volume is in use (drive 0)" },
+            "$pfx: loading 'current' when set_current hasn't been used yet gets slot 1 (which is in use)") || diag(Data::Dumper::Dumper($err));
 
 	$steps->{'load_slot_4'}->();
     };
@@ -1004,11 +1057,23 @@ sub test_changer {
     step loaded_disallowed_slot => sub {
 	(my $err, $res1) = @_;
 
-	chg_err_like($err,
-	    { message => "Storage 'TESTCONF': slot 6 not in use-slots (1-5)",
-	      reason => 'invalid',
-	      type => 'failed' },
-	    "$pfx: loading a disallowed slot fails propertly");
+	$err = { %$err }; #unbless
+	is_deeply(Installcheck::Rest::remove_source_line($err),
+	      { 'source_filename' => "$amperldir/Amanda/Changer/robot.pm",
+		'process' => 'Amanda_Changer_robot',
+		'running_on' => 'amanda-server',
+		'component' => 'changer',
+		'module' => 'Amanda::Changer::robot',
+		'code' => 1100101,
+		'severity' => $Amanda::Message::MESSAGE,
+		'type' => 'failed',
+		'reason' => 'invalid',
+		'slot'=> '6',
+		'use_slots' => '1-5',
+		'storage_name' => 'TESTCONF',
+		'changer_message' => "slot 6 not in use-slots (1-5)",
+		'message' => "Storage 'TESTCONF': slot 6 not in use-slots (1-5)" },
+            "$pfx: loading 'current' when set_current hasn't been used yet gets slot 1 (which is in use)") || diag(Data::Dumper::Dumper($err));
 
 	$steps->{'inventory5'}->();
     };
@@ -1117,11 +1182,22 @@ sub test_changer {
 
     step update_finished3 => sub {
 	my ($err) = @_;
-	chg_err_like($err,
-	    { message => "Storage 'TESTCONF': slot 5 is empty",
-	      reason => 'unknown',
-	      type => 'failed' },
-	    "$pfx: assignment-style update of an empty slot gives error");
+	$err = { %$err }; #unbless
+	is_deeply(Installcheck::Rest::remove_source_line($err),
+	      { 'source_filename' => "$amperldir/Amanda/Changer/robot.pm",
+		'process' => 'Amanda_Changer_robot',
+		'running_on' => 'amanda-server',
+		'component' => 'changer',
+		'module' => 'Amanda::Changer::robot',
+		'code' => 1100121,
+		'severity' => $Amanda::Message::MESSAGE,
+		'type' => 'failed',
+		'reason' => 'unknown',
+		'slot'=> '5',
+		'storage_name' => 'TESTCONF',
+		'changer_message' => "slot 5 is empty",
+		'message' => "Storage 'TESTCONF': slot 5 is empty" },
+	    "$pfx: assignment-style update of an empty slot gives error") || diag(Data::Dumper::Dumper($err));
 
 	$steps->{'inventory6'}->();
     };
@@ -1164,11 +1240,22 @@ sub test_changer {
     step moved1 => sub {
 	my ($err) = @_;
 
-	chg_err_like($err,
-	    { message => "Storage 'TESTCONF': slot 1 is not empty",
-	      reason => 'invalid',
-	      type => 'failed' },
-	    "$pfx: moving to a full slot is an error");
+	$err = { %$err }; #unbless
+	is_deeply(Installcheck::Rest::remove_source_line($err),
+	      { 'source_filename' => "$amperldir/Amanda/Changer/robot.pm",
+		'process' => 'Amanda_Changer_robot',
+		'running_on' => 'amanda-server',
+		'component' => 'changer',
+		'module' => 'Amanda::Changer::robot',
+		'code' => 1100124,
+		'severity' => $Amanda::Message::INFO,
+		'type' => 'failed',
+		'reason' => 'invalid',
+		'slot'=> '1',
+		'storage_name' => 'TESTCONF',
+		'changer_message' => "slot 1 is not empty",
+		'message' => "Storage 'TESTCONF': slot 1 is not empty" },
+	    "$pfx: moving to a full slot is an error") || diag(Data::Dumper::Dumper($err));
 
 	$steps->{'move2'}->();
     };
@@ -1182,11 +1269,22 @@ sub test_changer {
     step moved2 => sub {
 	my ($err) = @_;
 
-	chg_err_like($err,
-	    { message => "Storage 'TESTCONF': slot 3 is not empty",
-	      reason => 'invalid',
-	      type => 'failed' },
-	    "$pfx: moving to a full slot is an error even if that slot is loaded");
+	$err = { %$err }; #unbless
+	is_deeply(Installcheck::Rest::remove_source_line($err),
+	      { 'source_filename' => "$amperldir/Amanda/Changer/robot.pm",
+		'process' => 'Amanda_Changer_robot',
+		'running_on' => 'amanda-server',
+		'component' => 'changer',
+		'module' => 'Amanda::Changer::robot',
+		'code' => 1100124,
+		'severity' => $Amanda::Message::INFO,
+		'type' => 'failed',
+		'reason' => 'invalid',
+		'slot'=> '3',
+		'storage_name' => 'TESTCONF',
+		'changer_message' => "slot 3 is not empty",
+		'message' => "Storage 'TESTCONF': slot 3 is not empty" },
+	    "$pfx: moving to a full slot is an error even if that slot is loaded") || diag(Data::Dumper::Dumper($err));
 
 	$steps->{'move3'}->();
     };
@@ -1199,11 +1297,22 @@ sub test_changer {
     step moved3 => sub {
 	my ($err) = @_;
 
-	chg_err_like($err,
-	    { message => "Storage 'TESTCONF': slot 5 is empty", # note that this depends on the order of checks..
-	      reason => 'invalid',
-	      type => 'failed' },
-	    "$pfx: moving from an empty slot is an error");
+	$err = { %$err }; #unbless
+	is_deeply(Installcheck::Rest::remove_source_line($err),
+	      { 'source_filename' => "$amperldir/Amanda/Changer/robot.pm",
+		'process' => 'Amanda_Changer_robot',
+		'running_on' => 'amanda-server',
+		'component' => 'changer',
+		'module' => 'Amanda::Changer::robot',
+		'code' => 1100121,
+		'severity' => $Amanda::Message::INFO,
+		'type' => 'failed',
+		'reason' => 'invalid',
+		'slot'=> '5',
+		'storage_name' => 'TESTCONF',
+		'changer_message' => "slot 5 is empty",
+		'message' => "Storage 'TESTCONF': slot 5 is empty" },
+	    "$pfx: moving from an empty slot is an error") || diag(Data::Dumper::Dumper($err));
 
 	$steps->{'move4'}->();
     };

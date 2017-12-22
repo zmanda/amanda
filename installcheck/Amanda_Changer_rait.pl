@@ -28,6 +28,7 @@ use lib '@amperldir@';
 use Installcheck;
 use Installcheck::Config;
 use Installcheck::Changer;
+use Installcheck::Rest;
 use Amanda::Paths;
 use Amanda::Device qw( :constants );
 use Amanda::Debug;
@@ -86,16 +87,36 @@ label_vtape(2,3,"mytape");
 label_vtape(3,4,"mytape");
 {
     my $err = Amanda::Changer->new("chg-rait:chg-disk:$tapebase/1");
-    chg_err_like($err,
-	{ message => "Storage 'TESTCONF': chg-rait needs at least two child changers",
-	  type => 'fatal' },
-	"single child device detected and handled");
+    $err = { %$err }; #unbless
+    is_deeply(Installcheck::Rest::remove_source_line($err),
+	      { 'source_filename' => "$amperldir/Amanda/Changer/rait.pm",
+		'process' => 'Amanda_Changer_rait',
+		'running_on' => 'amanda-server',
+		'component' => 'changer',
+		'module' => 'Amanda::Changer::rait',
+		'code' => 1100136,
+		'severity' => $Amanda::Message::ERROR,
+		'type' => 'fatal',
+		'storage_name' => 'TESTCONF',
+		'changer_message' => 'chg-rait needs at least two child changers',
+		'message' => 'Storage \'TESTCONF\': chg-rait needs at least two child changers' },
+	      "single child device detected and handled") || diag(Data::Dumper::Dumper($err));
 
     $err = Amanda::Changer->new("chg-rait:chg-disk:{$tapebase/13,$tapebase/14}");
-    chg_err_like($err,
-	{ message => qr/Storage 'TESTCONF': chg-disk.*13: directory.*; chg-disk.*14: directory.*/,
-	  type => 'fatal' },
-	"constructor errors in child devices detected and handled");
+    $err = { %$err }; #unbless
+    is_deeply(Installcheck::Rest::remove_source_line($err),
+	      { 'source_filename' => "$amperldir/Amanda/Changer/rait.pm",
+		'process' => 'Amanda_Changer_rait',
+		'running_on' => 'amanda-server',
+		'component' => 'changer',
+		'module' => 'Amanda::Changer::rait',
+		'code' => 1190000,
+		'severity' => $Amanda::Message::ERROR,
+		'type' => 'fatal',
+		'storage_name' => 'TESTCONF',
+		'changer_message' => "chg-disk:$tapebase/13: directory \'$tapebase/13\' does not exist; chg-disk:$tapebase/14: directory \'$tapebase/14\' does not exist",
+		'message' => "Storage 'TESTCONF': chg-disk:$tapebase/13: directory \'$tapebase/13\' does not exist; chg-disk:$tapebase/14: directory \'$tapebase/14\' does not exist" },
+	      "constructor errors in child devices detected and handled") || diag(Data::Dumper::Dumper($err));
 }
 
 sub test_threeway {
@@ -235,11 +256,21 @@ sub test_threeway {
 
     step got_res_slot_failure => sub {
 	my ($err, $res) = @_;
-	chg_err_like($err,
-	    { message => qr/Storage 'TESTCONF': from chg-disk.*2: Slot 99 not found/,
-	      type => 'failed',
-	      reason => 'invalid' },
-	    "failure of a child to load a slot is correctly propagated");
+	$err = { %$err }; #unbless
+	is_deeply(Installcheck::Rest::remove_source_line($err),
+	      { 'source_filename' => "$amperldir/Amanda/Changer/rait.pm",
+		'process' => 'Amanda_Changer_rait',
+		'running_on' => 'amanda-server',
+		'component' => 'changer',
+		'module' => 'Amanda::Changer::rait',
+		'code' => 1190001,
+		'severity' => $Amanda::Message::ERROR,
+		'type' => 'failed',
+		'reason' => 'invalid',
+		'storage_name' => 'TESTCONF',
+		'changer_message' => "from chg-disk:$tapebase/2: Slot 99 not found",
+		'message' => "Storage 'TESTCONF': from chg-disk:$tapebase/2: Slot 99 not found" },
+	      "failure of a child to load a slot is correctly propagated") || diag(Data::Dumper::Dumper($err));
 
 	$steps->{'do_load_slot_multifailure'}->();
     };
@@ -253,11 +284,21 @@ sub test_threeway {
 
     step got_res_slot_multifailure => sub {
 	my ($err, $res) = @_;
-	chg_err_like($err,
-	    { message => qr/Storage 'TESTCONF': from chg-disk.*1: Slot 99 not found; from chg-disk.*3: /,
-	      type => 'failed',
-	      reason => 'invalid' },
-	    "failure of multiple chilren to load a slot is correctly propagated");
+	$err = { %$err }; #unbless
+	is_deeply(Installcheck::Rest::remove_source_line($err),
+	      { 'source_filename' => "$amperldir/Amanda/Changer/rait.pm",
+		'process' => 'Amanda_Changer_rait',
+		'running_on' => 'amanda-server',
+		'component' => 'changer',
+		'module' => 'Amanda::Changer::rait',
+		'code' => 1190000,
+		'severity' => $Amanda::Message::ERROR,
+		'type' => 'failed',
+		'reason' => 'invalid',
+		'storage_name' => 'TESTCONF',
+		'changer_message' => "from chg-disk:$tapebase/1: Slot 99 not found; from chg-disk:$tapebase/3: Slot 99 not found",
+		'message' => "Storage 'TESTCONF': from chg-disk:$tapebase/1: Slot 99 not found; from chg-disk:$tapebase/3: Slot 99 not found" },
+	      "failure of multiple chilren to load a slot is correctly propagated") || diag(Data::Dumper::Dumper($err));
 
 	$steps->{'do_inventory'}->();
     };

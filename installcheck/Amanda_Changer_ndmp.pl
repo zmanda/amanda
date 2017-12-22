@@ -27,6 +27,7 @@ use lib '@amperldir@';
 use Installcheck;
 use Installcheck::Config;
 use Installcheck::Changer;
+use Installcheck::Rest;
 use Installcheck::Mock qw( setup_mock_mtx $mock_mtx_path );
 use Amanda::Device qw( :constants );
 use Amanda::Debug;
@@ -488,11 +489,21 @@ sub test_changer {
     step loaded_slot_3 => sub {
 	my ($err, $no_res) = @_;
 
-	chg_err_like($err,
-	    { message => "Storage 'TESTCONF': no drives available",
-	      reason => 'driveinuse',
-	      type => 'failed' },
-	    "$pfx: trying to load a third slot fails with 'no drives available'");
+	$err = { %$err }; #unbless
+	is_deeply(Installcheck::Rest::remove_source_line($err),
+	      { 'source_filename' => "$amperldir/Amanda/Changer/robot.pm",
+		'process' => 'Amanda_Changer_ndmp',
+		'running_on' => 'amanda-server',
+		'component' => 'changer',
+		'module' => 'Amanda::Changer::ndmp',
+		'code' => 1100104,
+		'severity' => $Amanda::Message::MESSAGE,
+		'type' => 'failed',
+		'reason'=> 'driveinuse',
+		'storage_name' => 'TESTCONF',
+		'changer_message' => 'no drives available',
+		'message' => 'Storage \'TESTCONF\': no drives available' },
+	      "$pfx: trying to load a third slot fails with 'no drives available'") || diag(Data::Dumper::Dumper($err));
 
 	$steps->{'label_tape_1'}->();
     };
@@ -604,11 +615,22 @@ sub test_changer {
     step loaded_current_1 => sub {
 	my ($err, $res) = @_;
 
-	chg_err_like($err,
-	    { message => "Storage 'TESTCONF': the requested volume is in use (drive 0)",
-	      reason => 'volinuse',
-	      type => 'failed' },
-	    "$pfx: loading 'current' when set_current hasn't been used yet gets slot 1 (which is in use)");
+	$err = { %$err }; #unbless
+	is_deeply(Installcheck::Rest::remove_source_line($err),
+	      { 'source_filename' => "$amperldir/Amanda/Changer/robot.pm",
+		'process' => 'Amanda_Changer_ndmp',
+		'running_on' => 'amanda-server',
+		'component' => 'changer',
+		'module' => 'Amanda::Changer::ndmp',
+		'code' => 1100102,
+		'severity' => $Amanda::Message::MESSAGE,
+		'type' => 'failed',
+		'reason'=> 'volinuse',
+		'drive' => 0,
+		'storage_name' => 'TESTCONF',
+		'changer_message' => 'the requested volume is in use (drive 0)',
+		'message' => 'Storage \'TESTCONF\': the requested volume is in use (drive 0)' },
+	      "$pfx: loading 'current' when set_current hasn't been used yet gets slot 1 (which is in use)") || diag(Data::Dumper::Dumper($err));
 
 	$steps->{'load_slot_4'}->();
     };
