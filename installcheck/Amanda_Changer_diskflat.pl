@@ -27,7 +27,6 @@ use lib '@amperldir@';
 use Installcheck;
 use Installcheck::Config;
 use Installcheck::Changer;
-use Installcheck::Rest;
 use Amanda::Paths;
 use Amanda::Device qw( :constants );
 use Amanda::Debug;
@@ -99,7 +98,7 @@ File::Path::rmtree($rtaperoot);
 my $chg = Amanda::Changer->new("flat",
 			       tapelist => $tl);
 $chg = { %$chg }; #unbless
-is_deeply(Installcheck::Rest::remove_source_line($chg),
+is_deeply(Installcheck::Config::remove_source_line($chg),
       { 'source_filename' => "$amperldir/Amanda/Changer/diskflat.pm",
 	'process' => 'Amanda_Changer_diskflat',
 	'running_on' => 'amanda-server',
@@ -132,7 +131,7 @@ sub test_create {
 test_create( sub { my ($err, $rv) = @_;
 		   is($rv, undef, "create return undef");
 		   $err = { %$err }; #unbless
-		   is_deeply(Installcheck::Rest::remove_source_line($err),
+		   is_deeply(Installcheck::Config::remove_source_line($err),
 		      { 'source_filename' => "$amperldir/Amanda/Changer/diskflat.pm",
 			'process' => 'Amanda_Changer_diskflat',
 			'running_on' => 'amanda-server',
@@ -159,7 +158,7 @@ die($chg) if $chg->isa("Amanda::Changer::Error");
 test_create( sub { my ($err, $rv) = @_;
 		   is($err, undef, "create return undef");
 		   $rv = { %$rv }; #unbless
-		   is_deeply(Installcheck::Rest::remove_source_line($rv),
+		   is_deeply(Installcheck::Config::remove_source_line($rv),
 		      { 'source_filename' => "$amperldir/Amanda/Changer/diskflat.pm",
 			'process' => 'Amanda_Changer_diskflat',
 			'running_on' => 'amanda-server',
@@ -184,7 +183,7 @@ File::Path::rmtree($taperoot);
 $chg = Amanda::Changer->new("flat",
 			       tapelist => $tl);
 $chg = { %$chg }; #unbless
-is_deeply(Installcheck::Rest::remove_source_line($chg),
+is_deeply(Installcheck::Config::remove_source_line($chg),
       { 'source_filename' => "$amperldir/Amanda/Changer/diskflat.pm",
 	'process' => 'Amanda_Changer_diskflat',
 	'running_on' => 'amanda-server',
@@ -246,7 +245,7 @@ sub test_reserved {
 	    $err = { %$err }; #unbless
 	    my $pid = $err->{'pid'};
 	    my $drive = $err->{'drive'};
-	    is_deeply(Installcheck::Rest::remove_source_line($err),
+	    is_deeply(Installcheck::Config::remove_source_line($err),
 	      { 'source_filename' => "$amperldir/Amanda/Changer/diskflat.pm",
 		'process' => 'Amanda_Changer_diskflat',
 		'running_on' => 'amanda-server',
@@ -458,7 +457,7 @@ Amanda::MainLoop::run();
         $chg->eject(finished_cb => make_cb(sub {
 	    my ($err, $res) = @_;
 	    $err = { %$err }; #unbless
-	    is_deeply(Installcheck::Rest::remove_source_line($err),
+	    is_deeply(Installcheck::Config::remove_source_line($err),
 	      { 'source_filename' => "$amperldir/Amanda/Changer.pm",
 		'process' => 'Amanda_Changer_diskflat',
 		'running_on' => 'amanda-server',

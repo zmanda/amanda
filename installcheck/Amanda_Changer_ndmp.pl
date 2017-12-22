@@ -27,7 +27,6 @@ use lib '@amperldir@';
 use Installcheck;
 use Installcheck::Config;
 use Installcheck::Changer;
-use Installcheck::Rest;
 use Installcheck::Mock qw( setup_mock_mtx $mock_mtx_path );
 use Amanda::Device qw( :constants );
 use Amanda::Debug;
@@ -490,7 +489,7 @@ sub test_changer {
 	my ($err, $no_res) = @_;
 
 	$err = { %$err }; #unbless
-	is_deeply(Installcheck::Rest::remove_source_line($err),
+	is_deeply(Installcheck::Config::remove_source_line($err),
 	      { 'source_filename' => "$amperldir/Amanda/Changer/robot.pm",
 		'process' => 'Amanda_Changer_ndmp',
 		'running_on' => 'amanda-server',
@@ -616,7 +615,7 @@ sub test_changer {
 	my ($err, $res) = @_;
 
 	$err = { %$err }; #unbless
-	is_deeply(Installcheck::Rest::remove_source_line($err),
+	is_deeply(Installcheck::Config::remove_source_line($err),
 	      { 'source_filename' => "$amperldir/Amanda/Changer/robot.pm",
 		'process' => 'Amanda_Changer_ndmp',
 		'running_on' => 'amanda-server',

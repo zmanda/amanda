@@ -64,7 +64,7 @@ config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
 
 #CODE 1600001
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/labels");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Labels.pm",
 		'tles' => [],
@@ -104,7 +104,7 @@ close TAPELIST;
 
 #CODE 1600001
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/labels");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Labels.pm",
 		'tles' => [
@@ -268,7 +268,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 
 #CODE 1600001
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/labels?config=TESTCONF2");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Labels.pm",
 		'tles' => [
@@ -312,7 +312,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 
 #CODE 1600001
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/labels?storage=my_robot");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Labels.pm",
 		'tles' => [
@@ -380,7 +380,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 
 #CODE 1600001
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/labels?meta=AA");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Labels.pm",
 		'tles' => [
@@ -448,7 +448,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 
 #CODE 1600001
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/labels?pool=my_vtapes");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Labels.pm",
 		'tles' => [
@@ -540,7 +540,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 
 #CODE 1600001
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/labels?reuse=1");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Labels.pm",
 		'tles' => [
@@ -644,7 +644,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 
 #CODE 1600001
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/labels?reuse=0");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Labels.pm",
 		'tles' => [
@@ -724,7 +724,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 
 #CODE 1600001
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/labels?storage=my_vtapes&config=TESTCONF&reuse=1");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Labels.pm",
 		'tles' => [
@@ -780,7 +780,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 
 #CODE 1600001
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/labels?storage=my_vtapes&config=TESTCONF&reuse=1&meta=AA");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Labels.pm",
 		'tles' => [
@@ -824,7 +824,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 
 #CODE 1600001
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/labels?pool=my_robot&config=TESTCONF");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Labels.pm",
 		'tles' => [
@@ -892,7 +892,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 
 #CODE 1600001
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/labels?pool=my_robot&config=TESTCONF2");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Labels.pm",
 		'tles' => [

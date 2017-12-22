@@ -445,7 +445,7 @@ check_amstatus($status, $tracefile, "amstatus first amdump");
 
 
 $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/dles/hosts/localhost?disk=diskname2&force_level_1=1","");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {     'source_filename' => "$amperldir/Amanda/Curinfo.pm",
                 'severity' => $Amanda::Message::SUCCESS,

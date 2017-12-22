@@ -26,7 +26,6 @@ use warnings;
 use lib '@amperldir@';
 use Installcheck::Config;
 use Installcheck::Changer;
-use Installcheck::Rest;
 use Amanda::Paths;
 use Amanda::Device;
 use Amanda::Debug;
@@ -89,7 +88,7 @@ die "$chg" if $chg->isa("Amanda::Changer::Error");
     $got_second_res = make_cb('got_second_res' => sub {
 	my ($err, $res) = @_;
 	$err = { %$err }; #unbless
-	is_deeply(Installcheck::Rest::remove_source_line($err),
+	is_deeply(Installcheck::Config::remove_source_line($err),
 	     { 'source_filename' => "$amperldir/Amanda/Changer/single.pm",
 		'process' => 'Amanda_Changer_single',
 		'running_on' => 'amanda-server',

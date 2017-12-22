@@ -58,7 +58,7 @@ my $reply;
 my $amperldir = $Amanda::Paths::amperldir;
 
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/dumps");
-is_deeply (sort_reply(Installcheck::Rest::remove_source_line($reply)),
+is_deeply (sort_reply(Installcheck::Config::remove_source_line($reply)),
     { body =>
         [ {     'source_filename' => "$amperldir/Amanda/Rest/Dumps.pm",
                 'severity' => $Amanda::Message::SUCCESS,
@@ -100,7 +100,7 @@ sub sort_reply {
 }
 
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/dumps");
-is_deeply (sort_reply(Installcheck::Rest::remove_source_line($reply)),
+is_deeply (sort_reply(Installcheck::Config::remove_source_line($reply)),
     sort_reply({ body =>
         [ { 'source_filename' => "$amperldir/Amanda/Rest/Dumps.pm",
             'dumps' => [
@@ -976,7 +976,7 @@ is_deeply (sort_reply(Installcheck::Rest::remove_source_line($reply)),
     "All hosts") || diag(Data::Dumper::Dumper($reply));
 
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/dumps/hosts/otherbox");
-is_deeply (sort_reply(Installcheck::Rest::remove_source_line($reply)),
+is_deeply (sort_reply(Installcheck::Config::remove_source_line($reply)),
     { body =>
         [ { 'source_filename' => "$amperldir/Amanda/Rest/Dumps.pm",
                          'dumps' => [
@@ -1285,7 +1285,7 @@ is_deeply (sort_reply(Installcheck::Rest::remove_source_line($reply)),
     "One host, all disk==1") || diag(Data::Dumper::Dumper($reply));;
 
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/dumps/hosts/otherbox?disk=/lib");
-is_deeply (sort_reply(Installcheck::Rest::remove_source_line($reply)),
+is_deeply (sort_reply(Installcheck::Config::remove_source_line($reply)),
     { body =>
         [ { 'source_filename' => "$amperldir/Amanda/Rest/Dumps.pm",
                          'dumps' => [
@@ -1439,7 +1439,7 @@ is_deeply (sort_reply(Installcheck::Rest::remove_source_line($reply)),
     "One host, one disk");
 
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/dumps/hosts/nohost");
-is_deeply (sort_reply(Installcheck::Rest::remove_source_line($reply)),
+is_deeply (sort_reply(Installcheck::Config::remove_source_line($reply)),
     { body =>
         [ { 'source_filename' => "$amperldir/Amanda/Rest/Dumps.pm",
 	    'dumps' => [],

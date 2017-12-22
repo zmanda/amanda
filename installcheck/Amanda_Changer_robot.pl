@@ -27,7 +27,6 @@ use lib '@amperldir@';
 use Installcheck;
 use Installcheck::Config;
 use Installcheck::Changer;
-use Installcheck::Rest;
 use Installcheck::Mock qw( setup_mock_mtx $mock_mtx_path );
 use Amanda::Device qw( :constants );
 use Amanda::Debug;
@@ -323,7 +322,7 @@ Amanda::MainLoop::run();
     # test the changer constructor and properties
     my $err = Amanda::Changer->new("bum-scsi-dev");
     $err = { %$err }; #unbless
-    is_deeply(Installcheck::Rest::remove_source_line($err),
+    is_deeply(Installcheck::Config::remove_source_line($err),
       { 'source_filename' => "$amperldir/Amanda/Changer/robot.pm",
 	'process' => 'Amanda_Changer_robot',
 	'running_on' => 'amanda-server',
@@ -340,7 +339,7 @@ Amanda::MainLoop::run();
 
     $err = Amanda::Changer->new("no-tape-device");
     $err = { %$err }; #unbless
-    is_deeply(Installcheck::Rest::remove_source_line($err),
+    is_deeply(Installcheck::Config::remove_source_line($err),
       { 'source_filename' => "$amperldir/Amanda/Changer/robot.pm",
 	'process' => 'Amanda_Changer_robot',
 	'running_on' => 'amanda-server',
@@ -356,7 +355,7 @@ Amanda::MainLoop::run();
 
     $err = Amanda::Changer->new("bad-property");
     $err = { %$err }; #unbless
-    is_deeply(Installcheck::Rest::remove_source_line($err),
+    is_deeply(Installcheck::Config::remove_source_line($err),
       { 'source_filename' => "$amperldir/Amanda/Changer/robot.pm",
 	'process' => 'Amanda_Changer_robot',
 	'running_on' => 'amanda-server',
@@ -630,7 +629,7 @@ sub test_changer {
 	my ($err, $no_res) = @_;
 
 	$err = { %$err }; #unbless
-	is_deeply(Installcheck::Rest::remove_source_line($err),
+	is_deeply(Installcheck::Config::remove_source_line($err),
 	      { 'source_filename' => "$amperldir/Amanda/Changer/robot.pm",
 		'process' => 'Amanda_Changer_robot',
 		'running_on' => 'amanda-server',
@@ -754,7 +753,7 @@ sub test_changer {
 	my ($err, $res) = @_;
 
 	$err = { %$err }; #unbless
-	is_deeply(Installcheck::Rest::remove_source_line($err),
+	is_deeply(Installcheck::Config::remove_source_line($err),
 	      { 'source_filename' => "$amperldir/Amanda/Changer/robot.pm",
 		'process' => 'Amanda_Changer_robot',
 		'running_on' => 'amanda-server',
@@ -1058,7 +1057,7 @@ sub test_changer {
 	(my $err, $res1) = @_;
 
 	$err = { %$err }; #unbless
-	is_deeply(Installcheck::Rest::remove_source_line($err),
+	is_deeply(Installcheck::Config::remove_source_line($err),
 	      { 'source_filename' => "$amperldir/Amanda/Changer/robot.pm",
 		'process' => 'Amanda_Changer_robot',
 		'running_on' => 'amanda-server',
@@ -1183,7 +1182,7 @@ sub test_changer {
     step update_finished3 => sub {
 	my ($err) = @_;
 	$err = { %$err }; #unbless
-	is_deeply(Installcheck::Rest::remove_source_line($err),
+	is_deeply(Installcheck::Config::remove_source_line($err),
 	      { 'source_filename' => "$amperldir/Amanda/Changer/robot.pm",
 		'process' => 'Amanda_Changer_robot',
 		'running_on' => 'amanda-server',
@@ -1241,7 +1240,7 @@ sub test_changer {
 	my ($err) = @_;
 
 	$err = { %$err }; #unbless
-	is_deeply(Installcheck::Rest::remove_source_line($err),
+	is_deeply(Installcheck::Config::remove_source_line($err),
 	      { 'source_filename' => "$amperldir/Amanda/Changer/robot.pm",
 		'process' => 'Amanda_Changer_robot',
 		'running_on' => 'amanda-server',
@@ -1270,7 +1269,7 @@ sub test_changer {
 	my ($err) = @_;
 
 	$err = { %$err }; #unbless
-	is_deeply(Installcheck::Rest::remove_source_line($err),
+	is_deeply(Installcheck::Config::remove_source_line($err),
 	      { 'source_filename' => "$amperldir/Amanda/Changer/robot.pm",
 		'process' => 'Amanda_Changer_robot',
 		'running_on' => 'amanda-server',
@@ -1298,7 +1297,7 @@ sub test_changer {
 	my ($err) = @_;
 
 	$err = { %$err }; #unbless
-	is_deeply(Installcheck::Rest::remove_source_line($err),
+	is_deeply(Installcheck::Config::remove_source_line($err),
 	      { 'source_filename' => "$amperldir/Amanda/Changer/robot.pm",
 		'process' => 'Amanda_Changer_robot',
 		'running_on' => 'amanda-server',

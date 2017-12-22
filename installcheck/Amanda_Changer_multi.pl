@@ -27,7 +27,6 @@ use lib '@amperldir@';
 use Installcheck;
 use Installcheck::Config;
 use Installcheck::Changer;
-use Installcheck::Rest;
 use Amanda::Paths;
 use Amanda::Device qw( :constants );
 use Amanda::Debug;
@@ -114,7 +113,7 @@ is($chg->have_inventory(), '1', "changer have inventory");
 	    my ($err, $reservation) = @_;
 	    $err = { %$err }; #unbless
 	    my $pid = $err->{'pid'};
-	    is_deeply(Installcheck::Rest::remove_source_line($err),
+	    is_deeply(Installcheck::Config::remove_source_line($err),
 	      { 'source_filename' => "$amperldir/Amanda/Changer/multi.pm",
 		'process' => 'Amanda_Changer_multi',
 		'running_on' => 'amanda-server',

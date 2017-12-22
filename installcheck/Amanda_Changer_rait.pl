@@ -28,7 +28,6 @@ use lib '@amperldir@';
 use Installcheck;
 use Installcheck::Config;
 use Installcheck::Changer;
-use Installcheck::Rest;
 use Amanda::Paths;
 use Amanda::Device qw( :constants );
 use Amanda::Debug;
@@ -88,7 +87,7 @@ label_vtape(3,4,"mytape");
 {
     my $err = Amanda::Changer->new("chg-rait:chg-disk:$tapebase/1");
     $err = { %$err }; #unbless
-    is_deeply(Installcheck::Rest::remove_source_line($err),
+    is_deeply(Installcheck::Config::remove_source_line($err),
 	      { 'source_filename' => "$amperldir/Amanda/Changer/rait.pm",
 		'process' => 'Amanda_Changer_rait',
 		'running_on' => 'amanda-server',
@@ -104,7 +103,7 @@ label_vtape(3,4,"mytape");
 
     $err = Amanda::Changer->new("chg-rait:chg-disk:{$tapebase/13,$tapebase/14}");
     $err = { %$err }; #unbless
-    is_deeply(Installcheck::Rest::remove_source_line($err),
+    is_deeply(Installcheck::Config::remove_source_line($err),
 	      { 'source_filename' => "$amperldir/Amanda/Changer/rait.pm",
 		'process' => 'Amanda_Changer_rait',
 		'running_on' => 'amanda-server',
@@ -257,7 +256,7 @@ sub test_threeway {
     step got_res_slot_failure => sub {
 	my ($err, $res) = @_;
 	$err = { %$err }; #unbless
-	is_deeply(Installcheck::Rest::remove_source_line($err),
+	is_deeply(Installcheck::Config::remove_source_line($err),
 	      { 'source_filename' => "$amperldir/Amanda/Changer/rait.pm",
 		'process' => 'Amanda_Changer_rait',
 		'running_on' => 'amanda-server',
@@ -285,7 +284,7 @@ sub test_threeway {
     step got_res_slot_multifailure => sub {
 	my ($err, $res) = @_;
 	$err = { %$err }; #unbless
-	is_deeply(Installcheck::Rest::remove_source_line($err),
+	is_deeply(Installcheck::Config::remove_source_line($err),
 	      { 'source_filename' => "$amperldir/Amanda/Changer/rait.pm",
 		'process' => 'Amanda_Changer_rait',
 		'running_on' => 'amanda-server',

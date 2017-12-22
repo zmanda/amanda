@@ -1,4 +1,10 @@
 2017-12-22  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* installcheck/Installcheck/Config.pm (remove_source_line): Remove
+	  function
+	* installcheck/Installcheck/Rest.pm (remove_source_line): Add function
+	* installcheck/*.pl: Use remove_source_line for Installcheck::Config
+
+2017-12-22  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* installcheck/Amanda_Changer_disk.pl: Fix
 
 2017-12-22  Jean-Louis Martineau <JMartineau@carbonite.com>

@@ -95,7 +95,7 @@ foreach my $message (@{$reply->{'body'}}) {
 	$message->{'seconds'} = '1.00';
     }
 }
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
 #0
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Amcheck.pm",

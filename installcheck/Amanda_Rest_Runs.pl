@@ -123,7 +123,7 @@ foreach my $message (@{$reply->{'body'}}) {
 	}
     }
 }
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Amdump.pm",
 		'severity' => $Amanda::Message::INFO,
@@ -179,7 +179,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 
 #CODE 1500001
 $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/BADCONF/runs/amdump","");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Configs.pm",
 		'severity' => $Amanda::Message::ERROR,
@@ -202,7 +202,7 @@ do {
     $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/runs");
 } while ($reply->{'body'}[0]->{'code'} == 2000004 and
 	 $reply->{'body'}[0]->{'status'} ne 'done');
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Runs.pm",
 		'severity' => $Amanda::Message::INFO,
@@ -245,7 +245,7 @@ $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/status?t
 $datestr = $reply->{body}[0]{status}{datestr};
 $starttime = $reply->{body}[0]{status}{starttime};
 $starttime_locale_independent = $reply->{body}[0]{status}{'starttime-locale-independent'};
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body => [
                        {
                          'source_filename' => "$amperldir/Amanda/Status.pm",
@@ -470,7 +470,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
     "status") || diag("reply: " . Data::Dumper::Dumper($reply));
 
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/report?logfile=$logfile");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body => [
                        {
                          'report' => {
@@ -756,7 +756,7 @@ $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/status?t
 $datestr = $reply->{body}[0]{status}{datestr};
 $starttime = $reply->{body}[0]{status}{starttime};
 $starttime_locale_independent = $reply->{body}[0]{status}{'starttime-locale-independent'};
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body => [
                        {
                          'source_filename' => "$amperldir/Amanda/Status.pm",
@@ -989,7 +989,7 @@ $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/status?t
 $datestr = $reply->{body}[0]{status}{datestr};
 $starttime = $reply->{body}[0]{status}{starttime};
 $starttime_locale_independent = $reply->{body}[0]{status}{'starttime-locale-independent'};
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body => [
                        {
                          'source_filename' => "$amperldir/Amanda/Status.pm",
@@ -1229,7 +1229,7 @@ $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/status?t
 $datestr = $reply->{body}[0]{status}{datestr};
 $starttime = $reply->{body}[0]{status}{starttime};
 $starttime_locale_independent = $reply->{body}[0]{status}{'starttime-locale-independent'};
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body => [
                        {
                          'source_filename' => "$amperldir/Amanda/Status.pm",
@@ -1558,7 +1558,7 @@ $cat = Installcheck::Catalogs::load('doublefailure');
 $cat->install();
 
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/report?tracefile=$tracefile");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body => [
                        {
                          'report' => {
@@ -1736,7 +1736,7 @@ $cat = Installcheck::Catalogs::load('strontium');
 $cat->install();
 
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/report?logfile=$logfile");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body => [
                        {
                          'report' => {
@@ -1932,7 +1932,7 @@ $cat = Installcheck::Catalogs::load('amflush');
 $cat->install();
 
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/report?logfile=$logfile");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body => [
                        {
                          'report' => {
@@ -2142,7 +2142,7 @@ $cat = Installcheck::Catalogs::load('resultsmissing');
 $cat->install();
 
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/report?logfile=$logfile");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body => [
                        {
                          'report' => {
@@ -2357,7 +2357,7 @@ $cat = Installcheck::Catalogs::load('shortstrange');
 $cat->install();
 
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/report?logfile=$logfile");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body => [
                        {
                          'report' => {
@@ -2520,7 +2520,7 @@ $cat = Installcheck::Catalogs::load('longstrange');
 $cat->install();
 
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/report?logfile=$logfile");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body => [
                        {
                          'report' => {
@@ -2776,7 +2776,7 @@ $cat = Installcheck::Catalogs::load('bigestimate');
 $cat->install();
 
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/report?logfile=$logfile");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body => [
                        {
                          'report' => {
@@ -2922,7 +2922,7 @@ $cat = Installcheck::Catalogs::load('retried');
 $cat->install();
 
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/report?logfile=$logfile");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body => [
                        {
                          'report' => {
@@ -3076,7 +3076,7 @@ $cat = Installcheck::Catalogs::load('retried-strange');
 $cat->install();
 
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/report?logfile=$logfile");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body => [
                        {
                          'report' => {
@@ -3247,7 +3247,7 @@ $cat = Installcheck::Catalogs::load('retried-nofinish');
 $cat->install();
 
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/report?logfile=$logfile");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body => [
                        {
                          'report' => {
@@ -3405,7 +3405,7 @@ $cat = Installcheck::Catalogs::load('taperr');
 $cat->install();
 
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/report?logfile=$logfile");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body => [
                        {
                          'report' => {
@@ -3538,7 +3538,7 @@ $cat = Installcheck::Catalogs::load('spanned');
 $cat->install();
 
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/report?logfile=$logfile");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body => [
                        {
                          'report' => {
@@ -3696,7 +3696,7 @@ $cat = Installcheck::Catalogs::load('fatal');
 $cat->install();
 
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/report?logfile=$logfile");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body => [
                        {
                          'report' => {
@@ -3833,7 +3833,7 @@ $cat = Installcheck::Catalogs::load('flush-origsize');
 $cat->install();
 
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/report?logfile=$logfile");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body => [
                        {
                          'report' => {
@@ -3978,7 +3978,7 @@ $cat = Installcheck::Catalogs::load('flush-noorigsize');
 $cat->install();
 
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/report?logfile=$logfile");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body => [
                        {
                          'report' => {
@@ -4123,7 +4123,7 @@ $cat = Installcheck::Catalogs::load('plannerfail');
 $cat->install();
 
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/report?logfile=$logfile");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body => [
                        {
                          'report' => {
@@ -4311,7 +4311,7 @@ $cat = Installcheck::Catalogs::load('skipped');
 $cat->install();
 
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/report?logfile=$logfile");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body => [
                        {
                          'report' => {
@@ -4453,7 +4453,7 @@ $cat = Installcheck::Catalogs::load('filesystemstaped');
 $cat->install();
 
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/report?logfile=$logfile");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body => [
                        {
                          'report' => {
@@ -4618,7 +4618,7 @@ $cat->install();
 $logfile = "$logdir/log.20100908110856.0";
 
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/report?logfile=$logfile");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body => [
                        {
                          'report' => {
@@ -4910,7 +4910,7 @@ foreach my $message (@{$reply->{'body'}}) {
 	}
     }
 }
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body => [
                        {
                          'source_filename' => "$amperldir/Amanda/Amflush.pm",
@@ -4965,7 +4965,7 @@ do {
     $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/runs");
 } while ($reply->{'body'}[0]->{'code'} == 2000004 and
 	 $reply->{'body'}[0]->{'status'} ne 'done');
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Runs.pm",
 		'severity' => $Amanda::Message::INFO,

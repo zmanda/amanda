@@ -62,7 +62,7 @@ my $reply;
 my $amperldir = $Amanda::Paths::amperldir;
 
 $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storages/DISKFLAT/create","");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {     'source_filename' => "$amperldir/Amanda/Storage.pm",
                 'severity' => $Amanda::Message::ERROR,
@@ -97,7 +97,7 @@ $testconf->add_storage("DISKFLAT", [
 $testconf->write();
 
 $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storages/DISKFLAT/create","");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {     'source_filename' => "$amperldir/Amanda/Changer.pm",
                 'severity' => $Amanda::Message::ERROR,
@@ -125,7 +125,7 @@ $testconf->add_param("tapedev", '""');
 $testconf->write();
 
 $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storages/DISKFLAT/create","");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {     'source_filename' => "$amperldir/Amanda/Storage.pm",
                 'severity' => $Amanda::Message::ERROR,
@@ -152,7 +152,7 @@ $testconf->add_storage("DISKFLAT", [
 $testconf->write();
 
 $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storages/DISKFLAT/create","");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {     'source_filename' => "$amperldir/Amanda/Changer.pm",
                 'severity' => $Amanda::Message::ERROR,
@@ -180,7 +180,7 @@ $testconf->add_changer("DISKFLAT", [
 $testconf->write();
 
 $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storages/DISKFLAT/create","");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {     'source_filename' => "$amperldir/Amanda/Changer/diskflat.pm",
                 'severity' => $Amanda::Message::ERROR,
@@ -206,7 +206,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 mkdir $rtaperoot;
 
 $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storages/DISKFLAT/create","");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {     'source_filename' => "$amperldir/Amanda/Changer/diskflat.pm",
                 'severity' => $Amanda::Message::SUCCESS,
@@ -228,7 +228,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 ok(-d $taperoot, "DIR EXISTS");
 
 #$reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storages/DISKFLAT/inventory","");
-#is_deeply (Installcheck::Rest::remove_source_line($reply),
+#is_deeply (Installcheck::Config::remove_source_line($reply),
 #    { body =>
 #        [ {     'source_filename' => "$amperldir/Amanda/Changer/diskflat.pm",
 #                'severity' => $Amanda::Message::ERROR,
@@ -262,7 +262,7 @@ $testconf->add_storage("DISKFLAT", [
 $testconf->write();
 
 $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storages/DISKFLAT/inventory","");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {     'source_filename' => "$amperldir/Amanda/Rest/Storages.pm",
                 'severity' => $Amanda::Message::SUCCESS,
@@ -331,7 +331,7 @@ print AA "AMANDA: TAPESTART DATE 20140509113436 TAPE DISKFLAT-001\n";
 close AA;
 
 $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storages/DISKFLAT/inventory","");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {     'source_filename' => "$amperldir/Amanda/Rest/Storages.pm",
                 'severity' => $Amanda::Message::SUCCESS,
@@ -395,7 +395,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
     "one slot inventory DISKFLAT - 1100000") || diag("reply: " .Data::Dumper::Dumper($reply));
 
 $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storages/DISKFLAT/load?slot=1","");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {     'source_filename' => "$amperldir/Amanda/Rest/Storages.pm",
                 'severity' => $Amanda::Message::SUCCESS,
@@ -421,7 +421,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
     "load slot 1 - 1100002") || diag("reply: " .Data::Dumper::Dumper($reply));
 
 $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storages/DISKFLAT/load?slot=2","");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {     'source_filename' => "$amperldir/Amanda/Rest/Storages.pm",
                 'severity' => $Amanda::Message::ERROR,
@@ -446,7 +446,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
     "load slot 2 - 1100002") || diag("reply: " .Data::Dumper::Dumper($reply));
 
 $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storages/DISKFLAT/load?label=DISKFLAT-001","");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {     'source_filename' => "$amperldir/Amanda/Rest/Storages.pm",
                 'severity' => $Amanda::Message::SUCCESS,
@@ -472,7 +472,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
     "load label DISKFLAT-001 - 1100002") || diag("reply: " .Data::Dumper::Dumper($reply));
 
 $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storages/DISKFLAT/load?label=DISKFLAT-002","");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {     'source_filename' => "$amperldir/Amanda/Changer/diskflat.pm",
                 'severity' => $Amanda::Message::ERROR,
@@ -494,7 +494,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
     "load label DISKFLAT-002 - 1100002") || diag("reply: " .Data::Dumper::Dumper($reply));
 
 $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storages/DISKFLAT/show","");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {     'source_filename' => "$amperldir/Amanda/Changer.pm",
                 'severity' => $Amanda::Message::INFO,
@@ -588,7 +588,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
     "shot - 1100010 - 1100015 - 1100017") || diag("reply: " .Data::Dumper::Dumper($reply));
 
 $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storages/DISKFLAT/reset","");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {     'source_filename' => "$amperldir/Amanda/Rest/Storages.pm",
                 'severity' => $Amanda::Message::SUCCESS,
@@ -610,7 +610,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
     "reset - 1100003") || diag("reply: " .Data::Dumper::Dumper($reply));
 
 $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storages/DISKFLAT/clean","");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {     'source_filename' => "$amperldir/Amanda/Changer.pm",
                 'severity' => $Amanda::Message::ERROR,
@@ -635,7 +635,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
     "clean - 1100048") || diag("reply: " .Data::Dumper::Dumper($reply));
 
 $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storages/DISKFLAT/verify","");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {     'source_filename' => "$amperldir/Amanda/Changer.pm",
                 'severity' => $Amanda::Message::ERROR,
@@ -660,7 +660,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
     "verify - 1100048") || diag("reply: " .Data::Dumper::Dumper($reply));
 
 $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storages/DISKFLAT/update","");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {     'source_filename' => "$amperldir/Amanda/Changer.pm",
                 'severity' => $Amanda::Message::ERROR,
@@ -726,7 +726,7 @@ if ($cfg_result != $CFGERR_OK) {
 }
 
 $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storages/aggregate/show","");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
 	[ {	'code' => '1100010',
 		'num_slots' => '3',
@@ -794,7 +794,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 # chg-aggregate with 2 chg-disk (first missing)
 rmtree($taperoot0);
 $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storages/aggregate/show","");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
 	[ {	'code' => '1100010',
 		'num_slots' => '3',
@@ -901,7 +901,7 @@ if ($cfg_result != $CFGERR_OK) {
 }
 
 $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storages/aggregate/show","");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
 	[ {	'code' => '1100010',
 		'num_slots' => '3',
@@ -969,7 +969,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 # chg-aggregate with 2 chg-diskflat (first missing)
 rmtree($taperoot0);
 $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storages/aggregate/show","");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
 	[ {	'code' => '1100010',
 		'num_slots' => '3',

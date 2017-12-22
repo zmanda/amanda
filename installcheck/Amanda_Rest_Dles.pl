@@ -60,7 +60,7 @@ my $testconf;
 
 #CODE 1500001
 $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/dles/hosts/localhost","");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Configs.pm",
 		'cfgerror' => "parse error: could not open conf file '$Amanda::Paths::CONFIG_DIR/TESTCONF/amanda.conf': No such file or directory",
@@ -99,7 +99,7 @@ my $infodir = getconf($CNF_INFOFILE);
 
 #CODE 1400007
 $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/dles/hosts/localhost","");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Dles.pm",
 		'severity' => $Amanda::Message::ERROR,
@@ -118,7 +118,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 
 #CODE 140009
 $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/dles/hosts/Localhost?disk=/home","");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Dles.pm",
 		'diskfile' => $diskfile,
@@ -138,7 +138,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 
 #CODE 140009
 $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/dles/hosts/localhost?disk=/home","");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Dles.pm",
 		'severity' => $Amanda::Message::ERROR,
@@ -156,7 +156,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 
 #CODE 1300003
 $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/dles/hosts/localhost?disk=/home&force=1","");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Curinfo.pm",
 		'host' => 'localhost',
@@ -176,7 +176,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 
 #CODE 1300003
 $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/dles/hosts/localhost?disk=/home&force=1","");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Curinfo.pm",
 		'host' => 'localhost',
@@ -196,7 +196,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 
 #CODE 1300019
 $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/dles/hosts/localhost?disk=/home&force=0","");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Curinfo.pm",
 		'host' => 'localhost',
@@ -216,7 +216,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 
 #CODE 1300021
 $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/dles/hosts/localhost?disk=/home&force=0","");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Curinfo.pm",
 		'host' => 'localhost',
@@ -237,7 +237,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 
 #CODE 1300031
 $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/dles/hosts/localhost?disk=/home&force=1&force_level_1=1","");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Dles.pm",
 		'severity' => $Amanda::Message::ERROR,
@@ -255,7 +255,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 
 #CODE 1300023
 $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/dles/hosts/localhost?disk=/home&force_level_1=1","");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Curinfo.pm",
 		'host' => 'localhost',
@@ -275,7 +275,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 
 #CODE 1300023
 $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/dles/hosts/localhost?disk=/home&force_level_1=1","");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Curinfo.pm",
 		'host' => 'localhost',
@@ -295,7 +295,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 
 #CODE 1300020
 $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/dles/hosts/localhost?disk=/home&force_level_1=0","");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Curinfo.pm",
 		'host' => 'localhost',
@@ -315,7 +315,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 
 #CODE 1300021
 $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/dles/hosts/localhost?disk=/home&force_level_1=0","");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Curinfo.pm",
 		'host' => 'localhost',
@@ -335,7 +335,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 
 #CODE 1300023
 $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/dles/hosts/localhost?disk=/home&force_level_1=1","");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Curinfo.pm",
 		'host' => 'localhost',
@@ -355,7 +355,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 
 #CODE 1300000 and 1300003
 $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/dles/hosts/localhost?disk=/home&force=1","");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Curinfo.pm",
 		'host' => 'localhost',
@@ -386,7 +386,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 
 #CODE 1300022 and 1300025
 $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/dles/hosts/localhost?disk=/home&force_bump=1","");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Curinfo.pm",
 		'host' => 'localhost',
@@ -417,7 +417,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 
 #CODE 1300025
 $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/dles/hosts/localhost?disk=/home&force_bump=1","");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Curinfo.pm",
 		'host' => 'localhost',
@@ -437,7 +437,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 
 #CODE 1300027
 $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/dles/hosts/localhost?disk=/home&force_bump=0","");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Curinfo.pm",
 		'host' => 'localhost',
@@ -457,7 +457,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 
 #CODE 1300028
 $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/dles/hosts/localhost?disk=/home&force_bump=0","");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Curinfo.pm",
 		'host' => 'localhost',
@@ -477,7 +477,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 
 #CODE 1300025
 $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/dles/hosts/localhost?disk=/home&force_bump=1","");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Curinfo.pm",
 		'host' => 'localhost',
@@ -497,7 +497,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 
 #CODE 1300001 and 1300026
 $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/dles/hosts/localhost?disk=/home&force_no_bump=1","");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Curinfo.pm",
 		'host' => 'localhost',
@@ -528,7 +528,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 
 #CODE 1300026
 $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/dles/hosts/localhost?disk=/home&force_no_bump=1","");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Curinfo.pm",
 		'host' => 'localhost',
@@ -548,7 +548,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 
 #CODE 1300026
 $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/dles/hosts/localhost?disk=/home&force_no_bump=0","");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Curinfo.pm",
 		'host' => 'localhost',
@@ -568,7 +568,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 
 #CODE 1300028
 $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/dles/hosts/localhost?disk=/home&force_no_bump=0","");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Curinfo.pm",
 		'host' => 'localhost',
@@ -588,7 +588,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 
 #CODE 1300002
 $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/dles/hosts/localhost?disk=/home-incronly&force=1","");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Curinfo.pm",
 		'host' => 'localhost',
@@ -608,7 +608,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 
 #CODE 1300026
 $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/dles/hosts/localhost?disk=/home&force_no_bump=1","");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Curinfo.pm",
 		'host' => 'localhost',
@@ -628,7 +628,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 
 #CODE 1300024 and 1300025
 $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/dles/hosts/localhost?disk=/home&force_bump=1","");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Curinfo.pm",
 		'host' => 'localhost',

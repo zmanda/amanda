@@ -85,7 +85,7 @@ if (File::Temp->can('newdir')) {
 }
 
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/services/discover?host=localhost&auth=local&application=amgtar&diskdevice=$test_dir/does_not_exists");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "amgtar.c",
 		'severity' => $Amanda::Message::ERROR,
@@ -106,7 +106,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
     "test_dir do not exists") || diag("reply: " . Data::Dumper::Dumper($reply));
 
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/services/discover?host=localhost&auth=local&application=amgtar&diskdevice=$test_dir");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "amgtar.c",
 		'severity' => $Amanda::Message::ERROR,
@@ -144,7 +144,7 @@ $reply = $rest->get("http://localhost:5001/amanda/v1.0/services/discover?host=lo
 
 my @sorted = sort { $a->{dle_name} cmp $b->{dle_name} } @{$reply->{'body'}};
 $reply->{body} = \@sorted;
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "amgtar.c",
 		'severity' => $Amanda::Message::INFO,
@@ -248,7 +248,7 @@ $reply = $rest->get("http://localhost:5001/amanda/v1.0/services/discover?host=lo
 
 @sorted = sort { $a->{dle_name} cmp $b->{dle_name} } @{$reply->{'body'}};
 $reply->{body} = \@sorted;
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "amgtar.c",
 		'severity' => $Amanda::Message::INFO,

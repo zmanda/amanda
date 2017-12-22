@@ -27,7 +27,6 @@ use lib '@amperldir@';
 use Installcheck;
 use Installcheck::Config;
 use Installcheck::Changer;
-use Installcheck::Rest;
 use Amanda::Paths;
 use Amanda::Device qw( :constants );
 use Amanda::Debug;
@@ -81,7 +80,7 @@ reset_taperoot(5);
 # first try an error
 my $chg = Amanda::Changer->new("chg-disk:$taperoot/foo");
 $chg = { %$chg }; #unbless
-is_deeply(Installcheck::Rest::remove_source_line($chg),
+is_deeply(Installcheck::Config::remove_source_line($chg),
       { 'source_filename' => "$amperldir/Amanda/Changer/disk.pm",
 	'process' => 'Amanda_Changer_disk',
 	'running_on' => 'amanda-server',
@@ -142,7 +141,7 @@ sub test_reserved {
 	    $err = { %$err }; #unbless
 	    my $pid = $err->{'pid'};
 	    my $drive = $err->{'drive'};
-	    is_deeply(Installcheck::Rest::remove_source_line($err),
+	    is_deeply(Installcheck::Config::remove_source_line($err),
 	      { 'source_filename' => "$amperldir/Amanda/Changer/disk.pm",
                 'process' => 'Amanda_Changer_disk',
                 'running_on' => 'amanda-server',
@@ -354,7 +353,7 @@ Amanda::MainLoop::run();
         $chg->eject(finished_cb => make_cb(sub {
 	    my ($err, $res) = @_;
 	    $err = { %$err }; #unbless
-	    is_deeply(Installcheck::Rest::remove_source_line($err),
+	    is_deeply(Installcheck::Config::remove_source_line($err),
 	      { 'source_filename' => "$amperldir/Amanda/Changer.pm",
 		'process' => 'Amanda_Changer_disk',
 		'running_on' => 'amanda-server',

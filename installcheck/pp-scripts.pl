@@ -332,7 +332,7 @@ EODLE
                  $reply->{'body'}[0]->{'status'} ne 'done');
 
     $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/report?logfile=$logfile");
-    is_deeply (Installcheck::Rest::cleanup_for_amdump(Installcheck::Rest::remove_source_line($reply)),
+    is_deeply (Installcheck::Rest::cleanup_for_amdump(Installcheck::Config::remove_source_line($reply)),
     { body => [
 	{
                          'message' => 'The report',
@@ -521,7 +521,7 @@ EODLE
                  $reply->{'body'}[0]->{'status'} ne 'done');
 
     $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/report?logfile=$logfile");
-    is_deeply (Installcheck::Rest::cleanup_for_amdump(Installcheck::Rest::remove_source_line($reply)),
+    is_deeply (Installcheck::Rest::cleanup_for_amdump(Installcheck::Config::remove_source_line($reply)),
     { body => [
                        {
                          'running_on' => 'amanda-server',
@@ -724,7 +724,7 @@ EODLE
                  $reply->{'body'}[0]->{'status'} ne 'done');
 
     $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/report?logfile=$logfile");
-    is_deeply (Installcheck::Rest::cleanup_for_amdump(Installcheck::Rest::remove_source_line($reply)),
+    is_deeply (Installcheck::Rest::cleanup_for_amdump(Installcheck::Config::remove_source_line($reply)),
     { body => [
                        {
                          'running_on' => 'amanda-server',

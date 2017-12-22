@@ -65,7 +65,7 @@ $testconf = Installcheck::Run::setup();
 $testconf->add_param('AMRECOVER_DO_FSF', 'YES');
 $testconf->write();
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF?fields=amrecover_do_fsf");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Configs.pm",
 		'cfgerror' => "'$Amanda::Paths::CONFIG_DIR/TESTCONF/amanda.conf', line 11: warning: Keyword AMRECOVER_DO_FSF is deprecated.",
@@ -86,7 +86,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 $testconf = Installcheck::Run::setup();
 $testconf->write();
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/FOOBAR?fields=runtapes");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Configs.pm",
 		'cfgerror' => "parse error: could not open conf file '$Amanda::Paths::CONFIG_DIR/FOOBAR/amanda.conf': No such file or directory",
@@ -124,7 +124,7 @@ if (defined $reply->{'body'}[0]->{'config'}) {
     @{$reply->{'body'}[0]->{'config'}} = sort @{$reply->{'body'}[0]->{'config'}};
 }
 
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Configs.pm",
 		'config' => [@newconf],
@@ -161,7 +161,7 @@ if (@conf > 0) {
 	@{$reply->{'body'}[0]->{'config'}} = sort @{$reply->{'body'}[0]->{'config'}};
     }
 
-    is_deeply (Installcheck::Rest::remove_source_line($reply),
+    is_deeply (Installcheck::Config::remove_source_line($reply),
         { body =>
             [ { 'source_filename' => "$amperldir/Amanda/Rest/Configs.pm",
 		'config' => [@newconf],
@@ -178,7 +178,7 @@ if (@conf > 0) {
         },
         "Get config list");
 } else {
-    is_deeply (Installcheck::Rest::remove_source_line($reply),
+    is_deeply (Installcheck::Config::remove_source_line($reply),
         { body =>
             [ { 'source_filename' => "$amperldir/Amanda/Rest/Configs.pm",
 		'severity' => $Amanda::Message::ERROR,
@@ -201,7 +201,7 @@ $testconf->write();
 chmod 0000, $config_dir;
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs");
 
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Configs.pm",
 		'severity' => $Amanda::Message::ERROR,
@@ -224,7 +224,7 @@ chmod 0700, $config_dir;
 config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF');
 #CODE 1500007 and 1500008
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF?fields=foobar&fields=tapecycle");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Configs.pm",
 		'severity' => $Amanda::Message::ERROR,
@@ -254,7 +254,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 
 #CODE 1500008
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF?fields=runtapes&fields=tapecycle");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Configs.pm",
 		'severity' => $Amanda::Message::SUCCESS,
@@ -277,7 +277,7 @@ my @reserved_udp_port = [split ',', $Amanda::Constants::UDP_RESERVED_PORTRANGE];
 my @reserved_tcp_port = [split ',', $Amanda::Constants::TCP_RESERVED_PORTRANGE];
 my @unreserved_tcp_port = [split ',', $Amanda::Constants::TCP_UNRESERVED_PORTRANGE];
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Configs.pm",
 		'severity' => $Amanda::Message::SUCCESS,
@@ -415,7 +415,7 @@ $testconf->add_changer("DISKFLAT", [
 $testconf->write();
 
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/changers");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {     'source_filename' => "$amperldir/Amanda/Rest/Configs.pm",
                 'severity' => $Amanda::Message::SUCCESS,
@@ -433,7 +433,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
     "List changer") || diag("reply: " .Data::Dumper::Dumper($reply));
 
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/changers/TEST");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {     'source_filename' => "$amperldir/Amanda/Rest/Configs.pm",
                 'severity' => $Amanda::Message::ERROR,
@@ -451,7 +451,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
     "List changer") || diag("reply: " .Data::Dumper::Dumper($reply));
 
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/changers/TEST?fields");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {     'source_filename' => "$amperldir/Amanda/Rest/Configs.pm",
                 'severity' => $Amanda::Message::ERROR,
@@ -469,7 +469,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
     "List changer") || diag("reply: " .Data::Dumper::Dumper($reply));
 
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/changers/DISKFLAT?fields");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {     'source_filename' => "$amperldir/Amanda/Rest/Configs.pm",
                 'severity' => $Amanda::Message::SUCCESS,
@@ -488,7 +488,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
     "List changer") || diag("reply: " .Data::Dumper::Dumper($reply));
 
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/changers/DISKFLAT?fields=tpchanger&fields=changerfile&fields=pool");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
        [  {     'source_filename' => "$amperldir/Amanda/Rest/Configs.pm",
                 'severity' => $Amanda::Message::SUCCESS,
@@ -515,7 +515,7 @@ my $taperoot = "$Installcheck::TMP/Amanda_Changer_Diskflat_test";
 $testconf->write();
 
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storages");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {     'source_filename' => "$amperldir/Amanda/Rest/Configs.pm",
                 'severity' => $Amanda::Message::SUCCESS,
@@ -533,7 +533,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
     "List storage") || diag("reply: " .Data::Dumper::Dumper($reply));
 
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storages/TEST");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {     'source_filename' => "$amperldir/Amanda/Rest/Configs.pm",
                 'severity' => $Amanda::Message::ERROR,
@@ -551,7 +551,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
     "List storage") || diag("reply: " .Data::Dumper::Dumper($reply));
 
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storages/TEST?fields");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {     'source_filename' => "$amperldir/Amanda/Rest/Configs.pm",
                 'severity' => $Amanda::Message::ERROR,
@@ -569,7 +569,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
     "List storage") || diag("reply: " .Data::Dumper::Dumper($reply));
 
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storages/TESTCONF?fields");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {     'source_filename' => "$amperldir/Amanda/Rest/Configs.pm",
                 'severity' => $Amanda::Message::SUCCESS,
@@ -588,7 +588,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
     "List storage") || diag("reply: " .Data::Dumper::Dumper($reply));
 
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storages/TESTCONF?fields=tpchanger&fields=runtapes&fields=pool&fields=tapepool");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {     'source_filename' => "$amperldir/Amanda/Rest/Configs.pm",
                 'severity' => $Amanda::Message::SUCCESS,

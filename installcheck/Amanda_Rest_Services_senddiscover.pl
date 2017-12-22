@@ -68,7 +68,7 @@ $testconf->write();
 
 #CODE 3700012
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/services/discover?host=localhost&auth=local");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Services.pm",
 		'severity' => $Amanda::Message::ERROR,
@@ -86,7 +86,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 
 #CODE 3100000
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/services/discover?auth=local&application=amgtar");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Services.pm",
 		'severity' => $Amanda::Message::ERROR,
@@ -104,7 +104,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 
 #CODE 3100001
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/services/discover?host=localhost&application=amgtar");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Services.pm",
 		'severity' => $Amanda::Message::ERROR,
@@ -122,7 +122,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 
 #CODE 3100002
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/services/discover?host=localhost&auth=bad_auth&application=amgtar");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Services.pm",
 		'severity' => $Amanda::Message::ERROR,
@@ -141,7 +141,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 
 #CODE 2900000
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/services/discover?host=localhost&auth=local&application=bad_app");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => 'senddiscover.c',
 		'severity' => $Amanda::Message::ERROR,
@@ -175,7 +175,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 
 #CODE 2900002
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/services/discover?host=localhost&auth=local&application=amraw");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => 'senddiscover.c',
 		'severity' => $Amanda::Message::ERROR,

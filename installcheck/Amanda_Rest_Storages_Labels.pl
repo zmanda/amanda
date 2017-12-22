@@ -67,7 +67,7 @@ config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
 
 #CODE 1600001
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storages/DISKLFAT/labels");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Storages/Labels.pm",
 		'tles' => [],
@@ -110,7 +110,7 @@ write_tapelist();
 
 #CODE 1600001
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storages/DISKFLAT/labels");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Storages/Labels.pm",
 		'tles' => [
@@ -196,7 +196,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 
 #CODE 1600001
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storages/DISKFLAT/labels?config=TESTCONF");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Storages/Labels.pm",
 		'tles' => [
@@ -271,7 +271,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 
 #CODE 1600001
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storages/DISKFLAT/labels?reuse=1");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Storages/Labels.pm",
 		'tles' => [
@@ -324,7 +324,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 
 #CODE 1600001
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storages/DISKFLAT/labels/DISKFLAT-002");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Storages/Labels.pm",
 		'tles' => [
@@ -355,7 +355,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 
 #CODE 1150002
 $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storages/DISKFLAT/labels/DISKFLAT-002?reuse=0&storage=NEW-DISKFLAT&pool=NEW-POOL&comment=newcomment","");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Storage.pm",
 		'severity' => $Amanda::Message::ERROR,
@@ -392,7 +392,7 @@ write_tapelist();
 
 #CODE 1000035 1000061
 $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storages/DISKFLAT/labels/DISKFLAT-012?reuse=0&storage=NEW-DISKFLAT&pool=NEW-POOL&comment=newcomment","");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Label.pm",
 		'severity' => $Amanda::Message::ERROR,
@@ -422,7 +422,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 
 #CODE 1000047 1000003 1000004
 $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storages/DISKFLAT/labels/DISKFLAT-002?reuse=0&storage=NEW-DISKFLAT&pool=NEW-POOL&comment=newcomment","");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Label.pm",
 		'severity' => $Amanda::Message::SUCCESS,
@@ -463,7 +463,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 
 #CODE 1000048
 $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storages/DISKFLAT/labels/DISKFLAT-002?reuse=0&storage=NEW-DISKFLAT&pool=NEW-POOL&comment=newcomment&force=1","");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Label.pm",
 		'severity' => $Amanda::Message::INFO,
@@ -492,7 +492,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 
 #CODE 1600001
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storages/NEW-DISKFLAT/labels/DISKFLAT-002");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Storages/Labels.pm",
 		'tles' => [
@@ -523,7 +523,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 
 #CODE 1000008 1100066
 $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storages/DISKFLAT/labels","");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Label.pm",
 		'severity' => $Amanda::Message::INFO,
@@ -559,7 +559,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 
 #CODE 1000008 1100033
 $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storages/DISKFLAT/labels?slot=55","");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Label.pm",
 		'severity' => $Amanda::Message::INFO,
@@ -591,7 +591,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 
 #CODE 1000008 1000009 1000020 1000021 1000022
 $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storages/DISKFLAT/labels?slot=7","");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Label.pm",
 		'severity' => $Amanda::Message::INFO,
@@ -646,7 +646,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 
 #CODE 1500015
 $reply = $rest->delete("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storages/DISKFLAT/labels","");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Storages/Labels.pm",
 		'severity' => $Amanda::Message::ERROR,
@@ -664,7 +664,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 
 #CODE 1000035
 $reply = $rest->delete("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storages/DISKFLAT/labels/DISKFLAT-008","");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Label.pm",
 		'severity' => $Amanda::Message::ERROR,
@@ -684,7 +684,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 
 #CODE 1000035
 $reply = $rest->delete("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storages/DISKFLAT/labels/DISKFLAT-006","");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Label.pm",
 		'severity' => $Amanda::Message::SUCCESS,
@@ -704,7 +704,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 
 #CODE 1000049 1000052
 $reply = $rest->delete("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storages/DISKFLAT/labels/DISKFLAT-007?erase=1","");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
+is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Label.pm",
 		'severity' => $Amanda::Message::SUCCESS,
