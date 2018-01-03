@@ -1272,6 +1272,7 @@ process_dumpline(
 	    break;
 	}
 	/* else we fall through to bad line */
+	// fallthrough
     default:
 bad_line:
 	/* prefix with ?? */
