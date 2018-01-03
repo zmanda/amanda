@@ -1,4 +1,8 @@
 2018-01-03  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Rest/Runs.pm: Undo, bsd_glob is not exported on older
+	  perl
+
+2018-01-03  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/amcheck.c (handle_amcheck_device): NUL terminate the
 	  buffer if read return 0
 
