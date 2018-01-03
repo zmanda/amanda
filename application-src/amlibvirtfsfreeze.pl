@@ -58,10 +58,10 @@ sub check_properties {
 
     $self->{'freezeorthaw'} = $self->{'options'}->{'freezeorthaw'};
     if ( !defined $self->{'freezeorthaw'}
-      or $self->{'freezeorthaw'} !~ /^(?:freeze|thaw)$/ ) {
+      or $self->{'freezeorthaw'} !~ /^(?:freeze|thaw|trim)$/ ) {
         die Amanda::Script::InvocationError->transitionalError(
 	    item => 'property', value => 'freezeorthaw',
-	    problem => 'must be freeze or thaw');
+	    problem => 'must be freeze or thaw (or trim)');
     }
 
     $self->{'domain'} = $self->{'options'}->{'domain'};
@@ -71,6 +71,14 @@ sub check_properties {
     }
 
     $self->{'mountpoint'} = $self->{'options'}->{'mountpoint'};
+
+    if ( 'trim' eq $self->{'freezeorthaw'} ) {
+	my @mountpoints = @{$self->{'mountpoint'}};
+	die Amanda::Script::InvocationError->transitionalError(
+	    item => 'property', value => 'mountpoint',
+	    problem => 'trim cannot accept more than one')
+	if 1 < scalar(@mountpoints);
+    }
 }
 
 sub declare_options {
@@ -98,6 +106,10 @@ sub command_pre_dle_estimate {
     if ( 'freeze' eq $self->{'freezeorthaw'} ) {
         my @mountpoints = @{$self->{'mountpoint'}};
         @args = ( 'virsh', 'domfsfreeze', $domain, @mountpoints );
+    } elsif ( 'trim' eq $self->{'freezeorthaw'} ) {
+	my @mountpoints = @{$self->{'mountpoint'}};
+	unshift @mountpoints, '--mountpoint' if 0 < scalar(@mountpoints);
+	@args = ( 'virsh', 'domfstrim', $domain, @mountpoints );
     } else {
         @args = ( 'virsh', 'domfsthaw', $domain );
     }

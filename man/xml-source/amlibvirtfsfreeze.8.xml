@@ -97,6 +97,30 @@ ID, but may need to set the <emphasis>real</emphasis> ID to match it before
 the <command>virsh</command> command will permit the operations.</para></note>
 </refsect1>
 
+<refsect2 id='trim'><title>Trimming before freezing</title>
+
+<para>Another operation libvirt can request through the guest agent is to
+<emphasis>trim</emphasis> filesystems (any specified with MOUNTPOINT, or all
+filesystems if no mountpoint is given). The trim operation identifies all
+blocks regarded as free by the filesystem, and reports them to the filesystem's
+underlying block device as reclaimable. If the block device in the guest
+presents an image file from the host, this may reduce the space taken by
+the image on the host, by returning blocks to the host OS. Regular trimming
+can counteract the steady growth of image files due to file creation and
+deletion in the guest, especially if the guest filesystem is not mounted with
+a <code>discard</code> option to report freed blocks to the device layer as they
+are freed. A simple way to do regular trimming is to configure a DLE to trim
+with this script, just before freezing the filesystem for regular backups, as
+shown in the example below.</para>
+
+<para>Whether trimming is possible, or has any effect, depends on support
+in the virtualization system, guest OS and filesystem, and the image file
+format used on the host. For Linux guests and qemu-kvm, an image file must
+be presented via the <code>virtio-scsi</code> driver, not by the earlier
+<code>virtio-blk</code>.</para>
+
+</refsect2>
+
 <refsect1><title>PROPERTIES</title>
 
 <para>This section lists the properties that control amlibvirtfsfreeze's
@@ -114,15 +138,18 @@ frozen or thawed.
  <!-- ==== -->
  <varlistentry><term>FREEZEORTHAW</term><listitem>
 One of the values <literal>freeze</literal> or <literal>thaw</literal>.
+A third value, <literal>trim</literal>, is also allowed, to request trimming
+filesystems as described in <xref linkend='trim'/>.
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>MOUNTPOINT</term><listitem>
-Filesystems in the named domain to be frozen, identified by their mountpoints.
-This property can have multiple values. It is ignored in a
+Filesystems in the named domain to be frozen or trimmed, identified by their
+mountpoints. This property can have multiple values. It is ignored in a
 <literal>thaw</literal> operation; all frozen filesystems will be thawed.
 For some old versions of virtualization infrastructure, the guest agent, or
-guest OS, it must not be used for <literal>freeze</literal> either, in which
-case all mounted filesystems will be frozen.
+guest OS, it must not be used for <literal>freeze</literal> or
+<literal>trim</literal> either, in which case all mounted filesystems will be
+acted on.
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>VIRSHEXECUTABLE</term><listitem>
@@ -138,21 +165,24 @@ execute <command>virsh</command> with the same arguments.
 
 <refsect1><title>EXAMPLE</title>
 
-<para>This example sets up two script definitions,
-<literal>domfsfreeze</literal> and <literal>domfsthaw</literal>, both based on
+<para>This example sets up three script definitions,
+<literal>domfstrim</literal>, <literal>domfsfreeze</literal>,
+and <literal>domfsthaw</literal>, all based on
 this plugin, and a DLE that uses them, along with
 <manref name="amlvmsnapshot" vol="8"/> and an assumed
-<literal>remote-gtar</literal> dumptype, to freeze the root filesystems of
-several guest VMs running on a host, then snapshot the host's filesystem
-(containing the consistent, frozen image files of the guests), thaw the guest
-filesystems, and finally back up the host from the snapshot.</para>
+<literal>remote-gtar</literal> dumptype, to first trim, and then freeze,
+the root filesystems of several guest VMs running on a host, then snapshot
+the host's filesystem (containing the consistent, frozen image files of the
+guests), thaw the guest filesystems, and finally back up the host from the
+snapshot.</para>
 
 <para>Note the use of the ORDER option in script definitions. The default
 (applied to the <literal>lvmsnapshot</literal> script, which leaves it
-unspecified) is 5000. The explicit 3000 in the <literal>domfsfreeze</literal>
-definition and 7000 for <literal>domfsthaw</literal> ensure that,
-when all three scripts are run in a single phase such as PRE-DLE-ESTIMATE,
-the freezes occur first, then the snapshot, then the thaws.</para>
+unspecified) is 5000. The explicit 3000 in the <literal>domfstrim</literal>
+definition, 4000 for <literal>domfsfreeze</literal>, and 6000 for
+<literal>domfsthaw</literal> ensure that,
+when all four scripts are run in a single phase such as PRE-DLE-ESTIMATE,
+the trims occur first, then freezes, then the snapshot, then the thaws.</para>
 
 <para>In a realistic application where <command>amandad</command> does not
 run as the superuser, a privileged wrapper may need to be written and named
@@ -160,13 +190,22 @@ in the VIRSHEXECUTABLE property as discussed above.</para>
 
 <para>In <manref name='amanda.conf' vol='5'/>:
 <programlisting>
+ define script domfstrim {
+   plugin "amlibvirtfsfreeze"
+   execute-where client
+   execute-on pre-dle-estimate
+   property "freezeorthaw" "trim"
+   property "virshexecutable" "/path/to/virsh-wrapper"
+   order 3000 # must execute before libvirtfsfreeze 'freeze'
+ }
+
  define script domfsfreeze {
    plugin "amlibvirtfsfreeze"
    execute-where client
    execute-on pre-dle-estimate
    property "freezeorthaw" "freeze"
    property "virshexecutable" "/path/to/virsh-wrapper"
-   order 3000 # must execute before lvmsnapshot
+   order 4000 # must execute before lvmsnapshot
  }
 
  define script domfsthaw {
@@ -175,7 +214,7 @@ in the VIRSHEXECUTABLE property as discussed above.</para>
    execute-on pre-dle-estimate
    property "freezeorthaw" "thaw"
    property "virshexecutable" "/path/to/virsh-wrapper"
-   order 7000 # must execute after lvmsnapshot
+   order 6000 # must execute after lvmsnapshot
  }
 
  define script "lvmsnapshot" {
@@ -193,6 +232,11 @@ in the VIRSHEXECUTABLE property as discussed above.</para>
  example / /tmp/rootsnap {
    remote-gtar
    script {
+     "domfstrim"
+     property "domain" "vm1"
+     property "mountpoint" "/"
+   }
+   script {
      "domfsfreeze"
      property "domain" "vm1"
      property "mountpoint" "/"
@@ -200,6 +244,11 @@ in the VIRSHEXECUTABLE property as discussed above.</para>
    script {
      "domfsthaw"
      property "domain" "vm1"
+   }
+   script {
+     "domfstrim"
+     property "domain" "vm2"
+     property "mountpoint" "/"
    }
    script {
      "domfsfreeze"
