@@ -6952,7 +6952,7 @@ update_derived_values(
 	    autolabel_t *autolabel = &(conf_data[CNF_AUTOLABEL].v.autolabel);
 	    g_free(autolabel->template);
 	    autolabel->template = g_strdup(getconf_str(CNF_LABEL_NEW_TAPES));
-	    if (!autolabel->template || autolabel->template == '\0') {
+	    if (!autolabel->template || *autolabel->template == '\0') {
 		g_free(autolabel->template);
 		autolabel->template = NULL;
 		autolabel->autolabel = 0;

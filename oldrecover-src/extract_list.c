@@ -1406,7 +1406,7 @@ extract_files_setup(
 	switch (*ch) {     /* done this way in case there are more */
 	case '$':
 	    *(ch1++) = '\\';
-	    /* no break; we do want to fall through... */
+	    // fallthrough
 	default:
 	    *ch1 = *ch;
 	}
@@ -1430,7 +1430,7 @@ extract_files_setup(
 	switch (*ch) {     /* done this way in case there are more */
 	case '$':
 	    *(ch1++) = '\\';
-	    /* no break; we do want to fall through... */
+	    // fallthrough
 	default:
 	    *ch1 = *ch;
 	}

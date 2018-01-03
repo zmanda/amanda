@@ -585,6 +585,7 @@ main(
 		 break;
 	case 43: amfree(argument.timestamp);
 		 argument.timestamp = g_strdup(optarg);
+		 break;
 	case 44: argument.cmd_from_sendbackup = atoi(optarg);
 		 break;
 	case 45: argument.cmd_to_sendbackup = atoi(optarg);

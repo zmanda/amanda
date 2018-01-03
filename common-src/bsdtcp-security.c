@@ -280,7 +280,7 @@ bsdtcp_fn_connect(
 		}
 	    }
 	}
-	// pass through
+	// fallthrough
     case S_OK:
 	if (rh->res)
 	    freeaddrinfo(rh->res);

@@ -1,3 +1,13 @@
+2018-01-03  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* application-src/amgtar.c: Add missing break
+	* common-src/bsdtcp-security.c,
+	  common-src/conffile.c,
+	  common-src/ssl-security.c,
+	  oldrecover-src/extract_list.c,
+	  server-src/dumper.c: Fix warning in newer gcc
+	* perl/Amanda/Rest/Runs.pm,: Fix warning in newer perl
+	* installcheck/Installcheck.pm: Use File::Glob::bsd_glob
+
 2017-12-22  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* installcheck/Installcheck/Config.pm (remove_source_line): Remove
 	  function

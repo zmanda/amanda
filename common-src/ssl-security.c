@@ -201,16 +201,16 @@ ssl_connect(
     }
 
     if (ssl_dir) {
-	if (!ssl_cert_file || ssl_cert_file == '\0') {
+	if (!ssl_cert_file || *ssl_cert_file == '\0') {
 	    ssl_cert_file = g_strdup_printf("%s/me/crt.pem", ssl_dir);
 	}
-	if (!ssl_key_file || ssl_key_file == '\0') {
+	if (!ssl_key_file || *ssl_key_file == '\0') {
 	    ssl_key_file = g_strdup_printf("%s/me/private/key.pem", ssl_dir);
 	}
-	if (!ssl_ca_cert_file || ssl_ca_cert_file == '\0') {
+	if (!ssl_ca_cert_file || *ssl_ca_cert_file == '\0') {
 	    ssl_ca_cert_file = g_strdup_printf("%s/CA/crt.pem", ssl_dir);
 	}
-	if (!ssl_fingerprint_file || ssl_fingerprint_file == '\0') {
+	if (!ssl_fingerprint_file || *ssl_fingerprint_file == '\0') {
 	    struct stat  statbuf;
 	    ssl_fingerprint_file = g_strdup_printf("%s/remote/%s/fingerprint", ssl_dir, rh->hostname);
 	    if (stat(ssl_fingerprint_file, &statbuf) == -1) {
@@ -429,13 +429,13 @@ ssl_accept(
     }
 
     if (ssl_dir) {
-	if (!ssl_cert_file || ssl_cert_file == '\0') {
+	if (!ssl_cert_file || *ssl_cert_file == '\0') {
 	    ssl_cert_file = g_strdup_printf("%s/me/crt.pem", ssl_dir);
 	}
-	if (!ssl_key_file || ssl_key_file == '\0') {
+	if (!ssl_key_file || *ssl_key_file == '\0') {
 	    ssl_key_file = g_strdup_printf("%s/me/private/key.pem", ssl_dir);
 	}
-	if (!ssl_ca_cert_file || ssl_ca_cert_file == '\0') {
+	if (!ssl_ca_cert_file || *ssl_ca_cert_file == '\0') {
 	    ssl_ca_cert_file = g_strdup_printf("%s/CA/crt.pem", ssl_dir);
 	}
     }
@@ -574,7 +574,7 @@ ssl_accept(
     }
 
     if (ssl_dir) {
-	if (!ssl_fingerprint_file || ssl_fingerprint_file == '\0') {
+	if (!ssl_fingerprint_file || *ssl_fingerprint_file == '\0') {
 	    struct stat  statbuf;
 	    ssl_fingerprint_file = g_strdup_printf("%s/remote/%s/fingerprint", ssl_dir, cert_hostname);
 	    if (stat(ssl_fingerprint_file, &statbuf) == -1) {

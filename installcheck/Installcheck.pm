@@ -169,8 +169,14 @@ sub print {
 sub PRINT {
     my ($self, @msgs) = @_;
     # log each line separately
-    foreach my $m (split("\n", join($, , @msgs))) {
-        debug($m);
+    if (defined $,) {
+	foreach my $m (split("\n", join($, , @msgs))) {
+            debug($m);
+	}
+    } else {
+	foreach my $m (split("\n", join(@msgs))) {
+            debug($m);
+	}
     }
     # now call print on the wrapped filehandle
     return $self->{'fh'}->print(@msgs);
