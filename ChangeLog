@@ -1,4 +1,8 @@
 2018-01-03  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/amcheck.c (handle_amcheck_device): NUL terminate the
+	  buffer if read return 0
+
+2018-01-03  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* application-src/amgtar.c: Add missing break
 	* common-src/bsdtcp-security.c,
 	  common-src/conffile.c,

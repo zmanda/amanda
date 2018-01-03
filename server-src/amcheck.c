@@ -930,6 +930,8 @@ handle_amcheck_device(
 	    }
 	}
 	return;
+    } else {
+	amc_dev->buf[amc_dev->buf_count] = '\0'; // NUL terminate
     }
 
     if (!opt_message && amc_dev->buf_count) {
