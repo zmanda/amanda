@@ -1,4 +1,8 @@
 2018-01-03  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Rest/Runs.pm: Undo, bsd_glob is not exported on older
+	  perl
+
+2018-01-03  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/bsdtcp-security.c,
 	  common-src/conffile.c,
 	  common-src/ssl-security.c,
