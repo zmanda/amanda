@@ -332,14 +332,6 @@ sub set_no_reuse {
     die("set_no_reuse not defined");
 }
 
-sub remove_volume {
-    my $self = shift;
-    my $pool = shift;
-    my $label = shift;
-
-    die("remove_volume not defined");
-}
-
 sub add_flush_command {
     my $self = shift;
     my %params = @_;

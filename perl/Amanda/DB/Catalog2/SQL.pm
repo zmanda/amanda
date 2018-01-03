@@ -278,10 +278,9 @@ sub _add_image {
 sub add_image {
     my $self = shift;
 
-    # TODO: Split in many operation, should not take WRITE lock if we don't add
     return $self->run_execute($self, $self->can('_add_image'),
-			undef,
-			['configs', 'hosts', 'disks', 'images'], @_);
+			['configs', 'hosts', 'disks'],
+			['images'], @_);
 }
 
 sub _find_image {
@@ -312,7 +311,6 @@ sub _find_image {
 sub find_image {
     my $self = shift;
 
-    # TODO: Split in many operation, should not take WRITE lock if we don't add
     return $self->run_execute($self, $self->can('_find_image'),
 			['hosts', 'disks', 'images'],
 			undef, @_);
@@ -364,9 +362,8 @@ sub _find_dumping_copies {
 
 sub _get_image {
     my $self = shift;
-    my $image_id = shift;
 
-    return Amanda::DB::Catalog2::SQL::image->new($self, $image_id);
+    return Amanda::DB::Catalog2::SQL::image->new($self, @_);
 }
 
 sub get_image {
@@ -553,8 +550,8 @@ sub add_volume {
     my $self = shift;
 
     return $self->run_execute($self, $self->can('_add_volume'),
-			['configs'],
-			['volumes','pools','storages','metas'], @_);
+			['configs','pools','storages','metas'],
+			['volumes',], @_);
 }
 
 
@@ -787,7 +784,7 @@ sub _find_volumes {
     my $self = shift;
     my %params = @_;
 
-    debug("_find_volumes");
+    debug("_find_volumes: " . Data::Dumper::Dumper(\%params));
     my $dbh = $self->{'dbh'};
     my $sth;
     my @volumes;
@@ -926,7 +923,6 @@ sub _find_volumes {
 sub find_volumes {
     my $self = shift;
 
-    debug("find_volumes");
     my $volumes = $self->run_execute($self, $self->can('_find_volumes'),
 			['volumes','pools','storages','metas','configs'],
 			undef, @_);
@@ -944,7 +940,6 @@ sub _compute_storage_retention_tape {
     my $sth3;
     my $result;
 
-#debug("_compute_storage_retention_tape : $storage_name $pool : $retention_tapes");
     my $volume_table = "volume_ids_cstt_$$";
     if ($pool ne 'HOLDING') {
 	$sth = $self->make_statement('csrt upt1t', 'UPDATE volumes SET retention_tape=1 WHERE volume_id IN (SELECT volume_id FROM volumes,pools,storages WHERE storage_name=? AND volumes.storage_id=storages.storage_id AND pool_name=? AND volumes.pool_id=pools.pool_id AND retention_tape=0 AND reuse=1 AND write_timestamp!=0)');
@@ -1014,7 +1009,7 @@ sub _create_tableX {
     my $sth;
 
     # Do not create the tables if table version exists
-    return if $self->table_exists('versions');
+    return if $self->table_exists('version');
 
     my $autoincrement = $self->{'autoincrement'} || '';
     my $autoincrementX = $self->{'autoincrementX'} || 'INTEGER';
@@ -1461,10 +1456,12 @@ sub _compute_retention {
     my $copy_table = "copy_ids_$$";
     my $volume_table = "volume_ids_$$";
 
-    $sth = $self->make_statement('cr dcp', "DROP $self->{'drop_temporary'} TABLE IF EXISTS $copy_table");
+    $sth = $self->make_statement('dcids', "DROP $self->{'drop_temporary'} TABLE IF EXISTS $copy_table");
     $sth->execute()
 	or die "Cannot execute: " . $sth->errstr();
-    $sth->finish;
+    $sth = $self->make_statement('dvids', "DROP $self->{'drop_temporary'} TABLE IF EXISTS $volume_table");
+    $sth->execute()
+	or die "Cannot execute: " . $sth->errstr();
 
     debug("_compute_retention AA");
     # get all copy_id for this config
@@ -2601,8 +2598,8 @@ sub add_flush_cmd {
     my $self = shift;
 
     return $self->run_execute($self, $self->can('_add_flush_cmd'),
-			undef,
-			['configs', 'copys', 'images', 'disks', 'hosts', 'pools', 'metas', 'volumes', 'storages', 'commands'], @_);
+			['configs', 'copys', 'images', 'disks', 'hosts', 'pools', 'metas', 'volumes', 'storages'],
+			['commands'], @_);
 }
 
 sub _add_copy_cmd {
@@ -2648,8 +2645,8 @@ sub add_copy_cmd {
     my $self = shift;
 
     return $self->run_execute($self, $self->can('_add_copy_cmd'),
-			undef,
-			['configs', 'copys', 'images', 'disks', 'hosts', 'pools', 'metas', 'volumes', 'storages', 'commands'], @_);
+			['configs', 'copys', 'images', 'disks', 'hosts', 'pools', 'metas', 'volumes', 'storages'],
+			['commands'], @_);
 }
 
 sub _get_command_from_id {
@@ -3977,6 +3974,7 @@ sub _print_catalog {
     my $config_check;
     my $config_check_disk;
     my $image_check;
+    my @query_args;
 
     if (!$params{'all_configs'}) {
 	if (!$self->{'config_id'}) {
@@ -3993,118 +3991,109 @@ sub _print_catalog {
 		$self->{'config_id'} = $config_row->[0];
 	    }
 	}
-	$config_check = " hosts.config_id=$self->{'config_id'} AND ";
-	$config_check_disk = " hosts.config_id=$self->{'config_id'} AND disks.host_id=hosts.host_id AND ";
+	$config_check = " hosts.config_id=$self->{'config_id'} ";
+	$config_check_disk = " hosts.config_id=$self->{'config_id'} AND disks.host_id=hosts.host_id ";
     } else {
-	$config_check = " hosts.config_id=configs.config_id AND";
+	$config_check = " hosts.config_id=configs.config_id ";
     }
 
     if (defined $dumpspecs && @$dumpspecs > 0) {
-	my $first_image_check = 1;
-	$image_check = " ( 1<>1 ";
+	my $first_image_check = "";
+	$image_check = "";
 	if ($params{'exact_match'}) {
 	    foreach my $dumpspec (@$dumpspecs) {
+		my $dumpspec_check = '';
 		if ($dumpspec->{'datestamp'} && $dumpspec->{'datestamp'} ne "*") {
-		    my $sth_datestamp = $dbh->prepare("SELECT image_id FROM hosts, disks, images WHERE $config_check_disk host_name=? AND (disk_name=? OR device=?) AND disks.disk_id=images.image_id AND images.dump_timestamp=?")
-			or die "Cannot prepare: " . $dbh->errstr();
-		    $sth_datestamp->execute($dumpspec->{'host'}, $dumpspec->{'disk'}, $dumpspec->{'disk'}, $dumpspec->{'datestamp'})
-			or die "Cannot execute: " . $sth_datestamp->errstr();
-		    while (my $datestamp_row = $sth_datestamp->fetchrow_arrayref ) {
-			$image_check .= " OR (images.image_id=$datestamp_row->[0])";
-		    }
+		    $dumpspec_check = " (host_name=? AND (disk_name=? OR device=?) AND images.dump_timestamp=?)";
+		    push @query_args, $dumpspec->{'host'}, $dumpspec->{'disk'}, $dumpspec->{'disk'}, $dumpspec->{'datestamp'}
 		} elsif ($dumpspec->{'disk'} && $dumpspec->{'disk'} ne "*") {
 		    if ($dumpspec->{'host'} ne "*") {
-			my $sth_host_disk = $dbh->prepare("SELECT disk_id FROM hosts, disks WHERE $config_check_disk host_name=? AND (disk_name=? OR device=?)")
-			    or die "Cannot prepare: " . $dbh->errstr();
-			$sth_host_disk->execute($dumpspec->{'host'}, $dumpspec->{'disk'}, $dumpspec->{'disk'})
-			    or die "Cannot execute: " . $sth_host_disk->errstr();
-			while (my $host_disk_row = $sth_host_disk->fetchrow_arrayref ) {
-			    $image_check .= " OR (disks.disk_id=$host_disk_row->[0])";
-			}
+			$dumpspec_check = " (host_name=? AND (disk_name=? OR device=?))";
+			push @query_args, $dumpspec->{'host'}, $dumpspec->{'disk'}, $dumpspec->{'disk'};
 		    } else {
-			my $sth_disk = $dbh->prepare("SELECT disk_id FROM hosts, disks WHERE $config_check_disk (disk_name=? OR device=?)")
-			    or die "Cannot prepare: " . $dbh->errstr();
-			$sth_disk->execute($dumpspec->{'disk'}, $dumpspec->{'disk'})
-			    or die "Cannot execute: " . $sth_disk->errstr();
-			while (my $disk_row = $sth_disk->fetchrow_arrayref ) {
-			    $image_check .= " OR (disks.disk_id=$disk_row->[0])";
-			}
+			$dumpspec_check = " (disk_name=? OR device=?)";
+			push @query_args, $dumpspec->{'disk'}, $dumpspec->{'disk'};
 		    }
 		} elsif ($dumpspec->{'host'} ne "*") {
-		    my $sth_host = $dbh->prepare("SELECT host_id FROM hosts WHERE $config_check host_name=?")
-			or die "Cannot prepare: " . $dbh->errstr();
-		    $sth_host->execute($dumpspec->{'host'})
-			or die "Cannot execute: " . $sth_host->errstr();
-		    while (my $host_row = $sth_host->fetchrow_arrayref ) {
-			$image_check .= " OR (hosts.host_id=$host_row->[0])";
-		    }
-		} else {
-		    $image_check .= " OR 1=1 ";
+		    $dumpspec_check = " (host_name=?)";
+		    push @query_args, $dumpspec->{'host'};
+		}
+		if ($dumpspec_check ne '') {
+		    $image_check .= " $first_image_check $dumpspec_check";
+		    $first_image_check = ' OR ';
 		}
 	    }
 	} else {
 	    foreach my $dumpspec (@$dumpspecs) {
-		if ($dumpspec->{'datestamp'} && $dumpspec->{'datestamp'} ne "*") {
-		    my $sth_datestamp = $dbh->prepare("SELECT image_id, host_name, disk_name, device, dump_timestamp FROM hosts, disks, images WHERE $config_check_disk disks.disk_id=images.disk_id AND images.dump_timestamp=?")
-			or die "Cannot prepare: " . $dbh->errstr();
-		    $sth_datestamp->execute($dumpspec->{'host'}, $dumpspec->{'disk'}, $dumpspec->{'disk'}, $dumpspec->{'datestamp'})
-			or die "Cannot execute: " . $sth_datestamp->errstr();
-		    while (my $datestamp_row = $sth_datestamp->fetchrow_arrayref ) {
-			if (Amanda::Util::match_disk($dumpspec->{'host'}, $datestamp_row->[1]) &&
-			    (Amanda::Util::match_disk($dumpspec->{'disk'}, $datestamp_row->[2]) ||
-			     Amanda::Util::match_disk($dumpspec->{'disk'}, $datestamp_row->[3])) &&
-			    Amanda::Util::match_datestamp($dumpspec->{'datestamp'}, $datestamp_row->[4])) {
-			$image_check .= " OR (images.image_id=$datestamp_row->[0])";
-			}
-		    }
-		} elsif ($dumpspec->{'disk'} && $dumpspec->{'disk'} ne "*") {
-		    if ($dumpspec->{'host'} ne "*") {
-			my $sth_host_disk = $dbh->prepare("SELECT disk_id, host_name, disk_name, device FROM hosts, disks WHERE $config_check_disk 1=1")
-			    or die "Cannot prepare: " . $dbh->errstr();
-			$sth_host_disk->execute()
-			    or die "Cannot execute: " . $sth_host_disk->errstr();
-			while (my $host_disk_row = $sth_host_disk->fetchrow_arrayref ) {
-			    if (Amanda::Util::match_disk($dumpspec->{'host'}, $host_disk_row->[1]) &&
-				(Amanda::Util::match_disk($dumpspec->{'disk'}, $host_disk_row->[2]) ||
-				 Amanda::Util::match_disk($dumpspec->{'disk'}, $host_disk_row->[3]))) {
-				$image_check .= " OR (disks.disk_id=$host_disk_row->[0])";
-			    }
-			}
-		    } else {
-			my $sth_disk = $dbh->prepare("SELECT disk_id, disk_name, device FROM hosts, disks WHERE $config_check_disk 1=1")
-			    or die "Cannot prepare: " . $dbh->errstr();
-			$sth_disk->execute()
-			    or die "Cannot execute: " . $sth_disk->errstr();
-			while (my $disk_row = $sth_disk->fetchrow_arrayref ) {
-			    if (Amanda::Util::match_disk($dumpspec->{'disk'}, $disk_row->[1]) ||
-				Amanda::Util::match_disk($dumpspec->{'disk'}, $disk_row->[2])) {
-				$image_check .= " OR (disks.disk_id=$disk_row->[0])";
-			    }
-			}
-		    }
-		} elsif ($dumpspec->{'host'} ne "*") {
-		    my $sth_host = $dbh->prepare("SELECT host_id, host_name FROM hosts WHERE $config_check 1=1")
+		my $dumpspec_check = '';
+		my $first_dumpspec_check = '';
+		if ($dumpspec->{'host'} && $dumpspec->{'host'} ne "*") {
+		    my $sth_host = $dbh->prepare("SELECT host_id, host_name FROM hosts WHERE $config_check")
 			or die "Cannot prepare: " . $dbh->errstr();
 		    $sth_host->execute()
 			or die "Cannot execute: " . $sth_host->errstr();
 		    while (my $host_row = $sth_host->fetchrow_arrayref ) {
 			if (Amanda::Util::match_host($dumpspec->{'host'}, $host_row->[1])) {
-			    $image_check .= " OR (hosts.host_id=$host_row->[0])";
+			    $dumpspec_check .= " $first_dumpspec_check (hosts.host_id=$host_row->[0])";
+			    $first_dumpspec_check = " OR ";
 			}
 		    }
-		} else {
-		    $image_check .= " OR 1=1 ";
+		}
+		if ($dumpspec->{'disk'} && $dumpspec->{'disk'} ne "*") {
+		    if ($dumpspec_check ne '') {
+			$dumpspec_check = ' AND (' . $dumpspec_check . ')';
+		    }
+		    my $sth_host_disk = $dbh->prepare("SELECT disk_id, host_name, disk_name, device FROM hosts, disks WHERE $config_check_disk $dumpspec_check")
+			or die "Cannot prepare: " . $dbh->errstr();
+		    $sth_host_disk->execute()
+			or die "Cannot execute: " . $sth_host_disk->errstr();
+		    $dumpspec_check = '';
+		    $first_dumpspec_check = '';
+		    while (my $host_disk_row = $sth_host_disk->fetchrow_arrayref ) {
+			if (Amanda::Util::match_host($dumpspec->{'host'}, $host_disk_row->[1]) &&
+			   (Amanda::Util::match_disk($dumpspec->{'disk'}, $host_disk_row->[2]) ||
+			     Amanda::Util::match_disk($dumpspec->{'disk'}, $host_disk_row->[3]))) {
+			    $dumpspec_check .= " $first_dumpspec_check (disks.disk_id=$host_disk_row->[0])";
+			    $first_dumpspec_check = " OR ";
+			}
+		    }
+		}
+		if ($dumpspec->{'datestamp'} && $dumpspec->{'datestamp'} ne "*") {
+		    if ($dumpspec_check ne '') {
+			$dumpspec_check = ' AND (' . $dumpspec_check . ')';
+		    }
+		    my $sth_datestamp = $dbh->prepare("SELECT image_id, host_name, disk_name, device, dump_timestamp FROM hosts, disks, images WHERE $config_check_disk $dumpspec_check AND disks.disk_id=images.disk_id")
+			or die "Cannot prepare: " . $dbh->errstr();
+		    $sth_datestamp->execute()
+			or die "Cannot execute: " . $sth_datestamp->errstr();
+		    $dumpspec_check = '';
+		    $first_dumpspec_check = '';
+		    while (my $datestamp_row = $sth_datestamp->fetchrow_arrayref ) {
+			if (Amanda::Util::match_host($dumpspec->{'host'}, $datestamp_row->[1]) &&
+			    (Amanda::Util::match_disk($dumpspec->{'disk'}, $datestamp_row->[2]) ||
+			     Amanda::Util::match_disk($dumpspec->{'disk'}, $datestamp_row->[3])) &&
+			    Amanda::Util::match_datestamp($dumpspec->{'datestamp'}, "$datestamp_row->[4]")) {
+			    $dumpspec_check .= " $first_dumpspec_check (images.image_id=$datestamp_row->[0])";
+			    $first_dumpspec_check  = ' OR ';
+			}
+		    }
+		}
+		if ($dumpspec_check ne '') {
+		    $image_check .= " $first_image_check $dumpspec_check";
+		    $first_image_check = ' OR ';
 		}
 	    }
 	}
-	$image_check .= ") AND ";
+	if ( $image_check ne '') {
+	    $image_check = ' AND ( ' . $image_check . ')';
+	}
     } else {
-	$image_check = "";
+	$image_check = '';
     }
     if ($params{'parts'}) {
-	my $s ="SELECT config_name, dump_timestamp, host_name, disk_name, level, storage_name, pool_name, label, dump_status, copy_status, part_status, filenum, nb_parts, part_num
+	my $s ="SELECT config_name, dump_timestamp, host_name, disk_name, level, storage_name, pool_name, label, dump_status, copy_status, part_status, filenum, nb_parts, part_num, nb_files, nb_directories
 			      FROM configs, hosts, disks, images, copys, parts, volumes, storages, pools
-			      WHERE $config_check $image_check
+			      WHERE $config_check $image_check AND
 				    hosts.config_id=configs.config_id AND
 				    hosts.host_id=disks.host_id AND
 				    disks.disk_id=images.disk_id AND
@@ -4115,10 +4104,11 @@ sub _print_catalog {
 				    pools.pool_id=volumes.pool_id
 			      ORDER BY host_name, disk_name, dump_timestamp DESC , level, storages.storage_id, part_num, copys.write_timestamp DESC";
 	debug("statement: $s");
+	debug("query_args: " . join(', ', $s));
 	$sth = $dbh->prepare($s)
 	    or die "Cannot prepare: " . $dbh->errstr();
 
-	$sth->execute()
+	$sth->execute(@query_args)
 	    or die "Cannot execute: " . $sth->errstr();
 	my $row_copies = $sth->fetchall_arrayref;
 	for my $row_copy (@{$row_copies}) {
@@ -4145,12 +4135,14 @@ sub _print_catalog {
 		  $row_copy->[10] . " " .
 		  $row_copy->[11] . " " .
 		  $row_copy->[12] . " " .
-		  $row_copy->[13] . "\n";
+		  $row_copy->[13] . " " .
+		  $row_copy->[14] . " " .
+		  $row_copy->[15] . "\n";
 	}
     } else {
 	my $s = "SELECT config_name, dump_timestamp, host_name, disk_name, level, storage_name, dump_status, copy_status, nb_files, nb_directories
 			      FROM configs, hosts, disks, images, copys, storages
-			      WHERE $config_check $image_check
+			      WHERE $config_check $image_check AND
 				    hosts.config_id=configs.config_id AND
 				    hosts.host_id=disks.host_id AND
 				    disks.disk_id=images.disk_id AND
@@ -4158,12 +4150,15 @@ sub _print_catalog {
 				    storages.storage_id=copys.storage_id
 			      ORDER BY host_name, disk_name, dump_timestamp DESC, level, storages.storage_id, write_timestamp DESC";
 	debug("statement: $s");
+	debug("query_args: " . join(', ', @query_args));
 	$sth = $dbh->prepare($s)
 	    or die "Cannot prepare: " . $dbh->errstr();
 
-	$sth->execute()
+	$sth->execute(@query_args)
 	    or die "Cannot execute: " . $sth->errstr();
+	debug("query done");
 	my $row_copies = $sth->fetchall_arrayref;
+	debug("fetch done");
 	for my $row_copy (@{$row_copies}) {
 	    my $nice_date;
 	    if (defined $params{'timestamp'}) {
@@ -4303,21 +4298,7 @@ sub _volume_assign {
 			storage => $row_volume->[3],
 			catalog_name => $self->{'catalog_name'});
 	} else {
-	    my $storage_id;
-	    $sth = $dbh->prepare("SELECT storage_id FROM storages WHERE config_id=? AND storage_name=?")
-		or die "Cannot prepare: " . $dbh->errstr();
-	    $sth->execute($self->{'config_id'}, $storage)
-		or die "Cannot execute: " . $sth->errstr();
-	    my $storage_row = $sth->fetchrow_arrayref;
-	    if (!defined $storage_row) {
-		$sth = $self->make_statement('in sto', 'INSERT INTO storages(config_id, storage_name, last_sequence_id) VALUES (?, ?, ?)');
-		$sth->execute($self->{'config_id'}, $storage, 0)
-		    or die "Can't add storage '$storage': " . $sth->errstr();
-		$storage_id = $dbh->last_insert_id(undef, undef, "storages", undef);
-	    } else {
-		$storage_id = $storage_row->[0];
-	    }
-
+	    my $storage_id = $self->select_or_add_storage($storage);
 	    $s .= ',' if $first_set;
 	    $first_set = 1;
 	    $data_set = 1;
@@ -4339,21 +4320,7 @@ sub _volume_assign {
 			pool   => $pool,
 			catalog_name => $self->{'catalog_name'});
 	} else {
-	    my $pool_id;
-	    $sth = $dbh->prepare("SELECT pool_id FROM pools WHERE pool_name=?")
-		or die "Cannot prepare: " . $dbh->errstr();
-	    $sth->execute($new_pool)
-		or die "Cannot execute: " . $sth->errstr();
-	    my $pool_row = $sth->fetchrow_arrayref;
-	    if (!defined $pool_row) {
-		$sth = $self->make_statement('in poo', 'INSERT INTO pools(pool_name) VALUES (?)');
-		$sth->execute($new_pool)
-		    or die "Can't add pool '$new_pool': " . $sth->errstr();
-		$pool_id = $dbh->last_insert_id(undef, undef, "pools", undef);
-	    } else {
-		$pool_id = $pool_row->[0];
-	    }
-
+	    my $pool_id = $self->select_or_add_pool($new_pool);
 	    $s .= ',' if $first_set;
 	    $first_set = 1;
 	    $data_set = 1;
@@ -4376,21 +4343,7 @@ sub _volume_assign {
 			meta   => $row_volume->[5],
 			catalog_name => $self->{'catalog_name'});
 	} else {
-	    my $meta_id;
-	    $sth = $dbh->prepare("SELECT meta_id FROM metas WHERE meta_label=?")
-		or die "Cannot prepare: " . $dbh->errstr();
-	    $sth->execute($meta)
-		or die "Cannot execute: " . $sth->errstr();
-	    my $meta_row = $sth->fetchrow_arrayref;
-	    if (!defined $meta_row) {
-		$sth = $self->make_statement('in met','INSERT INTO metas(meta_label) VALUES (?)');
-		$sth->execute($meta)
-		    or die "Can't add meta '$meta': " . $sth->errstr();
-		$meta_id = $dbh->last_insert_id(undef, undef, "metas", undef);
-	    } else {
-		$meta_id = $meta_row->[0];
-	    }
-
+	    my $meta_id = $self->select_or_add_meta($meta);
 	    $s .= ',' if $first_set;
 	    $first_set = 1;
 	    $data_set = 1;
@@ -4488,8 +4441,8 @@ sub volume_assign {
     my $self = shift;
 
     return $self->run_execute($self, $self->can('_volume_assign'),
-		['configs'],
-		['volumes', 'storages', 'pools', 'metas'], @_);
+		['configs', 'storages', 'pools', 'metas'],
+		['volumes'], @_);
 }
 
 sub _write_tapelist {
@@ -4500,23 +4453,19 @@ sub _write_tapelist {
     my $sth;
     my $result = 1;
 
-#debug("_write_tapelist aa");
     if ($self->{'create_mode'}) {
 	return;
     }
-#debug("_write_tapelist bb");
 
     if (!$force_rewrite && rand(100) < 99) {
 	debug("not writing the tapelist because of rand");
 	$self->{'need_write_tapelist'} = 1;
 	return;
     }
-#debug("_write_tapelist cc");
     if (!-e $self->{'tapelist_lockname'}) {
         open(my $fhl, ">>", $self->{'tapelist_lockname'});
         close($fhl);
     }
-#debug("_write_tapelist dd");
     my $fl = Amanda::Util::file_lock->new($self->{'tapelist_lockname'});
     while(($fl->lock()) == 1) {
 	if ($have_usleep) {
@@ -4525,7 +4474,6 @@ sub _write_tapelist {
 	    sleep(1);
 	}
     }
-#debug("_write_tapelist ee");
 
     my $date = Amanda::Util::generate_timestamp();
     my $new_tapelist_file = $self->{'tapelist_filename'} . "-new-" . $date;
@@ -4544,9 +4492,7 @@ sub _write_tapelist {
     $sth = $self->make_statement('write_tapelist 1', 'SELECT write_timestamp, orig_write_timestamp, label, reuse, barcode, meta_label, block_size, pool_name, storage_name, config_name FROM volumes, metas, storages, pools, configs WHERE storages.config_id=configs.config_id AND volumes.storage_id=storages.storage_id AND volumes.pool_id=pools.pool_id AND volumes.meta_id=metas.meta_id ORDER BY write_timestamp DESC, label DESC');
     $sth->execute()
 	or die "Cannot execute: " . $sth->errstr();
-#debug("_write_tapelist ff");
     while (my $row_volume = $sth->fetchrow_arrayref ) {
-#debug("_write_tapelist gg $row_volume->[2]");
 	my $datestamp = $row_volume->[1];
 	my $label = $row_volume->[2];
 	my $reuse = $row_volume->[3] ? 'reuse' : 'no-reuse';
@@ -4558,31 +4504,22 @@ sub _write_tapelist {
 	my $config    = ((        $row_volume->[9])? (" CONFIG:"    . $row_volume->[9]) : '');
 	$result &&= print $fhn "$datestamp $label $reuse$barcode$meta$blocksize$pool$storage$config\n";
     }
-#debug("_write_tapelist hh");
     my $result_close = close($fhn);
     $result &&= $result_close;
-#debug("_write_tapelist ii $result");
 
     if ($result && (!defined $keep_at_new_name || !$keep_at_new_name)) {
-#debug("_write_tapelist ii1");
 	unlink($self->{'tapelist_last_write'});
-#debug("_write_tapelist ii2");
 	unless (move($new_tapelist_file, $self->{'tapelist_filename'})) {
-#debug("_write_tapelist ii2a $self->{'tapelist_filename'}");
 	    $fl->unlock();
             die ("failed to rename '$new_tapelist_file' to '$self->{'tapelist_filename'}': $!");
 	}
-#debug("_write_tapelist ii3");
 	symlink ("$$", $self->{'tapelist_last_write'});
     }
-#debug("_write_tapelist jj");
     $fl->unlock();
-#debug("_write_tapelist kk");
     if (!defined $keep_at_new_name || !$keep_at_new_name) {
 	$self->{'need_write_tapelist'} = 0;
 	$self->{'tapelist'}->reload(undef, 1) if $self->{'tapelist'};
     }
-#debug("_write_tapelist ll");
 }
 
 sub write_tapelist {
@@ -4759,8 +4696,13 @@ sub _remove {
 
     my $copy_table = "copy_ids_$$";
     my $image_table = "image_ids_$$";
-    #my $disk_table = "disk_ids_$$";
-    #my $host_table = "host_ids_$$";
+    $sth = $catalog->make_statement('dcids', "DROP $catalog->{'drop_temporary'} TABLE IF EXISTS $copy_table");
+    $sth->execute()
+	or die "Cannot execute: " . $sth->errstr();
+    $sth = $catalog->make_statement('diids', "DROP $catalog->{'drop_temporary'} TABLE IF EXISTS $image_table");
+    $sth->execute()
+	or die "Cannot execute: " . $sth->errstr();
+
     # get a list of all copy_id modified
     $sth = $dbh->prepare("CREATE $catalog->{'temporary'} TABLE $copy_table AS SELECT DISTINCT copy_id FROM parts WHERE volume_id=?")
 	or die "Cannot prepare: " . $dbh->errstr();
@@ -4809,17 +4751,15 @@ sub _remove {
     $sth->execute()
 	or die "Cannot execute: " . $sth->errstr();
 
-    $sth = $dbh->prepare("DROP $catalog->{'drop_temporary'} TABLE $image_table")
-	or die "Cannot prepare: " . $dbh->errstr();
+    $sth = $catalog->make_statement('diids', "DROP $catalog->{'drop_temporary'} TABLE IF EXISTS $image_table");
     $sth->execute()
 	or die "Cannot execute: " . $sth->errstr();
 
-    $sth = $dbh->prepare("DROP $catalog->{'drop_temporary'} TABLE $copy_table")
-	or die "Cannot prepare: " . $dbh->errstr();
+    $sth = $catalog->make_statement('dcids', "DROP $catalog->{'drop_temporary'} TABLE IF EXISTS $copy_table");
     $sth->execute()
 	or die "Cannot execute: " . $sth->errstr();
 
-    $self->{'catalog'}->_write_tapelist() if $self->{'storage'} ne 'HOLDING';
+    $catalog->_write_tapelist() if $self->{'storage'} ne 'HOLDING';
 }
 
 sub remove {
@@ -4926,20 +4866,7 @@ sub _add_copy {
     my $sth;
 
     # get/add the storage */
-    $sth = $catalog->make_statement('sel sto_id', 'SELECT storage_id FROM storages WHERE storage_name=? AND config_id=?');
-    $sth->execute($storage_name, $self->{'catalog'}{'config_id'})
-	or die "Cannot execute: " . $sth->errstr();
-    # get the first row
-    my $storage_row = $sth->fetchrow_arrayref;
-    my $storage_id;
-    if (!defined $storage_row) {
-	my $sth1 = $catalog->make_statement('in sto', 'INSERT INTO storages(config_id, storage_name, last_sequence_id) VALUES (?, ?, ?)');
-	$sth1->execute($self->{'catalog'}->{'config_id'}, $storage_name, 0) or die "Can't add storage $storage_name: " . $sth1->errstr()
-	    or die "Cannot execute: " . $sth1->errstr();
-	$storage_id = $dbh->last_insert_id(undef, undef, "storages", undef);
-    } else {
-	$storage_id = $storage_row->[0];
-    }
+    my $storage_id = $catalog->select_or_add_storage($storage_name);
 
     my $level = $self->{'level'};
     my $parent_id = 0;
@@ -4972,9 +4899,10 @@ sub add_copy  {
     my $catalog = $self->{'catalog'};
 
     return $catalog->run_execute($self, $self->can('_add_copy'),
-			['images'],
-			['storages', 'copys'], @_);
+			['images', 'storages'],
+			['copys'], @_);
 }
+
 sub _finish_image {
     my $self           = shift;
     my $orig_kb        = shift;

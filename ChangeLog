@@ -1,4 +1,9 @@
 2018-01-03  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/DB/Catalog2/MySQL.pm, perl/Amanda/DB/Catalog2/PgSQL.pm,
+	  perl/Amanda/DB/Catalog2/SQL.pm, perl/Amanda/DB/Catalog2/SQLite.pm,
+	  perl/Amanda/DB/Catalog2/log.pm: Update
+
+2018-01-03  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/Rest/Runs.pm: Undo, bsd_glob is not exported on older
 	  perl
 

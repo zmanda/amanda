@@ -221,10 +221,11 @@ sub run_execute {
 
 sub table_exists {
     my $self = shift;
+    my $table_name = shift;
     my $dbh = $self->{'dbh'};
     my $sth;
 
-    if ($sth = $dbh->prepare("SELECT 1 FROM version LIMIT 1")) {
+    if ($sth = $dbh->prepare("SELECT 1 FROM $table_name LIMIT 1")) {
         return 0;
     }
     return 1;

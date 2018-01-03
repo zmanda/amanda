@@ -151,12 +151,13 @@ sub run_execute {
 
 sub table_exists {
     my $self = shift;
+    my $table_name = shift;
     my $dbh = $self->{'dbh'};
     my $sth;
 
-    $sth = $dbh->prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='version'")
+    $sth = $dbh->prepare("SELECT name FROM sqlite_master WHERE type='table' AND name=?")
 	or die "Cannot prepare: " . $dbh->errstr();
-    $sth->execute()
+    $sth->execute($table_name)
 	or die "Cannot execute: " . $sth->errstr();
     my $row = $sth->fetchrow_arrayref;
     return 1 if defined $row;

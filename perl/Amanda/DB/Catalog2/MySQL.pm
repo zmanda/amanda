@@ -157,6 +157,7 @@ sub run_execute {
     my $stop_loop = 0;
     my $result;
     my $lock_query = "LOCK TABLES";
+    my $lock_write_query = "LOCK TABLES";
     my $first = 1;
     if (!defined $read_lock && !defined $write_lock) {
 	$lock_query .= " configs WRITE, commands WRITE, copys WRITE, disks WRITE, hosts WRITE, images WRITE, metas WRITE, parts WRITE, pools WRITE, storages WRITE, volumes WRITE, version WRITE;"
@@ -167,8 +168,10 @@ sub run_execute {
 		    $first = 0;
 		} else {
 		    $lock_query .= ",";
+		    $lock_write_query .= ",";
 		}
 		$lock_query .= " $rlock READ";
+		$lock_write_query .= " $rlock WRITE";
 	    }
 	}
 	if ($write_lock) {
@@ -177,16 +180,18 @@ sub run_execute {
 		    $first = 0;
 		} else {
 		    $lock_query .= ",";
+		    $lock_write_query .= ",";
 		}
 		$lock_query .= " $wlock WRITE";
+		$lock_write_query .= " $wlock WRITE";
 	    }
 	}
     }
     do {
 	eval {
 	    $dbh->{'AutoCommit'} = 0;
-	    $sth = $dbh->prepare($lock_query);
-	    $sth->execute();
+#	    $sth = $dbh->prepare($lock_query);
+#	    $sth->execute();
 	    $result = $fn->($obj, @_);
 
 	    $dbh->commit;
@@ -225,6 +230,13 @@ sub run_execute {
 	    if (defined $errstr &&  $errstr =~ /Cannot delete or update a parent/) {
 		die ($error);
 	    }
+	    if (defined $errstr &&  $errstr =~ /was locked with a READ lock and can't be updated/) {
+		if ($lock_query ne $lock_write_query) {
+		    $lock_query = $lock_write_query;
+		} else {
+		    die($error);
+		}
+	    }
 	    if ($need_reconnect) {
 		eval { $self->connect(); };
 		if ($@) {
@@ -242,10 +254,11 @@ sub run_execute {
 
 sub table_exists {
     my $self = shift;
+    my $table_name = shift;
     my $dbh = $self->{'dbh'};
     my $sth;
 
-    $sth = $dbh->prepare("SHOW TABLES LIKE 'versions'")
+    $sth = $dbh->prepare("SHOW TABLES LIKE '$table_name'")
 	or die "Cannot prepare: " . $dbh->errstr();
     $sth->execute() or die "Cannot execute: " . $sth->errstr();
 
@@ -263,7 +276,7 @@ sub _compute_retention {
     my $copy_table = "copy_ids_$$";
     my $volume_table = "volume_ids_$$";
 
-    $sth = $self->make_statement('dcp', "DROP $self->{'drop_temporary'} TABLE IF EXISTS $copy_table");
+    $sth = $self->make_statement('dcids', "DROP $self->{'drop_temporary'} TABLE IF EXISTS $copy_table");
     $sth->execute()
 	or die "Cannot execute: " . $sth->errstr();
 
@@ -311,7 +324,7 @@ sub _compute_retention {
     $sth->execute()
 	or die "Cannot execute: " . $sth->errstr();
 
-    $sth = $self->make_statement('dvt', "DROP $self->{'drop_temporary'} TABLE IF EXISTS $volume_table");
+    $sth = $self->make_statement('dvids', "DROP $self->{'drop_temporary'} TABLE IF EXISTS $volume_table");
     $sth->execute()
 	or die "Cannot execute: " . $sth->errstr();
 
@@ -323,11 +336,11 @@ sub _compute_retention {
     $sth->execute()
 	or die "Cannot execute: " . $sth->errstr();
 
-    $sth = $self->make_statement('dvt', "DROP $self->{'drop_temporary'} TABLE IF EXISTS $volume_table");
+    $sth = $self->make_statement('dvids', "DROP $self->{'drop_temporary'} TABLE IF EXISTS $volume_table");
     $sth->execute()
 	or die "Cannot execute: " . $sth->errstr();
 
-    $sth = $self->make_statement('dcp', "DROP $self->{'drop_temporary'} TABLE IF EXISTS $copy_table");
+    $sth = $self->make_statement('dcids', "DROP $self->{'drop_temporary'} TABLE IF EXISTS $copy_table");
     $sth->execute()
 	or die "Cannot execute: " . $sth->errstr();
 }
@@ -464,7 +477,7 @@ sub _compute_storage_retention_tape {
     my $pool_id = $self->select_or_add_pool($pool);
     if ($pool ne 'HOLDING') {
 
-	$sth = $self->make_statement('cdrt dv', "DROP $self->{'drop_temporary'} TABLE IF EXISTS $volume_table");
+	$sth = $self->make_statement('dvids', "DROP $self->{'drop_temporary'} TABLE IF EXISTS $volume_table");
 	$sth->execute()
 	    or die "Cannot execute: " . $sth->errstr();
 
@@ -490,7 +503,7 @@ sub _compute_storage_retention_tape {
 	$a = $sth->execute()
 	    or die "Cannot execute: " . $sth->errstr();
 
-	$sth = $self->make_statement('csrt dv', "DROP $self->{'drop_temporary'} TABLE IF EXISTS $volume_table");
+	$sth = $self->make_statement('dvids', "DROP $self->{'drop_temporary'} TABLE IF EXISTS $volume_table");
 	$sth->execute()
 	    or die "Cannot execute: " . $sth->errstr();
 
