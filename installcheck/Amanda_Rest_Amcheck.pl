@@ -32,6 +32,7 @@ use Amanda::Debug;
 use Amanda::MainLoop;
 use Amanda::Config qw( :init :getconf config_dir_relative );
 use Amanda::Changer;
+use Amanda::DB::Catalog2;
 
 eval 'use Installcheck::Rest;';
 if ($@) {
@@ -69,11 +70,13 @@ localhost /etc {
 }
 EOF
 
-$testconf->write();
+$testconf->write( do_catalog => 0 );
 
 config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
 my $diskfile = Amanda::Config::config_dir_relative(getconf($CNF_DISKFILE));
 my $infodir = getconf($CNF_INFOFILE);
+my $catalog = Amanda::DB::Catalog2->new(undef, create => 1, drop_tables =>1, load => 1);
+$catalog->quit();
 
 #CODE 28* 123
 $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/amcheck","");

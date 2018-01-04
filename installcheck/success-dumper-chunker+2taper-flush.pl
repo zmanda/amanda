@@ -34,6 +34,7 @@ use Amanda::Debug;
 use Amanda::MainLoop;
 use Amanda::Config qw( :init :getconf config_dir_relative );
 use Amanda::Changer;
+use Amanda::DB::Catalog2;
 
 eval 'use Installcheck::Rest;';
 if ($@) {
@@ -88,11 +89,16 @@ localhost diskname2 $diskname {
 }
 EODLE
 $testconf->add_param('storage', '"storage-1" "storage-2"');
-$testconf->write();
+$testconf->write( do_catalog => 0 );
 
 config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
+my $catalog = Amanda::DB::Catalog2->new(undef, create => 1, drop_tables => 1, load => 1);
+$catalog->quit();
 $diskfile = Amanda::Config::config_dir_relative(getconf($CNF_DISKFILE));
 $infodir = getconf($CNF_INFOFILE);
+
+$rest->stop();
+$rest = Installcheck::Rest->new();
 
 $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/runs/amdump?no_taper=1", "");
 foreach my $message (@{$reply->{'body'}}) {
@@ -358,10 +364,6 @@ END_STATUS
 check_amstatus($status, $tracefile, "amstatus first amdump");
 
 # taper-success (flush)
-
-config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
-$diskfile = Amanda::Config::config_dir_relative(getconf($CNF_DISKFILE));
-$infodir = getconf($CNF_INFOFILE);
 
 my $dump_timestamp = $timestamp;
 $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/runs/amflush","");
@@ -776,4 +778,4 @@ check_amstatus($status, $tracefile, "amstatus second amdump");
 
 $rest->stop();
 
-Installcheck::Run::cleanup();
+#Installcheck::Run::cleanup();

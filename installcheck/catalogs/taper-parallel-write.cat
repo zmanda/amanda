@@ -109,9 +109,9 @@ planner: time 2.386: analysis took 0.000 secs
 
 GENERATING SCHEDULE:
 --------
-DUMP localhost ffffffff9efefbffffffffff1f /root/testfile/732mb 20120919143530 15604 0 1970:1:1:0:0:0 715055 715055 698 1024 "Skipping: new disk can't be dumped in degraded mode"
-DUMP qa-debian6-x64-anuj ffffffff9efefbffffffffff1f /root/testfile/146mb 20120919143530 15604 0 1970:1:1:0:0:0 142298 142298 138 1024 "Skipping: new disk can't be dumped in degraded mode"
-DUMP centos6-43-client ffffffff9efefbffffffffff1f /root/testfile/36mb 20120919143530 15604 0 1970:1:1:0:0:0 35576 35576 34 1024 "Skipping: new disk can't be dumped in degraded mode"
+DUMP localhost ffffffff9efefbffffffffff1f /root/testfile/732mb 20120919143530 15604 0 1970:1:1:0:0:0 19700101000000 715055 715055 698 1024 "Skipping: new disk can't be dumped in degraded mode"
+DUMP qa-debian6-x64-anuj ffffffff9efefbffffffffff1f /root/testfile/146mb 20120919143530 15604 0 1970:1:1:0:0:0 19700101000000 142298 142298 138 1024 "Skipping: new disk can't be dumped in degraded mode"
+DUMP centos6-43-client ffffffff9efefbffffffffff1f /root/testfile/36mb 20120919143530 15604 0 1970:1:1:0:0:0 19700101000000 35576 35576 34 1024 "Skipping: new disk can't be dumped in degraded mode"
 --------
 driver: flush size 0
 find diskspace: not enough diskspace. Left with 715104 K

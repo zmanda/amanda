@@ -138,6 +138,7 @@ static char *dataport_list = NULL;
 static char *shm_name = NULL;
 static int level;
 static char *dumpdate = NULL;
+static char *based_on_timestamp = NULL;
 static char *dumper_timestamp = NULL;
 static time_t conf_dtimeout;
 static int indexfderror;
@@ -166,6 +167,12 @@ static GCond   *shm_thread_cond = NULL;
 static shm_ring_t *shm_ring_consumer = NULL;
 static shm_ring_t *shm_ring_direct = NULL;
 static char *write_to = NULL;
+static int   disk_id;
+static int   image_id;
+static int   nb_files;
+static int   nb_directories;
+static char  last_index_char;
+static event_handle_t *stdin_event;
 
 static dumpfile_t file;
 static int client_request_result;
@@ -260,6 +267,7 @@ static void	send_result_to_client(void);
 static void	send_result_to_driver(void);
 static void wait_filters(void *unused);
 static void stop_dump_callback(void *unused);
+static void handle_stdin(void *cookie G_GNUC_UNUSED);
 
 static void
 check_options(
@@ -529,6 +537,7 @@ main(
 	     *   device
 	     *   level
 	     *   dumpdate
+	     *   based_on_timestamp
 	     *   progname
 	     *   amandad_path
 	     *   client_username
@@ -628,6 +637,13 @@ main(
 	    }
 	    g_free(dumpdate);
 	    dumpdate = g_strdup(cmdargs->argv[a++]);
+
+	    if(a >= cmdargs->argc) {
+		error(_("error [dumper PORT-DUMP: not enough args: based_on_timestamp]"));
+		/*NOTREACHED*/
+	    }
+	    g_free(based_on_timestamp);
+	    based_on_timestamp = g_strdup(cmdargs->argv[a++]);
 
 	    if(a >= cmdargs->argc) {
 		error(_("error [dumper PORT-DUMP: not enough args: program]"));
@@ -920,6 +936,8 @@ main(
     free_cmdargs(cmdargs);
     cmdargs = NULL;
 
+    quit_amcatalog();
+
     log_add(L_INFO, "pid-done %ld", (long)getpid());
 
     am_release_feature_set(our_features);
@@ -932,6 +950,7 @@ main(
     amfree(diskname);
     amfree(device);
     amfree(dumpdate);
+    amfree(based_on_timestamp);
     amfree(progname);
     amfree(srvcompprog);
     amfree(clntcompprog);
@@ -1429,8 +1448,41 @@ static void
 finish_tapeheader(
     dumpfile_t *file)
 {
+    char *line;
 
     assert(ISSET(status, HEADER_DONE));
+
+    /* get image_id from catalog */
+    if (getconf_seen(CNF_CATALOG)) {
+	char  level_str[50];
+	char  pid_str[50];
+	char *line1;
+	g_snprintf(level_str, 50, "%d", level);
+	g_snprintf(pid_str, 50, "%d", getpid());
+	line = run_amcatalog("add-image",
+			     7, hostname, diskname, device, dumper_timestamp,
+				level_str, based_on_timestamp, pid_str);
+	if (!line) {
+	    g_critical("Can't add image to the catalog: %s %s %s %s %s %s",
+		hostname, diskname, device, dumper_timestamp, level_str,
+		based_on_timestamp);
+	}
+	g_debug("add-image result: %s", line);
+	image_id = atoi(line);
+	line1 = strchr(line, ' ');
+	if (!line1) {
+	    g_critical("Can't add image to the catalog: %s %s %s %s %s %s",
+		hostname, diskname, device, dumper_timestamp, level_str,
+		based_on_timestamp);
+	}
+	line1++;
+	disk_id = atoi(line1);
+	amfree(based_on_timestamp);
+	amfree(line);
+    } else {
+	image_id = 0;
+	disk_id = 0;
+    }
 
     file->type = F_DUMPFILE;
     strncpy(file->datestamp, dumper_timestamp, sizeof(file->datestamp) - 1);
@@ -1572,7 +1624,14 @@ do_dump(
     //double dumptime;	/* Time dump took in secs */
     char *m;
     int to_unlink = 1;
-    //struct cmdargs *cmdargs = NULL;
+    char  disk_id_str[50];
+    char  image_id_str[50];
+    char  orig_kb_str[50];
+    char  nb_files_str[50];
+    char  nb_directories_str[50];
+    char  native_crc_str[50];
+    char  client_crc_str[50];
+    char *line;
 
     startclock();
 
@@ -1586,6 +1645,11 @@ do_dump(
     amfree(retry_message);
     dumpbytes = dumpsize = headersize = origsize = (off_t)0;
     fh_init(&file);
+    nb_files = 0;
+    nb_directories = 0;
+    last_index_char = '\0';
+    disk_id = -1;
+    image_id = -1;
 
     g_snprintf(level_str, sizeof(level_str), "%d", level);
     time_str = get_timestamp_from_time(0);
@@ -1738,6 +1802,10 @@ do_dump(
 	g_mutex_unlock(shm_thread_mutex);
     }
 
+    /* set an event to read ABORT command from STDIN */
+    stdin_event = event_create((event_id_t)0, EV_READFD,
+			        handle_stdin, NULL);
+    event_activate(stdin_event);
     /*
      * Start the event loop.  This will exit when all five events
      * (read the mesgfd, read the datafd, read the indexfd, read the statefd,
@@ -1878,6 +1946,26 @@ do_dump(
     amfree(errstr);
 
     dumpfile_free_data(&file);
+    g_snprintf(image_id_str, 50, "%d", image_id);
+    g_snprintf(disk_id_str, 50, "%d", disk_id);
+    g_snprintf(orig_kb_str, 50, "%jd", (intmax_t)origsize);
+    g_snprintf(nb_files_str, 50, "%jd", (intmax_t)nb_files);
+    g_snprintf(nb_directories_str, 50, "%jd", (intmax_t)nb_directories);
+    g_snprintf(native_crc_str, 50, "%08x:%lld", native_crc.crc, (long long)native_crc.size);
+    g_snprintf(client_crc_str, 50, "%08x:%lld", client_crc.crc, (long long)client_crc.size);
+    if (getconf_seen(CNF_CATALOG)) {
+	line = run_amcatalog("finish-image",
+			     10, image_id_str, disk_id_str, orig_kb_str, "OK", nb_files_str,
+			     nb_directories_str, native_crc_str, client_crc_str,
+			     "00000000:0", "");
+	if (!line) {
+	    g_critical("Can't finish-image to the catalog: %s %s %s %s %s %s %s %s %s %s",
+		image_id_str, disk_id_str, orig_kb_str, "OK", nb_files_str,
+		nb_directories_str, native_crc_str, client_crc_str,
+		"00000000:0", "");
+	}
+	amfree(line);
+    }
 
     return 1;
 
@@ -2753,6 +2841,7 @@ read_indexfd(
     ssize_t	size)
 {
     int fd;
+    char *sbuf = buf, *s;
 
     assert(cookie != NULL);
     fd = *(int *)cookie;
@@ -2811,7 +2900,25 @@ read_indexfd(
 	return;
     }
 
-    assert(buf != NULL);
+    assert(sbuf != NULL);
+
+    /* count nb_files and nb_directories */
+
+    if (*sbuf == '\n') {
+	if (last_index_char == '/')
+	    nb_directories++;
+	else
+	    nb_files++;
+    }
+    for (s = sbuf+1; s < sbuf+size; s++) {
+	if (*s == '\n') {
+	    if (*(s-1) == '/')
+		nb_directories++;
+	    else
+		nb_files++;
+	}
+    }
+    last_index_char = sbuf[size-1];
 
     /*
      * We ignore error while writing to the index file.
@@ -2823,6 +2930,14 @@ read_indexfd(
 	    log_add(L_INFO, _("Index corrupted for %s:%s"), hostname, qdiskname);
 	}
     }
+}
+
+static void
+handle_stdin(
+    void *cookie G_GNUC_UNUSED)
+{
+    dump_result = 2;
+    stop_dump();
 }
 
 static void
@@ -3074,6 +3189,10 @@ stop_dump(void)
 
     if (dump_stoped)
 	return;
+    if (stdin_event) {
+	event_release(stdin_event);
+	stdin_event = NULL;
+    }
 
     /* Check if I have a pending ABORT command */
     cmdargs = get_pending_cmd();

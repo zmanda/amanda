@@ -34,7 +34,6 @@ C<amanda-taperscan(7)>.
 use strict;
 use warnings;
 use base qw( Amanda::ScanInventory Amanda::Taper::Scan );
-use Amanda::Tapelist;
 use Carp;
 use POSIX ();
 use Data::Dumper;
@@ -75,9 +74,16 @@ sub new {
 sub last_use_label {
     my $self = shift;
 
-    my $tles = $self->{'tapelist'}->{tles};
-    return undef if !defined $tles->[0];
-    return $tles->[0]->{'label'};
+debug("last_use_label...");
+    my $volumes = $self->{'catalog'}->find_volumes(
+				pool => $self->{'storage'}->{'tapepool'},
+				storage => $self->{'storage'}->{'storage_name'},
+				order_write_timestamp => -1,
+				max_volume => 1);
+debug("last_use_label aa");
+    return undef if !defined $volumes->[0];
+debug("last_use_label: $volumes->[0]->{'label'}");
+    return $volumes->[0]->{'label'};
 }
 
 sub analyze {
@@ -101,16 +107,18 @@ sub analyze {
 	} elsif ($sl->{'state'} == Amanda::Changer::SLOT_EMPTY) {
 	} elsif (defined $sl->{'label'} &&
 		 $sl->{device_status} == $DEVICE_STATUS_SUCCESS) {
-	    my $vol_tle = $self->{'tapelist'}->lookup_tapelabel($sl->{'label'});
-	    if ($self->is_reusable_volume(label => $sl->{'label'})) {
+	    my $volume = $self->{'catalog'}->find_volume(
+				$self->{'storage'}->{'tapepool'},
+				$sl->{'label'});
+	    if ($self->is_reusable_volume(volume => $volume)) {
 		push @reusable, $sl;
-		if ($vol_tle){
-		    $sl->{'datestamp'} = $vol_tle->{'datestamp'};
+		if ($volume){
+		    $sl->{'datestamp'} = $volume->{'write_timestamp'};
 		}
 	    } else {
-		if ($vol_tle) {
-		    $sl->{'datestamp'} = $vol_tle->{'datestamp'};
-		    if ($self->volume_is_new_labelled($vol_tle, $sl)) {
+		if ($volume) {
+		    $sl->{'datestamp'} = $volume->{'write_timestamp'};
+		    if ($self->volume_is_new_labelled($volume, $sl)) {
 			push @new_labeled, $sl;
 		    }
 		} elsif ($self->volume_is_labelable($sl)) {

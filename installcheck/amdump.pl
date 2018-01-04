@@ -18,7 +18,7 @@
 # Contact information: Carbonite Inc., 756 N Pastoria Ave
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 8;
+use Test::More tests => 10;
 use strict;
 use warnings;
 
@@ -27,10 +27,12 @@ use Installcheck;
 use Installcheck::Dumpcache;
 use Installcheck::Config;
 use Installcheck::Run qw(run run_err $diskname amdump_diag);
+use Installcheck::DBCatalog2 qw( create_db_catalog2 check_db_catalog2 );
 use Amanda::Config qw( :init );
 use Amanda::Debug;
 use Amanda::Paths;
 use Amanda::Util;
+use Amanda::DB::Catalog2;
 
 Amanda::Debug::dbopen("installcheck");
 Installcheck::log_test_output();
@@ -42,6 +44,12 @@ my $log;
 
 $testconf = Installcheck::Run::setup();
 $testconf->add_param('autolabel', '"TESTCONF%%" empty volume_error');
+#$testconf->add_catalog('my_catalog', [
+#  'comment' => '"SQLite catalog"',
+#  'plugin'  => '"SQLite"',
+#  'property' => "\"dbname\" \"$CONFIG_DIR/TESTCONF/SQLite.db\""
+#]);
+#$testconf->add_param('catalog','"my_catalog"');
 
 # one program "GNUTAR"
 $testconf->add_dle(<<EODLE);
@@ -63,15 +71,21 @@ localhost diskname2 $diskname {
     }
 }
 EODLE
-$testconf->write();
+$testconf->write( do_catalog => 0 );
+config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
+my $catalog = Amanda::DB::Catalog2->new(undef, create => 1, drop_tables => 1, load => 1);
+$catalog->quit();
 
 ok(run('amdump', 'TESTCONF'), "amdump runs successfully")
     or amdump_diag();
+check_db_catalog2('TESTCONF', 'amdump.catalog.1');
 
 # Dump a nonexistant client, and see amdump fail.
 $testconf = Installcheck::Run::setup();
 $testconf->add_dle('does-not-exist.example.com / installcheck-test');
-$testconf->write();
+$testconf->write( do_catalog => 0 );
+$catalog = Amanda::DB::Catalog2->new(undef, create => 1, drop_tables => 1, load => 1);
+$catalog->quit();
 
 ok(!run('amdump', 'TESTCONF'), "amdump fails with nonexistent client");
 
@@ -88,7 +102,9 @@ localhost diskname2 $diskname {
     compress client custom
 }
 EODLE
-$testconf->write();
+$testconf->write( do_catalog => 0 );
+$catalog = Amanda::DB::Catalog2->new(undef, create => 1, drop_tables => 1, load => 1);
+$catalog->quit();
 
 ok(!run("$amlibexecdir/planner", 'TESTCONF', '--log-filename', "$CONFIG_DIR/TESTCONF/log/log"), "amdump fails in validate_optstr");
 open(my $logfile, "<", "$CONFIG_DIR/TESTCONF/log/log")
@@ -121,7 +137,9 @@ localhost diskname1 $diskname {
 }
 EODLE
 
-$testconf->write();
+$testconf->write( do_catalog => 0 );
+$catalog = Amanda::DB::Catalog2->new(undef, create => 1, drop_tables => 1, load => 1);
+$catalog->quit();
 
 ok(!run('amdump', 'TESTCONF'), "amdump fail on no more space")
     or amdump_diag();
@@ -153,7 +171,9 @@ localhost diskname1 $diskname {
 }
 EODLE
 
-$testconf->write();
+$testconf->write( do_catalog => 0 );
+$catalog = Amanda::DB::Catalog2->new(undef, create => 1, drop_tables => 1, load => 1);
+$catalog->quit();
 
 ok(!run('amdump', 'TESTCONF'), "amdump succeed on flush no more space")
     or amdump_diag();

@@ -89,6 +89,7 @@ int open_infofile(char *infofile);
 void close_infofile(void);
 
 char *get_dumpdate(info_t *info, int level);
+char *get_based_on_timestamp(info_t *info, int lev);
 double perf_average(double *array, double def);
 int get_info(char *hostname, char *diskname, info_t *info);
 int put_info(char *hostname, char *diskname, info_t *info);

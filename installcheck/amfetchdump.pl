@@ -25,10 +25,13 @@ use Installcheck;
 use Installcheck::Config;
 use Installcheck::Run qw(run run_get run_err $diskname);
 use Installcheck::Dumpcache;
+use Installcheck::DBCatalog2;
 use File::Path qw(rmtree mkpath);
+use Amanda::Config qw( :init );
 use Amanda::Paths;
 use Amanda::Header;
 use Amanda::Debug;
+use Amanda::DB::Catalog2;
 use Cwd;
 use warnings;
 use strict;
@@ -98,7 +101,9 @@ sub got_files {
 }
 
 Installcheck::Dumpcache::load("basic");
-
+config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
+my $catalog = Amanda::DB::Catalog2->new(undef, create => 1, drop_tables => 1, load => 1);
+$catalog->quit();
 like(run_err('amfetchdump', 'TESTCONF'),
     qr{^Usage:},
     "'amfetchdump TESTCONF' gives usage message on stderr");
@@ -372,6 +377,9 @@ got_files(1, "G ..and restored file is present in testdir");
 # -n (using a multipart dump)
 
 Installcheck::Dumpcache::load("parts");
+config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
+$catalog = Amanda::DB::Catalog2->new(undef, create => 1, drop_tables => 1, load => 1);
+$catalog->quit();
 cleandir();
 
 $exp = Installcheck::Run::run_expect('amfetchdump', '-n', 'TESTCONF', 'localhost');
@@ -414,6 +422,9 @@ got_files(9, "H ..and restored file is present in testdir");
 # -l, no options, and -c for compressed dumps
 
 Installcheck::Dumpcache::load("compress");
+config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
+$catalog = Amanda::DB::Catalog2->new(undef, create => 1, drop_tables => 1, load => 1);
+$catalog->quit();
 cleandir();
 
 ok(run('amfetchdump', '-a', 'TESTCONF', 'localhost'),
@@ -443,6 +454,9 @@ ok($last_file_size < $uncomp_size,
     "..and is smaller than previous run ($last_file_size bytes)");
 
 Installcheck::Dumpcache::load("multi");
+config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
+$catalog = Amanda::DB::Catalog2->new(undef, create => 1, drop_tables => 1, load => 1);
+$catalog->quit();
 cleandir();
 
 $exp = Installcheck::Run::run_expect('amfetchdump', 'TESTCONF', 'localhost');
@@ -491,6 +505,9 @@ SKIP: {
 
 
     Installcheck::Dumpcache::load("ndmp");
+    config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
+    $catalog = Amanda::DB::Catalog2->new(undef, create => 1, drop_tables => 1, load => 1);
+    $catalog->quit();
     my $ndmp = Installcheck::Mock::NdmpServer->new(no_reset => 1);
     $ndmp->edit_config();
 

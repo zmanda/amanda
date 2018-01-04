@@ -63,14 +63,14 @@ my $testconf;
 #CODE 1500000
 $testconf = Installcheck::Run::setup();
 $testconf->add_param('AMRECOVER_DO_FSF', 'YES');
-$testconf->write();
+$testconf->write(do_catalog => 0);
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF?fields=amrecover_do_fsf");
 is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Configs.pm",
-		'cfgerror' => "'$Amanda::Paths::CONFIG_DIR/TESTCONF/amanda.conf', line 11: warning: Keyword AMRECOVER_DO_FSF is deprecated.",
+		'cfgerror' => "'$Amanda::Paths::CONFIG_DIR/TESTCONF/amanda.conf', line 11: warning: Keyword AMRECOVER-DO-FSF is deprecated.",
 		'severity' => $Amanda::Message::WARNING,
-		'message' => "config warning: '$Amanda::Paths::CONFIG_DIR/TESTCONF/amanda.conf', line 11: warning: Keyword AMRECOVER_DO_FSF is deprecated.",
+		'message' => "config warning: '$Amanda::Paths::CONFIG_DIR/TESTCONF/amanda.conf', line 11: warning: Keyword AMRECOVER-DO-FSF is deprecated.",
 		'process' => 'Amanda::Rest::Configs',
 		'running_on' => 'amanda-server',
 		'component' => 'rest-server',
@@ -84,7 +84,7 @@ is_deeply (Installcheck::Config::remove_source_line($reply),
 
 #CODE 1500001
 $testconf = Installcheck::Run::setup();
-$testconf->write();
+$testconf->write(do_catalog => 0);
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/FOOBAR?fields=runtapes");
 is_deeply (Installcheck::Config::remove_source_line($reply),
     { body =>
@@ -105,7 +105,7 @@ is_deeply (Installcheck::Config::remove_source_line($reply),
 
 #CODE 1500003
 $testconf = Installcheck::Run::setup();
-$testconf->write();
+$testconf->write( do_catalog => 0 );
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs");
 
 my @conf = <$config_dir/*/amanda.conf>;
@@ -197,7 +197,7 @@ if (@conf > 0) {
 
 #CODE 1500006
 $testconf = Installcheck::Run::setup();
-$testconf->write();
+$testconf->write( do_catalog => 0 );
 chmod 0000, $config_dir;
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs");
 
@@ -286,6 +286,7 @@ is_deeply (Installcheck::Config::remove_source_line($reply),
 			'BUMPMULT' => '1.5',
 			'DEBUG-PROTOCOL' => 0,
 			'KRB5KEYTAB' => '/.amanda-v5-keytab',
+			'CATALOG' => undef,
 			'COLUMNSPEC' => '',
 			'AMRECOVER-DO-FSF' => 'YES',
 			'LABEL-NEW-TAPES' => '',
@@ -412,7 +413,7 @@ $testconf->add_changer("DISKFLAT", [
     tpchanger => '"chg-disk:/amanda/h1/vtapes"',
     changerfile => '"/tmp/changerfile"'
 ]);
-$testconf->write();
+$testconf->write( do_catalog => 0 );
 
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/changers");
 is_deeply (Installcheck::Config::remove_source_line($reply),
@@ -512,7 +513,7 @@ my $taperoot = "$Installcheck::TMP/Amanda_Changer_Diskflat_test";
 
 # set up and load a simple config
  $testconf = Installcheck::Run::setup();
-$testconf->write();
+$testconf->write( do_catalog => 0 );
 
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storages");
 is_deeply (Installcheck::Config::remove_source_line($reply),
@@ -520,7 +521,7 @@ is_deeply (Installcheck::Config::remove_source_line($reply),
         [ {     'source_filename' => "$amperldir/Amanda/Rest/Configs.pm",
                 'severity' => $Amanda::Message::SUCCESS,
                 'message' => "Storage list",
-		'storages_list' => ['TESTCONF'],
+		'storages_list' => ['TESTCONF', 'HOLDING'],
 		'process' => 'Amanda::Rest::Configs',
 		'running_on' => 'amanda-server',
 		'component' => 'rest-server',

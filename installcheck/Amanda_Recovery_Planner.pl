@@ -30,6 +30,7 @@ use Amanda::Config qw( :init :getconf config_dir_relative );
 use Amanda::Changer;
 use Amanda::Debug;
 use Amanda::DB::Catalog;
+use Amanda::DB::Catalog2;
 use Amanda::Recovery::Planner;
 use Amanda::MainLoop;
 use Amanda::Header;
@@ -44,7 +45,7 @@ Installcheck::log_test_output();
 
 my $testconf;
 $testconf = Installcheck::Run::setup();
-$testconf->write();
+$testconf->write( do_catalog => 0 );
 
 # install the 'bigdb' catalog to test against
 my $cat = Installcheck::Catalogs::load("bigdb");
@@ -55,6 +56,7 @@ if ($cfg_result != $CFGERR_OK) {
     my ($level, @errors) = Amanda::Config::config_errors();
     die(join "\n", @errors);
 }
+my $catalog = Amanda::DB::Catalog2->new(undef, create => 1, drop_tables => 1, load => 1);
 
 ##
 ## Tests!
@@ -64,6 +66,7 @@ sub make_plan_sync {
     my $plan;
 
     Amanda::Recovery::Planner::make_plan(@_,
+	catalog => $catalog,
 	labelstr => ".*",
 	debug => 1,
 	plan_cb => sub {
@@ -121,7 +124,8 @@ is_plan(make_plan_sync(
     "empty plan for nonexistent host");
 
 is_plan(make_plan_sync(
-	    dumpspec => ds("oldbox", "^/opt")),
+	    dumpspec => ds("oldbox", "^/opt"),
+	    catalog => $catalog),
     [
 	[   "oldbox", "/opt", "20080414144444", 0, [
 		'20080414144444/oldbox._opt',
@@ -131,7 +135,8 @@ is_plan(make_plan_sync(
     "simple plan for a dump on holding disk");
 
 is_plan(make_plan_sync(
-	    dumpspec => ds("somebox", "^/lib", "200801")),
+	    dumpspec => ds("somebox", "^/lib", "200801"),
+	    catalog => $catalog),
     [
 	[   "somebox", "/lib", "20080111000000", 0, [
 		'Conf-001' => 1,
@@ -141,7 +146,8 @@ is_plan(make_plan_sync(
     "simple plan for just one dump");
 
 is_plan(make_plan_sync(
-	    dumpspec => ds("somebox", "^/usr/bin")),
+	    dumpspec => ds("somebox", "^/usr/bin"),
+	    catalog => $catalog),
     [
         [   'somebox', '/usr/bin', '20080313133333', 1, [
 		'Conf-003' => 1,
@@ -159,7 +165,8 @@ is_plan(make_plan_sync(
     "plan for three dumps, in order by tape write time");
 
 is_plan(make_plan_sync(
-	    dumpspec => ds("otherbox", "^/lib")),
+	    dumpspec => ds("otherbox", "^/lib"),
+	    catalog => $catalog),
     [
 	[   "otherbox", "/lib", "20080414144444", 1, [
 		'20080414144444/otherbox._lib',
@@ -180,7 +187,8 @@ is_plan(make_plan_sync(
 	    dumpspecs => [
 		ds("somebox", "^/lib", "20080111"),
 		ds("somebox", "^/lib", "20080222"),
-	    ]),
+	    ],
+	    catalog => $catalog),
     [
 	[   "somebox", "/lib", "20080111000000", 0, [
 		'Conf-001' => 1,
@@ -196,6 +204,7 @@ is_plan(make_plan_sync(
 
 is_plan(make_plan_sync(
 	    dumpspec => ds("somebox", "^/lib", "200803"),
+	    catalog => $catalog,
 	    one_dump_per_part => 1),
     [
 	[   "somebox", "/lib", "20080313133333", 0, [
@@ -243,6 +252,7 @@ is_plan(make_plan_sync(
 
 is_plan(make_plan_sync(
 	    dumpspec => ds("oldbox", "^/opt", "20080414144444"),
+	    catalog => $catalog,
 	    holding_file => $cat->holding_filename('oldbox_opt_20080414144444_holding')),
     [
 	[   "oldbox", "/opt", "20080414144444", 0, [
@@ -253,7 +263,8 @@ is_plan(make_plan_sync(
     "make_plan creates an appropriate plan for an explicit holding-disk recovery");
 
 is_plan(make_plan_sync(
-	    holding_file => $cat->holding_filename('oldbox_opt_20080414144444_holding')),
+	    holding_file => $cat->holding_filename('oldbox_opt_20080414144444_holding'),
+	    catalog => $catalog),
     [
 	[   "oldbox", "/opt", "20080414144444", 0, [
 		'20080414144444/oldbox._opt',
@@ -264,6 +275,7 @@ is_plan(make_plan_sync(
 
 is_plan(make_plan_sync(
 	    dumpspec => ds("somebox", "/lib", "20080515155555"),
+	    catalog => $catalog,
 	    filelist => [
 		'TESTCONF', 'Conf-006', [2, 3, 4, 5,       8, 9, 10, 11],
 		#  (make_plan should fill in files 6 and 7)
@@ -289,7 +301,8 @@ is_plan(make_plan_sync(
 	    filelist => [
 		'TESTCONF', 'Conf-006', [2, 3, 4, 5,       8, 9, 10, 11],
 		#  (make_plan should fill in files 6 and 7)
-	    ]),
+	    ],
+	    catalog => $catalog),
     [
 	[   'somebox', '/lib', '20080515155555', 0, [
 		'Conf-006' => 2,
@@ -306,3 +319,5 @@ is_plan(make_plan_sync(
 	],
     ],
     "plan based on filelist, without a dumpspec");
+
+$catalog->quit();

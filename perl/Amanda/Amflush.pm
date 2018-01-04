@@ -59,7 +59,8 @@ use Amanda::Logfile qw( :logtype_t log_add );
 use Amanda::Debug qw( debug );
 use Amanda::Paths;
 use Amanda::Holding;
-use Amanda::Cmdfile;
+#use Amanda::Cmdfile;
+use Amanda::DB::Catalog2;
 
 sub new {
     my $class = shift @_;
@@ -230,8 +231,7 @@ sub get_flush {
     @ts = sort @ts;
     my @hfiles = Amanda::Holding::get_files_for_flush(1, @ts);
 
-    my $conf_cmdfile = config_dir_relative(getconf($CNF_CMDFILE));
-    my $cmdfile = Amanda::Cmdfile->new($conf_cmdfile);
+    my $catalog = Amanda::DB::Catalog2->new();
     my $cmd_added;
 
     my %disks;
@@ -247,23 +247,22 @@ sub get_flush {
 	    log_add($L_DISK, $hdr->{'name'} . " " . quote_string($hdr->{'disk'}));
 	    $disks{$hdr->{'name'}}{$hdr->{'disk'}} = 1;
 	}
-	my $ids = $cmdfile->get_ids_for_holding($hfile);
-	if (!$ids) {
+	my $ids = $catalog->get_cmdflush_ids_for_holding($hfile);
+	if (!@$ids) {
 	    my $storages = getconf($CNF_STORAGE);
 	    my $storage_name = $storages->[0];
-	    my $cmddata = Amanda::Cmdfile->new_Cmddata(
+	    my $id = $catalog->add_flush_cmd(
 		operation      => $Amanda::Cmdfile::CMD_FLUSH,
 		config         => get_config_name(),
 		holding_file   => $hfile,
 		hostname       => $hdr->{'name'},
 		diskname       => $hdr->{'disk'},
 		dump_timestamp => $hdr->{'datestamp'},
+		level          => $hdr->{'dumplevel'},
 		dst_storage    => $storage_name,
 		working_pid    => $$,
 		status         => $Amanda::Cmdfile::CMD_TODO);
-	    my $id = $cmdfile->add_to_memory($cmddata);
-	    $ids = "$id;$storage_name";
-	    $cmd_added++;
+	    $ids = ["$id;$storage_name"];
 	}
 
 	my $to_flush = { hfile     => $hfile,
@@ -274,12 +273,6 @@ sub get_flush {
 			 ids       => $ids};
 	push @to_flush, $to_flush;
     }
-    if ($cmd_added) {
-	$cmdfile->write();
-    } else {
-	$cmdfile->unlock();
-    }
-
     return \@to_flush;
 }
 
@@ -341,14 +334,14 @@ sub run {
 	    log_add($L_DISK, $to_flush->{'host'} . " " . quote_string($to_flush->{'disk'}));
 	    $disks{$to_flush->{'host'}}{$to_flush->{'disk'}} = 1;
 	}
-	my $line =  "FLUSH $to_flush->{'ids'} $to_flush->{'host'} " .
+	my $line =  "FLUSH " . join(',', @{$to_flush->{'ids'}}) . " $to_flush->{'host'} " .
 				quote_string($to_flush->{'disk'}) .
 				" $to_flush->{'datestamp'} " .
 				"$to_flush->{'dumplevel'} " .
 				quote_string($to_flush->{'hfile'});
 	print STDERR "$line\n";
 	print {$driver_stream} "$line\n";
-	debug("flushing $to_flush->{'hfile'}");
+	debug("flushing $line");
     }
 
     print STDERR "ENDFLUSH\n";

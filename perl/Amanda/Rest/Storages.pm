@@ -28,13 +28,11 @@ use Amanda::Device qw( :constants );
 use Amanda::Changer;
 use Amanda::Header;
 use Amanda::MainLoop;
-use Amanda::Tapelist;
 use Amanda::Message;
 use Amanda::Recovery;
 use Amanda::Recovery::Scan;
 use Amanda::Storage;
 use Amanda::Rest::Configs;
-#use Amanda::Rest::Tapelist;
 use Symbol;
 use Data::Dumper;
 use vars qw(@ISA);
@@ -383,12 +381,7 @@ sub inventory {
     my ($status, @result_messages) = Amanda::Rest::Configs::config_init(@_);
     return ($status, \@result_messages) if @result_messages;
 
-    my $tlf = Amanda::Config::config_dir_relative(getconf($CNF_TAPELIST));
-    (my $tl, my $message) = Amanda::Tapelist->new($tlf);
-    if (defined $message) {
-	push @result_messages, $message;
-	return (-1, \@result_messages);
-    }
+    my $catalog = Amanda::DB::Catalog2->new();
 
     my $user_msg = sub {
         my $msg = shift;
@@ -407,7 +400,7 @@ sub inventory {
 
 	step start => sub {
 	    $storage = Amanda::Storage->new(storage_name => $params{'STORAGE'},
-				tapelist => $tl);
+				catalog => $catalog);
 	    if ($storage->isa("Amanda::Changer::Error")) {
 		$status = 404;
 		push @result_messages, $storage;
@@ -430,11 +423,18 @@ sub inventory {
 	    push @result_messages, $err if $err;
 
 	    if (1) {
-		Amanda::Tapelist::compute_retention();
 		for my $inv (@$inventory) {
-		    my $retention_type = Amanda::Tapelist::get_retention_type($storage->{tapepool}, $inv->{label});
-Amanda::Debug::debug("YY: $retention_type");
-		    $inv->{'retention_type'} = Amanda::Config::get_retention_name($retention_type);
+		    if ($inv->{'label'}) {
+			my $volume = $catalog->find_volume($storage->{tapepool}, $inv->{label});
+			if ($volume) {
+			my $retention_type = $volume->retention_type();
+			$inv->{'retention_type'} = Amanda::Config::get_retention_name($retention_type);
+			} else {
+			    $inv->{'retention_type'} = 'retention-no';
+			}
+		    } else {
+			$inv->{'retention_type'} = 'retention-no';
+		    }
 		}
 	    }
 	    for my $inv (@$inventory) {
@@ -480,12 +480,7 @@ sub load {
     my ($status, @result_messages) = Amanda::Rest::Configs::config_init(@_);
     return ($status, \@result_messages) if @result_messages;
 
-    my $tlf = Amanda::Config::config_dir_relative(getconf($CNF_TAPELIST));
-    (my $tl, my $message) = Amanda::Tapelist->new($tlf);
-    if (defined $message) {
-	push @result_messages, $message;
-	return (-1, \@result_messages);
-    }
+    my $catalog = Amanda::DB::Catalog2->new();
 
     my $user_msg = sub {
         my $msg = shift;
@@ -504,7 +499,7 @@ sub load {
 
 	step start => sub {
 	    $storage = Amanda::Storage->new(storage_name => $params{'STORAGE'},
-				tapelist => $tl);
+				catalog => $catalog);
 	    if ($storage->isa("Amanda::Changer::Error")) {
 		$status = 404;
 		push @result_messages, $storage;
@@ -592,12 +587,7 @@ sub reset {
     my ($status, @result_messages) = Amanda::Rest::Configs::config_init(@_);
     return ($status, \@result_messages) if @result_messages;
 
-    my $tlf = Amanda::Config::config_dir_relative(getconf($CNF_TAPELIST));
-    (my $tl, my $message) = Amanda::Tapelist->new($tlf);
-    if (defined $message) {
-	push @result_messages, $message;
-	return (-1, \@result_messages);
-    }
+    my $catalog = Amanda::DB::Catalog2->new();
 
     my $user_msg = sub {
         my $msg = shift;
@@ -616,7 +606,7 @@ sub reset {
 
 	step start => sub {
 	    $storage = Amanda::Storage->new(storage_name => $params{'STORAGE'},
-				tapelist => $tl);
+				catalog => $catalog);
 	    if ($storage->isa("Amanda::Changer::Error")) {
 		$status = 404;
 		push @result_messages, $storage;
@@ -672,12 +662,7 @@ sub eject {
     my ($status, @result_messages) = Amanda::Rest::Configs::config_init(@_);
     return ($status, \@result_messages) if @result_messages;
 
-    my $tlf = Amanda::Config::config_dir_relative(getconf($CNF_TAPELIST));
-    (my $tl, my $message) = Amanda::Tapelist->new($tlf);
-    if (defined $message) {
-	push @result_messages, $message;
-	return (-1, \@result_messages);
-    }
+    my $catalog = Amanda::DB::Catalog2->new();
 
     my $user_msg = sub {
         my $msg = shift;
@@ -696,7 +681,7 @@ sub eject {
 
 	step start => sub {
 	    $storage = Amanda::Storage->new(storage_name => $params{'STORAGE'},
-				tapelist => $tl);
+				catalog => $catalog);
 	    if ($storage->isa("Amanda::Changer::Error")) {
 		$status = 404;
 		push @result_messages, $storage;
@@ -754,12 +739,7 @@ sub clean {
     my ($status, @result_messages) = Amanda::Rest::Configs::config_init(@_);
     return ($status, \@result_messages) if @result_messages;
 
-    my $tlf = Amanda::Config::config_dir_relative(getconf($CNF_TAPELIST));
-    (my $tl, my $message) = Amanda::Tapelist->new($tlf);
-    if (defined $message) {
-	push @result_messages, $message;
-	return (-1, \@result_messages);
-    }
+    my $catalog = Amanda::DB::Catalog2->new();
 
     my $user_msg = sub {
         my $msg = shift;
@@ -778,7 +758,7 @@ sub clean {
 
 	step start => sub {
 	    $storage = Amanda::Storage->new(storage_name => $params{'STORAGE'},
-				tapelist => $tl);
+				catalog => $catalog);
 	    if ($storage->isa("Amanda::Changer::Error")) {
 		push @result_messages, $storage;
 		return $steps->{'done'}->();
@@ -834,12 +814,7 @@ sub create {
     my ($status, @result_messages) = Amanda::Rest::Configs::config_init(@_);
     return ($status, \@result_messages) if @result_messages;
 
-    my $tlf = Amanda::Config::config_dir_relative(getconf($CNF_TAPELIST));
-    (my $tl, my $message) = Amanda::Tapelist->new($tlf);
-    if (defined $message) {
-	push @result_messages, $message;
-	return (-1, \@result_messages);
-    }
+    my $catalog = Amanda::DB::Catalog2->new();
 
     my $user_msg = sub {
         my $msg = shift;
@@ -858,8 +833,8 @@ sub create {
 
 	step start => sub {
 	    $storage = Amanda::Storage->new(storage_name => $params{'STORAGE'},
-				tapelist => $tl,
-					    no_validate  => 1);
+				catalog => $catalog,
+				no_validate  => 1);
 	    if ($storage->isa("Amanda::Changer::Error")) {
 		$status = 404;
 		push @result_messages, $storage;
@@ -911,12 +886,7 @@ sub verify {
     my ($status, @result_messages) = Amanda::Rest::Configs::config_init(@_);
     return ($status, \@result_messages) if @result_messages;
 
-    my $tlf = Amanda::Config::config_dir_relative(getconf($CNF_TAPELIST));
-    (my $tl, my $message) = Amanda::Tapelist->new($tlf);
-    if (defined $message) {
-	push @result_messages, $message;
-	return (-1, \@result_messages);
-    }
+    my $catalog = Amanda::DB::Catalog2->new();
 
     my $user_msg = sub {
         my $msg = shift;
@@ -935,7 +905,7 @@ sub verify {
 
 	step start => sub {
 	    $storage = Amanda::Storage->new(storage_name => $params{'STORAGE'},
-				tapelist => $tl);
+				catalog => $catalog);
 	    if ($storage->isa("Amanda::Changer::Error")) {
 		$status = 404;
 		push @result_messages, $storage;
@@ -985,12 +955,7 @@ sub show {
     my ($status, @result_messages) = Amanda::Rest::Configs::config_init(@_);
     return ($status, \@result_messages) if @result_messages;
 
-    my $tlf = Amanda::Config::config_dir_relative(getconf($CNF_TAPELIST));
-    (my $tl, my $message) = Amanda::Tapelist->new($tlf);
-    if (defined $message) {
-	push @result_messages, $message;
-	return ($status, \@result_messages);
-    }
+    my $catalog = Amanda::DB::Catalog2->new();
 
     my $user_msg = sub {
         my $msg = shift;
@@ -1009,7 +974,7 @@ sub show {
 
 	step start => sub {
 	    $storage = Amanda::Storage->new(storage_name => $params{'STORAGE'},
-				tapelist => $tl);
+				catalog => $catalog);
 	    if ($storage->isa("Amanda::Changer::Error")) {
 		$status = 404;
 		push @result_messages, $storage;
@@ -1058,12 +1023,7 @@ sub label {
 	return ($status, \@result_messages);
     }
 
-    my $tlf = Amanda::Config::config_dir_relative(getconf($CNF_TAPELIST));
-    (my $tl, my $message) = Amanda::Tapelist->new($tlf);
-    if (defined $message) {
-	push @result_messages, $message;
-	return ($status, \@result_messages);
-    }
+    my $catalog = Amanda::DB::Catalog2->new();
 
     my $user_msg = sub {
         my $msg = shift;
@@ -1084,7 +1044,7 @@ sub label {
 
 	step start => sub {
 	    $storage = Amanda::Storage->new(storage_name => $params{'STORAGE'},
-				tapelist => $tl);
+				catalog => $catalog);
 	    if ($storage->isa("Amanda::Changer::Error")) {
 		return $steps->{'done'}->($storage);
 	    }
@@ -1151,12 +1111,7 @@ sub update {
         push @result_messages, $msg;
     };
 
-    my $tlf = Amanda::Config::config_dir_relative(getconf($CNF_TAPELIST));
-    (my $tl, my $message) = Amanda::Tapelist->new($tlf);
-    if (defined $message) {
-	push @result_messages, $message;
-	return \@result_messages;
-    }
+    my $catalog = Amanda::DB::Catalog2->new();
 
     my $main = sub {
 	my $finished_cb = shift;
@@ -1170,7 +1125,7 @@ sub update {
 
 	step start => sub {
 	    $storage = Amanda::Storage->new(storage_name => $params{'STORAGE'},
-				tapelist => $tl);
+				catalog => $catalog);
 	    if ($storage->isa("Amanda::Changer::Error")) {
 		$status = 404;
 		return $steps->{'done'}->($storage);

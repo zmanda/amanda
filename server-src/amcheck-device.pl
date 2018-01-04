@@ -68,6 +68,7 @@ use Amanda::MainLoop;
 use Amanda::Policy;
 use Amanda::Storage;
 use Amanda::Changer;
+use Amanda::DB::Catalog2;
 use Amanda::Taper::Scan;
 use Amanda::Interactivity;
 use Amanda::Message;
@@ -131,19 +132,12 @@ sub failure {
 sub do_check {
     my ($finished_cb) = @_;
     my ($res, $label, $mode);
-    my $tlf = Amanda::Config::config_dir_relative(getconf($CNF_TAPELIST));
-    my ($tl, $message) = Amanda::Tapelist->new($tlf);
-    if (defined $message) {
-	if ($message->{'severity'} >= $Amanda::Message::CRITICAL) {
-	    return failure($message, $finished_cb);
-	} else {
-	    print STDERR "ERROR: $message\n";
-	}
-    }
 
-    $storage  = Amanda::Storage->new(storage_name => $storage_name,
-				     tapelist => $tl);
-    return failure($storage, $finished_cb) if $storage->isa("Amanda::Message");
+    my $catalog = Amanda::DB::Catalog2->new();
+    my $storage = Amanda::Storage->new(storage_name => $storage_name,
+				       catalog => $catalog);
+    return failure("$storage", $finished_cb) if $storage->isa("Amanda::Message");
+
     my $chg = $storage->{'chg'};
     if ($chg->isa("Amanda::Message")) {
 	$storage->quit();
@@ -158,7 +152,7 @@ sub do_check {
 					     storage => $storage,
 					     changer => $chg,
 					     interactivity => $interactivity,
-					     tapelist => $tl);
+					     catalog  =>$catalog);
 
     my $steps = define_steps
 	cb_ref => \$finished_cb,

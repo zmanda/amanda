@@ -21,9 +21,8 @@
 package Amanda::Rest::Dumps;
 use Amanda::Config qw( :init :getconf config_dir_relative );
 use Amanda::Rest::Configs;
-use Amanda::Tapelist;
 use Amanda::DB;
-use Amanda::DB::Catalog;
+use Amanda::DB::Catalog2;
 use Symbol;
 use Data::Dumper;
 use URI::Escape;
@@ -31,7 +30,7 @@ use vars qw(@ISA);
 
 =head1 NAME
 
-Amanda::Rest::Dumps -- Rest interface to Amanda::DB::Catalog
+Amanda::Rest::Dumps -- Rest interface to Amanda::DB::Catalog2
 
 =head1 INTERFACE
 
@@ -122,11 +121,12 @@ sub list {
 	$params{'diskname'} = uri_unescape($params{'DISK'});
     }
 
-    my @dumps = Amanda::DB::Catalog::get_dumps(%params);
+    my $catalog = Amanda::DB::Catalog2::new();
+    my $dumps = $catalog->get_dumps(%params);
 
     # Remove cycle
     # uncomment commented line to remove undef parts.
-    foreach my $dump (@dumps) {
+    foreach my $dump (@{$dumps}) {
 	my $parts = $dump->{'parts'};
 #	my @newparts;
 	foreach my $part (@{$parts}) {
@@ -142,7 +142,7 @@ sub list {
 				source_line     => __LINE__,
 				code            => 2600000,
 				severity => $Amanda::Message::SUCCESS,
-				dumps           => \@dumps);
+				dumps           => $dumps);
     return ($status, \@result_messages);
 }
 

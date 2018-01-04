@@ -36,7 +36,7 @@ Installcheck::log_test_output();
 
 my $cat;
 my $testconf = Installcheck::Run::setup();
-$testconf->write();
+$testconf->write( do_catalog => 0 );
 
 ## try number formating
 

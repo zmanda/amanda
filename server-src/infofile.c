@@ -556,6 +556,31 @@ get_dumpdate(
     return stamp;
 }
 
+char *
+get_based_on_timestamp(
+    info_t *	info,
+    int		lev)
+{
+    char *stamp = malloc(15);
+    int l;
+    time_t this, last;
+    struct tm *t;
+
+    last = EPOCH;
+
+    for(l = 0; l < lev; l++) {
+	this = info->inf[l].date;
+	if (this > last) last = this;
+    }
+
+    t = localtime(&last);
+    g_snprintf(stamp, 15, "%04d%02d%02d%02d%02d%02d",
+		t->tm_year+1900, t->tm_mon+1, t->tm_mday,
+		t->tm_hour, t->tm_min, t->tm_sec);
+
+    return stamp;
+}
+
 /*
  * Weighted average
  */

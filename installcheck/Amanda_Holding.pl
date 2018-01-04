@@ -102,7 +102,7 @@ $testconf->add_dle("videoserver /video/a no-compress");
 # note no /video/b
 $testconf->add_dle("audio /usr no-compress");
 $testconf->add_dle("audio /var no-compress");
-$testconf->write();
+$testconf->write( do_catalog => 0 );
 
 my $cfg_result = config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF');
 $cfg_result = Amanda::Disklist::read_disklist();

@@ -1003,22 +1003,22 @@ sub load_unlocked {
 	    $self->_set_current(state => $state, slot => $slot);
 	}
 
-	if (defined $self->{'tapelist'} && $label) {
-	    my $tle = $self->{'tapelist'}->lookup_tapelabel($label);
-	    if (defined $tle and defined $tle->{'barcode'} and
+	if (defined $self->{'catalog'} && $label) {
+	    my $volume = $self->{'catalog'}->find_volume($self->{'storage'}->{'tapepool'}, $label);
+	    if (defined $volume and defined $volume->{'barcode'} and
 		defined $state->{'slots'}->{$slot}->{'barcode'} and
-		$state->{'slots'}->{$slot}->{'barcode'} ne $tle->{'barcode'}) {
+		$state->{'slots'}->{$slot}->{'barcode'} ne $volume->{'barcode'}) {
 		return $self->make_error("failed", $params{'res_cb'},
 			source_filename	=> __FILE__,
 			source_line	=> __LINE__,
 			module		=> ref $self,
 			severity	=> $Amanda::Message::MESSAGE,
 			code		=> 1100108,
-			reason		=> "notfound",
+			reason		=> "device",
 			slot		=> $slot,
 			label		=> $label,
 			state_barcode	=> $$state->{'slots'}->{$slot}->{'barcode'},
-			tle_barcode	=> $tle->{'barcode'});
+			tle_barcode	=> $volume->{'barcode'});
 	    }
 	}
         my $res = Amanda::Changer::robot::Reservation->new($self, $slot, $drive,
@@ -2477,16 +2477,16 @@ sub _get_state {
 
                 my $label = $state->{'bc2lb'}->{$info->{'barcode'}};
 		my $tl_label;
-		if (defined $self->{'tapelist'}) {
-		    my $tle = $self->{'tapelist'}->lookup_by_barcode($info->{'barcode'});
-		    if (defined $tle) {
-			$tl_label = $tle->{'label'};
+		if (defined $self->{'catalog'}) {
+		    my $volume = $self->{'catalog'}->find_volume_by_barcode($info->{'barcode'});
+		    if (defined $volume) {
+			$tl_label = $volume->{'label'};
 		    }
 		}
 
 		if (defined $label and defined $tl_label and
 		    $label ne $tl_label) {
-		    debug("MISMATCH label for barcode  state ($label)   tapelist ($tl_label) for barcode $info->{'barcode'}");
+		    debug("MISMATCH label for barcode  state ($label)   catalog ($tl_label) for barcode $info->{'barcode'}");
 		}
 		if (!defined $label && defined $tl_label) {
 		    if (defined $info->{'state'} and
@@ -2631,16 +2631,16 @@ sub _get_state {
 	    if (!defined $label && defined $info->{'barcode'}) {
 		$label = $state->{'bc2lb'}->{$info->{'barcode'}};
 		my $tl_label;
-		if (defined $self->{'tapelist'} and
+		if (defined $self->{'catalog'} and
 		    $state->{'slots'}->{$orig_slot}->{'state'} == Amanda::Changer::SLOT_UNKNOWN) {
-		    my $tle = $self->{'tapelist'}->lookup_by_barcode($info->{'barcode'});
-		    if (defined $tle) {
-			$tl_label = $tle->{'label'};
+		    my $volume = $self->{'catalog'}->find_volume_by_barcode($info->{'barcode'});
+		    if (defined $volume) {
+			$tl_label = $volume->{'label'};
 		    }
 		}
 
 		if (defined $label and defined $tl_label) {
-		    debug("WARNING: MISMATCH drive label for barcode  state ($label)   tapelist ($tl_label) for barcode $info->{'barcode'}");
+		    debug("WARNING: MISMATCH drive label for barcode  state ($label)   volume ($tl_label) for barcode $info->{'barcode'}");
 		}
 		if (!defined $label && defined $tl_label) {
 		    $label = $tl_label;

@@ -112,7 +112,6 @@ see C<amanda-taperscan(7)>.
 
 use strict;
 use warnings;
-use Amanda::Tapelist;
 use Carp;
 use POSIX ();
 use Data::Dumper;
@@ -121,7 +120,6 @@ use base qw(Exporter);
 our @EXPORT_OK = qw($DEFAULT_CHANGER);
 
 use Amanda::Paths;
-use Amanda::Tapelist;
 use Amanda::Config qw( :getconf );
 use Amanda::Util qw( match_labelstr );
 use Amanda::Device qw( :constants );
@@ -145,20 +143,21 @@ sub new {
     my $class = shift;
     my %params = @_;
     my $scan_conf = $params{'scan_conf'};
-    my $tapelist = $params{'tapelist'};
+    my $catalog = $params{'catalog'};
+    die("no catalog") if !defined $catalog;
     my $chg = $params{'changer'};
     my $interactivity = $params{'interactivity'};
 
     #until we have a config for it.
     $scan_conf = Amanda::ScanInventory::Config->new();
-    $chg = Amanda::Changer->new(undef, tapelist => $tapelist) if !defined $chg;
+    $chg = Amanda::Changer->new(undef, catalog => $catalog) if !defined $chg;
 
     my $self = {
 	initial_chg => $chg,
 	chg         => $chg,
 	scanning    => 0,
 	scan_conf   => $scan_conf,
-	tapelist    => $tapelist,
+	catalog     => $catalog,
         interactivity => $interactivity,
 	seen        => {},
 	scan_num    => 0,
@@ -173,9 +172,6 @@ sub scan {
     die "Can only run one scan at a time" if $self->{'scanning'};
     $self->{'scanning'} = 1;
     $self->{'user_msg_fn'} = $params{'user_msg_fn'} || sub {};
-
-    # refresh the tapelist at every scan
-    $self->read_tapelist();
 
     # count the number of scans we do, so we can only load 'current' on the
     # first scan
@@ -240,9 +236,6 @@ sub _scan {
 
 	return if $restart_scan_running;
 	$restart_scan_running = 1;
-
-	# Reload the tapelist at every scan.
-	$self->{'tapelist'}->reload(0);
 
 	if ($restart_scan_changer) {
 	    $self->{'chg'}->quit() if $self->{'chg'} != $self->{'initial_chg'};
@@ -324,13 +317,17 @@ sub _scan {
 		my $volume_header = $dev->volume_header;
 		if ($dev->status == $DEVICE_STATUS_SUCCESS) {
 		    my $label = $volume_header->{'name'};
-		    if ($self->is_reusable_volume(label => $label, new_label_ok => 1)) {
+		    if ($self->is_reusable_volume(
+				label => $label,
+				new_label_ok => 1)) {
 			    $action = Amanda::ScanInventory::SCAN_DONE;
 			    return $steps->{'call_result_cb'}->(undef, $res);
 		    } else {
-			my $vol_tle = $self->{'tapelist'}->lookup_tapelabel($label);
-			if ($vol_tle) {
-			    if ($self->volume_is_new_labelled($vol_tle, {label => $label, barcode => $res->{barcode}})) {
+			my $volume = $self->{'catalog'}->find_volume(
+					$self->{'storage'}->{'tapepool'},
+					$label);
+			if ($volume) {
+			    if ($self->volume_is_new_labelled($volume, {label => $label, barcode => $res->{barcode}})) {
 				$action = Amanda::ScanInventory::SCAN_DONE;
 				return $steps->{'call_result_cb'}->(undef, $res);
 			    }
@@ -681,7 +678,7 @@ sub _scan {
 		$message = undef;
 	    }
 	    $new_chg = Amanda::Changer->new($message,
-					    tapelist => $self->{'tapelist'});
+					    catalog => $self->{'catalog'});
 	    if ($new_chg->isa("Amanda::Changer::Error")) {
 		return $steps->{'scan_interactivity'}->("$new_chg");
 	    }
@@ -773,20 +770,20 @@ sub _scan {
 
 sub volume_is_new_labelled {
     my $self = shift;
-    my $tle = shift;
+    my $volume = shift;
     my $sl = shift;
 
-    if ($tle->{'pool'} && $tle->{'pool'} ne $self->{'tapepool'}) {
+    if ($volume->{'pool'} && $volume->{'pool'} ne $self->{'tapepool'}) {
 	return 0;
     }
-    if (!$tle->{'pool'} &&
+    if (!$volume->{'pool'} &&
 	     !match_labelstr($self->{'labelstr'}, $self->{'autolabel'}, $sl->{'label'}, $sl->{'barcode'}, $sl->{'meta'}, $self->{'chg'}->{'storage'}->{'storage_name'})) {
 	return 0;
     }
-    if ($tle->{'datestamp'} ne '0') {
+    if ($volume->{'write_timestamp'} ne '0') {
 	return 0;
     }
-    if (!$tle->{'reuse'}) {
+    if (!$volume->{'reuse'}) {
 	return 0;
     }
     return 1;
@@ -854,8 +851,10 @@ sub volume_is_labelable {
 		return 0;
 	    }
 	} else {
-	    my $vol_tle = $self->{'tapelist'}->lookup_tapelabel($label);
-	    if (!$vol_tle) {
+	    my $volume = $self->{'catalog'}->find_volume(
+				$self->{'storage'}->{'tapepool'},
+				$label);
+	    if (!$volume) {
 #		$self->_user_msg(slot_result     => 1,
 #				 label           => $label,
 #				 not_in_tapelist => 1,

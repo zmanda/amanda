@@ -85,7 +85,7 @@ planner: time 0.745: analysis took 0.000 secs
 
 GENERATING SCHEDULE:
 --------
-DUMP localhost ffffffff9efeffffffffff01 /etc 20090410074759 14339 0 1970:1:1:0:0:0 80822 80822 86 929 "Can't switch to degraded mode because an incremental estimate could not be performed"
+DUMP localhost ffffffff9efeffffffffff01 /etc 20090410074759 14339 0 1970:1:1:0:0:0 19700101000000 80822 80822 86 929 "Can't switch to degraded mode because an incremental estimate could not be performed"
 --------
 dumper: pid 4119 executable dumper3 version 3.0.0
 dumper: pid 4118 executable dumper2 version 3.0.0

@@ -25,6 +25,7 @@ use Installcheck;
 use Installcheck::Config;
 use Installcheck::Run qw(run run_get run_err $diskname);
 use Installcheck::Dumpcache;
+#use Installcheck::DBCatalog2;
 
 use File::Path qw(rmtree mkpath);
 use Data::Dumper;
@@ -33,6 +34,9 @@ use Sys::Hostname;
 use Amanda::Paths;
 use Amanda::Header;
 use Amanda::Debug;
+use Amanda::Config qw( :init );
+use Amanda::DB::Catalog2;
+
 use warnings;
 use strict;
 no strict 'subs';
@@ -132,6 +136,9 @@ sub run_amrecover {
 ## plain vanilla amrecover run
 
 Installcheck::Dumpcache::load("basic");
+config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
+my $catalog = Amanda::DB::Catalog2->new(undef, create => 1, drop_tables => 1, load => 1);
+$catalog->quit();
 
 run_amrecover(
 	commands => [

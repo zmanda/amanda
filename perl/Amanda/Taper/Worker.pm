@@ -54,7 +54,6 @@ use Amanda::Taper::Scribe qw( get_splitting_args_from_config );
 use Amanda::Logfile qw( :logtype_t log_add make_stats );
 use Amanda::Xfer qw( :constants );
 use Amanda::Util qw( quote_string );
-use Amanda::Tapelist;
 use Amanda::Recovery::Planner;
 use Amanda::Recovery::Scan;
 use Amanda::Recovery::Clerk;
@@ -109,6 +108,7 @@ sub new {
 	worker => $self,
 	taperscan => $controller->{'taperscan'},
 	feedback => $self,
+	catalog => $controller->{'catalog'},
 	debug => $Amanda::Config::debug_taper);
 
     $self->{'scribe'} = $scribe;
@@ -384,6 +384,9 @@ sub result_cb {
 	}
     }
     if ($self->{'server_crc'} eq '00000000:0') {
+	$self->{'server_crc'} = $self->{'dest_server_crc'};
+    }
+    if ($self->{'server_crc'} eq '00000000:0') {
 	$self->{'server_crc'} = $self->{'source_server_crc'};
     }
 
@@ -417,7 +420,14 @@ sub result_cb {
 
     my @all_messages = (@{$params{'device_errors'}}, @{$self->{'input_errors'}});
     push @all_messages, $params{'config_denial_message'} if $params{'config_denial_message'};
-    my $msg = quote_string(join("; ", @all_messages));
+    my $umsg = join("; ", @all_messages);
+    my $msg = quote_string($umsg);
+
+    my $kb = int($params{'size'}/1024);
+    my $result_calalog = $params{'result'};
+    $result_calalog = "OK" if $result_calalog eq "DONE";
+    $self->{'scribe'}->{'copy'}->finish_copy($params{'nparts'}, $kb, $params{'size'},
+                        $result_calalog, $params{'server_crc'}, $umsg) if $self->{'scribe'}->{'copy'};
 
     # write a DONE/PARTIAL/FAIL log line
     if ($logtype == $L_FAIL) {
@@ -453,7 +463,7 @@ sub result_cb {
 	handle => $self->{'handle'},
     );
 
-    $msg_params{'server_crc'} = $self->{'dest_server_crc'};
+    $msg_params{'server_crc'} = $self->{'server_crc'};
     # reflect errors in our own elements in INPUT-ERROR or INPUT-GOOD
     if (@{$self->{'input_errors'}}) {
 	$msg_params{'input'} = 'INPUT-ERROR';
@@ -904,17 +914,11 @@ sub setup_and_start_dump {
 	}
 	my $chg;
 	if (!defined $src->{'clerk'}) {
-	    my $tlf = Amanda::Config::config_dir_relative(getconf($CNF_TAPELIST));
-	    my ($tl, $message) = Amanda::Tapelist->new($tlf);
-	    if (defined $message) {
-		return $self->failure($message);
-	    }
-
 	    my $storage = $self->{'storages'}->{$self->{'src_storage'}};
 	    if (!$storage) {
 		$storage = Amanda::Storage->new(
 				storage_name => $self->{'src_storage'},
-				tapelist => $tl);
+				catalog => $self->{'controller'}->{'catalog'});
 		return $self->failure($storage)
 		    if $storage->isa("Amanda::Changer::Error");
 		$self->{'storages'}->{$self->{'src_storage'}} = $storage;
@@ -946,10 +950,12 @@ sub setup_and_start_dump {
 					undef);
 	my @storage_list = ( $self->{'src_storage'} );
 	Amanda::Recovery::Planner::make_plan(
+			catalog => $self->{'controller'}->{'catalog'},
 			hostname => $self->{'hostname'},
 			diskname => $self->{'diskname'},
 			dump_timestamp => $self->{'datestamp'},
 			level => $self->{'level'},
+			dumpspecs => \@dumpspecs,
 			changer => $chg,
 			storage_list => \@storage_list,
 			only_in_storage => 1,

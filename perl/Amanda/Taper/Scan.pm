@@ -60,7 +60,7 @@ algorithm.  The constructor takes the following keyword arguments:
     strorage      Amanda::Storage object to use
     changer       Amanda::Changer object to use (required)
     algorithm     Taperscan algorithm to instantiate
-    tapelist      Amanda::Tapelist
+    catalog       Amanda::DB::Catalog2
     labelstr
     autolabel
     meta_autolabel
@@ -111,10 +111,6 @@ It also terminate the changer by caller $chg->quit().
 There are a few common tasks for subclasses that are implemented as methods in
 the parent class.  Note that this class assumes subclasses will be implemented
 as blessed hashrefs, and sets keys corresponding to the constructor arguments.
-
-To read the tapelist, call C<read_tapelist>.  This method caches the result in
-C<< $self->{'tapelist'} >>, which will be used by the other functions here.  In
-general, call C<read_tapelist> at most once per C<scan()> invocation.
 
 To see if a volume is reusable, call the C<is_reusable_volume> method.  This takes
 several keyword parameters:
@@ -234,7 +230,6 @@ scan was looking for.
 use strict;
 use warnings;
 use Amanda::Config qw( :getconf );
-use Amanda::Tapelist;
 use Amanda::Debug qw( debug );
 use Amanda::Util qw( match_labelstr_template );
 
@@ -334,9 +329,9 @@ sub new {
     $self->{'labelstr'} = $params{'labelstr'};
     $self->{'autolabel'} = $params{'autolabel'};
     $self->{'meta_autolabel'} = $params{'meta_autolabel'};
-    $self->{'tapelist'} = $params{'tapelist'};
     $self->{'storage'} = $params{'storage'};
     $self->{'tapepool'} = $params{'tapepool'};
+    $self->{'catalog'} = $params{'catalog'};
 
     return $self;
 }
@@ -369,53 +364,51 @@ sub scan {
     $params{'result_cb'}->("scan not implemented");
 }
 
-sub read_tapelist {
-    my $self = shift;
-
-    $self->{'tapelist'}->reload();
-}
-
 sub oldest_reusable_volume {
     my $self = shift;
     my %params = @_;
 
-    return Amanda::Tapelist::get_last_reusable_tape_label(
-					$self->{'labelstr'}->{'template'},
-					$self->{'tapepool'},
-				        $self->{'storage'}->{'storage_name'},
-					$self->{'retention_tapes'},
-					$self->{'retention_days'},
-					$self->{'retention_recover'},
-					$self->{'retention_full'},
-				        0);
+    my $volumes = $self->{'catalog'}->get_last_reusable_volume($self->{'storage'});
+    return undef if !defined $volumes->[0];
+    return $volumes->[0]->{'label'};
 }
 
 sub is_reusable_volume {
     my $self = shift;
     my %params = @_;
+    my $volume = $params{'volume'};
+    if (!defined $volume) {
+	$volume = $self->{'catalog'}->find_volume(
+				$self->{'storage'}->{'tapepool'},
+				$params{'label'})
+    }
 
-    my $vol_tle = $self->{'tapelist'}->lookup_tapelabel($params{'label'});
-    return 0 unless $vol_tle;
-    return 0 unless $vol_tle->{'reuse'};
-    return 0 if $vol_tle->{'config'} and
-		$vol_tle->{'config'} ne Amanda::Config::get_config_name();
-    return 0 if $vol_tle->{'pool'} and
-		$vol_tle->{'pool'} ne $self->{'tapepool'};
-    return 0 if !$vol_tle->{'pool'} and
+    return 0 unless $volume;
+    return 0 unless $volume->{'reuse'};
+    return 0 if $volume->{'retention'};
+    return 0 if $volume->{'retention_tape'};
+    return 0 if $volume->{'retention_days'};
+    return 0 if $volume->{'retention_recover'};
+    return 0 if $volume->{'retention_full'};
+    return 0 if $volume->{'config'} ne '' &&
+		$volume->{'config'} ne Amanda::Config::get_config_name();
+    return 0 if $volume->{'pool'} ne '' &&
+		$volume->{'pool'} ne $self->{'tapepool'};
+    return 0 if !$volume->{'pool'} and
 		!match_labelstr_template($self->{'labelstr'}->{'template'},
-				$vol_tle->{'label'}, $vol_tle->{'barcode'},
-				$vol_tle->{'meta'}, $vol_tle->{'storage'});
+				$volume->{'label'}, $volume->{'barcode'},
+				$volume->{'meta'}, $volume->{'storage'});
 
-    if ($vol_tle->{'datestamp'} eq '0') {
+    if ($volume->{'write_timestamp'} == 0) {
 	return $params{'new_label_ok'};
     }
 
     if (defined $self->{'write_timestamp'} and
-	$vol_tle->{'datestamp'} eq $self->{'write_timestamp'}) {
+	$volume->{'write_timestamp'} eq $self->{'write_timestamp'}) {
 	return 0;
     }
 
-    return Amanda::Tapelist::volume_is_reusable($params{'label'});
+    return 1;
 }
 
 1;

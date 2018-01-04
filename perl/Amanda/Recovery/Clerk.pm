@@ -41,7 +41,7 @@ Amanda::Recovery::Clerk - handle assembling dumpfiles from multiple parts
 
     step setup => sub {
       $clerk->get_xfer_src(
-	    dump => $dump, # from Amanda::Recovery::Planner or Amanda::DB::Catalog
+	    dump => $dump, # from Amanda::Recovery::Planner or Amanda::DB::Catalog2
 	    xfer_src_cb => $steps->{'xfer_src_cb'});
     };
 
@@ -83,7 +83,7 @@ proceed without rewinding or reloading the volume.
 
 At a high level, the Clerk is operated as follows: the caller provides a dump,
 which includes information on the volumes, and file numbers on those volumes,
-from which to read the data.  The dump object is from L<Amanda::DB::Catalog>,
+from which to read the data.  The dump object is from L<Amanda::DB::Catalog2>,
 usually by awy of L<Amanda::Recovery::Planner>.  The Clerk responds with a
 transfer source element, which the caller then uses to construct an start a
 transfer.  The clerk then uses a changer to find the required volumes, seeks to

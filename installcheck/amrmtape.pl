@@ -18,7 +18,7 @@
 # Contact information: Carbonite Inc., 756 N Pastoria Ave
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 41;
+use Test::More tests => 39;
 use strict;
 use warnings;
 
@@ -29,8 +29,10 @@ use Amanda::Device qw( :constants );
 use Amanda::Paths;
 use Amanda::Tapelist;
 use Amanda::Util;
+use Amanda::DB::Catalog2;
 use Installcheck::Config;
 use Installcheck::Run qw(run run_err $diskname);
+use Installcheck::DBCatalog2;
 use Installcheck::Dumpcache;
 
 Amanda::Debug::dbopen("installcheck");
@@ -65,27 +67,13 @@ my $dev;
 my ($idx_count_pre, $idx_count_post);
 
 
-## test config overrides
-Installcheck::Dumpcache::load("basic");
-
-config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF');
-
-cmp_ok(
-    run(qw(amrmtape -o tapelist=/this/is/a/fake/tapelist TESTCONF TESTCONF01)),
-    "==", 1, "config override run"
-) or proc_diag();
-
-cmp_ok(
-    $Installcheck::Run::stdout, "=~",
-    qr/label 'TESTCONF01' not found in tapelist file '\/this\/is\/a\/fake\/tapelist'/,
-    "config overrides handled correctly"
-) or proc_diag();
-
 ## test
 
 Installcheck::Dumpcache::load("basic");
 
 config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF');
+my $catalog = Amanda::DB::Catalog2->new(undef, create => 1, drop_tables => 1, load => 1);
+$catalog->quit();
 my ($tapelist, $message) = Amanda::Tapelist->new(config_dir_relative("tapelist"));
 ok($tapelist->lookup_tapelabel('TESTCONF01'), "looked up tape after dump");
 
@@ -97,7 +85,7 @@ ok(run('amrmtape', 'TESTCONF', 'TESTCONF01'), "amrmtape runs successfully")
 $idx_count_post = dir_file_count($CNF_INDEXDIR);
 is($idx_count_post, $idx_count_pre, "number of index files before and after is the same");
 
-$tapelist->reload();
+$tapelist->reload(undef, 1);
 ok(!$tapelist->lookup_tapelabel('TESTCONF01'),
      "should fail to look up tape that should has been removed");
 
@@ -114,6 +102,9 @@ ok($dev->finish(),
 # test --cleanup
 
 Installcheck::Dumpcache::load("basic");
+$catalog = Amanda::DB::Catalog2->new(undef, create => 1, drop_tables => 1, load => 1);
+$catalog->quit();
+
 my $diskpath = Amanda::Util::sanitise_filename($Installcheck::Run::diskname);
 system ("touch -mt 201401020304.05 " . getconf($CNF_INDEXDIR) . "/localhost/$diskpath/*");
 
@@ -126,7 +117,7 @@ ok(run('amrmtape', '--cleanup', 'TESTCONF', 'TESTCONF01'),
 $idx_count_post = dir_file_count($CNF_INDEXDIR);
 isnt($idx_count_post, $idx_count_pre, "number of index files before ($idx_count_pre) and after ($idx_count_post) is different");
 
-$tapelist->reload();
+$tapelist->reload(undef, 1);
 ok(!$tapelist->lookup_tapelabel('TESTCONF01'),
      "succesfully looked up tape that should have been removed after --cleanup");
 
@@ -143,6 +134,8 @@ ok($dev->finish(),
 # test --erase
 
 Installcheck::Dumpcache::load("basic");
+$catalog = Amanda::DB::Catalog2->new(undef, create => 1, drop_tables => 1, load => 1);
+$catalog->quit();
 
 $idx_count_pre = dir_file_count($CNF_INDEXDIR);
 
@@ -153,7 +146,7 @@ ok(run('amrmtape', '--erase', 'TESTCONF', 'TESTCONF01'),
 $idx_count_post = dir_file_count($CNF_INDEXDIR);
 is($idx_count_post, $idx_count_pre, "number of index files before and after is the same");
 
-$tapelist->reload();
+$tapelist->reload(undef, 1);
 ok(!$tapelist->lookup_tapelabel('TESTCONF01'),
      "succesfully looked up tape that should have been removed after --erase");
 
@@ -171,6 +164,8 @@ ok($dev->finish(),
 # test --keep-label
 
 Installcheck::Dumpcache::load("basic");
+$catalog = Amanda::DB::Catalog2->new(undef, create => 1, drop_tables => 1, load => 1);
+$catalog->quit();
 
 $idx_count_pre = dir_file_count($CNF_INDEXDIR);
 
@@ -181,7 +176,7 @@ ok(run('amrmtape', '--keep-label', 'TESTCONF', 'TESTCONF01'),
 $idx_count_post = dir_file_count($CNF_INDEXDIR);
 is($idx_count_post, $idx_count_pre, "number of index files before and after is the same");
 
-$tapelist->reload();
+$tapelist->reload(undef, 1);
 my $tape = $tapelist->lookup_tapelabel('TESTCONF01');
 ok($tape, "succesfully looked up tape that should still be there");
 is($tape->{'datestamp'}, "0", "datestamp was zeroed");
@@ -199,6 +194,8 @@ ok($dev->finish(),
 # test --keep-label --erase
 
 Installcheck::Dumpcache::load("basic");
+$catalog = Amanda::DB::Catalog2->new(undef, create => 1, drop_tables => 1, load => 1);
+$catalog->quit();
 
 $idx_count_pre = dir_file_count($CNF_INDEXDIR);
 
@@ -209,7 +206,7 @@ ok(run('amrmtape', '--keep-label', '--erase', 'TESTCONF', 'TESTCONF01'),
 $idx_count_post = dir_file_count($CNF_INDEXDIR);
 is($idx_count_post, $idx_count_pre, "number of index files before and after is the same");
 
-$tapelist->reload();
+$tapelist->reload(undef, 1);
 $tape = $tapelist->lookup_tapelabel('TESTCONF01');
 ok($tape, "succesfully looked up tape that should still be there");
 is($tape->{'datestamp'}, "0", "datestamp was zeroed");
@@ -225,6 +222,8 @@ is($dev->volume_label, 'TESTCONF01', "label is correct");
 # test --keep-label --erase
 
 Installcheck::Dumpcache::load("basic");
+$catalog = Amanda::DB::Catalog2->new(undef, create => 1, drop_tables => 1, load => 1);
+$catalog->quit();
 
 $idx_count_pre = dir_file_count($CNF_INDEXDIR);
 
@@ -235,7 +234,7 @@ ok(run('amrmtape', '--keep-label', '--erase', 'TESTCONF', 'TESTCONF01'),
 $idx_count_post = dir_file_count($CNF_INDEXDIR);
 is($idx_count_post, $idx_count_pre, "number of index files before and after is the same");
 
-$tapelist->reload();
+$tapelist->reload(undef, 1);
 $tape = $tapelist->lookup_tapelabel('TESTCONF01');
 ok($tape, "succesfully looked up tape that should still be there");
 is($tape->{'datestamp'}, "0", "datestamp was zeroed");
@@ -251,6 +250,8 @@ is($dev->volume_label, 'TESTCONF01', "label is correct");
 # test --dryrun --erase --cleanup
 
 Installcheck::Dumpcache::load("basic");
+$catalog = Amanda::DB::Catalog2->new(undef, create => 1, drop_tables => 1, load => 1);
+$catalog->quit();
 $diskpath = Amanda::Util::sanitise_filename($Installcheck::Run::diskname);
 system ("touch -mt 201401020304.05 " . getconf($CNF_INDEXDIR) . "/localhost/$diskpath/*");
 
@@ -263,7 +264,7 @@ ok(run('amrmtape', '--dryrun', '--erase', '--cleanup', 'TESTCONF', 'TESTCONF01')
 $idx_count_post = dir_file_count($CNF_INDEXDIR);
 is($idx_count_post, $idx_count_pre, "number of index files before and after is the same");
 
-$tapelist->reload();
+$tapelist->reload(undef, 1);
 ok($tapelist->lookup_tapelabel('TESTCONF01'),
      "succesfully looked up tape that should still be there");
 
@@ -277,4 +278,4 @@ ok($dev->finish(),
    "finish device after starting")
     or diag($dev->error_or_status());
 
-Installcheck::Run::cleanup();
+#Installcheck::Run::cleanup();

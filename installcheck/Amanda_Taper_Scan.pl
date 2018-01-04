@@ -29,11 +29,15 @@ use Installcheck;
 use Installcheck::Run;
 use Installcheck::Config;
 use Installcheck::Changer;
+use Installcheck::DBCatalog2;
+use Amanda::Paths;
+use Amanda::Constants;
 use Amanda::Debug;
 use Amanda::MainLoop;
 use Amanda::Config qw( :init :getconf config_dir_relative );
 use Amanda::Taper::Scan;
 use Amanda::Storage;
+use Amanda::DB::Catalog2;
 
 # set up debugging so debug output doesn't interfere with test results
 Amanda::Debug::dbopen("installcheck");
@@ -42,77 +46,111 @@ Installcheck::log_test_output();
 # and disable Debug's die() and warn() overrides
 Amanda::Debug::disable_die_override();
 
-my $tapelist_filename = "$Installcheck::TMP/tapelist";
-sub set_tapelist {
-    my ($content) = @_;
-    open(my $fh, ">", $tapelist_filename) or die("opening '$tapelist_filename': $!");
-    print $fh $content;
-    close($fh);
-}
+my $testconf_dir = "$CONFIG_DIR/TESTCONF";
+my $tapelist_filename = "$testconf_dir/tapelist";
+#my $DBCatalog2;
+#my $tapelist_filename = "$Installcheck::TMP/tapelist";
+#sub set_tapelist {
+    #my ($content) = @_;
+    #open(my $fh, ">", $tapelist_filename) or die("opening '$tapelist_filename': $!");
+    #print $fh $content;
+    #close($fh);
+
+    #for my $line (split "\n", $content) {
+	#my ($datestamp, $label, $reuse) = split ' ', $line;
+	#$DBCatalog2->add_volume('TESTCONF', $label, $datestamp, 'TESTCONF');
+    #}
+#}
 
 my $testconf = Installcheck::Run::setup();
-$testconf->write();
+$testconf->write( do_catalog => 0, tapelist=><<TAPELIST
+20090424173004 TEST-4 reuse POOL:TESTCONF STORAGE:TESTCONF
+20090424173003 TEST-3 reuse POOL:TESTCONF STORAGE:TESTCONF
+20090424173002 TEST-2 reuse POOL:TESTCONF STORAGE:TESTCONF
+20090424173001 TEST-1 reuse POOL:TESTCONF STORAGE:TESTCONF
+20090424172000 CONF-4 reuse POOL:CONFCONF
+TAPELIST
+);
 config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF');
+my $catalog = Amanda::DB::Catalog2->new(undef, create => 1, drop_tables => 1, load => 1);
 
 # we use a "traditional" Amanda::Taper::Scan object, only because instantiating
 # the parent class alone is difficult.  We never call scan(), so traditional's
 # methods are never invoked in this test.
-my ($tapelist, $message) = Amanda::Tapelist->new($tapelist_filename);
-my $storage = Amanda::Storage->new(tapelist => $tapelist);
+my $storage = Amanda::Storage->new(catalog => $catalog);
 my $taperscan = Amanda::Taper::Scan->new(
     algorithm => "traditional",
     changer => undef, # (not used)
-    tapelist => $tapelist,
+    catalog => $catalog,
     storage => $storage,
     );
 
-set_tapelist(<<EOF);
-20090424173004 TEST-4 reuse
-20090424173003 TEST-3 reuse
-20090424173002 TEST-2 reuse
-20090424173001 TEST-1 reuse
-20090424172000 CONF-4 reuse
-EOF
 $taperscan->quit();
 $storage->quit();
+$catalog->quit();
 
-$testconf->add_param('tapelist', "\"$tapelist_filename\"");
 $testconf->remove_param('labelstr');
 $testconf->add_param('labelstr', '"TEST-[0-9]"');
 $testconf->remove_param('tapecycle');
 $testconf->add_param('tapecycle', 2);
-$testconf->write();
+$testconf->write( do_catalog => 0, tapelist=><<TAPELIST
+20090424173004 TEST-4 reuse POOL:TESTCONF STORAGE:TESTCONF
+20090424173003 TEST-3 reuse POOL:TESTCONF STORAGE:TESTCONF
+20090424173002 TEST-2 reuse POOL:TESTCONF STORAGE:TESTCONF
+20090424173001 TEST-1 reuse POOL:TESTCONF STORAGE:TESTCONF
+20090424172000 CONF-4 reuse POOL:CONFCONF
+TAPELIST
+);
 config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF');
-($tapelist, $message) = Amanda::Tapelist->new($tapelist_filename);
-$storage = Amanda::Storage->new(tapelist => $tapelist);
+$catalog = Amanda::DB::Catalog2->new(undef, create => 1, drop_tables => 1, load => 1);
+$catalog->add_simple_dump("localhost","/boot","/boot", 20090424173004, 0, "TESTCONF", "TESTCONF", "TEST-4", 1, 0, 0, 0);
+$catalog->add_simple_dump("localhost","/boot","/boot", 20090424173003, 0, "TESTCONF", "TESTCONF", "TEST-3", 1, 0, 0, 0);
+$catalog->add_simple_dump("localhost","/boot","/boot", 20090424173002, 0, "TESTCONF", "TESTCONF", "TEST-2", 1, 0, 0, 0);
+$catalog->add_simple_dump("localhost","/boot","/boot", 20090424173001, 0, "TESTCONF", "TESTCONF", "TEST-1", 1, 0, 0, 0);
+system("amcatalog TESTCONF export /tmp/aa");
+$catalog->compute_retention();
+system("amcatalog TESTCONF export /tmp/zz");
+$storage = Amanda::Storage->new(catalog => $catalog);
 $taperscan = Amanda::Taper::Scan->new(
     algorithm => "traditional",
     changer => undef, # (not used)
-    tapelist => $tapelist,
+    catalog => $catalog,
     storage => $storage);
-$taperscan->read_tapelist();
 
 is($taperscan->oldest_reusable_volume(new_label_ok => 1), "TEST-1",
    "simple tapelist, tapecycle = 2: oldest_reusable_volume correct");
+
 ok( $taperscan->is_reusable_volume(label => "TEST-1", new_label_ok => 1), " TEST-1 reusable");
 ok( $taperscan->is_reusable_volume(label => "TEST-2", new_label_ok => 1), " TEST-2 reusable");
 ok( $taperscan->is_reusable_volume(label => "TEST-3", new_label_ok => 1), " TEST-3 reusable");
 ok(!$taperscan->is_reusable_volume(label => "TEST-4", new_label_ok => 1), " TEST-4 not reusable");
 $taperscan->quit();
 $storage->quit();
+$catalog->quit();
 
 $testconf->remove_param('tapecycle');
 $testconf->add_param('tapecycle', 3);
-$testconf->write();
+$testconf->write( do_catalog => 0, tapelist=><<TAPELIST
+20090424173004 TEST-4 reuse POOL:TESTCONF STORAGE:TESTCONF
+20090424173003 TEST-3 reuse POOL:TESTCONF STORAGE:TESTCONF
+20090424173002 TEST-2 reuse POOL:TESTCONF STORAGE:TESTCONF
+20090424173001 TEST-1 reuse POOL:TESTCONF STORAGE:TESTCONF
+20090424172000 CONF-4 reuse POOL:CONFCONF
+TAPELIST
+);
 config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF');
-($tapelist, $message) = Amanda::Tapelist->new($tapelist_filename);
-$storage = Amanda::Storage->new(tapelist => $tapelist);
+$catalog = Amanda::DB::Catalog2->new(undef, create => 1, drop_tables => 1, load => 1);
+$catalog->add_simple_dump("localhost","/boot","/boot", 20090424173004, 0, "TESTCONF", "TESTCONF", "TEST-4", 1);
+$catalog->add_simple_dump("localhost","/boot","/boot", 20090424173003, 0, "TESTCONF", "TESTCONF", "TEST-3", 1);
+$catalog->add_simple_dump("localhost","/boot","/boot", 20090424173002, 0, "TESTCONF", "TESTCONF", "TEST-2", 1);
+$catalog->add_simple_dump("localhost","/boot","/boot", 20090424173001, 0, "TESTCONF", "TESTCONF", "TEST-1", 1);
+$catalog->compute_retention();
+$storage = Amanda::Storage->new(catalog => $catalog);
 $taperscan = Amanda::Taper::Scan->new(
     algorithm => "traditional",
     changer => undef, # (not used)
-    tapelist => $tapelist,
+    catalog => $catalog,
     storage => $storage);
-$taperscan->read_tapelist();
 
 is($taperscan->oldest_reusable_volume(new_label_ok => 1), "TEST-1",
    "simple tapelist, tapecycle = 3: oldest_reusable_volume correct");
@@ -122,19 +160,30 @@ ok(!$taperscan->is_reusable_volume(label => "TEST-3", new_label_ok => 1), " TEST
 ok(!$taperscan->is_reusable_volume(label => "TEST-4", new_label_ok => 1), " TEST-4 not reusable");
 $taperscan->quit();
 $storage->quit();
+$catalog->quit();
 
 $testconf->remove_param('tapecycle');
 $testconf->add_param('tapecycle', 5);
-$testconf->write();
+$testconf->write( do_catalog => 0, tapelist=><<TAPELIST
+20090424173004 TEST-4 reuse POOL:TESTCONF STORAGE:TESTCONF
+20090424173003 TEST-3 reuse POOL:TESTCONF STORAGE:TESTCONF
+20090424173002 TEST-2 reuse POOL:TESTCONF STORAGE:TESTCONF
+20090424173001 TEST-1 reuse POOL:TESTCONF STORAGE:TESTCONF
+20090424172000 CONF-4 reuse POOL:CONFCONF
+TAPELIST
+);
 config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF');
-($tapelist, $message) = Amanda::Tapelist->new($tapelist_filename);
-$storage = Amanda::Storage->new(tapelist => $tapelist);
+$catalog = Amanda::DB::Catalog2->new(undef, create => 1, drop_tables => 1, load => 1);
+$catalog->add_simple_dump("localhost","/boot","/boot", 20090424173004, 0, "TESTCONF", "TESTCONF", "TEST-4", 1);
+$catalog->add_simple_dump("localhost","/boot","/boot", 20090424173003, 0, "TESTCONF", "TESTCONF", "TEST-3", 1);
+$catalog->add_simple_dump("localhost","/boot","/boot", 20090424173002, 0, "TESTCONF", "TESTCONF", "TEST-2", 1);
+$catalog->add_simple_dump("localhost","/boot","/boot", 20090424173001, 0, "TESTCONF", "TESTCONF", "TEST-1", 1);
+$catalog->compute_retention();
+$storage = Amanda::Storage->new(catalog => $catalog);
 $taperscan = Amanda::Taper::Scan->new(
     algorithm => "traditional",
-    changer => undef, # (not used)
-    tapelist => $tapelist,
+    catalog => $catalog,
     storage => $storage);
-$taperscan->read_tapelist();
 
 is($taperscan->oldest_reusable_volume(new_label_ok => 1), undef,
    "simple tapelist, tapecycle = 5: oldest_reusable_volume correct (undef)");
@@ -144,26 +193,25 @@ ok(!$taperscan->is_reusable_volume(label => "TEST-3", new_label_ok => 1), " TEST
 ok(!$taperscan->is_reusable_volume(label => "TEST-4", new_label_ok => 1), " TEST-4 not reusable");
 $taperscan->quit();
 $storage->quit();
-
-set_tapelist(<<EOF);
-20090424173004 TEST-4 reuse
-20090424173003 TEST-3 reuse
-20090424173002 TEST-2 reuse
-20090424173001 TEST-1 no-reuse
-EOF
+$catalog->quit();
 
 $testconf->remove_param('tapecycle');
 $testconf->add_param('tapecycle', 2);
-$testconf->write();
+$testconf->write( do_catalog => 0, tapelist =><<TAPELIST
+20090424173004 TEST-4 reuse POOL:TESTCONF STORAGE:TESTCONF
+20090424173003 TEST-3 reuse POOL:TESTCONF STORAGE:TESTCONF
+20090424173002 TEST-2 reuse POOL:TESTCONF STORAGE:TESTCONF
+20090424173001 TEST-1 no-reuse POOL:TESTCONF STORAGE:TESTCONF
+TAPELIST
+);
 config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF');
-($tapelist, $message) = Amanda::Tapelist->new($tapelist_filename);
-$storage = Amanda::Storage->new(tapelist => $tapelist);
+$catalog = Amanda::DB::Catalog2->new(undef, create => 1, drop_tables => 1, load => 1);
+$storage = Amanda::Storage->new(catalog => $catalog);
 $taperscan = Amanda::Taper::Scan->new(
     algorithm => "traditional",
     changer => undef, # (not used)
-    tapelist => $tapelist,
+    catalog => $catalog,
     storage => $storage);
-$taperscan->read_tapelist();
 
 is($taperscan->oldest_reusable_volume(new_label_ok => 1), "TEST-2",
    "no-reuse in tapelist, tapecycle = 2: oldest_reusable_volume correct");
@@ -173,47 +221,53 @@ ok( $taperscan->is_reusable_volume(label => "TEST-3", new_label_ok => 1), " TEST
 ok(!$taperscan->is_reusable_volume(label => "TEST-4", new_label_ok => 1), " TEST-4 not reusable");
 $taperscan->quit();
 $storage->quit();
+$catalog->quit();
 
 $testconf->remove_param('tapecycle');
 $testconf->add_param('tapecycle', 4);
-$testconf->write();
+$testconf->write( do_catalog => 0, tapelist =><<TAPELIST
+20090424173004 TEST-4 reuse POOL:TESTCONF STORAGE:TESTCONF
+20090424173003 TEST-3 reuse POOL:TESTCONF STORAGE:TESTCONF
+20090424173002 TEST-2 reuse POOL:TESTCONF STORAGE:TESTCONF
+20090424173001 TEST-1 no-reuse POOL:TESTCONF STORAGE:TESTCONF
+TAPELIST
+);
 config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF');
-($tapelist, $message) = Amanda::Tapelist->new($tapelist_filename);
-$storage = Amanda::Storage->new(tapelist => $tapelist);
+$catalog = Amanda::DB::Catalog2->new(undef, create => 1, drop_tables => 1, load => 1);
+$storage = Amanda::Storage->new(catalog => $catalog);
 $taperscan = Amanda::Taper::Scan->new(
     algorithm => "traditional",
     changer => undef, # (not used)
-    tapelist => $tapelist,
+    catalog => $catalog,
     storage => $storage);
-$taperscan->read_tapelist();
 is($taperscan->oldest_reusable_volume(new_label_ok => 1), undef,
    "no-reuse in tapelist, tapecycle = 4: oldest_reusable_volume correct (undef)");
 ok(!$taperscan->is_reusable_volume(label => "TEST-1", new_label_ok => 1), " TEST-1 not reusable");
 ok(!$taperscan->is_reusable_volume(label => "TEST-2", new_label_ok => 1), " TEST-2 not reusable");
 ok(!$taperscan->is_reusable_volume(label => "TEST-3", new_label_ok => 1), " TEST-3 not reusable");
 ok(!$taperscan->is_reusable_volume(label => "TEST-4", new_label_ok => 1), " TEST-4 not reusable");
+$taperscan->quit();
 $storage->quit();
-
-set_tapelist(<<EOF);
-20090424173003 TEST-3 reuse
-20090424173002 TEST-2 reuse
-20090424173001 TEST-1 reuse
-0 TEST-4 reuse
-EOF
+$catalog->quit();
 
 $testconf->remove_param('tapecycle');
 $testconf->add_param('tapecycle', 3);
-$testconf->write();
+$testconf->write( do_catalog => 0, tapelist=><<TAPELIST
+20090424173003 TEST-3 reuse POOL:TESTCONF STORAGE:TESTCONF
+20090424173002 TEST-2 reuse POOL:TESTCONF STORAGE:TESTCONF
+20090424173001 TEST-1 reuse POOL:TESTCONF STORAGE:TESTCONF
+0 TEST-4 reuse POOL:TESTCONF
+TAPELIST
+);
 config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF');
-($tapelist, $message) = Amanda::Tapelist->new($tapelist_filename);
-$storage = Amanda::Storage->new(tapelist => $tapelist);
+$catalog = Amanda::DB::Catalog2->new(undef, create => 1, drop_tables => 1, load => 1);
+$storage = Amanda::Storage->new(catalog => $catalog);
 $taperscan = Amanda::Taper::Scan->new(
     algorithm => "traditional",
     changer => undef, # (not used)
-    tapelist => $tapelist,
+    catalog => $catalog,
     retention_tapes => 2,
     storage => $storage);
-$taperscan->read_tapelist();
 ok( $taperscan->is_reusable_volume(label => "TEST-1", new_label_ok => 1), " TEST-1 reusable");
 ok(!$taperscan->is_reusable_volume(label => "TEST-2", new_label_ok => 1), " TEST-2 not reusable");
 ok(!$taperscan->is_reusable_volume(label => "TEST-3", new_label_ok => 1), " TEST-3 not reusable");
@@ -228,4 +282,5 @@ ok(!$taperscan->is_reusable_volume(label => "TEST-4", new_label_ok => 0), " TEST
 
 $taperscan->quit();
 $storage->quit();
+$catalog->quit();
 

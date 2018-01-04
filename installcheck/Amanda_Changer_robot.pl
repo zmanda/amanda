@@ -109,7 +109,7 @@ sub test_interface {
 	    # an point to the mock mtx
 	    property => "\"mtx\" \"$mock_mtx_path\"",
 	]);
-	$testconf->write();
+	$testconf->write( do_catalog => 0 );
 
 	my $cfg_result = config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF');
 	if ($cfg_result != $CFGERR_OK) {
@@ -310,7 +310,7 @@ Amanda::MainLoop::run();
 	property => "\"unload-delay\" \"2M\"",
 	property => "\"load-poll\" \"2s POLl 3s uNtil 1m\"",
     ]);
-    $testconf->write();
+    $testconf->write( do_catalog => 0 );
 
     config_uninit();
     my $cfg_result = config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF');
@@ -466,7 +466,7 @@ sub test_changer {
 	    @broken_drive_loaded_slot,
 	    @ignore_barcodes,
 	]);
-	$testconf->write();
+	$testconf->write( do_catalog => 0 );
 
 	config_uninit();
 	my $cfg_result = config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF');

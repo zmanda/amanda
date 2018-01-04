@@ -221,9 +221,9 @@ use Amanda::Cmdline;
 use Amanda::Recovery::Clerk;
 use Amanda::Recovery::Planner;
 use Amanda::Recovery::Scan;
-use Amanda::DB::Catalog;
 use Amanda::Disklist;
 use Amanda::Restore;
+use Amanda::DB::Catalog2;
 
 # Note that this class performs its control IO synchronously.  This is adequate
 # for this service, as it never receives unsolicited input from the remote
@@ -462,6 +462,8 @@ sub make_plan {
 	$is_holding = 1;
     }
 
+    my $catalog = Amanda::DB::Catalog2->new();
+    $self->{'catalog'} = $catalog;
     my $chg;
     if ($is_holding) {
 	# for holding, give the clerk a null; it won't touch it
@@ -477,21 +479,16 @@ sub make_plan {
 	    $use_default = 1;
 	}
 
-	my $tlf = Amanda::Config::config_dir_relative(getconf($CNF_TAPELIST));
-	my ($tl, $message) = Amanda::Tapelist->new($tlf);
-	if (defined $message) {
-	    die "Could not read the tapelist: $message";
-	}
 	if (!$use_default) {
 	    $self->{'storage'} = Amanda::Storage->new(storage_name => $self->{'command'}{'DEVICE'},
-						      tapelist => $tl);
+						      catalog => $catalog);
 	    if ($self->{'storage'}->isa("Amanda::Changer::Error")) {
-		$self->{'storage'} = Amanda::Storage->new(tapelist => $tl);
+		$self->{'storage'} = Amanda::Storage->new(catalog => $catalog);
 		if ($self->{'storage'}->isa("Amanda::Changer::Error")) {
 		    die("$self->{'storage'}");
 		}
 		$chg = Amanda::Changer->new($self->{'command'}{'DEVICE'},
-					    storage => $self->{'storage'}, tapelist => $tl);
+					    storage => $self->{'storage'}, catalog => $catalog);
 		$self->{'storage'}->{'chg'}->quit();
 		$self->{'storage'}->{'chg'} = $chg;
 	    } else {
@@ -504,20 +501,20 @@ sub make_plan {
 						 $self->{'command'}{'LABEL'});
 		my $storage_name = $filelist->[0];
 		$self->{'storage'}  = Amanda::Storage->new(
-				storage_name => $storage_name, tapelist => $tl);
+				storage_name => $storage_name, catalog => $catalog);
 	    }
 	    if (!$self->{'storage'} ||
 		$self->{'storage'}->isa("Amanda::Changer::Error")) {
 	        warning("$self->{'storage'}") if $self->{'storage'};
-		$self->{'storage'} =  Amanda::Storage->new(tapelist => $tl);
+		$self->{'storage'} =  Amanda::Storage->new(catalog => $catalog);
 		if ($use_default) {
 		    $chg = Amanda::Changer->new(undef,
 					        storage => $self->{'storage'},
-						tapelist => $tl);
+						catalog => $catalog);
 		} else {
 		    $chg = Amanda::Changer->new($self->{'command'}{'DEVICE'},
 						storage => $self->{'storage'},
-						tapelist => $tl);
+						catalog => $catalog);
 		}
 		if ($chg->isa("Amanda::Changer::Error")) {
 	            $chg = Amanda::Changer->new("chg-null:");
@@ -561,6 +558,7 @@ sub make_plan {
 	my $holding_file = $self->tapespec_to_holding($holding_file_tapespec);
 
 	return Amanda::Recovery::Planner::make_plan(
+	    catalog => $self->{'catalog'},
 	    holding_file => $holding_file,
 	    $spec? (dumpspec => $spec) : (),
 	    plan_cb => sub { $self->plan_cb(@_); });
@@ -588,6 +586,7 @@ sub make_plan {
 	}
 
 	return Amanda::Recovery::Planner::make_plan(
+	    catalog => $self->{'catalog'},
 	    filelist => $filelist,
 	    chg => $chg,
 	    $spec? (dumpspec => $spec) : (),
@@ -1264,13 +1263,17 @@ sub try_to_find_dump {
 
     # search the catalog; get_dumps cannot search by labels, so we have to use
     # get_parts instead
-    my @parts = Amanda::DB::Catalog::get_parts(
+    my $dumps = $self->{'catalog'}->get_dumps(
+	parts => 1,
 	storage => $storage,
 	label => $label,
 	dumpspecs => [ $spec ]);
 
-    if (!@parts) {
+    if (!@{$dumps}) {
 	$self->sendmessage("could not find any matching dumps on volume '$label'");
+	return undef;
+    } elsif (@{$dumps} > 1) {
+	$self->sendmessage("more that one matching dumps on volume '$label'");
 	return undef;
     }
 
@@ -1279,13 +1282,13 @@ sub try_to_find_dump {
 
     # sort the parts by their order on each volume.  This sorts the volumes
     # lexically by label, but the planner will straighten it out.
-    @parts = Amanda::DB::Catalog::sort_dumps([ "label", "filenum" ], @parts);
+#    @parts = Amanda:DB:Catalog::sort_dumps([ "label", "filenum" ], @parts);
 
     # loop over the parts for the dump and make a filelist.
     my $last_label = '';
     my $last_filenums = undef;
     my $filelist = [];
-    for my $part (@parts) {
+    for my $part (@{$dumps->[0]->{'parts'}}) {
 	next unless defined $part; # skip part number 0
 	if ($part->{'label'} ne $last_label) {
 	    $last_label = $part->{'label'};

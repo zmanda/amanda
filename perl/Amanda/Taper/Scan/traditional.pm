@@ -34,7 +34,6 @@ C<amanda-taperscan(7)>.
 use strict;
 use warnings;
 use base qw( Amanda::Taper::Scan );
-use Amanda::Tapelist;
 use Amanda::Config qw( :getconf );
 use Amanda::Device qw( :constants );
 use Amanda::Header;
@@ -50,7 +49,6 @@ sub new {
     # parent will set all of the $params{..} keys for us
     my $self = bless {
 	scanning => 0,
-        tapelist => undef,
 	seen => {},
 	scan_num => 0,
     }, $class;
@@ -66,9 +64,6 @@ sub scan {
     $self->{'scanning'} = 1;
     $self->{'user_msg_fn'} = $params{'user_msg_fn'} || sub {};
     $self->{'user_message_fn'} = $params{'user_message_fn'};
-
-    # refresh the tapelist at every scan
-    $self->read_tapelist();
 
     # count the number of scans we do, so we can only load 'current' on the
     # first scan
@@ -426,9 +421,9 @@ sub stage_2 {
 	if ($status == $DEVICE_STATUS_SUCCESS) {
             $label = $dev->volume_label;
 
-	    # verify that the label is in the tapelist
-	    my $tle = $self->{'tapelist'}->lookup_tapelabel($label);
-	    if (!$tle) {
+	    # verify that the label is in the catalog
+	    my $volume = $self->{'catalog'}->find_volume($self->{'tapepool'}, $label);
+	    if (!$volume) {
 		if (!match_labelstr($labelstr, $autolabel, $label, $barcode,
                                     $meta, $self->{'changer'}->{'storage'}->{'storage_name'})) {
 		    if (!$autolabel->{'other_config'}) {
@@ -461,8 +456,8 @@ sub stage_2 {
 		    return $steps->{'try_continue'}->();
 		}
 	    } else {
-		if ($tle->{'config'} &&
-		    $tle->{'config'} ne Amanda::Config::get_config_name()) {
+		if ($volume->{'config'} &&
+		    $volume->{'config'} ne Amanda::Config::get_config_name()) {
 		    $self->_user_msg(Amanda::ScanInventory::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
@@ -472,15 +467,14 @@ sub stage_2 {
 				storage_name    => $self->{'changer'}->{'storage'}->{'storage_name'},
 				slot_result     => 1,
 				other_config    => 1,
-				config          => $tle->{'config'},
+				config          => $volume->{'config'},
 				slot            => $slot,
-				label           => $label,
-				res             => $res));
+				label           => $label));
 		    return $steps->{'try_continue'}->();
 		}
 
-		if ($tle->{'pool'} &&
-		    $tle->{'pool'} ne $self->{'tapepool'}) {
+		if ($volume->{'pool'} &&
+		    $volume->{'pool'} ne $self->{'tapepool'}) {
 		    $self->_user_msg(Amanda::ScanInventory::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
@@ -490,14 +484,13 @@ sub stage_2 {
 				storage_name    => $self->{'changer'}->{'storage'}->{'storage_name'},
 				slot_result     => 1,
 				other_pool      => 1,
-				pool            => $tle->{'pool'},
+				pool            => $volume->{'pool'},
 				slot            => $slot,
-				label           => $label,
-				res             => $res));
+				label           => $label));
 		    return $steps->{'try_continue'}->();
 		}
 
-		if (!$tle->{'pool'} &&
+		if (!$volume->{'pool'} &&
 		    !match_labelstr($labelstr, $autolabel, $label, $barcode,
 				    $meta, $self->{'changer'}->{'storage'}->{'storage_name'})) {
 		    $self->_user_msg(Amanda::ScanInventory::Message->new(
@@ -516,7 +509,9 @@ sub stage_2 {
 		}
 
 		# see if it's reusable
-		if (!$self->is_reusable_volume(label => $label, new_label_ok => 1)) {
+		if (!$self->is_reusable_volume(
+				label => $label,
+				new_label_ok => 1)) {
 		    $self->_user_msg(Amanda::ScanInventory::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,

@@ -26,9 +26,12 @@ use lib '@amperldir@';
 use Installcheck::Config;
 use Installcheck::Dumpcache;
 use Installcheck::Catalogs;
+use Installcheck::DBCatalog2;
 use Installcheck::Run qw(run run_get run_err $diskname);
 use Amanda::Paths;
 use Amanda::Debug;
+use Amanda::Config qw( :init );
+use Amanda::DB::Catalog2;
 
 Amanda::Debug::dbopen("installcheck");
 Installcheck::log_test_output();
@@ -45,6 +48,9 @@ like($Installcheck::Run::stderr, qr/\AUSAGE:/i,
 # Now try it against a cached dump
 
 Installcheck::Dumpcache::load("multi");
+config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
+my $catalog = Amanda::DB::Catalog2->new(undef, create => 1, drop_tables => 1, load => 1);
+$catalog->quit();
 
 like(run_get('amoverview', 'TESTCONF', '--diskwidth=200'),
     # this pattern is pretty loose, but that's OK
@@ -61,10 +67,13 @@ Installcheck::Run::cleanup();
 # And some cached catalogs
 
 my $testconf = Installcheck::Run::setup();
-$testconf->write();
+$testconf->write( do_catalog => 0 );
 
 my $cat = Installcheck::Catalogs::load("bigdb");
 $cat->install();
+config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
+$catalog = Amanda::DB::Catalog2->new(undef, create => 1, drop_tables => 1, load => 1);
+$catalog->quit();
 
 like(run_get('amoverview', 'TESTCONF', '--skipmissed'),
     qr{

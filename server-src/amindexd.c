@@ -51,13 +51,13 @@
 #include "disk_history.h"
 #include "list_dir.h"
 #include "logfile.h"
-#include "find.h"
 #include "tapefile.h"
 #include "amutil.h"
 #include "amandad.h"
 #include "pipespawn.h"
 #include "sockaddr-util.h"
 #include "amxml.h"
+#include "server_util.h"
 
 #include <grp.h>
 
@@ -82,7 +82,7 @@ static char *qdisk_name = NULL;			/* disk we are restoring */
 static char *target_date = NULL;
 static char **storage_list = NULL;
 static disklist_t disk_list;			/* all disks in cur config */
-static find_result_t *output_find = NULL;
+static GHashTable *parts;
 static g_option_t *g_options = NULL;
 static file_lock *lock_index = NULL;
 
@@ -581,7 +581,6 @@ check_and_load_config(
     char *	config)
 {
     char *conf_diskfile;
-    char *conf_tapelist;
     char *conf_indexdir;
     char *lock_file;
     struct stat dir_stat;
@@ -609,21 +608,9 @@ check_and_load_config(
 	return -1;
     }
 
-    conf_tapelist = config_dir_relative(getconf_str(CNF_TAPELIST));
-    if(read_tapelist(conf_tapelist)) {
-	reply(501, _("Could not read tapelist file %s!"), conf_tapelist);
-	amfree(conf_tapelist);
-	return -1;
-    }
-    amfree(conf_tapelist);
-
     dbrename(get_config_name(), DBG_SUBDIR_SERVER);
 
-    output_find = find_dump(&disk_list, 1);
-    /* the 'w' here sorts by write timestamp, so that the first instance of
-     * any particular datestamp/host/disk/level/part that we see is the one
-     * written earlier */
-    sort_find_result("DLKHspwB", &output_find);
+//    sort_find_result("DLKHspwB", &output_find);
 
     conf_indexdir = config_dir_relative(getconf_str(CNF_INDEXDIR));
     if (stat (conf_indexdir, &dir_stat) != 0 || !S_ISDIR(dir_stat.st_mode)) {
@@ -660,7 +647,8 @@ build_disk_table(void)
     off_t last_filenum;
     int last_level;
     int last_partnum;
-    find_result_t *find_output;
+    GHashTableIter iter;
+    gpointer key, value;
 
     if (get_config_name() == NULL) {
 	reply(590, _("Must set config,host,disk before building disk table"));
@@ -681,58 +669,62 @@ build_disk_table(void)
     last_filenum = (off_t)-1;
     last_level = -1;
     last_partnum = -1;
-    for(find_output = output_find;
-	find_output != NULL; 
-	find_output = find_output->next) {
-	if(strcasecmp(dump_hostname, find_output->hostname) == 0 &&
-	   g_str_equal(disk_name, find_output->diskname) &&
-	   g_str_equal("OK", find_output->status) &&
-	   g_str_equal("OK", find_output->dump_status)) {
-	    /*
-	     * The sort order puts holding disk entries first.  We want to
-	     * use them if at all possible, so ignore any other entries
-	     * for the same datestamp after we see a holding disk entry
-	     * (as indicated by a filenum of zero).
-	     */
-	    if(last_timestamp &&
-	       g_str_equal(find_output->timestamp, last_timestamp) &&
-	       find_output->level == last_level && 
-	       last_filenum == 0) {
-		continue;
-	    }
-	    /* ignore duplicate partnum */
-	    if (last_timestamp &&
-	        g_str_equal(find_output->timestamp, last_timestamp) &&
-	        find_output->level == last_level &&
-	        find_output->partnum == last_partnum &&
-	        (!am_has_feature(their_features, fe_amindexd_STORAGE) ||
-		 g_str_equal(find_output->storage, last_storage))) {
-		continue;
-	    }
-	    if (storage_list) {
-		char **storage_l;
-		gboolean found = FALSE;
-		for (storage_l = storage_list; *storage_l != NULL; storage_l++) {
-		     if (g_str_equal(find_output->storage, *storage_l))
-			found = TRUE;
-		}
-		if (!found)
+    parts = amcatalog_get_parts(dump_hostname, disk_name);
+    g_hash_table_iter_init (&iter, parts);
+    while (g_hash_table_iter_next (&iter, &key, &value)) {
+	GPtrArray *parts = value;
+	guint i;
+	for (i=0; i<parts->len;i++) {
+	    part_result_t *part = parts->pdata[i];
+	    if (g_str_equal("OK", part->dump_status) &&
+		g_str_equal("OK", part->copy_status) &&
+		g_str_equal("OK", part->part_status)) {
+		/*
+		* The sort order puts holding disk entries first.  We want to
+		* use them if at all possible, so ignore any other entries
+		* for the same datestamp after we see a holding disk entry
+		* (as indicated by a filenum of zero).
+		*/
+		if (last_timestamp &&
+		    g_str_equal(part->timestamp, last_timestamp) &&
+		    part->level == last_level &&
+		    last_filenum == 0) {
 		    continue;
+		}
+		/* ignore duplicate partnum */
+		if (last_timestamp &&
+		    g_str_equal(part->timestamp, last_timestamp) &&
+		    part->level == last_level &&
+		    part->partnum == last_partnum &&
+		    (!am_has_feature(their_features, fe_amindexd_STORAGE) ||
+		     g_str_equal(part->storage, last_storage))) {
+		    continue;
+		}
+		if (storage_list) {
+		    char **storage_l;
+		    gboolean found = FALSE;
+		    for (storage_l = storage_list; *storage_l != NULL; storage_l++) {
+			if (g_str_equal(part->storage, *storage_l))
+			    found = TRUE;
+		    }
+		    if (!found)
+			continue;
+		}
+		last_timestamp = part->timestamp;
+		last_storage = part->storage;
+		last_filenum = part->filenum;
+		last_level = part->level;
+		last_partnum = part->partnum;
+		date = amindexd_nicedate(part->timestamp);
+		add_dump(part->hostname, date, part->level,
+			 part->storage, part->label, part->filenum,
+			 part->partnum, part->nb_parts);
+		dbprintf("- %s %d %s %lld %d %d\n",
+			 date, part->level,
+			 part->label,
+			 (long long)part->filenum,
+			 part->partnum, part->nb_parts);
 	    }
-	    last_timestamp = find_output->timestamp;
-	    last_storage = find_output->storage;
-	    last_filenum = find_output->filenum;
-	    last_level = find_output->level;
-	    last_partnum = find_output->partnum;
-	    date = amindexd_nicedate(find_output->timestamp);
-	    add_dump(find_output->hostname, date, find_output->level,
-		     find_output->storage, find_output->label, find_output->filenum,
-		     find_output->partnum, find_output->totalparts);
-	    dbprintf("- %s %d %s %lld %d %d\n",
-		     date, find_output->level, 
-		     find_output->label,
-		     (long long)find_output->filenum,
-		     find_output->partnum, find_output->totalparts);
 	}
     }
 
@@ -1715,7 +1707,6 @@ main(
 		storage_list = NULL;
 		reply(200, _("storage unset"));
 	    }
-	    sort_find_result_with_storage("DLKHspwB", storage_list, &output_find);
 	    build_disk_table();
 	    s[-1] = (char)ch;
 	} else {
@@ -1737,7 +1728,6 @@ main(
 	lock_index = NULL;
     }
 
-    free_find_result(&output_find);
     reply(200, _("Good bye."));
     dbclose();
     return 0;

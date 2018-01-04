@@ -30,7 +30,6 @@ use File::Path;
 use Amanda::Config qw( :init :getconf );
 use Amanda::Debug;
 use Amanda::Changer;
-use Amanda::Tapelist;
 use Amanda::MainLoop;
 use Amanda::Device qw( :constants );
 
@@ -1004,9 +1003,9 @@ sub set_no_reuse {
 	    }
 
 	    if ($device->have_set_reuse()) {
-		my $tle = $self->{'tapelist'}->lookup_tapelabel($label);
-		if ($tle) {
-		    $device->set_no_reuse($label, $tle->{'datestamp'});
+		my $volume = $self->{'catalog'}->find_volume($self->{'storage'}->{'tapepool'}, $label);
+		if ($volume) {
+		    $device->set_no_reuse($label, $volume->{'write_timestamp'});
 		}
 	    }
 	    undef $device;

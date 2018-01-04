@@ -43,7 +43,7 @@ my @lines;
 # First try reading a tapelist
 
 my $testconf = Installcheck::Config->new();
-$testconf->write();
+$testconf->write( do_catalog => 0 );
 
 config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF") == $CFGERR_OK
     or die("config_init failed");
@@ -432,7 +432,7 @@ $testconf->add_storage("STORAGE1", [ policy => "\"test_policy\"",
 				     tapepool => "\"POOL1\"" ]);
 $testconf->add_storage("STORAGE2", [ policy => "\"test_policy\"",
 				     tapepool => "\"POOL2\"" ]);
-$testconf->write();
+$testconf->write( do_catalog => 0 );
 
 config_uninit();
 config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF") == $CFGERR_OK
@@ -509,7 +509,7 @@ $testconf->add_storage("STORAGE1", [ policy => "\"test_policy\"",
 				     tapepool => "\"POOL1\"" ]);
 $testconf->add_storage("STORAGE2", [ policy => "\"test_policy\"",
 				     tapepool => "\"POOL2\"" ]);
-$testconf->write();
+$testconf->write( do_catalog => 0 );
 
 config_uninit();
 config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF") == $CFGERR_OK

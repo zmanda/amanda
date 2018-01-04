@@ -58,7 +58,7 @@ $hostname diskname $diskname {
     }
 }
 EODLE
-$testconf->write();
+$testconf->write( do_catalog => 0 );
 
 ok(run('amdump_client', '--config', 'TESTCONF', 'list'), "'amdump_client list' runs successfully");
 is($Installcheck::Run::stdout,

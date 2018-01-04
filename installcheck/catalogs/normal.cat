@@ -1,4 +1,5 @@
-%F log/log
+%S log/log log.20090225080737 log/log.20090225080737
+%F log/log.20090225080737
 INFO amdump amdump pid 23649
 INFO planner planner pid 23682
 DISK planner localhost.localdomain /boot1
@@ -26,8 +27,8 @@ STATS driver estimate localhost.localdomain /boot1 20090225080737 0 [sec 1 nkb 1
 SUCCESS chunker localhost.localdomain /boot1 20090225080737 0 [sec 1.607 kb 12 kps 24426.5]
 INFO chunker pid-done 23733
 INFO dumper pid-done 23738
-START taper datestamp 20090225080737 label DIRO-TEST-003 tape 1
-PART taper DIRO-TEST-003 1 localhost.localdomain /boot1 20090225080737 1/1 0 [sec 0.250557 kb 12 kps 156611.070535]
+START taper datestamp 20090225080737 label Conf-001 tape 1
+PART taper Conf-001 1 localhost.localdomain /boot1 20090225080737 1/1 0 [sec 0.250557 kb 12 kps 156611.070535]
 DONE taper "ST:TESTCONF" localhost.localdomain /boot1 20090225080737 1 0 [sec 0.250557 kb 12 kps 156611.070535]
 INFO chunker chunker pid 23733
 INFO dumper gzip pid 23738
@@ -36,7 +37,7 @@ STATS driver estimate localhost.localdomain /boot2 20090225080737 0 [sec 1 nkb 1
 SUCCESS chunker localhost.localdomain /boot2 20090225080737 0 [sec 1.607 kb 123 kps 24426.5]
 INFO chunker pid-done 23733
 INFO dumper pid-done 23738
-PART taper DIRO-TEST-003 2 localhost.localdomain /boot2 20090225080737 1/1 0 [sec 0.250557 kb 123 kps 156611.070535]
+PART taper Conf-001 2 localhost.localdomain /boot2 20090225080737 1/1 0 [sec 0.250557 kb 123 kps 156611.070535]
 DONE taper "ST:TESTCONF" localhost.localdomain /boot2 20090225080737 1 0 [sec 0.250557 kb 123 kps 156611.070535]
 INFO chunker chunker pid 23733
 INFO dumper gzip pid 23738
@@ -45,7 +46,7 @@ STATS driver estimate localhost.localdomain /boot3 20090225080737 0 [sec 1 nkb 1
 SUCCESS chunker localhost.localdomain /boot3 20090225080737 0 [sec 1.607 kb 1234 kps 24426.5]
 INFO chunker pid-done 23733
 INFO dumper pid-done 23738
-PART taper DIRO-TEST-003 3 localhost.localdomain /boot3 20090225080737 1/1 0 [sec 0.250557 kb 1234 kps 156611.070535]
+PART taper Conf-001 3 localhost.localdomain /boot3 20090225080737 1/1 0 [sec 0.250557 kb 1234 kps 156611.070535]
 DONE taper "ST:TESTCONF" localhost.localdomain /boot3 20090225080737 1 0 [sec 0.250557 kb 1234 kps 156611.070535]
 INFO chunker chunker pid 23733
 INFO dumper gzip pid 23738
@@ -54,7 +55,7 @@ STATS driver estimate localhost.localdomain /boot4 20090225080737 0 [sec 1 nkb 1
 SUCCESS chunker localhost.localdomain /boot4 20090225080737 0 [sec 1.607 kb 12345 kps 24426.5]
 INFO chunker pid-done 23733
 INFO dumper pid-done 23738
-PART taper DIRO-TEST-003 4 localhost.localdomain /boot4 20090225080737 1/1 0 [sec 0.250557 kb 12345 kps 156611.070535]
+PART taper Conf-001 4 localhost.localdomain /boot4 20090225080737 1/1 0 [sec 0.250557 kb 12345 kps 156611.070535]
 DONE taper "ST:TESTCONF" localhost.localdomain /boot4 20090225080737 1 0 [sec 0.250557 kb 12345 kps 156611.070535]
 INFO chunker chunker pid 23733
 INFO dumper gzip pid 23738
@@ -63,7 +64,7 @@ STATS driver estimate localhost.localdomain /boot5 20090225080737 0 [sec 1 nkb 1
 SUCCESS chunker localhost.localdomain /boot5 20090225080737 0 [sec 1.607 kb 123456 kps 24426.5]
 INFO chunker pid-done 23733
 INFO dumper pid-done 23738
-PART taper DIRO-TEST-003 5 localhost.localdomain /boot5 20090225080737 1/1 0 [sec 0.250557 kb 123456 kps 156611.070535]
+PART taper Conf-001 5 localhost.localdomain /boot5 20090225080737 1/1 0 [sec 0.250557 kb 123456 kps 156611.070535]
 DONE taper "ST:TESTCONF" localhost.localdomain /boot5 20090225080737 1 0 [sec 0.250557 kb 123456 kps 156611.070535]
 INFO chunker chunker pid 23733
 INFO dumper gzip pid 23738
@@ -72,7 +73,7 @@ STATS driver estimate localhost.localdomain /boot6 20090225080737 0 [sec 1 nkb 1
 SUCCESS chunker localhost.localdomain /boot6 20090225080737 0 [sec 1.607 kb 1234567 kps 24426.5]
 INFO chunker pid-done 23733
 INFO dumper pid-done 23738
-PART taper DIRO-TEST-003 6 localhost.localdomain /boot6 20090225080737 1/1 0 [sec 0.250557 kb 1234567 kps 156611.070535]
+PART taper Conf-001 6 localhost.localdomain /boot6 20090225080737 1/1 0 [sec 0.250557 kb 1234567 kps 156611.070535]
 DONE taper "ST:TESTCONF" localhost.localdomain /boot6 20090225080737 1 0 [sec 0.250557 kb 1234567 kps 156611.070535]
 INFO chunker chunker pid 23733
 INFO dumper gzip pid 23738
@@ -81,7 +82,7 @@ STATS driver estimate localhost.localdomain /boot7 20090225080737 0 [sec 1 nkb 1
 SUCCESS chunker localhost.localdomain /boot7 20090225080737 0 [sec 1.607 kb 12345678 kps 24426.5]
 INFO chunker pid-done 23733
 INFO dumper pid-done 23738
-PART taper DIRO-TEST-003 7 localhost.localdomain /boot7 20090225080737 1/1 0 [sec 0.250557 kb 12345678 kps 156611.070535]
+PART taper Conf-001 7 localhost.localdomain /boot7 20090225080737 1/1 0 [sec 0.250557 kb 12345678 kps 156611.070535]
 DONE taper "ST:TESTCONF" localhost.localdomain /boot7 20090225080737 1 0 [sec 0.250557 kb 12345678 kps 156611.070535]
 INFO chunker chunker pid 23733
 INFO dumper gzip pid 23738
@@ -90,7 +91,7 @@ STATS driver estimate localhost.localdomain /boot8 20090225080737 0 [sec 1 nkb 1
 SUCCESS chunker localhost.localdomain /boot8 20090225080737 0 [sec 1.607 kb 123456789 kps 24426.5]
 INFO chunker pid-done 23733
 INFO dumper pid-done 23738
-PART taper DIRO-TEST-003 8 localhost.localdomain /boot8 20090225080737 1/1 0 [sec 0.250557 kb 123456789 kps 156611.070535]
+PART taper Conf-001 8 localhost.localdomain /boot8 20090225080737 1/1 0 [sec 0.250557 kb 123456789 kps 156611.070535]
 DONE taper "ST:TESTCONF" localhost.localdomain /boot8 20090225080737 1 0 [sec 0.250557 kb 123456789 kps 156611.070535]
 INFO chunker chunker pid 23733
 INFO dumper gzip pid 23738
@@ -101,10 +102,10 @@ SUCCESS chunker localhost.localdomain /boot9 20090225080737 0 [sec 1.607 kb 1234
 INFO chunker pid-done 23733
 INFO dumper pid-done 23738
 # add an 'orig-kb -1', which the driver has been known to produce, and which should be treated as missing
-PART taper DIRO-TEST-003 9 localhost.localdomain /boot9 20090225080737 1/1 0 [sec 0.250557 kb 1234567890 kps 156611.070535 orig-kb -1]
+PART taper Conf-001 9 localhost.localdomain /boot9 20090225080737 1/1 0 [sec 0.250557 kb 1234567890 kps 156611.070535 orig-kb -1]
 DONE taper "ST:TESTCONF" localhost.localdomain /boot9 20090225080737 1 0 [sec 0.250557 kb 1234567890 kps 156611.070535 orig-kb -1]
 INFO dumper pid-done 23686
-INFO taper tape DIRO-TEST-003 kb 39240 fm 10 [OK]
+INFO taper tape Conf-001 kb 39240 fm 10 [OK]
 INFO taper pid-done 23685
 FINISH driver date 20090225080737 time 5.306
 INFO driver pid-done 23684
@@ -169,7 +170,7 @@ planner: time 0.091: analysis took 0.000 secs
 
 GENERATING SCHEDULE:
 --------
-DUMP clienthost ffffffff9ffeffffffff1f /some/dir 20080618130147 14050 0 1970:1:1:0:0:0 100 100 0 1024
+DUMP clienthost ffffffff9ffeffffffff1f /some/dir 20080618130147 14050 0 1970:1:1:0:0:0 19700101000000 100 100 0 1024
 --------
 dumper: pid 4086 executable dumper0 version 9.8.7
 dumper: pid 4095 executable dumper3 version 9.8.7
@@ -228,18 +229,19 @@ driver: send-cmd time 6.418 to taper0: QUIT
 taper: DONE
 driver: FINISHED time 7.426
 amdump: end at Wed Jun 18 13:01:55 EDT 2008
-
+%F tapelist
+20090225080737 Conf-001 reuse
 %T postscript
 --PS-TEMPLATE--
 (February 25, 2009) DrawDate
 \
 (Amanda Version x.y.z) DrawVers
-(DIRO-TEST-003) DrawTitle
+(Conf-001) DrawTitle
 (Total Size:        1339591.9 MB) DrawStat
 (Tape Used (%)       ##### %) DrawStat
 (Number of files:      9) DrawStat
 (Filesystems Taped:    9) DrawStat
-(-) (DIRO-TEST-003) (-) (  0) (      32) (      32) DrawHost
+(-) (Conf-001) (-) (  0) (      32) (      32) DrawHost
 (localhost.localdomain) (/boot1) (0) (  1) (      16) (      12) DrawHost
 (localhost.localdomain) (/boot2) (0) (  2) (     167) (     123) DrawHost
 (localhost.localdomain) (/boot3) (0) (  3) (    1678) (    1234) DrawHost
@@ -260,7 +262,7 @@ Org     : DailySet1
 Config  : TESTCONF
 Date    : February 25, 2009
 
-These dumps were to tape DIRO-TEST-003.
+These dumps were to tape Conf-001.
 The next tape Amanda expects to use is: 1 new tape.
 
 
@@ -286,11 +288,11 @@ Avg Tp Write Rate (k/s) #######    #######        --
 
 USAGE BY TAPE:
   Label               Time        Size      %  DLEs Parts
-  DIRO-TEST-003       0:00 1371742094K  #####     9     9
+  Conf-001       0:00 1371742094K  #####     9     9
 
 
 NOTES:
-  taper: tape DIRO-TEST-003 kb 39240 fm 10 [OK]
+  taper: tape Conf-001 kb 39240 fm 10 [OK]
 
 
 DUMP SUMMARY:
@@ -314,7 +316,7 @@ Org     : DailySet1
 Config  : TESTCONF
 Date    : February 25, 2009
 
-These dumps were to tape DIRO-TEST-003.
+These dumps were to tape Conf-001.
 The next tape Amanda expects to use is: 1 new tape.
 
 
@@ -340,11 +342,11 @@ Avg Tp Write Rate (k/s) #######    #######        --
 
 USAGE BY TAPE:
   Label               Time        Size      %  DLEs Parts
-  DIRO-TEST-003       0:00 1371742094K  #####     9     9
+  Conf-001       0:00 1371742094K  #####     9     9
 
 
 NOTES:
-  taper: tape DIRO-TEST-003 kb 39240 fm 10 [OK]
+  taper: tape Conf-001 kb 39240 fm 10 [OK]
 
 
 DUMP SUMMARY:
@@ -368,7 +370,7 @@ Org     : DailySet1
 Config  : TESTCONF
 Date    : February 25, 2009
 
-These dumps were to tape DIRO-TEST-003.
+These dumps were to tape Conf-001.
 The next tape Amanda expects to use is: 1 new tape.
 
 
@@ -394,11 +396,11 @@ Avg Tp Write Rate (k/s) #######    #######        --
 
 USAGE BY TAPE:
   Label               Time        Size      %  DLEs Parts
-  DIRO-TEST-003       0:00 1371742094K  #####     9     9
+  Conf-001       0:00 1371742094K  #####     9     9
 
 
 NOTES:
-  taper: tape DIRO-TEST-003 kb 39240 fm 10 [OK]
+  taper: tape Conf-001 kb 39240 fm 10 [OK]
 
 
 DUMP SUMMARY:
@@ -422,7 +424,7 @@ Org     : DailySet1
 Config  : TESTCONF
 Date    : February 25, 2009
 
-These dumps were to tape DIRO-TEST-003.
+These dumps were to tape Conf-001.
 The next tape Amanda expects to use is: 1 new tape.
 
 
@@ -448,11 +450,11 @@ Avg Tp Write Rate (k/s) #######    #######        --
 
 USAGE BY TAPE:
   Label               Time        Size      %  DLEs Parts
-  DIRO-TEST-003       0:00 1371742094K  #####     9     9
+  Conf-001       0:00 1371742094K  #####     9     9
 
 
 NOTES:
-  taper: tape DIRO-TEST-003 kb 39240 fm 10 [OK]
+  taper: tape Conf-001 kb 39240 fm 10 [OK]
 
 
 DUMP SUMMARY:
@@ -476,7 +478,7 @@ Org     : DailySet1
 Config  : TESTCONF
 Date    : February 25, 2009
 
-These dumps were to tape DIRO-TEST-003.
+These dumps were to tape Conf-001.
 The next tape Amanda expects to use is: 1 new tape.
 
 
@@ -502,11 +504,11 @@ Avg Tp Write Rate (k/s) #######    #######        --
 
 USAGE BY TAPE:
   Label               Time      Size      %  DLEs Parts
-  DIRO-TEST-003       0:00  1339592M  #####     9     9
+  Conf-001       0:00  1339592M  #####     9     9
 
 
 NOTES:
-  taper: tape DIRO-TEST-003 kb 39240 fm 10 [OK]
+  taper: tape Conf-001 kb 39240 fm 10 [OK]
 
 
 DUMP SUMMARY:

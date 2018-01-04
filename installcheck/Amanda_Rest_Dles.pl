@@ -91,7 +91,7 @@ localhost /home-incronly {
 }
 EOF
 
-$testconf->write();
+$testconf->write( do_catalog => 0 );
 
 config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
 my $diskfile = Amanda::Config::config_dir_relative(getconf($CNF_DISKFILE));

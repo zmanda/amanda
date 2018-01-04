@@ -35,13 +35,20 @@ use Amanda::Cmdline;
 use Amanda::Xfer qw( :constants );
 use POSIX qw( strftime );
 
-eval 'use DBD::SQLite;';
+eval 'use DBD::mysql 4.043;';
 if ($@) {
-    plan skip_all => "Can't load DBD::SQLite: $@";
+    plan skip_all => "Can't load DBD::mysql: $@";
     exit 1;
 }
 
-$ENV{'AMANDA_CATALOG'} = 'SQLite';
+my $catalog_mysql_database = $ENV{CATALOG_MYSQL_DATABASE};
+
+if (!defined $catalog_mysql_database) {
+    plan skip_all => "Not configured for MySQL Database";
+    exit 1;
+}
+
+$ENV{AMANDA_CATALOG} = 'MySQL';
 
 # send xfer logging somewhere
 Amanda::Debug::dbopen("installcheck");
@@ -55,7 +62,6 @@ $testconf->write( do_catalog => 0 );
 
 config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF') == $CFGERR_OK
     or die("Could not load test config");
-
 my $catalog = Amanda::DB::Catalog2->new(undef, create => 1, drop_tables => 1, load => 1);
 
 # test functions against an empty set of logfiles
@@ -77,19 +83,20 @@ SKIP : {
 is_deeply([ $catalog->get_parts(@$dumps) ], [],
     "No parts in an empty catalog");
 }
-$catalog->quit();
 
 # and add some logfiles to query, and a corresponding tapelist, while also gathering
 # a list of parts and dumps for comparison with the results from Amanda::DB::Catalog.
 # also add some files to holding disk
 my @dumpspecs;
 
+$catalog->quit();
 # install the bigdb catalog
 my $cat = Installcheck::Catalogs::load("bigdb");
 $cat->install();
 my %dumps = $cat->get_dumps();
 my %parts = $cat->get_parts();
 
+unlink("$CONFIG_DIR/TESTCONF/SQLite.db");
 Amanda::DB::Catalog::_clear_cache();
 $catalog = Amanda::DB::Catalog2->new(undef, create => 1, drop_tables => 1, load => 1);
 
@@ -751,7 +758,6 @@ $cat->install();
 %dumps = $cat->get_dumps();
 %parts = $cat->get_parts();
 
-unlink("$CONFIG_DIR/TESTCONF/SQLite.db");
 Amanda::DB::Catalog::_clear_cache();
 $catalog = Amanda::DB::Catalog2->new(undef, create => 1, load => 1, drop_tables => 1);
 
@@ -1067,6 +1073,7 @@ is_deeply(\@volumes,
              'storage' => 'storage_retention_days',
              'write_timestamp' => $date4
            },
+#4
            {
              'retention_days' => 1,
              'retention_tape' => 0,
@@ -1309,7 +1316,7 @@ is_deeply(\@volumes,
            },
          ],
          "time5"
-) or diag("". Data::Dumper::Dumper(\@volumes));
+) or diag("". Data::Dumper::Dumper($volumes));
 
 $image = $catalog->add_image("localhost", "disk1", "disk1", $date6, 0, "0", $$);
 

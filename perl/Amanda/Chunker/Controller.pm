@@ -51,18 +51,19 @@ use Amanda::Chunker::Scribe;
 use Amanda::Logfile qw( :logtype_t log_add make_chunker_stats );
 use Amanda::Xfer qw( :constants );
 use Amanda::Util qw( quote_string );
-use Amanda::Tapelist;
 use File::Temp;
 use Carp;
 
 use parent -norequire,  qw( Amanda::Chunker::Scribe::Feedback );
 
 sub new {
-    my $class           = shift;
+    my $class    = shift;
+    my (%params) = @_;
 
     my $self = bless {
 	state       => "init",
 	timestamp   => undef,
+	catalog => $params{'catalog'},
 
 	# filled in when a write starts:
 	xfer => undef,
@@ -141,6 +142,7 @@ sub msg_START {
     $self->{'max_memory'} = 32 * 32768;
     $self->{'scribe'} = Amanda::Chunker::Scribe->new(
 	feedback => $self,
+	catalog => $self->{'catalog'},
 	debug => $Amanda::Config::debug_chunker);
 
     $self->{'scribe'}->start(write_timestamp => $self->{'timestamp'});
@@ -264,6 +266,20 @@ sub msg_PORT_WRITE {
 
         # and fix it up before writing it
         $hdr->{'totalparts'} = -1;
+	$self->{'volume'} = $self->{'catalog'}->add_volume(
+				"HOLDING",
+				$self->{'filename'},
+				$self->{'timestamp'},
+				"HOLDING");
+	$self->{'image'} = $self->{'catalog'}->add_image($params{'hostname'},
+				$params{'diskname'},
+				$params{'diskname'}, # DEVICE
+				$params{'datestamp'},
+				$params{'level'},
+				$params{'based_on_timestamp'});
+	$self->{'copy'} = $self->{'image'}->add_copy(
+				"HOLDING",
+				$self->{'timestamp'}, 1, 1, 1, $$);
 
         $self->{'scribe'}->start_dump(
             xfer => $self->{'xfer'},
@@ -370,6 +386,16 @@ sub result_cb {
     my $logtype;
     my $msg;
     my $server_crc;
+
+    if ($self->{'copy'}) {
+	my $result = $params{'result'};
+	$result = 'OK' if $result eq 'DONE';
+	$self->{'copy'}->add_part($self->{'volume'}, 0, $params{'data_size'},
+			0, 1, $result, $msg);
+	$self->{'copy'}->finish_copy(1, int($params{'data_size'}/1024),
+			$params{'data_size'}, $result,
+			$self->{'server_crc'}, $msg);
+    }
 
     if ($self->{'cancelled'}) {
 	goto cleanup;

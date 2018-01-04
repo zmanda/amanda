@@ -35,7 +35,7 @@ Installcheck::log_test_output();
 
 $testconf = Installcheck::Run::setup();
 $testconf->add_param("autolabel", "\"TESTCONF%%\" empty volume_error");
-$testconf->write();
+$testconf->write( do_catalog => 0 );
 
 like(run_get("$amlibexecdir/amcheck-device", "TESTCONF", "TESTCONF"),
     qr/Will write label 'TESTCONF01' to new volume/,
@@ -50,7 +50,7 @@ like(run_get("$amlibexecdir/amcheck-device", "TESTCONF", "TESTCONF", "-w"),
 
 $testconf = Installcheck::Run::setup();
 $testconf->add_param("autolabel", "\"TESTCONF-\$4s\" empty volume_error");
-$testconf->write();
+$testconf->write( do_catalog => 0 );
 
 like(run_get("$amlibexecdir/amcheck-device", "TESTCONF", "TESTCONF"),
     qr/Will write label 'TESTCONF-0001' to new volume in slot 1/,

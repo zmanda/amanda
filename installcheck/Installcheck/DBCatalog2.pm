@@ -66,16 +66,24 @@ Verify the DB::Catalog2 is what we expect
 sub recreate_db_catalog2 {
     my $confname = shift;
 
+Amanda::Debug::debug("recreate_db_catalog2");
     unlink "$CONFIG_DIR/$confname/SQLite.db";
-    create_db_catalog2($confname);
+    create_db_catalog2($confname, 1);
 }
 
 sub create_db_catalog2 {
     my $confname = shift;
+    my $drop_tables = shift;
 
+Amanda::Debug::debug("create_db_catalog2 $drop_tables");
     #ok(!system("$sbindir/amcatalog $confname create"), "create_db_catalog2")
-    ok(!system("$sbindir/amcatalog $confname create 2>/dev/null"), "create_db_catalog2")
-	or die("Can't create database");
+    if (defined $drop_tables && $drop_tables) {
+	ok(!system("$sbindir/amcatalog $confname create drop_tables 2>/dev/null"), "create_db_catalog2")
+	    or die("Can't create database");
+    } else {
+	ok(!system("$sbindir/amcatalog $confname create 2>/dev/null"), "create_db_catalog2")
+	    or die("Can't create database");
+    }
 }
 
 sub check_db_catalog2 {

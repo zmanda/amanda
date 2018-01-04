@@ -84,7 +84,6 @@ static int conf_max_dle_by_volume;
 static int conf_taperalgo;
 static int conf_taper_parallel_write;
 static int conf_runtapes;
-static char *conf_cmdfile;
 static unsigned long conf_reserve = 100;
 static time_t sleep_time;
 static int idle_reason;
@@ -103,7 +102,6 @@ static int   force_flush;			// All dump are terminated, we
 static int nb_sent_new_tape = 0;
 static int taper_started = 0;
 static int nb_storage;
-static cmddatas_t *cmddatas = NULL;
 
 static int no_dump = FALSE;
 //static int no_flush = FALSE;
@@ -136,7 +134,7 @@ static void handle_taper_result(void *);
 static gboolean dump_match_selection(char *storage_n, sched_t *sp);
 
 static void holdingdisk_state(char *time_str);
-static wtaper_t *idle_taper(taper_t *taper);
+static wtaper_t *idle_wtaper(taper_t *taper);
 static wtaper_t *wtaper_from_name(taper_t *taper, char *name);
 static void interface_state(char *time_str);
 static int queue_length(schedlist_t *q);
@@ -555,10 +553,6 @@ main(
 	}
     }
 
-    conf_cmdfile = config_dir_relative(getconf_str(CNF_CMDFILE));
-    cmddatas = read_cmdfile(conf_cmdfile);
-    unlock_cmdfile(cmddatas);
-
     flush_ev_read = event_create((event_id_t)0, EV_READFD, read_flush, NULL);
     event_activate(flush_ev_read);
 
@@ -735,6 +729,8 @@ main(
            walltime_str(curclock()));
     fflush(stdout);
 
+    quit_amcatalog();
+
     if(!no_dump) {
 	for(dumper = dmptable; dumper < dmptable + inparallel; dumper++) {
 	    if(dumper->fd >= 0)
@@ -754,7 +750,7 @@ main(
     /* cleanup */
     holding_cleanup(NULL, NULL);
 
-    cmddatas = remove_working_in_cmdfile(cmddatas, getppid());
+    amcatalog_remove_working_cmd(getppid());
 
     amfree(newdir);
 
@@ -893,6 +889,8 @@ wait_for_children(void)
 {
     dumper_t *dumper;
     taper_t  *taper;
+
+    quit_amcatalog();
 
     if(!no_dump) {
 	for(dumper = dmptable; dumper < dmptable + inparallel; dumper++) {
@@ -1059,7 +1057,7 @@ start_a_flush_wtaper(
 	*state_changed = TRUE;
     } else if (result_tape_action & TAPE_ACTION_MOVE) {
 	/* move from wtaper to wtaper1 */
-	wtaper1 = idle_taper(taper);
+	wtaper1 = idle_wtaper(taper);
 	if (wtaper1) {
 	    wtaper->state &= ~TAPER_STATE_TAPE_REQUESTED;
 	    wtaper->state &= ~TAPER_STATE_WAIT_FOR_TAPE;
@@ -1375,7 +1373,7 @@ start_a_vault_wtaper(
 	start_degraded_mode(&runq);
 	*state_changed = TRUE;
     } else if (result_tape_action & TAPE_ACTION_MOVE) {
-	wtaper1 = idle_taper(taper);
+	wtaper1 = idle_wtaper(taper);
 	if (wtaper1) {
 	    wtaper->state &= ~TAPER_STATE_TAPE_REQUESTED;
 	    wtaper->state &= ~TAPER_STATE_WAIT_FOR_TAPE;
@@ -1708,7 +1706,7 @@ start_some_dumps(
 		    continue;
 		}
 		sp_accept = NULL;
-		wtaper_accept = idle_taper(taper);
+		wtaper_accept = idle_wtaper(taper);
 		if (wtaper_accept) {
 		    TapeAction result_tape_action;
 		    char *why_no_new_tape = NULL;
@@ -2076,6 +2074,7 @@ start_degraded_mode(
 	    else if(sp->degr_level != -1) {
 		sp->level = sp->degr_level;
 		sp->dumpdate = g_strdup(sp->degr_dumpdate);
+		sp->based_on_timestamp = g_strdup(sp->degr_based_on_timestamp);
 		sp->est_nsize = sp->degr_nsize;
 		sp->est_csize = sp->degr_csize;
 		sp->est_time = sp->degr_time;
@@ -2898,7 +2897,7 @@ vault_taper_result(
     } else {
         time_t     now = time(NULL);
 
-        cmddatas = remove_cmd_in_cmdfile(cmddatas, sp->command_id);
+	amcatalog_remove_cmd(sp->command_id);
 
         /* this code is duplicated in file_taper_result and dumper_taper_result */
         /* Add COPY */
@@ -2928,7 +2927,7 @@ vault_taper_result(
                         cmddata->working_pid = getppid();
                         cmddata->status = CMD_TODO;
                         cmddata->start_time = now + v->days * 60*60*24;
-                        cmddatas = add_cmd_in_cmdfile(cmddatas, cmddata);
+			amcatalog_add_cmd(cmddata);
 			// JLM Should call cmdfile_vault
                     }
                 }
@@ -3041,10 +3040,10 @@ file_taper_result(
         time_t     now = time(NULL);
 	char      *holding_file;
 
-	cmddata = g_hash_table_lookup(cmddatas->cmdfile, GINT_TO_POINTER(sp->command_id));
+	cmddata = amcatalog_get_cmd_from_id(sp->command_id);
 	if (cmddata) {
 	    holding_file = g_strdup(cmddata->holding_file);
-	    cmddatas = remove_cmd_in_cmdfile(cmddatas, sp->command_id);
+	    amcatalog_remove_cmd(sp->command_id);
 
 	    /* this code is duplicated in dumper_taper_result  and vault_taper_result */
 	    /* Add COPY */
@@ -3074,14 +3073,14 @@ file_taper_result(
 			    cmddata->working_pid = getppid();
 			    cmddata->status = CMD_TODO;
 			    cmddata->start_time = now + v->days * 60*60*24;
-			    cmddatas = add_cmd_in_cmdfile(cmddatas, cmddata);
+			    amcatalog_add_cmd(cmddata);
 			    // JLM Should call cmdfile_vault
 			}
 		    }
 		}
 	    }
 
-	    if (!holding_in_cmdfile(cmddatas, holding_file)) {
+	    if (!amcatalog_holding_have_cmd(holding_file)) {
 		delete_diskspace(sp);
 	    }
 	    free_sched(sp);
@@ -3211,7 +3210,7 @@ dumper_taper_result_finish(
 			cmddata->working_pid = getppid();
 			cmddata->status = CMD_TODO;
 			cmddata->start_time = now + v->days * 60*60*24;
-			cmddatas = add_cmd_in_cmdfile(cmddatas, cmddata);
+			amcatalog_add_cmd(cmddata);
 			// JLM Should call cmdfile_vault
 		    }
 		}
@@ -3250,7 +3249,7 @@ dumper_taper_result_finish(
 
 
 static wtaper_t *
-idle_taper(taper_t *taper)
+idle_wtaper(taper_t *taper)
 {
     wtaper_t *wtaper;
 
@@ -3366,6 +3365,7 @@ dumper_chunker_result_finish(
     off_t dummy;
     off_t size;
     int is_partial;
+    amwait_t   retstat;
 
     dumper  = job->dumper;
     chunker = job->chunker;
@@ -3432,10 +3432,11 @@ dumper_chunker_result_finish(
 		cmddata->hostname = g_strdup(dp->hostname);
 		cmddata->diskname = g_strdup(dp->name);
 		cmddata->dump_timestamp = g_strdup(driver_timestamp);
+		cmddata->level = sp->level;
 		cmddata->dst_storage = g_strdup(storage_name);
 		cmddata->working_pid = getppid();
 		cmddata->status = CMD_TODO;
-		cmddatas = add_cmd_in_cmdfile(cmddatas, cmddata);
+		amcatalog_add_cmd(cmddata);
 
 		for (taper = tapetable; taper < tapetable+nb_storage ; taper++) {
 		    if (g_str_equal(storage_name, taper->storage_name)) {
@@ -3445,6 +3446,8 @@ dumper_chunker_result_finish(
 	                sp1->destname = g_strdup(sp->destname);
 	                sp1->dumpdate = g_strdup(sp->dumpdate);
 	                sp1->degr_dumpdate = g_strdup(sp->degr_dumpdate);
+	                sp1->based_on_timestamp = g_strdup(sp->based_on_timestamp);
+	                sp1->degr_based_on_timestamp = g_strdup(sp->degr_based_on_timestamp);
 	                sp1->degr_mesg = g_strdup(sp->degr_mesg);
 	                sp1->datestamp = g_strdup(sp->datestamp);
 			enqueue_sched(&taper->tapeq, sp1);
@@ -3466,7 +3469,13 @@ dumper_chunker_result_finish(
     dp->host->inprogress -= 1;
     dp->inprogress = 0;
 
-    waitpid(chunker->pid, NULL, 0 );
+    if (waitpid(chunker->pid, &retstat, WNOHANG) == chunker->pid) {
+	if (!WIFEXITED(retstat)) {
+	    g_debug("chunker '%s' exited with signal %d", chunker->name, WTERMSIG(retstat));
+	} else if (WEXITSTATUS(retstat) != 0) {
+	    g_debug("chunker '%s' exited with code %d", chunker->name, WEXITSTATUS(retstat));
+	}
+    }
     aaclose(chunker->fd);
     chunker->fd = -1;
     chunker->down = 1;
@@ -3800,6 +3809,7 @@ handle_chunker_result(
     int dummy;
     int activehd;
     char *qname;
+    amwait_t retstat;
 
     assert(chunker != NULL);
 
@@ -4023,6 +4033,13 @@ handle_chunker_result(
                         sp->level);
             }
             amfree(qname);
+	    if (waitpid(chunker->pid, &retstat, WNOHANG) == chunker->pid) {
+		if (!WIFEXITED(retstat)) {
+		    g_debug("chunker '%s' exited with signal %d", chunker->name, WTERMSIG(retstat));
+		} else if (WEXITSTATUS(retstat) != 0) {
+		    g_debug("chunker '%s' exited with code %d", chunker->name, WEXITSTATUS(retstat));
+		}
+	    }
 
 	    event_release(chunker->ev_read);
 
@@ -4034,6 +4051,9 @@ handle_chunker_result(
 		job->dumper && (job->dumper->result != LAST_TOK ||
 				!job->dumper->sent_command)) {
 		dumper_chunker_result(job);
+	    } else if (job->dumper) {
+		dumper_cmd(job->dumper, ABORT, NULL, "BOGUS chunker");
+		pending_aborts++;
 	    }
 	    if (chunker->result != LAST_TOK &&
 		job->dumper && job->dumper->result != LAST_TOK &&
@@ -4133,7 +4153,7 @@ read_flush(
 	    /*NOTREACHED*/
 	}
 
-	skip_whitespace(s, ch);			/* find the level number */
+	skip_whitespace(s, ch);			/* find the ids */
 	if(ch == '\0') {
 	    error(_("flush line %d: syntax error (bad ids)"), line);
 	    /*NOTREACHED*/
@@ -4259,13 +4279,14 @@ read_flush(
 	/* for all ids */
 	ids_array = g_strsplit(ids, ",", 0);
 	for (one_id = ids_array; *one_id != NULL; one_id++) {
-	    char *storage = strchr(*one_id, ':');
+	    char *storage = strchr(*one_id, ';');
 	    if (storage) {
 		*storage = '\0';
 		storage++;
 	    }
 	    id = atoi(*one_id);
-	    cmddata = g_hash_table_lookup(cmddatas->cmdfile, GINT_TO_POINTER(id));
+	    //cmddata = g_hash_table_lookup(cmddatas->cmdfile, GINT_TO_POINTER(id));
+	    cmddata = amcatalog_get_cmd_from_id(id);
 	    if (cmddata) {
 		for (taper = tapetable; taper < tapetable+nb_storage ; taper++) {
 		    if (g_str_equal(taper->storage_name, cmddata->dst_storage)) {
@@ -4298,6 +4319,7 @@ read_flush(
 		    }
 		}
 	    } else {
+//g_error("not in commandfile");
 		// What to do with the holding file?
 	    }
 	}
@@ -4310,11 +4332,6 @@ read_flush(
     }
     amfree(inpline);
     close_infofile();
-
-    /* re-read de cmdfile */
-    close_cmdfile(cmddatas);
-    cmddatas = read_cmdfile(conf_cmdfile);
-    unlock_cmdfile(cmddatas);
 
     start_a_flush();
     if (!no_dump) {
@@ -4334,6 +4351,7 @@ read_schedule(
     disk_t *dp;
     int level, line, priority;
     char *dumpdate, *degr_dumpdate, *degr_mesg = NULL;
+    char *based_on_timestamp, *degr_based_on_timestamp = NULL;
     int degr_level;
     time_t time, degr_time;
     time_t *time_p = &time;
@@ -4442,6 +4460,15 @@ read_schedule(
 	skip_non_whitespace(s, ch);
 	s[-1] = '\0';
 
+	skip_whitespace(s, ch);			/* find the based_on_timestamp*/
+	if(ch == '\0') {
+	    error(_("schedule line %d: syntax error (bad based_on_timestamp)"), line);
+	    /*NOTREACHED*/
+	}
+	based_on_timestamp = s - 1;
+	skip_non_whitespace(s, ch);
+	s[-1] = '\0';
+
 	skip_whitespace(s, ch);			/* find the native size */
 	nsize_ = (off_t)0;
 	if(ch == '\0' || sscanf(s - 1, "%lld", &nsize_) != 1) {
@@ -4504,6 +4531,15 @@ read_schedule(
 	    skip_non_whitespace(s, ch);
 	    s[-1] = '\0';
 
+	    skip_whitespace(s, ch);		/* find the degr based_on_timestamp*/
+	    if(ch == '\0') {
+		error(_("schedule line %d: syntax error (bad degr_based_on_timestamp)"), line);
+		/*NOTREACHED*/
+	    }
+	    degr_based_on_timestamp = s - 1;
+	    skip_non_whitespace(s, ch);
+	    s[-1] = '\0';
+
 	    skip_whitespace(s, ch);		/* find the degr native size */
 	    degr_nsize_ = (off_t)0;
 	    if(ch == '\0'  || sscanf(s - 1, "%lld", &degr_nsize_) != 1) {
@@ -4554,6 +4590,7 @@ read_schedule(
 	/*@ignore@*/
 	sp->level = level;
 	sp->dumpdate = g_strdup(dumpdate);
+	sp->based_on_timestamp = g_strdup(based_on_timestamp);
 	sp->est_nsize = DISK_BLOCK_KB + nsize; /* include header */
 	sp->est_csize = DISK_BLOCK_KB + csize; /* include header */
 	/* round estimate to next multiple of DISK_BLOCK_KB */
@@ -4567,6 +4604,7 @@ read_schedule(
 	if (degr_dumpdate) {
 	    sp->degr_level = degr_level;
 	    sp->degr_dumpdate = g_strdup(degr_dumpdate);
+	    sp->degr_based_on_timestamp = g_strdup(degr_based_on_timestamp);
 	    sp->degr_nsize = DISK_BLOCK_KB + degr_nsize;
 	    sp->degr_csize = DISK_BLOCK_KB + degr_csize;
 	    /* round estimate to next multiple of DISK_BLOCK_KB */
@@ -4578,6 +4616,7 @@ read_schedule(
 	} else {
 	    sp->degr_level = -1;
 	    sp->degr_dumpdate = NULL;
+	    sp->degr_based_on_timestamp = NULL;
 	    sp->degr_mesg = degr_mesg;
 	    degr_mesg = NULL;
 	}
@@ -4645,9 +4684,9 @@ read_schedule(
     start_a_vault();
 }
 
+
 static void
 cmdfile_vault(
-    gpointer key G_GNUC_UNUSED G_GNUC_UNUSED,
     gpointer value,
     gpointer user_data G_GNUC_UNUSED)
 {
@@ -4656,7 +4695,6 @@ cmdfile_vault(
     taper_t      *taper = NULL;
     int           i;
     disk_t       *dp;
-    //disk_t       *dp1;
     sched_t      *sp;
     GSList       *sl;
     GList        *slist;
@@ -4667,8 +4705,6 @@ cmdfile_vault(
     int           nb_cmddata_src_labels = 0;
     int           nb_vaultqs_src_labels = 0;
     gboolean      inserted;
-
-    //cmdfile_data_t *data = user_data;
 
     if (cmddata->operation != CMD_COPY)
 	return;
@@ -4699,6 +4735,8 @@ cmdfile_vault(
     sp->level = cmddata->level;
     sp->dumpdate = NULL;
     sp->degr_dumpdate = NULL;
+    sp->based_on_timestamp = NULL;
+    sp->degr_based_on_timestamp = NULL;
     sp->degr_mesg = NULL;
     sp->datestamp = g_strdup(cmddata->dump_timestamp);
     sp->est_nsize = (off_t)0;
@@ -4725,7 +4763,6 @@ cmdfile_vault(
     sp->disk = dp;
 
     cmddata->working_pid = getpid();
-
     sp->action = ACTION_VAULT;
 
     found_vaultqs = NULL;
@@ -4841,13 +4878,10 @@ cmdfile_vault(
 static void
 set_vaultqs(void)
 {
+    GPtrArray *copy_cmds;
 
-    close_cmdfile(cmddatas);
-    cmddatas = read_cmdfile(conf_cmdfile);
-
-    g_hash_table_foreach(cmddatas->cmdfile, &cmdfile_vault, NULL);
-
-    write_cmdfile(cmddatas);
+    copy_cmds = amcatalog_get_copy_cmd();
+    g_ptr_array_foreach(copy_cmds, &cmdfile_vault, NULL);
 }
 
 static unsigned long
@@ -5188,6 +5222,12 @@ delete_diskspace(
 	 * reserved sizes from the disk's allocated space
 	 */
 	holdp[i]->disk->allocated_space -= holdp[i]->used;
+    }
+
+    if (getconf_seen(CNF_CATALOG)) {
+	char *line;
+	line = run_amcatalog("rm-volume", 2, "HOLDING", holdp[0]->destname);
+	amfree(line);
     }
 
     holding_file_unlink(holdp[0]->destname);	/* no need for the entire list,

@@ -37,7 +37,7 @@
 #include "conffile.h"
 #include "diskfile.h"
 #include "tapefile.h"
-#include "find.h"
+#include "server_util.h"
 
 int amtrmidx_debug = 0;
 
@@ -50,7 +50,7 @@ main(
 {
     disklist_t diskl;
     int no_keep;			/* files per system to keep */
-    GHashTable *hash_output_find_log;
+    GHashTable *hash_log_name;
     DIR *dir;
     struct dirent *adir;
     int useful;
@@ -60,7 +60,6 @@ main(
     struct stat stat_log;
     struct stat stat_old;
     char *conf_diskfile;
-    char *conf_tapelist;
     char *conf_logdir;
     int dumpcycle;
     config_overrides_t *cfg_ovr = NULL;
@@ -123,20 +122,13 @@ main(
 
     dbrename(get_config_name(), DBG_SUBDIR_SERVER);
 
-    conf_tapelist = config_dir_relative(getconf_str(CNF_TAPELIST));
-    if (read_tapelist(conf_tapelist)) {
-	error(_("could not load tapelist \"%s\""), conf_tapelist);
-	/*NOTREACHED*/
-    }
-    amfree(conf_tapelist);
-
     today = time((time_t *)NULL);
     dumpcycle = getconf_int(CNF_DUMPCYCLE);
     if (dumpcycle > 30)
 	dumpcycle = 30;
     date_keep = today - (dumpcycle * 86400);
 
-    hash_output_find_log = hash_find_log();
+    hash_log_name = amcatalog_get_log_names();
 
     /* determine how many log to keep */
     no_keep = getconf_int(CNF_TAPECYCLE) * 2;
@@ -183,7 +175,7 @@ main(
 		dot = strchr(dot, '.');
 		if (dot)
 		    *dot = '\0';
-		if (g_hash_table_lookup(hash_output_find_log, name)) {
+		if (g_hash_table_lookup(hash_log_name, name)) {
 		    useful = 1;
 		}
 	    }
@@ -222,14 +214,13 @@ main(
 		g_free(datestamp);
 		g_free(amdumpfile);
 	    }
+	    amfree(logname);
 	}
     }
     closedir(dir);
-    free_dump_hash(hash_output_find_log);
-    amfree(logname);
+    g_hash_table_destroy(hash_log_name);
     amfree(olddir);
     amfree(conf_logdir);
-    clear_tapelist();
     free_disklist(&diskl);
     unload_disklist();
 

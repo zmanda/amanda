@@ -1463,31 +1463,26 @@ sub _compute_retention {
     $sth->execute()
 	or die "Cannot execute: " . $sth->errstr();
 
-    debug("_compute_retention AA");
     # get all copy_id for this config
     $sth = $self->make_statement('cr cct', "CREATE $self->{'temporary'} TABLE $copy_table AS SELECT copy_id,parent_copy_id,storage_id,images.dump_timestamp,level,retention_days,retention_full,retention_recover FROM copys,images,disks,hosts WHERE hosts.config_id=? AND disks.host_id=hosts.host_id AND images.disk_id=disks.disk_id AND copys.image_id=images.image_id");
     $sth->execute($self->{'config_id'})
 	or die "Cannot execute: " . $sth->errstr();
-    debug("_compute_retention AA1");
 
     # set their retention to 1
     $sth = $self->make_statement('cr setret=1', "UPDATE copys SET retention_days=1,retention_full=1,retention_recover=1 WHERE copy_id IN (SELECT copy_id FROM $copy_table)");
     $sth->execute()
 	or die "Can't select storage with config_id $self->{'config_id'}: " . $sth->errstr();
 
-    debug("_compute_retention AA2");
     $sth = $self->make_statement('sel sto_name', 'SELECT storage_id, storage_name FROM storages WHERE config_id=?');
     $sth->execute($self->{'config_id'})
 	or die "Can't select storage with config_id $self->{'config_id'}: " . $sth->errstr();
     my $all_row_storages = $sth->fetchall_arrayref;
-    debug("_compute_retention BB");
     foreach my $storage_row (@$all_row_storages) {
 	if ($storage_row->[1] ne "HOLDING") {
 	    $self->_compute_retention_storage($copy_table, $storage_row->[0], $storage_row->[1], $localtime);
 	}
     }
 
-    debug("_compute_retention CC");
     $sth = $self->make_statement('cr uv=0', 'UPDATE volumes SET retention_days=0, retention_full=0, retention_recover=0');
     $sth->execute()
 	or die "Cannot execute: " . $sth->errstr();
@@ -1516,7 +1511,6 @@ sub _compute_retention {
 #    $sth->execute()
 #	or die "Cannot execute: " . $sth->errstr();
 
-    debug("_compute_retention DD");
     if ($self->{subquery_same_table}) {
 	$sth = $self->make_statement('cr uvt=0s', 'UPDATE volumes SET retention_tape=0 WHERE volume_id IN (SELECT volume_id FROM volumes,storages WHERE storage_name=? AND volumes.storage_id=storages.storage_id AND write_timestamp=0)');
 	$sth->execute('')
@@ -1542,7 +1536,6 @@ sub _compute_retention {
     $sth = $self->make_statement('cr dct', "DROP $self->{'drop_temporary'} TABLE IF EXISTS $copy_table");
     $sth->execute()
 	or die "Cannot execute: " . $sth->errstr();
-    debug("_compute_retention EE");
 }
 
 sub compute_retention {
@@ -1562,13 +1555,11 @@ sub _compute_retention_storage {
     my $dbh = $self->{'dbh'};
     my $sth;
 
-    debug("_compute_retention_storage");
     my $storage = lookup_storage($storage_name);
     return if !$storage;
     my $policy = lookup_policy(Amanda::Config::storage_getconf($storage, $STORAGE_POLICY));
     return if !$policy;
 
-    debug("_compute_retention_storage AA $storage_name");
     # retention_days
     my $retention_days = Amanda::Config::policy_getconf($policy, $POLICY_RETENTION_DAYS);
 #    if ($retention_days > 0) {
@@ -1580,7 +1571,6 @@ sub _compute_retention_storage {
 	    or die "Cannot execute: " . $sth->errstr();
     }
 
-    debug("_compute_retention_storage BB");
     # retention_full
     my $retention_full = Amanda::Config::policy_getconf($policy, $POLICY_RETENTION_FULL);
 #    if ($retention_full > 0) {
@@ -1608,7 +1598,6 @@ sub _compute_retention_storage {
     $sth->execute()
 	or die "Cannot execute: " . $sth->errstr();
 
-    debug("_compute_retention_storage CC");
     # retention_recover
     my $retention_recover = Amanda::Config::policy_getconf($policy, $POLICY_RETENTION_RECOVER);
 #    if ($retention_recover > 0) {
@@ -1680,11 +1669,9 @@ sub _compute_retention_storage {
 	    or die "Cannot execute: " . $sth->errstr();
     }
 
-    debug("_compute_retention_storage DD");
     $self->_compute_storage_retention_tape($storage_name,
 				storage_getconf($storage, $STORAGE_TAPEPOOL),
 				policy_getconf($policy, $POLICY_RETENTION_TAPES));
-    debug("_compute_retention_storage EE");
 }
 
 sub _remove_volume {
@@ -4104,7 +4091,7 @@ sub _print_catalog {
 				    pools.pool_id=volumes.pool_id
 			      ORDER BY host_name, disk_name, dump_timestamp DESC , level, storages.storage_id, part_num, copys.write_timestamp DESC";
 	debug("statement: $s");
-	debug("query_args: " . join(', ', $s));
+	debug("query_args: " . join(', ', @query_args));
 	$sth = $dbh->prepare($s)
 	    or die "Cannot prepare: " . $dbh->errstr();
 

@@ -37,7 +37,7 @@
 #include "conffile.h"
 #include "diskfile.h"
 #include "tapefile.h"
-#include "find.h"
+#include "server_util.h"
 #include "amutil.h"
 #include "amindex.h"
 #include "pipespawn.h"
@@ -87,9 +87,7 @@ main(
     disklist_t diskl;
     size_t i;
     char *conf_diskfile;
-    char *conf_tapelist;
     char *conf_indexdir;
-    find_result_t *output_find;
     GHashTable *dump_hash;
     time_t tmp_time;
     int amtrmidx_debug = 0;
@@ -157,18 +155,10 @@ main(
 
     dbrename(get_config_name(), DBG_SUBDIR_SERVER);
 
-    conf_tapelist = config_dir_relative(getconf_str(CNF_TAPELIST));
-    if(read_tapelist(conf_tapelist)) {
-	error(_("could not load tapelist \"%s\""), conf_tapelist);
-	/*NOTREACHED*/
-    }
-    amfree(conf_tapelist);
-
     compress_index = getconf_boolean(CNF_COMPRESS_INDEX);
     sort_index = getconf_boolean(CNF_SORT_INDEX);
 
-    output_find = find_dump(&diskl, 1);
-    dump_hash = make_dump_hash(output_find);
+    dump_hash = amcatalog_get_dump_list();
 
     conf_indexdir = config_dir_relative(getconf_str(CNF_INDEXDIR));
 
@@ -369,8 +359,8 @@ main(
 		    level = 0;
 		for (mdp = matching_dp; mdp != NULL; mdp = mdp->next) {
 		    dp = mdp->data;
-		    if (dump_hash_exist(dump_hash, dp->host->hostname,
-					dp->name, datestamp, level)) {
+		    if (cat_dump_hash_exist(dump_hash, dp->host->hostname,
+					    dp->name, datestamp, level)) {
 			matching = 1;
 		    }
 		}
@@ -683,9 +673,7 @@ lock_failed:
     file_lock_free(lock_index);
     amfree(conf_indexdir);
     amfree(lock_file);
-    free_find_result(&output_find);
-    free_dump_hash(dump_hash);
-    clear_tapelist();
+    g_hash_table_destroy(dump_hash);
     free_disklist(&diskl);
     unload_disklist();
 

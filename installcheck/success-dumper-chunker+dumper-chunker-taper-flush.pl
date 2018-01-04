@@ -34,6 +34,7 @@ use Amanda::Debug;
 use Amanda::MainLoop;
 use Amanda::Config qw( :init :getconf config_dir_relative );
 use Amanda::Changer;
+use Amanda::DB::Catalog2;
 
 eval 'use Installcheck::Rest;';
 if ($@) {
@@ -95,9 +96,11 @@ localhost diskname2 $diskname {
     }
 }
 EODLE
-$testconf->write();
+$testconf->write( do_catalog => 0 );
 
 config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
+my $catalog = Amanda::DB::Catalog2->new(undef, create => 1, drop_tables => 1, load => 1);
+$catalog->quit();
 $diskfile = Amanda::Config::config_dir_relative(getconf($CNF_DISKFILE));
 $infodir = getconf($CNF_INFOFILE);
 
@@ -362,6 +365,9 @@ dumper0 busy    : 00:00:00  ( 12.11%)
 END_STATUS
 
 check_amstatus($status, $tracefile, "amstatus first amdump");
+
+#$rest->stop();
+#exit;
 
 # dumper-chunker-taper+flush
 
@@ -765,5 +771,6 @@ check_amstatus($status, $tracefile, "amstatus second amdump");
 #exit;
 
 $rest->stop();
+exit;
 
 Installcheck::Run::cleanup();

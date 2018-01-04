@@ -41,7 +41,7 @@ Installcheck::log_test_output();
 Amanda::Debug::disable_die_override();
 
 my $testconf = Installcheck::Config->new();
-$testconf->write();
+$testconf->write( do_catalog => 0 );
 
 my $cfg_result = config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF');
 if ($cfg_result != $CFGERR_OK) {

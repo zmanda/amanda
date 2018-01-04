@@ -29,6 +29,7 @@ use Amanda::Config qw( :init :getconf );
 use Amanda::Logfile qw( :logtype_t log_add $amanda_log_trace_log );
 use Amanda::Debug qw( debug );
 use Amanda::Taper::Controller;
+use Amanda::DB::Catalog2;
 use Getopt::Long;
 
 Amanda::Util::setup_application("taper", "server", $CONTEXT_DAEMON, "amanda", "amanda");
@@ -70,17 +71,14 @@ Amanda::Debug::add_amanda_log_handler($amanda_log_trace_log);
 
 Amanda::Util::finish_setup($RUNNING_AS_DUMPUSER);
 
-my $tlf = Amanda::Config::config_dir_relative(getconf($CNF_TAPELIST));
-my ($tl, $message) = Amanda::Tapelist->new($tlf);
-if (defined $message) {
-    die "Could not read the tapelist: $message";
-}
+my $catalog = Amanda::DB::Catalog2->new(undef);
 # transfer control to the Amanda::Taper::Controller class implemented above
 my $controller = Amanda::Taper::Controller->new(
 					storage_name => $opt_storage_name,
-					tapelist => $tl);
+					catalog      => $catalog);
 $controller->start();
 Amanda::MainLoop::run();
 
+$catalog->quit();
 log_add($L_INFO, "pid-done $$");
 Amanda::Util::finish_application();

@@ -52,7 +52,7 @@ like(run_err('amdevcheck', 'this-probably-doesnt-exist'), qr(could not open conf
 # this is re-created for each test
 $testconf = Installcheck::Config->new();
 $testconf->add_param("tapedev", '"null:null"');
-$testconf->write();
+$testconf->write( do_catalog=> 0 );
 
 # test some defaults
 ok(run('amdevcheck', 'TESTCONF'), "run succeeds with a null tapedev");
@@ -67,7 +67,7 @@ is_deeply([ sort split "\n", $Installcheck::Run::stdout],
 $testconf = Installcheck::Run::setup();
 $testconf->add_param('autolabel', '"TESTCONF%%" empty volume_error');
 $testconf->add_dle("localhost $diskname installcheck-test");
-$testconf->write();
+$testconf->write( do_catalog=> 0 );
 
 ok(run('amdevcheck', 'TESTCONF'), "run succeeds with an unlabeled tape");
 is_deeply([ sort split "\n", $Installcheck::Run::stdout],

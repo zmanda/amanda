@@ -418,13 +418,6 @@ if ($cfgerr_level >= $CFGERR_WARNINGS) {
 
 Amanda::Util::finish_setup($RUNNING_AS_DUMPUSER);
 
-# read the tapelist
-my $tl_file = config_dir_relative(getconf($CNF_TAPELIST));
-(my $tl, my $message) = Amanda::Tapelist->new($tl_file);
-if (defined $message) {
-    debug("Could not read the tapelist: $message");
-}
-
 # read the disklist
 my $diskfile = config_dir_relative(getconf($CNF_DISKFILE));
 $cfgerr_level = Amanda::Disklist::read_disklist('filename' => $diskfile);

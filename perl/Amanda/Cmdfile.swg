@@ -148,6 +148,53 @@ typedef struct {
 					       timestamp, holding_file);
 	}
 
+	%typemap(out) cmdfile_t {
+	    GHashTableIter iter;
+	    gpointer key, value;
+
+	    int countx=0;
+	    g_hash_table_iter_init (&iter, $1);
+	    while (g_hash_table_iter_next(&iter, &key, &value)) {
+		countx++;
+	    }
+	    EXTEND(SP, countx);
+	    g_hash_table_iter_init (&iter, $1);
+	    while (g_hash_table_iter_next(&iter, &key, &value)) {
+		int id = GPOINTER_TO_INT(key);
+		Cmddata *data = value;
+		HV *hv = newHV();
+		SV *rv = newRV_noinc((SV *)hv);
+		g_debug("id: %d", data->id);
+		hv_store(hv, "id"            , 2 , newSViv(data->id), 0);
+		hv_store(hv, "operation"     , 9 , newSViv(data->operation), 0);
+		hv_store(hv, "config"        , 6 , newSVpv(data->config, 0), 0);
+		hv_store(hv, "src_storage"   , 11, newSVpv(data->src_storage, 0), 0);
+		hv_store(hv, "src_pool"      , 8 , newSVpv(data->src_pool, 0), 0);
+		hv_store(hv, "src_label"     , 9 , newSVpv(data->src_label, 0), 0);
+		hv_store(hv, "src_fileno"    , 10, newSViv(data->src_fileno), 0);
+		hv_store(hv, "src_labels_str", 14, newSVpv(data->src_labels_str, 0), 0);
+		hv_store(hv, "holding_file"  , 12, newSVpv(data->holding_file, 0), 0);
+		hv_store(hv, "hostname"      , 8 , newSVpv(data->hostname, 0), 0);
+		hv_store(hv, "diskname"      , 8 , newSVpv(data->diskname, 0), 0);
+		hv_store(hv, "dump_timestamp", 14, newSVpv(data->dump_timestamp, 0), 0);
+		hv_store(hv, "level"         , 5 , newSViv(data->level), 0);
+		hv_store(hv, "dst_storage"   , 11, newSVpv(data->dst_storage, 0), 0);
+		hv_store(hv, "working_pid"   , 11, newSViv(data->working_pid), 0);
+		hv_store(hv, "status"        , 6 , newSViv(data->status), 0);
+		hv_store(hv, "todo"          , 4 , newSViv(data->todo), 0);
+		hv_store(hv, "size"          , 4 , newSViv(data->size), 0);
+		hv_store(hv, "start_time"    , 10, newSViv(data->start_time), 0);
+		hv_store(hv, "expire"        , 6 , newSViv(data->expire), 0);
+		hv_store(hv, "count"         , 5 , newSViv(data->count), 0);
+		$result = sv_2mortal(rv);
+		argvi++;
+	    }
+	}
+	cmdfile_t get_all() {
+	    return self->cmdfile;
+	}
+	%typemap(out) cmdfile_t;
+
     }
 } Cmdfile;
 

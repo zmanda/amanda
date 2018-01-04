@@ -29,11 +29,13 @@ use lib '@amperldir@';
 use Installcheck;
 use Installcheck::Run qw( run run_get run_out run_err );
 use Installcheck::Catalogs;
+use Installcheck::DBCatalog2;
 use Amanda::Paths;
 use Amanda::Constants;
 use Amanda::Util qw( slurp burp );
 use Amanda::Debug;
 use Amanda::Config qw ( :init :getconf config_dir_relative );
+use Amanda::DB::Catalog2;
 
 # easy knob to twiddle to check amreport_new instead
 my $amreport = "amreport";
@@ -66,6 +68,7 @@ my $mail_output = "$Installcheck::TMP/mail-output";
 $ENV{'INSTALLCHECK_MOCK_MAIL_OUTPUT'} = $mail_output;
 my $mail_mock = abs_path("mock") . "/mail";
 
+my $catalog;
 my $cat;
 my $alternate_log_filename="$Installcheck::TMP/installcheck-log";
 my $current_log_filename="$Installcheck::CONFIG_DIR/TESTCONF/log/log";
@@ -75,6 +78,10 @@ sub setup_config {
     my %params = @_;
     my $testconf = Installcheck::Run::setup();
 
+    if ($catalog) {
+	$catalog->quit();
+	$catalog = undef;
+    }
     cleanup();
 
     my $mailer =
@@ -128,13 +135,20 @@ sub setup_config {
 	$testconf->add_param('vault-storage', "\"vault\"");
     }
 
-    $testconf->write();
+    $testconf->write( do_catalog => 0 );
 
     undef $cat;
     if ($params{'catalog'}) {
 	$cat = Installcheck::Catalogs::load($params{'catalog'});
 	$cat->install();
     }
+    my $cfg_result = config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF');
+    if ($cfg_result != $CFGERR_OK) {
+	my ($level, @errors) = Amanda::Config::config_errors();
+	die(join "\n", @errors);
+    }
+
+    $catalog = Amanda::DB::Catalog2->new(undef, create => 1, drop_tables => 1, load => 1);
 }
 
 sub cleanup {

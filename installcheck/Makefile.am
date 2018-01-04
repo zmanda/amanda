@@ -42,6 +42,10 @@ server_tests = \
 	Amanda_Curinfo \
 	Amanda_Disklist \
 	Amanda_DB_Catalog \
+	Amanda_DB_Catalog2_log \
+	Amanda_DB_Catalog2_MySQL \
+	Amanda_DB_Catalog2_PgSQL \
+	Amanda_DB_Catalog2_SQLite \
 	Amanda_Device \
 	Amanda_Holding \
 	Amanda_Logfile \
@@ -225,6 +229,7 @@ test_utils = \
 	Installcheck/Catalogs.pm \
 	Installcheck/Config.pm \
 	Installcheck/ClientService.pm \
+	Installcheck/DBCatalog2.pm \
 	Installcheck/Mock.pm \
 	Installcheck/Rest.pm \
 	Installcheck/Run.pm \
@@ -269,6 +274,11 @@ catalogs = \
 	catalogs/vault2.cat \
 	catalogs/vault3.cat
 EXTRA_DIST += $(catalogs)
+
+# the DB_Catalog2 themselves
+db_catalog2 = \
+	DB_Catalolog2/amdump.catalog.1
+EXTRA_DIST += $(db_catalog2)
 
 
 # and finally some development utilities

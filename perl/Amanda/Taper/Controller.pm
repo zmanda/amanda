@@ -57,7 +57,6 @@ use Amanda::Interactivity;
 use Amanda::Logfile qw( :logtype_t log_add );
 use Amanda::Xfer qw( :constants );
 use Amanda::Util qw( quote_string );
-use Amanda::Tapelist;
 use File::Temp;
 
 sub new {
@@ -68,7 +67,7 @@ sub new {
 
 	# filled in at start
 	proto => undef,
-	tapelist => $params{'tapelist'},
+	catalog => $params{'catalog'},
 	storage_name => $params{'storage_name'},
 	worker => {},
     }, $class;
@@ -123,7 +122,7 @@ sub start {
 
     my ($storage) = Amanda::Storage->new(
 					storage_name => $self->{'storage_name'},
-					tapelist => $self->{'tapelist'});
+					catalog => $self->{'catalog'});
     if ($storage->isa("Amanda::Changer::Error")) {
 	$self->{'proto'}->send(Amanda::Taper::Protocol::TAPE_ERROR,
 		worker_name => "SETUP",
@@ -142,7 +141,6 @@ sub start {
     }
     if ($storage->{'erase_volume'}) {
 	$storage->erase_no_retention();
-	$self->{'tapelist'}->reload();
     }
     my $changer = $storage->{'chg'};
     if ($changer->isa("Amanda::Changer::Error")) {
@@ -175,7 +173,7 @@ sub start {
 					    storage => $storage,
 					    changer => $changer,
 					    interactivity => $interactivity,
-					    tapelist => $self->{'tapelist'});
+					    catalog => $self->{'catalog'});
     $self->{'proto'}->start_read();
 }
 
@@ -266,6 +264,7 @@ sub msg_FILE_WRITE {
     my $self = shift;
     my ($msgtype, %params) = @_;
 
+debug("msg_FILE_WRITE: " . Data::Dumper::Dumper(\%params));
     my $worker = $self->{'worker'}->{$params{'worker_name'}};
     $worker->FILE_WRITE(@_);
 }
@@ -274,6 +273,7 @@ sub msg_PORT_WRITE {
     my $self = shift;
     my ($msgtype, %params) = @_;
 
+debug("msg_PORT_WRITE " . Data::Dumper::Dumper(\%params));
     my $worker = $self->{'worker'}->{$params{'worker_name'}};
     $worker->PORT_WRITE(@_);
 }
@@ -282,6 +282,7 @@ sub msg_SHM_WRITE {
     my $self = shift;
     my ($msgtype, %params) = @_;
 
+debug("msg_SHM_WRITE " . Data::Dumper::Dumper(\%params));
     my $worker = $self->{'worker'}->{$params{'worker_name'}};
     $worker->SHM_WRITE(@_);
 }
@@ -290,6 +291,7 @@ sub msg_VAULT_WRITE {
     my $self = shift;
     my ($msgtype, %params) = @_;
 
+debug("msg_VAULT_WRITE " . Data::Dumper::Dumper(\%params));
     my $worker = $self->{'worker'}->{$params{'worker_name'}};
     $worker->VAULT_WRITE(@_);
 }
@@ -298,6 +300,7 @@ sub msg_START_SCAN {
     my $self = shift;
     my ($msgtype, %params) = @_;
 
+debug("msg_START_SCAN " . Data::Dumper::Dumper(\%params));
     my $worker = $self->{'worker'}->{$params{'worker_name'}};
     $worker->START_SCAN(@_);
 }

@@ -1,3 +1,10 @@
+                Release Notes for amanda-3.6
+
+   * Use a database (SQLite, MySQL or ProstgreSQL) to replace the tapelist
+     and log.* file
+     Read the Amanda-Catalog file
+
+
                 Release Notes for amanda-3.5.1
 
    * Fix compilation on Solaris

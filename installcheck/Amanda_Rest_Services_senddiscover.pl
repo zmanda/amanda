@@ -64,7 +64,7 @@ my $amperldir = $Amanda::Paths::amperldir;
 my $testconf;
 
 $testconf = Installcheck::Run::setup();
-$testconf->write();
+$testconf->write( do_catalog => 0 );
 
 #CODE 3700012
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/services/discover?host=localhost&auth=local");

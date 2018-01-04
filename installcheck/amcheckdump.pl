@@ -27,6 +27,8 @@ use Installcheck::Config;
 use Installcheck::Dumpcache;
 use Installcheck::Run qw(run run_get run_err $diskname);
 use Amanda::Paths;
+use Amanda::Config qw( :init );
+use Amanda::DB::Catalog2;
 
 # set up debugging so debug output doesn't interfere with test results
 Amanda::Debug::dbopen("installcheck");
@@ -35,8 +37,10 @@ Installcheck::log_test_output();
 # and disable Debug's die() and warn() overrides
 Amanda::Debug::disable_die_override();
 
-
 my $testconf;
+
+Amanda::Debug::dbopen("installcheck");
+Installcheck::log_test_output();
 
 ##
 # First, try amgetconf out without a config
@@ -53,7 +57,10 @@ like(run_err('amcheckdump', 'this-probably-doesnt-exist'), qr(could not open con
 # Now use a config with a vtape and without usetimestamps
 
 $testconf = Installcheck::Run::setup();
-$testconf->write();
+$testconf->write( do_catalog => 0 );
+config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
+my $catalog = Amanda::DB::Catalog2->new(undef, create => 1, drop_tables => 1, load => 1);
+$catalog->quit();
 
 ok(!run('amcheckdump', 'TESTCONF'),
     "amcheckdump with a new config succeeds");
@@ -64,6 +71,9 @@ like($Installcheck::Run::stdout, qr(No matching dumps found)i,
 # and check command-line handling
 
 Installcheck::Dumpcache::load("basic");
+$catalog = Amanda::DB::Catalog2->new(undef, create => 1, drop_tables => 1, load => 1);
+$catalog->quit();
+
 
 like(run_get('amcheckdump', 'TESTCONF', '-oorg=installcheck'), qr(Validating),
     "amcheckdump accepts '-o' options on the command line");
@@ -92,4 +102,4 @@ for my $dumpfile (@dump1) {
 ok(!run('amcheckdump', 'TESTCONF'),
     "amcheckdump detects a failure from a zeroed-out dumpfile");
 
-Installcheck::Run::cleanup();
+#Installcheck::Run::cleanup();

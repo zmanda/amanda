@@ -33,7 +33,7 @@ use Amanda::Debug;
 use Amanda::MainLoop;
 use Amanda::Config qw( :init :getconf config_dir_relative );
 use Amanda::Changer;
-use Amanda::Tapelist;
+use Amanda::DB::Catalog2;
 
 # set up debugging so debug output doesn't interfere with test results
 Amanda::Debug::dbopen("installcheck");
@@ -44,6 +44,8 @@ Amanda::Debug::disable_die_override();
 
 my $rtaperoot = "$Installcheck::TMP/Amanda_Changer_Diskflat_test";
 my $taperoot = "$rtaperoot/flat";
+my $tl;
+my $catalog;
 
 sub reset_taperoot {
     my ($nslots) = @_;
@@ -59,6 +61,7 @@ sub reset_taperoot {
 	    or die("Could not open: $!");
 	close AA;
     }
+    $catalog = Amanda::DB::Catalog2->new(undef, create => 1, drop_tables=> 1);
 }
 
 sub is_pointing_to {
@@ -79,7 +82,7 @@ $testconf->add_changer('flat', [
 $testconf->add_param('labelstr', 'MATCH-AUTOLABEL');
 $testconf->add_param('meta-autolabel', '"!!"');
 $testconf->add_param('autolabel', '"$m-TESTCONF-$3s" any');
-$testconf->write();
+$testconf->write( do_catalog => 0 );
 
 my $cfg_result = config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF');
 if ($cfg_result != $CFGERR_OK) {
@@ -90,13 +93,13 @@ if ($cfg_result != $CFGERR_OK) {
 my $tlf = config_dir_relative("tapelist");
 open AA, ">$tlf";
 close AA;
-my ($tl, $message) = Amanda::Tapelist->new($tlf);
+($tl, my $message) = Amanda::Tapelist->new($tlf);
 reset_taperoot(5);
 
 File::Path::rmtree($rtaperoot);
 # first try an error
 my $chg = Amanda::Changer->new("flat",
-			       tapelist => $tl);
+			       catalog => $catalog);
 $chg = { %$chg }; #unbless
 is_deeply(Installcheck::Config::remove_source_line($chg),
       { 'source_filename' => "$amperldir/Amanda/Changer/diskflat.pm",
@@ -181,7 +184,7 @@ reset_taperoot(5);
 File::Path::rmtree($taperoot);
 # first try an error
 $chg = Amanda::Changer->new("flat",
-			       tapelist => $tl);
+			       catalog => $catalog);
 $chg = { %$chg }; #unbless
 is_deeply(Installcheck::Config::remove_source_line($chg),
       { 'source_filename' => "$amperldir/Amanda/Changer/diskflat.pm",
@@ -200,7 +203,7 @@ is_deeply(Installcheck::Config::remove_source_line($chg),
 
 reset_taperoot(5);
 $chg = Amanda::Changer->new("flat",
-			    tapelist => $tl);
+			    catalog => $catalog);
 die($chg) if $chg->isa("Amanda::Changer::Error");
 is($chg->have_inventory(), '1', "changer have inventory");
 

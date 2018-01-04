@@ -65,7 +65,7 @@ $testconf->add_changer('multi', [
     tpchanger => "\"chg-multi:file:$taperoot/slot{0,1,2,3,4}\"",
     changerfile => "\"changer\"",
 ]);
-$testconf->write();
+$testconf->write( do_catalog => 0 );
 
 my $cfg_result = config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF');
 if ($cfg_result != $CFGERR_OK) {

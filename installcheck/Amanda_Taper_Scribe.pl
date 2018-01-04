@@ -27,12 +27,14 @@ use lib '@amperldir@';
 use Installcheck::Config;
 use Amanda::Config qw( :init );
 use Amanda::Changer;
+use Amanda::Storage;
 use Amanda::Device qw( :constants );
 use Amanda::Debug;
 use Amanda::Header;
 use Amanda::Xfer;
 use Amanda::Taper::Scribe qw( get_splitting_args_from_config );
 use Amanda::MainLoop;
+use Amanda::DB::Catalog2;
 
 # and disable Debug's die() and warn() overrides
 Amanda::Debug::disable_die_override();
@@ -49,14 +51,15 @@ $testconf = Installcheck::Config->new();
 $testconf->add_tapetype("TEST-TAPE", [
     "length" => ($volume_length / 1024) . " k",
 ]);
-$testconf->write();
+$testconf->write( do_catalog => 0 );
 
 my $cfg_result = config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF');
 if ($cfg_result != $CFGERR_OK) {
     my ($level, @errors) = Amanda::Config::config_errors();
     die(join "\n", @errors);
 }
-
+my $DBCatalog2 = Amanda::DB::Catalog2->new();
+$DBCatalog2->add_image("localhost", "/home", undef, "20010203040506", 0);
 my $taperoot = "$Installcheck::TMP/Amanda_Taper_Scribe";
 
 sub reset_taperoot {
@@ -106,7 +109,8 @@ sub new {
     my $class = shift;
     my %params = @_;
     my @slots = @{ $params{'slots'} || [] };
-    my $chg =  $params{'changer'};
+    my $storage = $params{'storage'};
+    my $chg =  $storage->{'chg'};
 
     # wedge in an extra device property to disable LEOM support, if requested
     if ($params{'disable_leom'}) {
@@ -118,6 +122,7 @@ sub new {
     return bless {
 	chg => $chg,
 	slots => [ @slots ],
+	storage => $storage,
 	next_or_current => "current",
     }, $class;
 }
@@ -249,7 +254,8 @@ sub run_devh {
     reset_taperoot($nruns);
     $main::scribe = Amanda::Taper::Scribe->new(
 	taperscan => $taperscan,
-	feedback => $feedback);
+	feedback => $feedback,
+	catalog  => Amanda::DB::Catalog2->new());
     $devh = $main::scribe->{'devhandling'};
 
     my ($start, $get_volume, $got_volume, $quit);
@@ -311,8 +317,10 @@ sub run_devh {
 }
 
 reset_taperoot(1);
-my $chg =  Amanda::Changer->new("chg-disk:$taperoot");
-run_devh(3, Mock::Taperscan->new(changer => $chg), Mock::Feedback->new({allow => 1}, {allow => 1}, {allow => 1}));
+#my $chg =  Amanda::Changer->new("chg-disk:$taperoot");
+my $storage = Amanda::Storage->new(storage_name => 'TESTCONF',
+				   changer_name => "chg-disk:$taperoot");
+run_devh(3, Mock::Taperscan->new(storage => $storage), Mock::Feedback->new({allow => 1}, {allow => 1}, {allow => 1}));
 is_deeply([ @events ], [
       [ 'start' ],
       [ 'scan' ], # scan starts *before* get_volume
@@ -341,7 +349,7 @@ is_deeply([ @events ], [
     ], "correct event sequence for basic run of DevHandling")
     or diag(Dumper([@events]));
 
-run_devh(1, Mock::Taperscan->new(changer => $chg), Mock::Feedback->new({cause => 'config', message => 'no-can-do'}));
+run_devh(1, Mock::Taperscan->new(storage => $storage), Mock::Feedback->new({cause => 'config', message => 'no-can-do'}));
 is_deeply([ @events ], [
       [ 'start' ],
       [ 'scan' ],
@@ -355,7 +363,7 @@ is_deeply([ @events ], [
     ], "correct event sequence for a run without permission")
     or diag(Dumper([@events]));
 
-run_devh(1, Mock::Taperscan->new(slots => ["bogus"], changer => $chg), Mock::Feedback->new({allow => 1}));
+run_devh(1, Mock::Taperscan->new(slots => ["bogus"], storage => $storage), Mock::Feedback->new({allow => 1}));
 is_deeply([ @events ], [
       [ 'start' ],
       [ 'scan' ],
@@ -369,7 +377,7 @@ is_deeply([ @events ], [
     ], "correct event sequence for a run with a changer error")
     or diag(Dumper([@events]));
 
-run_devh(1, Mock::Taperscan->new(slots => ["bogus"], changer => $chg),
+run_devh(1, Mock::Taperscan->new(slots => ["bogus"], storage => $storage),
 	    Mock::Feedback->new({cause => 'config', message => "not this time"}));
 is_deeply([ @events ], [
       [ 'start' ],
@@ -384,7 +392,7 @@ is_deeply([ @events ], [
     ], "correct event sequence for a run with no permission AND a changer config denial")
     or diag(Dumper([@events]));
 
-run_devh(1, Mock::Taperscan->new(slots => ["bogus"], changer => $chg), Mock::Feedback->new({cause => 'error', message => "frobnicator exploded!"}));
+run_devh(1, Mock::Taperscan->new(slots => ["bogus"], storage => $storage), Mock::Feedback->new({cause => 'error', message => "frobnicator exploded!"}));
 is_deeply([ @events ], [
       [ 'start' ],
       [ 'scan' ],
@@ -498,8 +506,9 @@ my $experr;
 
 reset_taperoot(1);
 $main::scribe = Amanda::Taper::Scribe->new(
-    taperscan => Mock::Taperscan->new(disable_leom => 1, changer => $chg),
-    feedback => Mock::Feedback->new({allow => 1}));
+    taperscan => Mock::Taperscan->new(disable_leom => 1, storage => $storage),
+    feedback => Mock::Feedback->new({allow => 1}),
+    catalog  => Amanda::DB::Catalog2->new());
 
 reset_events();
 run_scribe_xfer(1024*200, $main::scribe,
@@ -537,8 +546,9 @@ is_deeply([ @events ], [
 
 reset_taperoot(1);
 $main::scribe = Amanda::Taper::Scribe->new(
-    taperscan => Mock::Taperscan->new(changer => $chg),
-    feedback => Mock::Feedback->new({ allow => 1 }));
+    taperscan => Mock::Taperscan->new(storage => $storage),
+    feedback => Mock::Feedback->new({ allow => 1 }),
+    catalog  => Amanda::DB::Catalog2->new());
 
 reset_events();
 run_scribe_xfer(1024*200, $main::scribe,
@@ -569,8 +579,9 @@ is_deeply([ @events ], [
 
 reset_taperoot(2);
 $main::scribe = Amanda::Taper::Scribe->new(
-    taperscan => Mock::Taperscan->new(disable_leom => 1, changer => $chg),
-    feedback => Mock::Feedback->new({ allow => 1 }, { allow => 1 }));
+    taperscan => Mock::Taperscan->new(disable_leom => 1, storage => $storage),
+    feedback => Mock::Feedback->new({ allow => 1 }, { allow => 1 }),
+    catalog  => Amanda::DB::Catalog2->new());
 
 reset_events();
 run_scribe_xfer($volume_length + $volume_length / 4, $main::scribe,
@@ -609,8 +620,9 @@ is_deeply([ @events ], [
 
 reset_taperoot(2);
 $main::scribe = Amanda::Taper::Scribe->new(
-    taperscan => Mock::Taperscan->new(changer => $chg),
-    feedback => Mock::Feedback->new({ allow => 1 },{ allow => 1 }));
+    taperscan => Mock::Taperscan->new(storage => $storage),
+    feedback => Mock::Feedback->new({ allow => 1 },{ allow => 1 }),
+    catalog  => Amanda::DB::Catalog2->new());
 
 reset_events();
 run_scribe_xfer(1024*520, $main::scribe,
@@ -647,8 +659,9 @@ is_deeply([ @events ], [
 
 reset_taperoot(1);
 $main::scribe = Amanda::Taper::Scribe->new(
-    taperscan => Mock::Taperscan->new(slots => ["1", "bogus"], disable_leom => 1, changer => $chg),
-    feedback => Mock::Feedback->new({ allow => 1 },{ allow => 1 }));
+    taperscan => Mock::Taperscan->new(slots => ["1", "bogus"], disable_leom => 1, storage => $storage),
+    feedback => Mock::Feedback->new({ allow => 1 },{ allow => 1 }),
+    catalog  => Amanda::DB::Catalog2->new());
 
 reset_events();
 run_scribe_xfer($volume_length + $volume_length / 4, $main::scribe,
@@ -682,8 +695,9 @@ is_deeply([ @events ], [
 
 reset_taperoot(1);
 $main::scribe = Amanda::Taper::Scribe->new(
-    taperscan => Mock::Taperscan->new(slots => ["1", "bogus"], changer => $chg),
-    feedback => Mock::Feedback->new({ allow => 1 }, { allow => 1 }));
+    taperscan => Mock::Taperscan->new(slots => ["1", "bogus"], storage => $storage),
+    feedback => Mock::Feedback->new({ allow => 1 }, { allow => 1 }),
+    catalog  => Amanda::DB::Catalog2->new());
 
 reset_events();
 run_scribe_xfer($volume_length + $volume_length / 4, $main::scribe,
@@ -718,8 +732,9 @@ is_deeply([ @events ], [
 
 reset_taperoot(2);
 $main::scribe = Amanda::Taper::Scribe->new(
-    taperscan => Mock::Taperscan->new(changer => $chg),
-    feedback => Mock::Feedback->new({ allow => 1 }, { cause => 'config', message => "sorry!" }));
+    taperscan => Mock::Taperscan->new(storage => $storage),
+    feedback => Mock::Feedback->new({ allow => 1 }, { cause => 'config', message => "sorry!" }),
+    catalog  => Amanda::DB::Catalog2->new());
 
 reset_events();
 run_scribe_xfer($volume_length + $volume_length / 4, $main::scribe,
@@ -751,8 +766,9 @@ is_deeply([ @events ], [
 
 reset_taperoot(2);
 $main::scribe = Amanda::Taper::Scribe->new(
-    taperscan => Mock::Taperscan->new(disable_leom => 1, changer => $chg),
-    feedback => Mock::Feedback->new({ allow => 1 }));
+    taperscan => Mock::Taperscan->new(disable_leom => 1, storage => $storage),
+    feedback => Mock::Feedback->new({ allow => 1 }),
+    catalog  => Amanda::DB::Catalog2->new());
 
 reset_events();
 run_scribe_xfer(1024*300, $main::scribe, part_size => 0, part_cache_type => 'none',
@@ -774,8 +790,9 @@ is_deeply([ @events ], [
 
 reset_taperoot(2);
 $main::scribe = Amanda::Taper::Scribe->new(
-    taperscan => Mock::Taperscan->new(changer => $chg),
-    feedback => Mock::Feedback->new({ allow => 1 }));
+    taperscan => Mock::Taperscan->new(storage => $storage),
+    feedback => Mock::Feedback->new({ allow => 1 }),
+    catalog  => Amanda::DB::Catalog2->new());
 $Amanda::Config::debug_taper = 9;
 reset_events();
 run_scribe_xfer(1024*300, $main::scribe, part_size => 0, part_cache_type => 'none',
@@ -926,5 +943,5 @@ is_deeply(
 	       . "using part cache type 'none'"},
     "part_* parameters handled correctly when specified");
 
-$chg->quit();
+$storage->quit();
 rmtree($taperoot);

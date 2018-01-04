@@ -72,7 +72,7 @@ Installcheck::log_test_output();
 Amanda::Debug::disable_die_override();
 
 my $testconf = Installcheck::Config->new();
-$testconf->write();
+$testconf->write( do_catalog => 0 );
 
 my $cfg_result = config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF');
 if ($cfg_result != $CFGERR_OK) {
@@ -482,7 +482,7 @@ $testconf->add_changer("myrait", [
     tpchanger => "\"chg-rait:chg-disk:$tapebase/{1,2,3}\"",
     device_property => '"comment" "hello, world"',
 ]);
-$testconf->write();
+$testconf->write( do_catalog => 0 );
 
 config_uninit();
 $cfg_result = config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF');

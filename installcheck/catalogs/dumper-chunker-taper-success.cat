@@ -212,7 +212,7 @@ planner: time 0.098: analysis took 0.000 secs
 
 GENERATING SCHEDULE:
 --------
-DUMP localhost.localdomain ffffffff9efefbfffffffffffffff3fffbf70f /bootAMGTAR 20160527131341 1 11 2016:5:11:17:22:37 54144 54144 1 36547 "Skipping: a full is not planned, so can't dump in degraded mode"
+DUMP localhost.localdomain ffffffff9efefbfffffffffffffff3fffbf70f /bootAMGTAR 20160527131341 1 11 2016:5:11:17:22:37 20160511172237 54144 54144 1 36547 "Skipping: a full is not planned, so can't dump in degraded mode"
 --------
 driver: start time 1.180 inparallel 20 bandwidth 800000000 diskspace 104857600  dir OBSOLETE datestamp 20160527131341 driver: drain-ends tapeq LARGEST big-dumpers sssS
 driver: state time 1.180 free kps: 800000000 space: 104857600 taper: idle idle-dumpers: 20 qlen tapeq taper0: 0:0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: not-idle

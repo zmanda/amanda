@@ -28,7 +28,6 @@ use Amanda::Changer;
 use Amanda::Report;
 use Amanda::Report::json;
 use Amanda::MainLoop;
-use Amanda::Tapelist;
 use Amanda::Label;
 use Amanda::Rest::Configs;
 use Symbol;

@@ -50,8 +50,8 @@ use Amanda::Disklist;
 use Amanda::Logfile qw/:logtype_t :program_t/;
 use Amanda::Util;
 use Amanda::Debug qw( debug warning );
-use Amanda::Storage;
 use Amanda::Process;
+use Amanda::DB::Catalog2;
 
 =head1 NAME
 
@@ -438,6 +438,7 @@ the speed at which the part was written.
 
 =cut
 
+use constant STATUS_ERROR   => 1;
 use constant STATUS_STRANGE => 2;
 use constant STATUS_FAILED  => 4;
 use constant STATUS_MISSING => 8;
@@ -486,6 +487,8 @@ sub read_file
     $self->{cache}    = {};
     $self->{flags}    = {};
     $self->{run_timestamp} = '00000000000000';
+
+    $self->{'catalog'} = Amanda::DB::Catalog2->new() if !defined $self->{'catalog'};
 
     my $logfh = Amanda::Logfile::open_logfile($logfname)
       or die "cannot open '$logfname': $!";
@@ -1586,7 +1589,7 @@ sub _handle_error_line
     my $program_p = $programs->{$program};
     my $errors_p  = $program_p->{errors} ||= [];
 
-    $self->{flags}{exit_status} |= 1;
+    $self->{flags}{exit_status} |= STATUS_ERROR;
 
     push @$errors_p, $str;
 }
@@ -1602,7 +1605,7 @@ sub _handle_fatal_line
     my $program_p = $programs->{$program};
     my $fatal_p  = $program_p->{fatal} ||= [];
 
-    $self->{flags}{exit_status} |= 1;
+    $self->{flags}{exit_status} |= STATUS_ERROR;
 
     push @$fatal_p, $str;
 }

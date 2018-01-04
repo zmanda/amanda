@@ -29,6 +29,7 @@ use Installcheck::Run qw(run run_err $diskname amdump_diag);
 use Amanda::Config qw( :init );
 use Amanda::Debug;
 use Amanda::Paths;
+use Amanda::DB::Catalog2;
 use warnings;
 use strict;
 
@@ -131,7 +132,10 @@ localhost diskname1 $diskname {
     }
 }
 EODLE
-$testconf->write();
+$testconf->write( do_catalog => 0 );
+config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
+my $catalog = Amanda::DB::Catalog2->new(undef, create => 1, drop_tables => 1, load => 1);
+$catalog->quit();
 
 unlink $templog;
 ok(run('amcheck', '-c', 'TESTCONF'), "amcheck runs successfully for client scripts.");
@@ -192,7 +196,10 @@ localhost diskname3 $diskname {
     }
 }
 EODLE
-$testconf->write();
+$testconf->write( do_catalog => 0 );
+config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
+$catalog = Amanda::DB::Catalog2->new(undef, create => 1, drop_tables => 1, load => 1);
+$catalog->quit();
 
 unlink $templog;
 ok(run('amcheck', '-c', 'TESTCONF'), "amcheck runs successfully for server scripts.");
@@ -255,7 +262,10 @@ localhost diskname2 $diskname {
     }
 }
 EODLE
-$testconf->write();
+$testconf->write( do_catalog => 0 );
+config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
+$catalog = Amanda::DB::Catalog2->new(undef, create => 1, drop_tables => 1, load => 1);
+$catalog->quit();
 
 unlink $templog;
 ok(run('amcheck', '-c', 'TESTCONF'), "amcheck runs successfully for ordered scripts.");
@@ -306,7 +316,10 @@ localhost diskname3 $diskname {
   }
 }
 EODLE
-    $testconf->write();
+    $testconf->write( do_catalog => 0 );
+    config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
+    $catalog = Amanda::DB::Catalog2->new(undef, create => 1, drop_tables => 1, load => 1);
+    $catalog->quit();
 
     $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/runs/amdump","");
     foreach my $message (@{$reply->{'body'}}) {
@@ -495,7 +508,10 @@ localhost diskname3 $diskname {
   }
 }
 EODLE
-    $testconf->write();
+    $testconf->write( do_catalog => 0 );
+    config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
+    $catalog = Amanda::DB::Catalog2->new(undef, create => 1, drop_tables => 1, load => 1);
+    $catalog->quit();
 
     $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/runs/amdump","");
     foreach my $message (@{$reply->{'body'}}) {
@@ -697,7 +713,10 @@ localhost diskname3 $diskname {
   }
 }
 EODLE
-    $testconf->write();
+    $testconf->write( do_catalog => 0 );
+    config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
+    $catalog = Amanda::DB::Catalog2->new(undef, create => 1, drop_tables => 1, load => 1);
+    $catalog->quit();
 
     $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/runs/amdump","");
     foreach my $message (@{$reply->{'body'}}) {

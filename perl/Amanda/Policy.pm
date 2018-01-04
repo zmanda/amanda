@@ -25,13 +25,8 @@ use warnings;
 use Data::Dumper;
 use vars qw( @ISA );
 
-use Amanda::Paths;
-use Amanda::Util;
 use Amanda::Config qw( :getconf );
-use Amanda::Device qw( :constants );
 use Amanda::Debug qw( debug );
-use Amanda::MainLoop;
-use Amanda::Changer;
 
 =head1 NAME
 

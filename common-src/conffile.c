@@ -3701,6 +3701,7 @@ read_catalog(
     int save_overwrites;
     FILE *saved_conf = NULL;
     char *saved_fname = NULL;
+    char *saved_block = NULL;
 
     if (from) {
 	saved_conf = current_file;
@@ -3715,6 +3716,7 @@ read_catalog(
     if (linenum)
 	current_line_num = *linenum;
 
+    saved_block = current_block;
     save_overwrites = allow_overwrites;
     allow_overwrites = 1;
 
@@ -3726,6 +3728,8 @@ read_catalog(
 	ctcur.name = g_strdup(tokenval.v.s);
 	validate_name(CONF_CATALOG, &tokenval);
     }
+    current_block = g_strconcat("catalog ", ctcur.name, NULL);
+    stcur.seen.block = current_block;
     ctcur.seen.filename = current_filename;
     ctcur.seen.linenum = current_line_num;
 
@@ -3740,6 +3744,7 @@ read_catalog(
 
     allow_overwrites = save_overwrites;
 
+    current_block = saved_block;
     if (linenum)
 	*linenum = current_line_num;
 
@@ -6572,6 +6577,7 @@ config_uninit(void)
 	for(i=0; i<CATALOG_CATALOG; i++) {
 	   free_val_t(&ct->value[i]);
 	}
+	g_free(ct->seen.block);
 	ctnext = ct->next;
 	amfree(ct);
     }
@@ -7001,17 +7007,37 @@ update_derived_values(
 	    save_policy();
 	}
 
+	/* create a default storage */
+	if (!(lookup_storage(conf_name))) {
+	    init_storage_defaults();
+	    stcur.name = g_strdup(conf_name);
+
+	    free_val_t(&stcur.value[STORAGE_COMMENT]);
+	    val_t__str(&stcur.value[STORAGE_COMMENT]) = g_strdup(_("implicit from global config"));
+	    save_storage();
+	}
+
+	/* create a HOLDING policy */
+	if (!(lookup_policy("HOLDING"))) {
+	    init_policy_defaults();
+	    pocur.name = g_strdup("HOLDING");
+
+	    free_val_t(&pocur.value[POLICY_COMMENT]);
+	    val_t__str(&pocur.value[POLICY_COMMENT]) = g_strdup(_("implicit HOLDING from global config"));
+	    save_policy();
+	}
+
+	/* create a HOLDING storage */
+	if (!(lookup_storage("HOLDING"))) {
+	    init_storage_defaults();
+	    stcur.name = g_strdup("HOLDING");
+
+	    free_val_t(&stcur.value[STORAGE_COMMENT]);
+	    val_t__str(&stcur.value[STORAGE_COMMENT]) = g_strdup(_("implicit HOLDING from global config"));
+	    save_storage();
+	}
+
 	if (!getconf_seen(CNF_STORAGE) && (!st_name || *st_name == '\0')) {
-	    /* create a default storage */
-	    if (!(lookup_storage(conf_name))) {
-		init_storage_defaults();
-		stcur.name = g_strdup(conf_name);
-
-		free_val_t(&stcur.value[STORAGE_COMMENT]);
-		val_t__str(&stcur.value[STORAGE_COMMENT]) = g_strdup(_("implicit from global config"));
-		save_storage();
-	    }
-
 	    /* set the default storage */
 	    il = g_slist_append(NULL, g_strdup(conf_name));
 	    val_t__identlist(&conf_data[CNF_STORAGE]) = il;

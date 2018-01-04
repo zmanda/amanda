@@ -479,6 +479,7 @@ use Amanda::Header;
 use Amanda::Holding;
 use Amanda::Cmdline;
 use Amanda::Cmdfile;
+use Amanda::DB::Catalog2;
 use Amanda::Xfer qw( :constants );
 use Amanda::Recovery::Planner;
 use Amanda::Recovery::Clerk;
@@ -956,7 +957,7 @@ sub restore {
     my $dest_is_client;
     my $dest_is_native;
     my $check_crc;
-    my $tl;
+    my $catalog;
     my $offset;
     my $size;
     my $xfer;
@@ -983,11 +984,7 @@ sub restore {
 
 	my $chg;
 
-	my $tlf = Amanda::Config::config_dir_relative(getconf($CNF_TAPELIST));
-	($tl, my $message) = Amanda::Tapelist->new($tlf);
-	if (defined $message) {
-	    die "Could not read the tapelist: $message";
-	}
+	$catalog = Amanda::DB::Catalog2->new();
 
 	# first, go to params{'chdir'} or the original working directory we
 	# were started in
@@ -1017,14 +1014,14 @@ sub restore {
 	    # if we have an explicit device, then the clerk doesn't get a changer --
 	    # we operate the changer via Amanda::Recovery::Scan
 	    $storage = Amanda::Storage->new(changer_name => $params{'device'},
-					    tapelist => $tl);
+					    catalog => $catalog);
 	    return $steps->{'failure'}->($storage) if $storage->isa("Amanda::Changer::Error");
 	    $storage{$storage->{"storage_name"}} = $storage;
 	    $chg = $storage->{'chg'};
 	    return $steps->{'failure'}->($chg) if $chg->isa("Amanda::Changer::Error");
 	    $params{'feedback'}->set_feedback(chg => $chg);
 	} else {
-	    $storage = Amanda::Storage->new(tapelist => $tl);
+	    $storage = Amanda::Storage->new(catalog => $catalog);
 	    return $steps->{'failure'}->($storage) if $storage->isa("Amanda::Changer::Error");
 	    $storage{$storage->{"storage_name"}} = $storage;
 	    $chg = $storage->{'chg'};
@@ -1066,6 +1063,7 @@ sub restore {
 	    $steps->{'start_dump'}->();
 	} else {
 	    Amanda::Recovery::Planner::make_plan(
+		catalog => $catalog,
 		dumpspecs => [ @{$params{'dumpspecs'}} ],
 		labelstr => $storage->{'labelstr'},
 		all_copy => $params{'all_copy'},
@@ -1123,7 +1121,7 @@ sub restore {
 	my $storage_name=$Xinit_label->{'storage'};
 	if (!$storage{$storage_name}) {
 	    my ($storage) = Amanda::Storage->new(storage_name => $storage_name,
-						 tapelist => $tl);
+						 catalog => $catalog);
 	    #return  $steps->{'quit'}->($storage) if $storage->isa("Amanda::Changer::Error");
 	    $storage{$storage_name} = $storage;
 	};
@@ -1178,7 +1176,6 @@ sub restore {
 	my $last_label;
 
 	if ($params{'reserve-tapes'}) {
-debug("plan: " . Data::Dumper::Dumper($plan->{'dumps'}));
 	    for my $dump (@{$plan->{'dumps'}}) {
 		for my $part (@{$dump->{'parts'}}) {
 		    next unless defined $part; # skip parts[0]
@@ -1330,7 +1327,7 @@ debug("plan: " . Data::Dumper::Dumper($plan->{'dumps'}));
 	    if (!$storage{$storage_name}) {
 		my ($storage) = Amanda::Storage->new(
 						storage_name => $storage_name,
-						tapelist => $tl);
+						catalog => $catalog);
 		return  $steps->{'failure'}->($storage)
 		    if $storage->isa("Amanda::Changer::Error");
 		$storage{$storage_name} = $storage;

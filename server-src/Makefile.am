@@ -37,6 +37,7 @@ amlibexec_SCRIPTS_PERL = \
 
 sbin_SCRIPTS_PERL = \
 	    amaddclient \
+	    amcatalog \
 	    amoverview \
 	    amserverconfig \
 	    amtoc \

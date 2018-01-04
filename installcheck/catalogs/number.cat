@@ -171,17 +171,17 @@ planner: time 0.197: analysis took 0.000 secs
 
 GENERATING SCHEDULE:
 --------
-DUMP localhost.localdomain ffffffff9efefbfffffffffffffff3fffbf707 100t 20160222114156 8 0 1970:1:1:0:0:0 104857670000 104857670000 286 36572 "Skipping: Can't bump a 'force' dle in degraded mode"
-DUMP localhost.localdomain ffffffff9efefbfffffffffffffff3fffbf707 10t 20160222114156 8 0 1970:1:1:0:0:0 10485767000 10485767000 455 23041 "Skipping: Can't bump a 'force' dle in degraded mode"
-DUMP localhost.localdomain ffffffff9efefbfffffffffffffff3fffbf707 10g 20160222114156 8 0 1970:1:1:0:0:0 10485767 10485767 37 275982 "Skipping: Can't bump a 'force' dle in degraded mode"
-DUMP localhost.localdomain ffffffff9efefbfffffffffffffff3fffbf707 5ga 20160222114156 8 0 1970:1:1:0:0:0 5242885 5242885 129 40360 "Skipping: Can't bump a 'force' dle in degraded mode"
-DUMP localhost.localdomain ffffffff9efefbfffffffffffffff3fffbf707 2ga 20160222114156 8 0 1970:1:1:0:0:0 2097155 2097155 32 64423 "Skipping: Can't bump a 'force' dle in degraded mode"
-DUMP localhost.localdomain ffffffff9efefbfffffffffffffff3fffbf707 1g 20160222114156 8 0 1970:1:1:0:0:0 1048579 1048753 35 29485 "Skipping: Can't bump a 'force' dle in degraded mode"
-DUMP localhost.localdomain ffffffff9efefbfffffffffffffff3fffbf707 1000g 20160222114156 8 0 1970:1:1:0:0:0 1048579000 1048579000 1 589535 "Skipping: Can't bump a 'force' dle in degraded mode"
-DUMP localhost.localdomain ffffffff9efefbfffffffffffffff3fffbf707 100g 20160222114156 8 0 1970:1:1:0:0:0 104857900 104857900 9 107771 "Skipping: Can't bump a 'force' dle in degraded mode"
-DUMP localhost.localdomain ffffffff9efefbfffffffffffffff3fffbf707 /bootAMGTAR 20160222114156 8 0 1970:1:1:0:0:0 155516 155516 1 116688 "Skipping: Can't bump a 'force' dle in degraded mode"
-DUMP localhost.localdomain ffffffff9efefbfffffffffffffff3fffbf707 100m 20160222114156 8 0 1970:1:1:0:0:0 102403 102403 1 68273 "Skipping: Can't bump a 'force' dle in degraded mode"
-DUMP localhost.localdomain ffffffff9efefbfffffffffffffff3fffbf707 10m 20160222114156 8 0 1970:1:1:0:0:0 10243 10243 10 1024 "Skipping: Can't bump a 'force' dle in degraded mode"
+DUMP localhost.localdomain ffffffff9efefbfffffffffffffff3fffbf707 100t 20160222114156 8 0 1970:1:1:0:0:0 19700101000000 104857670000 104857670000 286 36572 "Skipping: Can't bump a 'force' dle in degraded mode"
+DUMP localhost.localdomain ffffffff9efefbfffffffffffffff3fffbf707 10t 20160222114156 8 0 1970:1:1:0:0:0 19700101000000 10485767000 10485767000 455 23041 "Skipping: Can't bump a 'force' dle in degraded mode"
+DUMP localhost.localdomain ffffffff9efefbfffffffffffffff3fffbf707 10g 20160222114156 8 0 1970:1:1:0:0:0 19700101000000 10485767 10485767 37 275982 "Skipping: Can't bump a 'force' dle in degraded mode"
+DUMP localhost.localdomain ffffffff9efefbfffffffffffffff3fffbf707 5ga 20160222114156 8 0 1970:1:1:0:0:0 19700101000000 5242885 5242885 129 40360 "Skipping: Can't bump a 'force' dle in degraded mode"
+DUMP localhost.localdomain ffffffff9efefbfffffffffffffff3fffbf707 2ga 20160222114156 8 0 1970:1:1:0:0:0 19700101000000 2097155 2097155 32 64423 "Skipping: Can't bump a 'force' dle in degraded mode"
+DUMP localhost.localdomain ffffffff9efefbfffffffffffffff3fffbf707 1g 20160222114156 8 0 1970:1:1:0:0:0 19700101000000 1048579 1048753 35 29485 "Skipping: Can't bump a 'force' dle in degraded mode"
+DUMP localhost.localdomain ffffffff9efefbfffffffffffffff3fffbf707 1000g 20160222114156 8 0 1970:1:1:0:0:0 19700101000000 1048579000 1048579000 1 589535 "Skipping: Can't bump a 'force' dle in degraded mode"
+DUMP localhost.localdomain ffffffff9efefbfffffffffffffff3fffbf707 100g 20160222114156 8 0 1970:1:1:0:0:0 19700101000000 104857900 104857900 9 107771 "Skipping: Can't bump a 'force' dle in degraded mode"
+DUMP localhost.localdomain ffffffff9efefbfffffffffffffff3fffbf707 /bootAMGTAR 20160222114156 8 0 1970:1:1:0:0:0 19700101000000 155516 155516 1 116688 "Skipping: Can't bump a 'force' dle in degraded mode"
+DUMP localhost.localdomain ffffffff9efefbfffffffffffffff3fffbf707 100m 20160222114156 8 0 1970:1:1:0:0:0 19700101000000 102403 102403 1 68273 "Skipping: Can't bump a 'force' dle in degraded mode"
+DUMP localhost.localdomain ffffffff9efefbfffffffffffffff3fffbf707 10m 20160222114156 8 0 1970:1:1:0:0:0 19700101000000 10243 10243 10 1024 "Skipping: Can't bump a 'force' dle in degraded mode"
 --------
 driver: flush size 0
 driver: started chunker0 pid 2573
@@ -840,15 +840,3 @@ driver: QUITTING time 793.819 telling children to quit
 driver: send-cmd time 793.819 to dumper0: QUIT ""
 driver: FINISHED time 794.820
 amdump: end at Mon Feb 22 11:55:11 EST 2016
-Warning: no log files found for tape JLM-s3-006 written 2015-10-19 11:01:12
-Warning: no log files found for tape JLM-s3-005 written 2015-10-19 10:59:16
-Warning: no log files found for tape JLM-s3-004 written 2015-10-19 10:52:06
-Warning: no log files found for tape JLM-s3-003 written 2015-10-19 08:56:12
-Warning: no log files found for tape JLM-s3-002 written 2015-10-19 08:49:34
-Warning: no log files found for tape JLM-s3-001 written 2015-10-19 08:46:05
-Warning: no log files found for tape swift-2-003 written 2015-08-06 10:43:53
-Warning: no log files found for tape swift-2-002 written 2015-08-06 10:41:01
-Warning: no log files found for tape swift-2-001 written 2015-08-06 09:34:49
-Warning: no log files found for tape swift-2-006 written 2015-08-06 09:34:40
-Warning: no log files found for tape swift-2-005 written 2015-08-06 09:34:26
-Warning: no log files found for tape swift-2-004 written 2015-08-06 09:34:10

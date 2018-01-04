@@ -34,7 +34,6 @@ C<amanda-taperscan(7)>.
 use strict;
 use warnings;
 use base qw( Amanda::ScanInventory Amanda::Taper::Scan );
-use Amanda::Tapelist;
 use Carp;
 use POSIX ();
 use Data::Dumper;
@@ -73,9 +72,13 @@ sub new {
 sub last_use_label {
     my $self = shift;
 
-    my $tles = $self->{'tapelist'}->{tles};
-    return undef if !defined $tles->[0];
-    my $label = $tles->[0]->{'label'};
+    my $volumes = $self->{'catalog'}->find_volumes(
+				pool => $self->{'storage'}->{'tapepool'},
+				storage => $self->{'storage'}->{'storage_name'},
+				order_write_timestamp => -1,
+				max_volume => 1);
+    return undef if !defined $volumes->[0];
+    return $volumes->[0]->{'label'};
 }
 
 sub analyze {
@@ -112,9 +115,11 @@ sub analyze {
 		    push @reusable_before, $sl;
 		}
 	    } else {
-		my $vol_tle = $self->{'tapelist'}->lookup_tapelabel($sl->{'label'});
-		if ($vol_tle) {
-		    if ($self->volume_is_new_labelled($vol_tle, $sl)) {
+		my $volume = $self->{'catalog'}->find_volume(
+				$self->{'storage'}->{'tapepool'},
+				$sl->{'label'});
+		if ($volume) {
+		    if ($self->volume_is_new_labelled($volume, $sl)) {
 			if ($last_label && $sl->{'label'} gt $last_label) {
 			    push @new_labeled_after, $sl;
 			} else {

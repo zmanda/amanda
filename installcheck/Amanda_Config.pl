@@ -18,7 +18,7 @@
 # Contact information: Carbonite Inc., 756 N Pastoria Ave
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 375;
+use Test::More tests => 381;
 use strict;
 use warnings;
 use Data::Dumper;
@@ -69,7 +69,7 @@ is(getconf($CNF_TAPEDEV), "null:TEST",
 
 $testconf = Installcheck::Config->new();
 $testconf->add_param('label_new_tapes', '"xx"'); # a deprecated keyword -> warning
-$testconf->write();
+$testconf->write(do_catalog => 0);
 
 {
     is(config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF"), $CFGERR_WARNINGS,
@@ -85,7 +85,7 @@ $testconf->write();
 
 $testconf = Installcheck::Config->new();
 $testconf->add_param('invalid-param', 'random-value'); # a deprecated keyword -> warning
-$testconf->write();
+$testconf->write(do_catalog => 0);
 
 is(config_init($CONFIG_INIT_EXPLICIT_NAME, "NO-SUCH-CONFIGURATION"), $CFGERR_ERRORS,
     "Non-existent config generates an error");
@@ -103,7 +103,7 @@ $testconf->add_client_param('property', 'priority "clIent-prop1" "foo"');
 $testconf->add_client_param('property', 'append "clieNt-prop" "bar"');
 $testconf->add_client_param('property', '"ANotHer_prOp" "baz"');
 $testconf->add_client_param('property', 'append "ANOTHER-prop" "boo"');
-$testconf->write();
+$testconf->write( do_catalog => 0 );
 
 my $cfg_result = config_init($CONFIG_INIT_CLIENT|$CONFIG_INIT_GLOBAL, undef);
 is($cfg_result, $CFGERR_OK,
@@ -244,7 +244,13 @@ $testconf->add_taperscan('my_taperscan', [
   'property' => '"testprop" "testval"',
 ]);
 
-$testconf->write();
+$testconf->add_catalog('M_catalog', [
+  'comment' => '"my catalog is mine, not yours"',
+  'plugin'  => '"MY-catalog"',
+  'property' => '"testprop" "testval"',
+]);
+
+$testconf->write( do_catalog => 0 );
 
 $cfg_result = config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF');
 if (!is($cfg_result, $CFGERR_OK,
@@ -576,6 +582,28 @@ is_deeply([ sort(+getconf_list("taperscan")) ],
     "getconf_list lists all taperscan");
 
 
+$dc = lookup_catalog("M_catalog");
+ok($dc, "found M_catalog");
+is(catalog_name($dc), "M_catalog",
+    "M_catalog knows its name");
+is(catalog_getconf($dc, $CATALOG_COMMENT), 'my catalog is mine, not yours',
+    "catalog comment");
+is(catalog_getconf($dc, $CATALOG_PLUGIN), 'MY-catalog',
+    "catalog plugin");
+is_deeply(catalog_getconf($dc, $CATALOG_PROPERTY),
+    { 'testprop' => {
+	    'priority' => 0,
+	    'values' => [ 'testval' ],
+	    'append' => 0,
+	    'visible' => 1,
+	}
+    }, "catalog properties represented correctly");
+
+is_deeply([ sort(+getconf_list("catalog")) ],
+	  [ sort("my_catalog", "M_catalog") ],
+    "getconf_list lists all catalog");
+
+
 ##
 # Test config overwrites (using the config from above)
 
@@ -663,7 +691,7 @@ $testconf->add_dumptype('nested_stuff', [
 }',
 ]);
 
-$testconf->write();
+$testconf->write( do_catalog => 0 );
 
 $cfg_result = config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
 is($cfg_result, $CFGERR_OK, 
@@ -707,7 +735,7 @@ $testconf->add_dumptype('mydump-type', [
     'exclude list optional append' => '"true" "star"',
     'exclude list append' => '"true" "star"',
 ]);
-$testconf->write();
+$testconf->write( do_catalog => 0 );
 
 $cfg_result = config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
 is($cfg_result, $CFGERR_OK, 
@@ -739,7 +767,7 @@ $testconf->add_dumptype('rl3', [
 $testconf->add_dumptype('rl4', [
     'recovery-limit' => '"foohost" same-host',
 ]);
-$testconf->write();
+$testconf->write( do_catalog => 0 );
 
 $cfg_result = config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
 is($cfg_result, $CFGERR_OK,
@@ -787,7 +815,7 @@ $testconf->add_dumptype('dl2', [
 $testconf->add_dumptype('dl3', [
     'dump-limit' => 'same-host server',
 ]);
-$testconf->write();
+$testconf->write( do_catalog => 0 );
 
 $cfg_result = config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
 is($cfg_result, $CFGERR_OK,
@@ -816,7 +844,7 @@ SKIP: {
 $testconf->add_dumptype('dl4', [
     'dump-limit' => 'same-host server "somehost"',
 ]);
-$testconf->write();
+$testconf->write(do_catalog => 0);
 $cfg_result = config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
 isnt($cfg_result, $CFGERR_OK,
     "dump-limit do not accept hostname");
@@ -826,7 +854,7 @@ isnt($cfg_result, $CFGERR_OK,
 
 $testconf = Installcheck::Config->new();
 $testconf->add_param('autolabel', '"FOO%%%BAR" any');
-$testconf->write();
+$testconf->write( do_catalog => 0 );
 
 $cfg_result = config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
 is($cfg_result, $CFGERR_OK, 
@@ -863,7 +891,7 @@ $testconf->add_dumptype('child', [
 $testconf->add_dumptype('child2', [
     '' => 'parent',
 ]);
-$testconf->write();
+$testconf->write( do_catalog => 0 );
 
 $cfg_result = config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
 is($cfg_result, $CFGERR_OK,
@@ -893,7 +921,7 @@ $testconf->add_dumptype('mydump-type2', [
 $testconf->add_dumptype('mydump-type3', [
     'client_port' => '"67890"',
 ]);
-$testconf->write();
+$testconf->write( do_catalog => 0 );
 
 $cfg_result = config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
 is($cfg_result, $CFGERR_OK, 
@@ -958,7 +986,7 @@ $testconf->add_application('app2b', [
     'app2' => undef,
     'property' => 'append "prop2" "val2b"',
 ]);
-$testconf->write();
+$testconf->write( do_catalog => 0 );
 
 $cfg_result = config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
 is($cfg_result, $CFGERR_OK, 
@@ -1070,7 +1098,7 @@ define script-tool "scr2" {
     comment "two"
 }
 EOF
-$testconf->write();
+$testconf->write( do_catalog => 0 );
 
 $cfg_result = config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
 is($cfg_result, $CFGERR_OK,
@@ -1140,7 +1168,7 @@ for my $pn (@prop_names) {
 
 $testconf = Installcheck::Config->new();
 $testconf->add_param('property', '"PrOP_nAme" "VALUE"');
-$testconf->write();
+$testconf->write( do_catalog => 0 );
 config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
 my $properties = getconf($CNF_PROPERTY);
 
@@ -1161,7 +1189,7 @@ $testconf = Installcheck::Config->new();
 $testconf->add_client_config_param('amdump-server', '"amdump.localhost"');
 $testconf->add_client_config_param('index-server', '"index.localhost"');
 $testconf->add_client_config_param('tape-server', '"tape.localhost"');
-$testconf->write();
+$testconf->write( do_catalog => 0 );
 config_init_with_global($CONFIG_INIT_CLIENT | $CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
 my $amdump_server = getconf($CNF_AMDUMP_SERVER);
 is ($amdump_server, "amdump.localhost", "amdump-server is \"amdump.localhost\"");
@@ -1247,7 +1275,7 @@ foreach my $exp_ok_columnspec (
 
     $testconf = Installcheck::Config->new();
     $testconf->add_param('columnspec', "\"$columnspec\"");
-    $testconf->write();
+    $testconf->write(do_catalog => 0);
 
     my $rv = config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
     if ($exp_ok) {
@@ -1263,7 +1291,7 @@ $testconf->add_storage('storage1', [
     'dump_selection' => '"incr" INCR',
     'dump_selection' => 'ALL ALL',
 ]);
-$testconf->write();
+$testconf->write( do_catalog => 0 );
 config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
 my $st = lookup_storage("storage1");
 ok($st, "found storage1");

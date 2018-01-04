@@ -526,7 +526,7 @@ SKIP: {
 
 	# set up vtapes
 	my $testconf = Installcheck::Run::setup();
-	$testconf->write();
+	$testconf->write( do_catalog => 0 );
 	config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
 	my ($cfgerr_level, @cfgerr_errors) = config_errors();
 	if ($cfgerr_level >= $CFGERR_WARNINGS) {
@@ -603,7 +603,7 @@ SKIP: {
 
 	# set up vtapes
 	my $testconf = Installcheck::Run::setup();
-	$testconf->write();
+	$testconf->write( do_catalog => 0 );
 	config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
 	my ($cfgerr_level, @cfgerr_errors) = config_errors();
 	if ($cfgerr_level >= $CFGERR_WARNINGS) {
@@ -1270,7 +1270,7 @@ SKIP: {
 
 	# set up vtapes
 	my $testconf = Installcheck::Run::setup();
-	$testconf->write();
+	$testconf->write( do_catalog => 0 );
 	config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
 	my ($cfgerr_level, @cfgerr_errors) = config_errors();
 	if ($cfgerr_level >= $CFGERR_WARNINGS) {
@@ -1542,7 +1542,7 @@ SKIP: {
 }
 if (!Amanda::Util::built_with_component("server")) {
     my $testconf = Installcheck::Run::setup();
-    $testconf->write();
+    $testconf->write( do_catalog => 0 );
     config_init($CONFIG_INIT_EXPLICIT_NAME|$CONFIG_INIT_CLIENT, "TESTCONF");
     my ($cfgerr_level, @cfgerr_errors) = config_errors();
     if ($cfgerr_level >= $CFGERR_WARNINGS) {

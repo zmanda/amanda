@@ -106,7 +106,7 @@ handle.  The text will not be written to the filesystem on C<install>.
 =item A line beginning with C<%H> specifies a holding-disk file.  The rest of
 the line is a space-separated list:
 
-  %H tag datestamp hostname pathname level status size
+  %H tag datestamp hostname pathname level status ksize native_crc client_crc server_crc
 
 A single-chunk holding-disk file of the appropriate size will be created,
 filled with garbage, and the corresponding entries will be made in the dump and
@@ -115,7 +115,7 @@ part hashes.
 =item A line beginning with C<%D> specifies a dump.  The format, all on one line, is:
 
   %D tag dump_timestamp write_timestamp hostname diskname level status
-    message nparts sec kb orig_kb
+    message nparts sec kb orig_kb native_crc client_crc server_crc
 
 =item A line beginning with C<%P> specifies a part.  The format, again all on
 one line, is:
@@ -198,47 +198,55 @@ sub _parse {
 	    $self->{$kind}{$cur_filename} = '';
 	    $fileref = \$self->{$kind}{$cur_filename};
 
+	# symlink
+	} elsif (/%S ([^ ]*) ([^ ]*) (.*)$/) {
+	    $self->{'symlink'}->{$1} = { link => $2, file => $3 };
+	} elsif (/%S (.*)$/) {
 	# holding file
-	} elsif (/^%H (\S+) (\S+) (\S+) (\S+) (\S+) (\d+) (\S+) (\d+) (\S+) (\S+) (\S+)$/) {
+	} elsif (/^%H (\S+) (\S+) (\S+) (\S+) (\S+) (\S+) (\d+) (\S+) (\d+) (\S+) (\S+) (\S+)$/) {
 
 	    die "dump tag $1 already exists" if exists $self->{'dumps'}{$1};
 	    die "part tag $1 already exists" if exists $self->{'parts'}{$1};
 
-	    my $safe_disk = $5;
+	    my $safe_disk = $6;
 	    $safe_disk =~ tr{/}{_};
-	    my $hfile = "$holdingdir/$3/$4.$safe_disk";
+	    my $hfile = "$holdingdir/$4/$5.$safe_disk";
 
-	    $self->{'holding_files'}->{$1} = [ $hfile, $3, $4, $5, $6, $7, $8 ];
+	    $self->{'holding_files'}->{$1} = [ $hfile, $4, $5, $6, $7, $8, $9 ];
 
 	    my $dump = $self->{'dumps'}{$1} = {
 		storage => $2,
-		pool => $2,
-		dump_timestamp => $3,
-		hostname => $4,
-		diskname => $5,
-		level => $6+0,
-		status => $7,
-		kb => $8,
+		pool => $3,
+		dump_timestamp => $4,
+		hostname => $5,
+		diskname => $6,
+		level => $7+0,
+		status => $8,
+		kb => $9,
+		bytes => $9 * 1024,
 		orig_kb => 0,
 		write_timestamp => '00000000000000',
 		message => '',
 		nparts => 1,
 		sec => 0.0,
-		native_crc => $9,
-		client_crc => $10,
-		server_crc => $11,
+		native_crc => $10,
+		client_crc => $11,
+		server_crc => $12,
 	    };
 	    my $part = $self->{'parts'}{$1} = {
+		pool => $3,
 		holding_file => $hfile,
 		dump => $dump,
 		status => $dump->{'status'},
 		sec => 0.0,
 		kb => $dump->{'kb'},
-		orig_kb => 0,
+		part_size => $dump->{'kb'} * 1024,
+		part_offset => 0,
+		#orig_kb => 0,
 		partnum => 1,
-		native_crc => $9,
-		client_crc => $10,
-		server_crc => $11,
+		#native_crc => $10,
+		#client_crc => $11,
+		#server_crc => $12,
 	    };
 	    $dump->{'parts'} = [ undef, $part ];
 
@@ -262,30 +270,36 @@ sub _parse {
 		native_crc => $14,
 		client_crc => $15,
 		server_crc => $16,
+		part_offset => 0,
 		parts => [ undef ],
 	    };
 	    # translate "" to an empty string
 	    $dump->{'message'} = '' if $dump->{'message'} eq '""';
 
 	# part
-	} elsif (/^%P (\S+) (\S+) (\S+) (\d+) (\d+) (\S+) (\S+) (\d+) (\d+) (\S+) (\S+) (\S+)/) {
+	} elsif (/^%P (\S+) (\S+) (\S+) (\S+) (\d+) (\d+) (\S+) (\S+) (\d+) (\d+) (\S+) (\S+) (\S+)/) {
 	    die "part tag $1 already exists" if exists $self->{'parts'}{$1};
 	    die "dump tag $2 does not exist" unless exists $self->{'dumps'}{$2};
 
+	    $self->{dumps}->{$2}->{'part_offset'} = 0 if $6 == 1;
 	    my $part = $self->{'parts'}{$1} = {
 		dump => $self->{dumps}{$2},
-		label => $3,
-		filenum => $4,
-		partnum => $5,
-		status => $6,
-		sec => $7+0.0,
-		kb => $8,
-		orig_kb => $9,
-		native_crc => $10,
-		client_crc => $11,
-		server_crc => $12,
+		pool => $3,
+		label => $4,
+		filenum => $5,
+		partnum => $6,
+		status => $7,
+		sec => $8+0.0,
+		kb => $9,
+		part_size => $9 * 1024,
+		part_offset => $self->{'dumps'}->{$2}->{'part_offset'},
+		#orig_kb => $10,
+		#native_crc => $11,
+		#client_crc => $12,
+		#server_crc => $13,
 	    };
-	    $self->{'dumps'}->{$2}->{'parts'}->[$5] = $part;
+	    $self->{'dumps'}->{$2}->{'part_offset'} += $9 * 1024;
+	    $self->{'dumps'}->{$2}->{'parts'}->[$6] = $part;
 
 	# processing tag
 	} elsif (/^%%\s*(.*)$/) {
@@ -308,6 +322,9 @@ sub _parse {
 	    }
 	    $$fileref .= $_;
 	}
+    }
+    foreach my $dump (values %{$self->{'dumps'}}) {
+	delete $dump->{'part_offset'};
     }
 }
 
@@ -368,6 +385,13 @@ sub install {
 	Amanda::Util::burp($pathname, $self->{'files'}{$filename});
     }
 
+    # write the new symlink files
+    for my $symname (keys %{$self->{'symlink'}}) {
+	my $pathname = "$Amanda::Paths::CONFIG_DIR/TESTCONF/$symname";
+	my $filename = $self->{'symlink'}->{$symname}->{'link'};
+	symlink $filename, $pathname;
+    }
+
     # erase holding and create some new holding files
     rmtree($holdingdir);
     for my $hldinfo (values %{$self->{'holding_files'}}) {
@@ -401,7 +425,8 @@ sub get_file {
     my $self = shift;
     my ($name) = @_;
 
-    return $self->{'files'}->{$name};
+    return $self->{'files'}->{$name} if defined $self->{'files'}->{$name};
+    return $self->{'files'}->{$self->{'symlink'}->{$name}->{'file'}};
 }
 
 sub holding_filename {

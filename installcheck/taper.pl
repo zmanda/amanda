@@ -18,7 +18,7 @@
 # Contact information: Carbonite Inc., 756 N Pastoria Ave
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 312;
+use Test::More tests => 330;
 use strict;
 use warnings;
 
@@ -26,6 +26,7 @@ use lib '@amperldir@';
 use Installcheck;
 use Installcheck::Run;
 use Installcheck::Mock;
+use Installcheck::DBCatalog2;
 use IO::Handle;
 use IPC::Open3;
 use Data::Dumper;
@@ -33,11 +34,13 @@ use IO::Socket::INET;
 use POSIX ":sys_wait_h";
 use Cwd qw(abs_path);
 
+use Amanda::Config qw( :init :getconf config_dir_relative );
 use Amanda::Paths;
 use Amanda::Header qw( :constants );
 use Amanda::Debug;
 use Amanda::Paths;
 use Amanda::Device qw( :constants );
+use Amanda::DB::Catalog2;
 
 # ABOUT THESE TESTS:
 #
@@ -61,7 +64,7 @@ my $debug = !exists $ENV{'HARNESS_ACTIVE'};
 # information on the current run
 my ($datestamp, $handle);
 my ($taper_pid, $taper_in, $taper_out, $last_taper_reply, $taper_reply_timeout);
-
+my $DBCatalog2;
 sub run_taper {
     my ($length, $description, %params) = @_;
 
@@ -69,6 +72,11 @@ sub run_taper {
 
     unless ($params{'keep_config'}) {
 	my $testconf;
+
+	if (defined $DBCatalog2) {
+	    $DBCatalog2->quit();
+	    $DBCatalog2= undef;
+	}
 	$testconf = Installcheck::Run::setup();
 	$testconf->add_param('autolabel', '"TESTCONF%%" empty volume_error');
 	if ($params{'notapedev'}) {
@@ -95,7 +103,15 @@ sub run_taper {
 			]);
 
 	}
-	$testconf->write();
+	$testconf->write(do_catalog => 0);
+	config_uninit();
+	config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
+	$DBCatalog2 = Amanda::DB::Catalog2->new(undef, create => 1, drop_tables => 1, load => 1);
+    }
+    if ($params{'images'}) {
+	foreach my $image (@{$params{'images'}}) {
+	    $DBCatalog2->add_image($image->[0], $image->[1], $image->[2], $image->[3], $image->[4]);
+	}
     }
 
     open(TAPER_ERR, ">", $taper_stderr_file);
@@ -239,6 +255,9 @@ sub check_logs {
 sub cleanup_log {
     my $logfile = "$CONFIG_DIR/TESTCONF/log/log";
     -f $logfile and unlink($logfile);
+
+#    $DBCatalog2->compute_retention();
+#    $DBCatalog2->cleanup_parts_copys_images() if defined $DBCatalog2;
 }
 
 # functions to create dumpfiles
@@ -298,6 +317,9 @@ sub write_to_port {
     # just run this in the child
     return unless fork() == 0;
 
+    $DBCatalog2->{'dbh'}->{InactiveDestroy} = 1;
+    $DBCatalog2 = undef;
+
     my $sock = IO::Socket::INET->new(
 	PeerAddr => "127.0.0.1:$header_port",
 	Proto => "tcp",
@@ -322,8 +344,10 @@ sub write_to_port {
 ##
 # A simple, one-part FILE-WRITE
 $handle = "11-11111";
-$datestamp = "20070102030405";
-run_taper(4096, "single-part and multipart FILE-WRITE");
+$datestamp = "20070102030409";
+run_taper(4096, "single-part and multipart FILE-WRITE",
+	 images => [["localhost", "/home", undef, $datestamp, 0],
+		    ["localhost", "/usr", undef, $datestamp, 0]]);
 like(taper_reply, qr/^TAPER-OK worker0-0 ALLOW-TAKE-SCRIBE-FROM$/,
 	"got TAPER-OK") or die;
 make_holding_file(1024*1024, "localhost", "/home");
@@ -356,6 +380,9 @@ like(taper_reply, qr/^PARTDONE worker0-0 $handle TESTCONF01 4 0 "\[sec [\d.]+ by
 	"got PARTDONE for filenum 4") or die;
 like(taper_reply, qr/^DONE worker0-0 $handle INPUT-GOOD TAPE-GOOD "02929ca0:1048576" "\[sec [\d.]+ bytes 1048576 kps [\d.]+ orig-kb 512\]" "" ""$/,
 	"got DONE") or die;
+taper_cmd("CLOSE-VOLUME worker0-0");
+like(taper_reply, qr/^CLOSED-VOLUME worker0-0$/,
+	"got CLOSED-VOLUME worker0-0") or die;
 taper_cmd("QUIT");
 wait_for_exit();
 
@@ -428,7 +455,8 @@ check_logs([
 
 $handle = '11-22223';
 $datestamp = "20070102030406";
-run_taper(4096, "multipart partial FILE-WRITE");
+run_taper(4096, "multipart partial FILE-WRITE",
+	 images =>[[ "localhost", "/usr", undef, $datestamp, 0 ]]);
 like(taper_reply, qr/^TAPER-OK worker0-0 ALLOW-TAKE-SCRIBE-FROM$/,
 	"got TAPER-OK") or die;
 make_holding_file(1024*1024, "localhost", "/usr", 1);
@@ -448,6 +476,9 @@ like(taper_reply, qr/^PARTDONE worker0-0 $handle TESTCONF01 3 0 "\[sec [\d.]+ by
 	"got PARTDONE for filenum 3") or die;
 like(taper_reply, qr/^DONE worker0-0 $handle INPUT-GOOD TAPE-GOOD "02929ca0:1048576" "\[sec [\d.]+ bytes 1048576 kps [\d.]+ orig-kb 512\]" "" ""$/,
 	"got DONE") or die;
+taper_cmd("CLOSE-VOLUME worker0-0");
+like(taper_reply, qr/^CLOSED-VOLUME worker0-0$/,
+	"got CLOSED-VOLUME worker0-0") or die;
 taper_cmd("QUIT");
 wait_for_exit();
 
@@ -466,7 +497,8 @@ check_logs([
 
 $handle = "11-33333";
 $datestamp = "19780615010203";
-run_taper(4096, "multipart PORT-WRITE");
+run_taper(4096, "multipart PORT-WRITE",
+	 images =>[[ "localhost", "/var", undef, $datestamp, 0 ]]);
 like(taper_reply, qr/^TAPER-OK worker0-0 ALLOW-TAKE-SCRIBE-FROM$/,
 	"got TAPER-OK") or die;
 taper_cmd("PORT-WRITE worker0-0 $handle localhost /var 0 $datestamp 524288 \"\" 393216 1 0 \"\" \"\" 0 AMANDA");
@@ -497,6 +529,9 @@ like(taper_reply, qr/^DUMPER-STATUS worker0-0 $handle$/,
 taper_cmd("DONE worker0-0 $handle 712 00000000:0 00000000:0 00000000:0");
 like(taper_reply, qr/^DONE worker0-0 $handle INPUT-GOOD TAPE-GOOD "94a8170a:2064384" "\[sec [\d.]+ bytes 2064384 kps [\d.]+ orig-kb 712\]" "" ""$/,
 	"got DONE") or die;
+taper_cmd("CLOSE-VOLUME worker0-0");
+like(taper_reply, qr/^CLOSED-VOLUME worker0-0$/,
+	"got CLOSED-VOLUME worker0-0") or die;
 taper_cmd("QUIT");
 wait_for_exit();
 
@@ -518,7 +553,8 @@ check_logs([
 
 $handle = "11-44444";
 $datestamp = "19411207000000";
-run_taper(4096, "testing NO-NEW-TAPE from the driver on 1st request");
+run_taper(4096, "testing NO-NEW-TAPE from the driver on 1st request",
+	 images =>[[ "localhost", "/home", undef, $datestamp, 0 ]]);
 like(taper_reply, qr/^TAPER-OK worker0-0 ALLOW-TAKE-SCRIBE-FROM$/,
 	"got TAPER-OK") or die;
 make_holding_file(1024*1024, "localhost", "/home");
@@ -528,6 +564,9 @@ like(taper_reply, qr/^REQUEST-NEW-TAPE worker0-0 $handle$/,
 taper_cmd("NO-NEW-TAPE worker0-0 $handle sorry");
 like(taper_reply, qr/^FAILED worker0-0 $handle INPUT-GOOD TAPE-CONFIG "" "?sorry"?.*$/,
 	"got FAILED") or die;
+taper_cmd("CLOSE-VOLUME worker0-0");
+like(taper_reply, qr/^CLOSED-VOLUME worker0-0$/,
+	"got CLOSED-VOLUME worker0-0") or die;
 taper_cmd("QUIT");
 wait_for_exit();
 
@@ -542,7 +581,8 @@ check_logs([
 
 $handle = "11-55555";
 $datestamp = "19750711095836";
-run_taper(1024, "PORT-WRITE retry on EOT (mem cache)");
+run_taper(1024, "PORT-WRITE retry on EOT (mem cache)",
+	 images =>[[ "localhost", "/usr/local", undef, $datestamp, 0 ]]);
 like(taper_reply, qr/^TAPER-OK worker0-0 ALLOW-TAKE-SCRIBE-FROM$/,
 	"got TAPER-OK") or die;
 taper_cmd("PORT-WRITE worker0-0 $handle localhost /usr/local 0 $datestamp 786432 \"\" 786432 1 0 \"\" \"\" 0 AMANDA");
@@ -573,6 +613,9 @@ like(taper_reply, qr/^DUMPER-STATUS worker0-0 $handle$/,
 taper_cmd("DONE worker0-0 $handle 1012 00000000:0 00000000:0 00000000:0");
 like(taper_reply, qr/^DONE worker0-0 $handle INPUT-GOOD TAPE-GOOD "8960acbb:1575936" "\[sec [\d.]+ bytes 1575936 kps [\d.]+ orig-kb 1012\]" "" ""$/,
 	"got DONE") or die;
+taper_cmd("CLOSE-VOLUME worker0-0");
+like(taper_reply, qr/^CLOSED-VOLUME worker0-0$/,
+	"got CLOSED-VOLUME worker0-0") or die;
 taper_cmd("QUIT");
 wait_for_exit();
 
@@ -596,7 +639,8 @@ check_logs([
 
 $handle = "11-66666";
 $datestamp = "19470815000000";
-run_taper(1024, "FILE-WRITE retry on EOT");
+run_taper(1024, "FILE-WRITE retry on EOT",
+	 images =>[[ "localhost", "/usr", undef, $datestamp, 0 ]]);
 like(taper_reply, qr/^TAPER-OK worker0-0 ALLOW-TAKE-SCRIBE-FROM$/,
 	"got TAPER-OK") or die;
 make_holding_file(1575936, "localhost", "/usr");
@@ -645,7 +689,8 @@ check_logs([
 
 $handle = "11-77777";
 $datestamp = "20090427212500";
-run_taper(1024, "PORT-WRITE retry on EOT (disk cache)");
+run_taper(1024, "PORT-WRITE retry on EOT (disk cache)",
+	 images =>[[ "localhost", "/usr/local", undef, $datestamp, 0 ]]);
 like(taper_reply, qr/^TAPER-OK worker0-0 ALLOW-TAKE-SCRIBE-FROM$/,
 	"got TAPER-OK") or die;
 taper_cmd("PORT-WRITE worker0-0 $handle localhost /usr/local 0 $datestamp 786432 \"$Installcheck::TMP\" 786432 1 0 \"\" \"\" 0 AMANDA");
@@ -700,7 +745,9 @@ check_logs([
 
 $handle = "11-88888";
 $datestamp = "20090424173000";
-run_taper(1024, "PORT-WRITE failure on EOT (no cache)");
+run_taper(1024, "PORT-WRITE failure on EOT (no cache)",
+	 images =>[[ "localhost", "/var/log", undef, $datestamp, 0 ],
+		   [ "localhost", "/boot", undef, $datestamp, 0 ]]);
 like(taper_reply, qr/^TAPER-OK worker0-0 ALLOW-TAKE-SCRIBE-FROM$/,
 	"got TAPER-OK") or die;
 taper_cmd("PORT-WRITE worker0-0 $handle localhost /var/log 0 $datestamp 0 \"\" 0 0 0 \"\" \"\" 0 AMANDA");
@@ -714,7 +761,7 @@ taper_cmd("NEW-TAPE worker0-0 $handle");
 like(taper_reply, qr/^NEW-TAPE worker0-0 $handle TESTCONF01$/,
 	"got proper NEW-TAPE worker0-0 $handle") or die;
 like(taper_reply, qr/^READY worker0-0 $handle/);
-like(taper_reply, qr/^PARTIAL worker0-0 $handle INPUT-GOOD TAPE-ERROR "00000000:0" "\[sec [\d.]+ bytes 0 kps [\d.]+\]" "" "No space left on device: more than MAX_VOLUME_USAGE bytes written, splitting not enabled"$/,
+like(taper_reply, qr/^PARTIAL worker0-0 $handle INPUT-GOOD TAPE-ERROR "8960acbb:1575936" "\[sec [\d.]+ bytes 0 kps [\d.]+\]" "" "No space left on device: more than MAX_VOLUME_USAGE bytes written, splitting not enabled"$/,
 	"got PARTIAL") or die;
 # retry on the next tape
 $handle = "11-88899";
@@ -757,7 +804,8 @@ check_logs([
 
 $handle = "11-99999";
 $datestamp = "20100101000000";
-run_taper(512, "FILE-WRITE runs out of tapes");
+run_taper(512, "FILE-WRITE runs out of tapes",
+	 images =>[[ "localhost", "/music", undef, $datestamp, 0 ]]);
 like(taper_reply, qr/^TAPER-OK worker0-0 ALLOW-TAKE-SCRIBE-FROM$/,
 	"got TAPER-OK") or die;
 make_holding_file(512*1024, "localhost", "/music");
@@ -787,7 +835,7 @@ check_logs([
     qr(^INFO taper Will request retry of failed split part\.$),
     qr(^INFO taper tape TESTCONF01 kb 256 fm 2 \[OK\]$),
     qr(^ERROR taper no-tape config \[that's enough\]$),
-    qr(^PARTIAL taper "ST:TESTCONF" "POOL:TESTCONF" localhost /music $datestamp 2 0 00000000:0 00000000:0 7a0eb504:524288 \[sec [\d.]+ bytes 262144 kps [\d.]+ orig-kb 1312\] "that's enough"$),
+    qr(^PARTIAL taper "ST:TESTCONF" "POOL:TESTCONF" localhost /music $datestamp 2 0 00000000:0 00000000:0 372815a3:262144 \[sec [\d.]+ bytes 262144 kps [\d.]+ orig-kb 1312\] "that's enough"$),
 ], "running out of tapes (simulating runtapes=1) logged correctly");
 
 ##
@@ -795,7 +843,8 @@ check_logs([
 
 $handle = "22-00000";
 $datestamp = "20200202222222";
-run_taper(4096, "multipart PORT-WRITE");
+run_taper(4096, "multipart PORT-WRITE",
+	 images =>[[ "localhost", "/sbin", undef, $datestamp, 0 ]]);
 like(taper_reply, qr/^TAPER-OK worker0-0 ALLOW-TAKE-SCRIBE-FROM$/,
 	"got TAPER-OK") or die;
 taper_cmd("PORT-WRITE worker0-0 $handle localhost /sbin 0 $datestamp 999999 \"\" 655360 1 \"\" \"\" \"\" \"\" AMANDA");
@@ -841,7 +890,9 @@ check_logs([
 
 $handle = "33-11111";
 $datestamp = "20090101010000";
-run_taper(1024, "first in a sequence");
+run_taper(1024, "first in a sequence",
+	 images =>[[ "localhost", "/u01", undef, $datestamp, 0 ],
+		   [ "localhost", "/u02", undef, $datestamp, 0 ]]);
 like(taper_reply, qr/^TAPER-OK worker0-0 ALLOW-TAKE-SCRIBE-FROM$/,
 	"got TAPER-OK") or die;
 make_holding_file(500000, "localhost", "/u01");
@@ -877,6 +928,9 @@ like(taper_reply, qr/^PARTDONE worker0-0 $handle TESTCONF02 2 88 "\[sec [\d.]+ b
 	"got PARTDONE for filenum 2 on second tape") or die;
 like(taper_reply, qr/^DONE worker0-0 $handle INPUT-GOOD TAPE-GOOD "a6f09c00:614400" "\[sec [\d.]+ bytes 614400 kps [\d.]+ orig-kb 1512\]" "" ""$/,
 	"got DONE") or die;
+taper_cmd("CLOSE-VOLUME worker0-0");
+like(taper_reply, qr/^CLOSED-VOLUME worker0-0$/,
+	"got CLOSED-VOLUME worker0-0") or die;
 taper_cmd("QUIT");
 wait_for_exit();
 
@@ -901,7 +955,9 @@ cleanup_log();
 
 $handle = "33-33333";
 $datestamp = "20090202020000";
-run_taper(1024, "second in a sequence", keep_config => 1);
+run_taper(1024, "second in a sequence", keep_config => 1,
+	 images =>[[ "localhost", "/u01", undef, $datestamp, 0 ],
+		   [ "localhost", "/u02", undef, $datestamp, 0 ]]);
 like(taper_reply, qr/^TAPER-OK worker0-0 ALLOW-TAKE-SCRIBE-FROM$/,
 	"got TAPER-OK") or die;
 make_holding_file(300000, "localhost", "/u01");
@@ -938,6 +994,9 @@ like(taper_reply, qr/^PARTDONE worker0-0 $handle TESTCONF01 1 88 "\[sec [\d.]+ b
 	"got PARTDONE for filenum 1 on second tape") or die;
 like(taper_reply, qr/^DONE worker0-0 $handle INPUT-GOOD TAPE-GOOD "a6f09c00:614400" "\[sec [\d.]+ bytes 614400 kps [\d.]+ orig-kb 1712\]" "" ""$/,
 	"got DONE") or die;
+taper_cmd("CLOSE-VOLUME worker0-0");
+like(taper_reply, qr/^CLOSED-VOLUME worker0-0$/,
+	"got CLOSED-VOLUME worker0-0") or die;
 taper_cmd("QUIT");
 wait_for_exit();
 
@@ -966,7 +1025,8 @@ cleanup_log();
 
 $handle = "33-55555";
 $datestamp = "20090303030000";
-run_taper(1024, "failure to overwrite a volume", keep_config => 1);
+run_taper(1024, "failure to overwrite a volume", keep_config => 1,
+	 images =>[[ "localhost", "/u03", undef, $datestamp, 0 ]]);
 like(taper_reply, qr/^TAPER-OK worker0-0 ALLOW-TAKE-SCRIBE-FROM$/,
 	"got TAPER-OK") or die;
 make_holding_file(32768, "localhost", "/u03");
@@ -987,6 +1047,9 @@ like(taper_reply, qr/^REQUEST-NEW-TAPE worker0-0 $handle$/,
 taper_cmd("NO-NEW-TAPE worker0-0 $handle \"sorry\"");
 like(taper_reply, qr/^FAILED worker0-0 $handle INPUT-GOOD TAPE-CONFIG "" "?sorry"?.*$/,
 	"got FAILED") or die;
+taper_cmd("CLOSE-VOLUME worker0-0");
+like(taper_reply, qr/^CLOSED-VOLUME worker0-0$/,
+	"got CLOSED-VOLUME worker0-0") or die;
 taper_cmd("QUIT");
 wait_for_exit();
 
@@ -999,7 +1062,7 @@ wait_for_exit();
 ##
 # A run with a bogus tapedev/tpchanger
 $handle = "44-11111";
-$datestamp = "20070102030405";
+$datestamp = "20070102030406";
 run_taper(4096, "Yno tapedev", notapedev => 1);
 like(taper_reply, qr/^TAPE-ERROR SETUP "Storage 'TESTCONF': You must specify the 'tapedev' or 'tpchanger'"$/,
 	"got TAPE-ERROR") or die;
@@ -1010,7 +1073,9 @@ wait_for_exit();
 my $handle0 = "66-00000";
 my $handle1 = "66-11111";
 $datestamp = "20090202020000";
-run_taper(1024, "with 2 workers");
+run_taper(1024, "with 2 workers",
+	 images =>[[ "localhost", "/u01", undef, $datestamp, 0 ],
+		   [ "localhost", "/u02", undef, $datestamp, 0 ]]);
 like(taper_reply, qr/^TAPER-OK worker0-0 ALLOW-TAKE-SCRIBE-FROM$/,
 	"got TAPER-OK") or die;
 taper_cmd("START-TAPER taper0 worker0-1 TESTCONF $datestamp");
@@ -1048,6 +1113,9 @@ like(taper_reply, qr/^PARTDONE worker0-1 $handle1 TESTCONF02 3 88 "\[sec [\d.]+ 
 	"got PARTDONE for filenum 3 on second tape") or die;
 like(taper_reply, qr/^DONE worker0-1 $handle1 INPUT-GOOD TAPE-GOOD "a6f09c00:614400" "\[sec [\d.]+ bytes 614400 kps [\d.]+ orig-kb 1712\]" "" ""$/,
 	"got DONE") or die;
+taper_cmd("CLOSE-VOLUME worker0-0");
+like(taper_reply, qr/^CLOSED-VOLUME worker0-0$/,
+	"got CLOSED-VOLUME worker0-0") or die;
 taper_cmd("QUIT");
 wait_for_exit();
 
@@ -1072,7 +1140,8 @@ cleanup_log();
 # A run with 2 workers and a take_scribe
 $handle = "66-22222";
 $datestamp = "20090202020000";
-run_taper(1024, "with 2 workers and a take_scribe");
+run_taper(1024, "with 2 workers and a take_scribe",
+	 images =>[[ "localhost", "/u01", undef, $datestamp, 0 ]]);
 like(taper_reply, qr/^TAPER-OK worker0-0 ALLOW-TAKE-SCRIBE-FROM$/,
 	"got TAPER-OK") or die;
 taper_cmd("START-TAPER taper0 worker0-1 TESTCONF $datestamp");
@@ -1107,6 +1176,9 @@ like(taper_reply, qr/^PARTDONE worker0-0 $handle TESTCONF02 1 208 "\[sec [\d.]+ 
 	"got PARTDONE for filenum 4") or die;
 like(taper_reply, qr/^DONE worker0-0 $handle INPUT-GOOD TAPE-GOOD "62c785cc:1000000" "\[sec [\d.]+ bytes 1000000 kps [\d.]+ orig-kb 1612\]" "" ""$/,
 	"got DONE") or die;
+taper_cmd("CLOSE-VOLUME worker0-0");
+like(taper_reply, qr/^CLOSED-VOLUME worker0-0$/,
+	"got CLOSED-VOLUME worker0-0") or die;
 taper_cmd("QUIT");
 wait_for_exit();
 
@@ -1140,7 +1212,9 @@ SKIP : {
     $handle = "55-11111";
     $datestamp = "19780615010305";
     run_taper(4096, "multipart directtcp PORT-WRITE",
-	ndmp_server => $ndmp);
+	ndmp_server => $ndmp,
+	images =>[[ "localhost", "/var", undef, $datestamp, 0 ],
+		  [ "localhost", "/etc", undef, $datestamp, 0 ]]);
     like(taper_reply, qr/^TAPER-OK worker0-0 NO-TAKE-SCRIBE-FROM$/,
 	    "got TAPER-OK") or die;
     # note that, with the addition of the new splitting params, this does the "sensible"
@@ -1191,6 +1265,9 @@ SKIP : {
     taper_cmd("DONE worker0-0 $handle 2012 00000000:0 00000000:0 00000000:0");
     like(taper_reply, qr/^DONE worker0-0 $handle INPUT-GOOD TAPE-GOOD "00000000:0" "\[sec [\d.]+ bytes 327680 kps [\d.]+ orig-kb 2012\]" "" ""$/,
 	    "got DONE") or die;
+    taper_cmd("CLOSE-VOLUME worker0-0");
+    like(taper_reply, qr/^CLOSED-VOLUME worker0-0$/,
+	    "got CLOSED-VOLUME worker0-0") or die;
     taper_cmd("QUIT");
     wait_for_exit();
 
@@ -1215,7 +1292,8 @@ SKIP : {
     $handle = "55-33333";
     $datestamp = "19780615010305";
     run_taper(4096, "multipart directtcp PORT-WRITE, with a zero-byte part",
-	ndmp_server => $ndmp);
+	ndmp_server => $ndmp,
+	images =>[[ "localhost", "/var", undef, $datestamp, 0 ]]);
     like(taper_reply, qr/^TAPER-OK worker0-0 NO-TAKE-SCRIBE-FROM$/,
 	    "got TAPER-OK") or die;
     # use a different part size this time, to hit EOM "on the head"
@@ -1250,6 +1328,9 @@ SKIP : {
     taper_cmd("DONE worker0-0 $handle 2112 00000000:0 00000000:0 00000000:0");
     like(taper_reply, qr/^DONE worker0-0 $handle INPUT-GOOD TAPE-GOOD "00000000:0" "\[sec [\d.]+ bytes 1671168 kps [\d.]+ orig-kb 2112\]" "" ""$/,
 	    "got DONE") or die;
+    taper_cmd("CLOSE-VOLUME worker0-0");
+    like(taper_reply, qr/^CLOSED-VOLUME worker0-0$/,
+	    "got CLOSED-VOLUME worker0-0") or die;
     taper_cmd("QUIT");
     wait_for_exit();
 
@@ -1276,7 +1357,8 @@ SKIP : {
 # A run without LEOM and without allow-split
 $handle = "77-11111";
 $datestamp = "20090302020000";
-run_taper(1024, "without LEOM and without allow-split");
+run_taper(1024, "without LEOM and without allow-split",
+	 images =>[[ "localhost", "/usr", undef, $datestamp, 0 ]]);
 make_holding_file(1024*1024, "localhost", "/usr");
 like(taper_reply, qr/^TAPER-OK worker0-0 ALLOW-TAKE-SCRIBE-FROM$/,
 	"got TAPER-OK") or die;
@@ -1288,8 +1370,11 @@ taper_cmd("NEW-TAPE worker0-0 $handle");
 like(taper_reply, qr/^NEW-TAPE worker0-0 $handle TESTCONF01$/,
 	"got proper NEW-TAPE worker0-0 $handle") or die;
 like(taper_reply, qr/^READY worker0-0 $handle/);
-like(taper_reply, qr/^PARTIAL worker0-0 $handle INPUT-GOOD TAPE-ERROR "00000000:0" "\[sec [\d.]+ bytes \d* kps [\d.]+ orig-kb 1612\]" "" "No space left on device: more than MAX_VOLUME_USAGE bytes written, splitting not enabled"$/,
+like(taper_reply, qr/^PARTIAL worker0-0 $handle INPUT-GOOD TAPE-ERROR "02929ca0:1048576" "\[sec [\d.]+ bytes \d* kps [\d.]+ orig-kb 1612\]" "" "No space left on device: more than MAX_VOLUME_USAGE bytes written, splitting not enabled"$/,
 	"got PARTIAL for filenum 1") or die;
+taper_cmd("CLOSE-VOLUME worker0-0");
+like(taper_reply, qr/^CLOSED-VOLUME worker0-0$/,
+	"got CLOSED-VOLUME worker0-0") or die;
 taper_cmd("QUIT");
 wait_for_exit();
 
@@ -1306,7 +1391,8 @@ cleanup_log();
 # A run with LEOM and without allow-split
 $handle = "77-11112";
 $datestamp = "20090303020000";
-run_taper(1024, "with LEOM and without allow-split", leom => 1);
+run_taper(1024, "with LEOM and without allow-split", leom => 1,
+	 images =>[[ "localhost", "/usr", undef, $datestamp, 0 ]]);
 make_holding_file(1024*1024, "localhost", "/usr");
 like(taper_reply, qr/^TAPER-OK worker0-0 ALLOW-TAKE-SCRIBE-FROM$/,
 	"got TAPER-OK") or die;
@@ -1322,6 +1408,9 @@ like(taper_reply, qr/^PARTDONE worker0-0 $handle TESTCONF01 1 864 "\[sec [\d.]+ 
 	"got PARTDONE for filenum 1") or die;
 like(taper_reply, qr/^PARTIAL worker0-0 $handle INPUT-GOOD TAPE-ERROR "9eee465f:884736" "\[sec [\d.]+ bytes 884736 kps [\d.]+ orig-kb 1612\]" "" "No space left on device, splitting not enabled"$/,
 	"got PARTIAL") or die;
+taper_cmd("CLOSE-VOLUME worker0-0");
+like(taper_reply, qr/^CLOSED-VOLUME worker0-0$/,
+	"got CLOSED-VOLUME worker0-0") or die;
 taper_cmd("QUIT");
 wait_for_exit();
 
@@ -1339,8 +1428,10 @@ cleanup_log();
 ##
 # A simple, one-part FILE-WRITE
 $handle = "11-11111";
-$datestamp = "20070102030405";
-run_taper(4096, "single-part and multipart FILE-WRITE", taperscan => "lexical");
+$datestamp = "20070102030407";
+run_taper(4096, "single-part and multipart FILE-WRITE", taperscan => "lexical",
+	 images =>[[ "localhost", "/home", undef, $datestamp, 0 ],
+		   [ "localhost", "/usr", undef, $datestamp, 0 ]]);
 like(taper_reply, qr/^TAPER-OK worker0-0 ALLOW-TAKE-SCRIBE-FROM$/,
 	"got TAPER-OK") or die;
 make_holding_file(1024*1024, "localhost", "/home");
@@ -1373,6 +1464,9 @@ like(taper_reply, qr/^PARTDONE worker0-0 $handle TESTCONF01 4 0 "\[sec [\d.]+ by
 	"got PARTDONE for filenum 4") or die;
 like(taper_reply, qr/^DONE worker0-0 $handle INPUT-GOOD TAPE-GOOD "02929ca0:1048576" "\[sec [\d.]+ bytes 1048576 kps [\d.]+ orig-kb 512\]" "" ""$/,
 	"got DONE") or die;
+taper_cmd("CLOSE-VOLUME worker0-0");
+like(taper_reply, qr/^CLOSED-VOLUME worker0-0$/,
+	"got CLOSED-VOLUME worker0-0") or die;
 taper_cmd("QUIT");
 wait_for_exit();
 
@@ -1393,7 +1487,9 @@ check_logs([
 
 $handle = "33-11111";
 $datestamp = "20090101010000";
-run_taper(1024, "first in a sequence", taperscan => "lexical");
+run_taper(1024, "first in a sequence", taperscan => "lexical",
+	 images =>[[ "localhost", "/u01", undef, $datestamp, 0 ],
+		   [ "localhost", "/u02", undef, $datestamp, 0 ]]);
 like(taper_reply, qr/^TAPER-OK worker0-0 ALLOW-TAKE-SCRIBE-FROM$/,
 	"got TAPER-OK") or die;
 make_holding_file(500000, "localhost", "/u01");
@@ -1429,6 +1525,9 @@ like(taper_reply, qr/^PARTDONE worker0-0 $handle TESTCONF02 2 88 "\[sec [\d.]+ b
 	"got PARTDONE for filenum 2 on second tape") or die;
 like(taper_reply, qr/^DONE worker0-0 $handle INPUT-GOOD TAPE-GOOD "a6f09c00:614400" "\[sec [\d.]+ bytes 614400 kps [\d.]+ orig-kb 1512\]" "" ""$/,
 	"got DONE") or die;
+taper_cmd("CLOSE-VOLUME worker0-0");
+like(taper_reply, qr/^CLOSED-VOLUME worker0-0$/,
+	"got CLOSED-VOLUME worker0-0") or die;
 taper_cmd("QUIT");
 wait_for_exit();
 
@@ -1453,7 +1552,9 @@ cleanup_log();
 
 $handle = "33-33333";
 $datestamp = "20090202020000";
-run_taper(1024, "second in a sequence", keep_config => 1);
+run_taper(1024, "second in a sequence", keep_config => 1,
+	 images =>[[ "localhost", "/u01", undef, $datestamp, 0 ],
+		   [ "localhost", "/u02", undef, $datestamp, 0 ]]);
 like(taper_reply, qr/^TAPER-OK worker0-0 ALLOW-TAKE-SCRIBE-FROM$/,
 	"got TAPER-OK") or die;
 make_holding_file(300000, "localhost", "/u01");
@@ -1489,6 +1590,9 @@ like(taper_reply, qr/^PARTDONE worker0-0 $handle TESTCONF01 1 88 "\[sec [\d.]+ b
 	"got PARTDONE for filenum 1 on second tape") or die;
 like(taper_reply, qr/^DONE worker0-0 $handle INPUT-GOOD TAPE-GOOD "a6f09c00:614400" "\[sec [\d.]+ bytes 614400 kps [\d.]+ orig-kb 1712\]" "" ""$/,
 	"got DONE") or die;
+taper_cmd("CLOSE-VOLUME worker0-0");
+like(taper_reply, qr/^CLOSED-VOLUME worker0-0$/,
+	"got CLOSED-VOLUME worker0-0") or die;
 taper_cmd("QUIT");
 wait_for_exit();
 
@@ -1514,7 +1618,7 @@ cleanup_log();
 ##
 # A run with a bogus tapedev/tpchanger
 $handle = "44-11111";
-$datestamp = "20070102030405";
+$datestamp = "20070102030408";
 run_taper(4096, "Xno tapedev", notapedev => 1, taperscan => "lexical");
 like(taper_reply, qr/^TAPE-ERROR SETUP "Storage 'TESTCONF': You must specify the 'tapedev' or 'tpchanger'"$/,
 	"got TAPE-ERROR") or die;
@@ -1525,7 +1629,9 @@ wait_for_exit();
 $handle0 = "66-00000";
 $handle1 = "66-11111";
 $datestamp = "20090202020000";
-run_taper(1024, "with 2 workers", taperscan => "lexical");
+run_taper(1024, "with 2 workers", taperscan => "lexical",
+	 images =>[[ "localhost", "/u01", undef, $datestamp, 0 ],
+		   [ "localhost", "/u02", undef, $datestamp, 0 ]]);
 like(taper_reply, qr/^TAPER-OK worker0-0 ALLOW-TAKE-SCRIBE-FROM$/,
 	"got TAPER-OK") or die;
 taper_cmd("START-TAPER taper0 worker0-1 TESTCONF $datestamp");
@@ -1563,6 +1669,9 @@ like(taper_reply, qr/^PARTDONE worker0-1 $handle1 TESTCONF02 3 88 "\[sec [\d.]+ 
 	"got PARTDONE for filenum 3 on second tape") or die;
 like(taper_reply, qr/^DONE worker0-1 $handle1 INPUT-GOOD TAPE-GOOD "a6f09c00:614400" "\[sec [\d.]+ bytes 614400 kps [\d.]+ orig-kb 1712\]" "" ""$/,
 	"got DONE") or die;
+taper_cmd("CLOSE-VOLUME worker0-0");
+like(taper_reply, qr/^CLOSED-VOLUME worker0-0$/,
+	"got CLOSED-VOLUME worker0-0") or die;
 taper_cmd("QUIT");
 wait_for_exit();
 

@@ -451,9 +451,25 @@ EXTRA_DIST += Amanda/DB.pm
 
 if WANT_SERVER
 # PACKAGE: Amanda::DB::Catalog
-Amanda_DB_DATA += Amanda/DB/Catalog.pm
+Amanda_DB_DATA += Amanda/DB/Catalog.pm \
+		 Amanda/DB/Catalog2.pm
 endif
-EXTRA_DIST += Amanda/DB/Catalog.pm
+EXTRA_DIST += Amanda/DB/Catalog.pm \
+	      Amanda/DB/Catalog2.pm
+
+if WANT_SERVER
+# PACKAGE: Amanda::DB::Catalog2::*
+Amanda_DBCatalog2dir = $(Amandadir)/DB/Catalog2
+Amanda_DBCatalog2_DATA = \
+	Amanda/DB/Catalog2/log.pm \
+	Amanda/DB/Catalog2/MySQL.pm \
+	Amanda/DB/Catalog2/PgSQL.pm \
+	Amanda/DB/Catalog2/SQL.pm \
+	Amanda/DB/Catalog2/SQLite.pm
+PM_FILES += $(Amanda_DBCatalog2_DATA)
+endif
+EXTRA_DIST += $(Amanda_DBCatalog2_DATA)
+
 
 # PACKAGE: Amanda::Xfer
 libXferdir = $(amperldir)/auto/Amanda/Xfer

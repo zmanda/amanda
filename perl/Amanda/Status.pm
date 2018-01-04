@@ -572,14 +572,14 @@ REREAD:
 		my $dle = $state->{'dles'}->{$host}->{$disk}->{$datestamp};
 		$dle->{'status'} = $WAIT_FOR_DUMPING;
 		$dle->{'level'} = $line[6];
-		my $esize = $line[14] * 1024; #compressed size
+		my $esize = $line[15] * 1024; #compressed size
 		$esize=32768 if $esize<32768;
 		$dle->{'esize'} = $esize;
-		if (!defined($line[25])) {
+		if (!defined($line[26])) {
 		    $dle->{'degr_level'} = -1;
 		} else {
-		    $dle->{'degr_level'} = $line[17];
-		    $esize=$line[25] * 1024;   #compressed size
+		    $dle->{'degr_level'} = $line[19];
+		    $esize=$line[27] * 1024;   #compressed size
 		    $esize=32768 if $esize<32768;
 		    $dle->{'degr_size'} = $esize;
 		}
@@ -1141,39 +1141,43 @@ REREAD:
 		    my $taper = $line[5];
 		    if ($line[6] eq "(eof)") {
 			# all worker fail
-			foreach my $worker (keys %{$state->{'worker_to_serial'}}) {
+			foreach my $worker (sort keys %{$self->{'taper'}->{$taper}->{'worker'}}) {
 			    my $serial = $state->{'worker_to_serial'}->{$worker};
 			    my $dle = $state->{'serial_to_dle'}->{$serial};
-			    if (defined $dle) {
-				my $error= "taper CRASH";
-				my $storage = $state->{'taper'}->{$taper}->{'storage'};
-				my $dlet = $dle->{'storage'}->{$storage};
-				if ($dlet->{'status'} == $DUMPING_TO_TAPE ||
-				    $dlet->{'status'} == $DUMPING_TO_TAPE_INIT ||
-				    $dlet->{'status'} == $DUMP_TO_TAPE_FAILED ||
-				    $dlet->{'status'} == $DUMPING_TO_TAPE_DUMPER) {
-				    $dlet->{'status'} = $DUMP_TO_TAPE_FAILED;
-				    $dle->{'status'} = $DUMP_TO_TAPE_FAILED;
-				} elsif ($dlet->{'status'} == $WRITING ||
-					 $dlet->{'status'} == $WRITE_FAILED) {
-				    $dlet->{'status'} = $WRITE_FAILED;
-				    $dle->{'status'} = $WRITE_FAILED;
-				} elsif ($dlet->{'status'} == $FLUSHING ||
-					 $dlet->{'status'} == $FLUSH_FAILED) {
-				    $dlet->{'status'} = $FLUSH_FAILED;
-				    $dle->{'status'} = $FLUSH_FAILED;
-				} elsif ($dlet->{'status'} == $VAULTING ||
-					 $dlet->{'status'} == $VAULTING_FAILED) {
-				    $dlet->{'status'} = $VAULTING_FAILED;
-				    $dle->{'status'} = $VAULTING_FAILED;
-				} else {
-				    die("bad status on taper eof ($serial): $dlet->{'status'}");
-				}
-				$dlet->{'taper_time'} = $state->{'current_time'};
-				$dlet->{'error'} = "$error";
-				$dle->{'error'} = "$error" if !defined $dle->{'error'};
-				undef $state->{'worker_to_serial'}->{$worker};
+			    my $error= "taper CRASH";
+			    $state->{'taper'}->{$taper}->{'worker'}->{$worker}->{'status'} = $TAPE_ERROR;
+			    $state->{'taper'}->{$taper}->{'worker'}->{$worker}->{'error'} = $error;
+			    $state->{'taper'}->{$taper}->{'worker'}->{$worker}->{'wait_for_tape'} = undef;
+			    $state->{'taper'}->{$taper}->{'worker'}->{$worker}->{'search_for_tape'} = undef;
+			    next if !defined($dle);
+			    my $storage = $state->{'taper'}->{$taper}->{'storage'};
+			    my $dlet = $dle->{'storage'}->{$storage};
+			    next if !defined $dlet;
+			    if ($dlet->{'status'} == $DUMPING_TO_TAPE ||
+				$dlet->{'status'} == $DUMPING_TO_TAPE_INIT ||
+				$dlet->{'status'} == $DUMP_TO_TAPE_FAILED ||
+				$dlet->{'status'} == $DUMPING_TO_TAPE_DUMPER) {
+				$dlet->{'status'} = $DUMP_TO_TAPE_FAILED;
+				$dle->{'status'} = $DUMP_TO_TAPE_FAILED;
+			    } elsif ($dlet->{'status'} == $WRITING ||
+				     $dlet->{'status'} == $WRITE_FAILED) {
+				$dlet->{'status'} = $WRITE_FAILED;
+				$dle->{'status'} = $WRITE_FAILED;
+			    } elsif ($dlet->{'status'} == $FLUSHING ||
+				     $dlet->{'status'} == $FLUSH_FAILED) {
+				$dlet->{'status'} = $FLUSH_FAILED;
+				$dle->{'status'} = $FLUSH_FAILED;
+			    } elsif ($dlet->{'status'} == $VAULTING ||
+				     $dlet->{'status'} == $VAULTING_FAILED) {
+				$dlet->{'status'} = $VAULTING_FAILED;
+				$dle->{'status'} = $VAULTING_FAILED;
+			    } else {
+				die("bad status on taper eof ($serial): $dlet->{'status'}");
 			    }
+			    $dlet->{'taper_time'} = $state->{'current_time'};
+			    $dlet->{'error'} = "$error";
+			    $dle->{'error'} = "$error" if !defined $dle->{'error'};
+			    undef $state->{'worker_to_serial'}->{$worker};
 			}
 		    } elsif ($line[6] eq "DONE" || $line[6] eq "PARTIAL") {
 			#DONE:    7:worker 8:handle 9:INPUT-GOOD 10:TAPE-GOOD 11:CRC 12:errstr

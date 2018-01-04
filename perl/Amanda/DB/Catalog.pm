@@ -635,6 +635,7 @@ sub get_parts_and_dumps {
 	    0);
 
 	# loop over each entry in the logfile.
+	my $part_offset = 0;
 	for my $find_result (@find_results) {
 
 	    # filter out the non-dump error messages that find.c produces
@@ -715,33 +716,40 @@ sub get_parts_and_dumps {
 
 	    # start setting up a part hash for this result
 	    my %part;
+	    $part_offset = 0 if $find_result->{'partnum'} == 1;
 	    if ($logfile ne 'holding') {
 		# on-media dump
 		%part = (
+		    pool => $find_result->{'pool'},
 		    label => $find_result->{'label'},
 		    filenum => $find_result->{'filenum'},
 		    dump => $dump,
 		    status => $find_result->{'status'} || 'FAILED',
 		    sec => $find_result->{'sec'},
+		    part_offset => $part_offset,
+		    part_size => $find_result->{'kb'} * 1024,
 		    kb => $find_result->{'kb'},
-		    orig_kb => $find_result->{'orig_kb'},
-		    native_crc => $find_result->{'native_crc'},
-		    client_crc => $find_result->{'client_crc'},
-		    server_crc => $find_result->{'server_crc'},
+		    #orig_kb => $find_result->{'orig_kb'},
+		    #native_crc => $find_result->{'native_crc'},
+		    #client_crc => $find_result->{'client_crc'},
+		    #server_crc => $find_result->{'server_crc'},
 		    partnum => $find_result->{'partnum'},
 		);
 	    } else {
 		# holding disk
 		%part = (
+		    pool => $find_result->{'pool'},
 		    holding_file => $find_result->{'label'},
 		    dump => $dump,
 		    status => $find_result->{'status'} || 'FAILED',
 		    sec => 0.0,
+		    part_offset => 0,
+		    part_size => $find_result->{'kb'} * 1024,
 		    kb => $find_result->{'kb'},
-		    orig_kb => $find_result->{'orig_kb'},
-		    native_crc => $find_result->{'native_crc'},
-		    client_crc => $find_result->{'client_crc'},
-		    server_crc => $find_result->{'server_crc'},
+		    #orig_kb => $find_result->{'orig_kb'},
+		    #native_crc => $find_result->{'native_crc'},
+		    #client_crc => $find_result->{'client_crc'},
+		    #server_crc => $find_result->{'server_crc'},
 		    partnum => 1,
 		);
 		# and fix up the dump, too
@@ -750,6 +758,7 @@ sub get_parts_and_dumps {
 		$dump->{'kb'} = $find_result->{'kb'};
 		$dump->{'sec'} = $find_result->{'sec'};
 	    }
+	    $part_offset += $find_result->{'kb'} * 1024;
 
 	    # weaken the dump ref if we're returning dumps
 	    weaken_ref($part{'dump'})
@@ -906,6 +915,8 @@ sub get_parts_and_dumps {
 	    my $dump = $dumps{$dumpkey};
 	    if (!defined $dump) {
 		# this will happen when a dump has no parts - a FAILed dump.
+		# or the label of the dump removed
+		next;
 		$dump = $dumps{$dumpkey} = {
 		    dump_timestamp => zeropad($dump_timestamp),
 		    write_timestamp => $write_timestamp,
@@ -1002,6 +1013,18 @@ sub sort_dumps {
 	    if ($k =~ /^(nparts|level|filenum)$/) {
 		# compare dump components numerically
 		$res = $a->{$k} <=> $b->{$k};
+	    } elsif ($k eq 'status') {
+		if ($a->{$k} eq 'FAILED') {
+		    $res = -1;
+		} elsif ($b->{$k} eq 'FAILED') {
+		    $res = 1;
+		} elsif ($a->{$k} eq 'PARTIAL') {
+		    $res = -1;
+		} elsif ($b->{$k} eq 'PARTIAL') {
+		    $res = 1;
+		} else {
+		    $res = -1;
+		}
 	    } else { # ($k =~ /^(hostname|diskname|write_timestamp|dump_timestamp)$/)
 		# compare dump components alphabetically
 		$res = $a->{$k} cmp $b->{$k};

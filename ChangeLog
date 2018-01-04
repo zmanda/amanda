@@ -1,3 +1,11 @@
+2018-01-04  Jean-Louis Martineau <JMartineau@carbonite.com>
+	Use a database (SQLite, MySQL or ProstgreSQL) to replace the tapelist
+	and log.* file
+	Read the Amanda-Catalog file
+	* perl/*, server-src/*, common-src/conffile.c: Major changes
+	* installcheck/*: Fix tests
+	* Amanda-Catalog: New documentation document
+
 2018-01-03  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/DB/Catalog2/MySQL.pm, perl/Amanda/DB/Catalog2/PgSQL.pm,
 	  perl/Amanda/DB/Catalog2/SQL.pm, perl/Amanda/DB/Catalog2/SQLite.pm,

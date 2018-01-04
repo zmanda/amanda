@@ -30,21 +30,21 @@ sub local_message {
     my $self = shift;
 
     if ($self->{'code'} == 1000000) {
-	return "$self->{'label'}: Can't assign because it is is the '$self->{'config'}' config";
+	return "volume '$self->{'pool'}:$self->{'label'}': Can't assign because it is in the '$self->{'config'}' config";
     } elsif ($self->{'code'} == 1000001) {
-	return "$self->{'label'}: Can't assign meta-label without force, old meta-label is '$self->{'meta'}'";
+	return "volume '$self->{'pool'}:$self->{'label'}': Can't assign meta-label without force, old meta-label is '$self->{'meta'}'";
     } elsif ($self->{'code'} == 1000002) {
-	return "$self->{'label'}: Can't assign barcode without force, old barcode is '$self->{'barcode'}'";
+	return "volume '$self->{'pool'}:$self->{'label'}': Can't assign barcode without force, old barcode is '$self->{'barcode'}'";
     } elsif ($self->{'code'} == 1000003) {
-	return  "$self->{'label'}: Can't assign pool without force, old pool is '$self->{'pool'}'";
+	return  "volume '$self->{'pool'}:$self->{'label'}': Can't assign pool without force, old pool is '$self->{'pool'}'";
     } elsif ($self->{'code'} == 1000004) {
-	return "$self->{'label'}: Can't assign storage without force, old storage is '$self->{'storage'}'";
+	return "volume '$self->{'pool'}:$self->{'label'}': Can't assign storage without force, old storage is '$self->{'storage'}'";
     } elsif ($self->{'code'} == 1000005) {
 	return "$self->{'label'}: Can't assign storage because it is a new labelled tape.";
     } elsif ($self->{'code'} == 1000006) {
-	return "Setting $self->{'label'}";
+	return "Setting volume '$self->{'pool'}:$self->{'label'}'";
     } elsif ($self->{'code'} == 1000007) {
-	return "All labels already correctly set.";
+	return "label '$self->{'pool'}:$self->{'label'}' already correctly set.";
     } elsif ($self->{'code'} == 1000008) {
 	return "Reading label...";
     } elsif ($self->{'code'} == 1000009) {
@@ -60,7 +60,7 @@ sub local_message {
     } elsif ($self->{'code'} == 1000014) {
 	return "Found label '$self->{'label'}' but it is from config '$self->{'config'}'";
     } elsif ($self->{'code'} == 1000015) {
-	return "Found label '$self->{'label'}' but it is from tape pool '$self->{'pool'}'.";
+	return "Found label '$self->{'label'}' but it is from tape pool '$self->{'oldpool'}'.";
     } elsif ($self->{'code'} == 1000016) {
 	return "Found label '$self->{'label'}' but it doesn't match the labelstr '$self->{'labelstr'}->{'template'}'.";
     } elsif ($self->{'code'} == 1000017) {
@@ -68,7 +68,7 @@ sub local_message {
     } elsif ($self->{'code'} == 1000018) {
 	return "Consider using 'amrmtape' to remove volume '$self->{'label'}' from the catalog.";
     } elsif ($self->{'code'} == 1000019) {
-	return "Found label '$self->{'label'}' but it is not in the tapelist file.";
+	return "Found volume '$self->{'pool'}:$self->{'label'}' but it is not in the catalog.";
     } elsif ($self->{'code'} == 1000020) {
 	return "Writing label '$self->{'label'}'...";
     } elsif ($self->{'code'} == 1000021) {
@@ -76,7 +76,7 @@ sub local_message {
     } elsif ($self->{'code'} == 1000022) {
 	return "Success!"
     } elsif ($self->{'code'} == 1000023) {
-	return "Label '$self->{'label'}' already on a volume.";
+	return "Label '$self->{'pool'}:$self->{'label'}' already on a volume.";
     } elsif ($self->{'code'} == 1000024) {
 	return "No volume with barcode '$self->{'barcode'}' available.";
     } elsif ($self->{'code'} == 1000025) {
@@ -100,7 +100,7 @@ sub local_message {
     } elsif ($self->{'code'} == 1000034) {
 	return "Not writing label.";
     } elsif ($self->{'code'} == 1000035) {
-	return "label '$self->{'label'}' not found in tapelist file '$self->{'tapelist_filename'}'.";
+	return "volume '$self->{'pool'}:$self->{'label'}' not found in catalog '$self->{'catalog_name'}'.";
     } elsif ($self->{'code'} == 1000036) {
 	return "Failed to copy/backup '$self->{'tapelist_filename'}' to '$self->{'backup_tapelist'}': $self->{'strerror'}.";
     } elsif ($self->{'code'} == 1000037) {
@@ -120,13 +120,13 @@ sub local_message {
     } elsif ($self->{'code'} == 1000044) {
 	return "'$self->{'program'}' exited with non-zero while importing: $self->{'strerror'} $self->{'exit_value'}.";
     } elsif ($self->{'code'} == 1000045) {
-	return "marking tape '$self->{'label'}' as reusable.";
+	return "marking volume '$self->{'pool'}:$self->{'label'}' as reusable.";
     } elsif ($self->{'code'} == 1000046) {
-	return "tape '$self->{'label'}' already reusable.";
+	return "volume '$self->{'pool'}:$self->{'label'}' already reusable.";
     } elsif ($self->{'code'} == 1000047) {
-	return "marking tape '$self->{'label'}' as not reusable.";
+	return "marking volume '$self->{'pool'}:$self->{'label'}' as not reusable.";
     } elsif ($self->{'code'} == 1000048) {
-	return "tape '$self->{'label'}' already not reusable.";
+	return "volume '$self->{'pool'}:$self->{'label'}' already not reusable.";
     } elsif ($self->{'code'} == 1000049) {
 	return "Erased volume with label '$self->{'label'}'.";
     } elsif ($self->{'code'} == 1000050) {
@@ -134,7 +134,7 @@ sub local_message {
     } elsif ($self->{'code'} == 1000051) {
 	return "Can not erase '$self->{'label'} because the device doesn't support this feature";
     } elsif ($self->{'code'} == 1000052) {
-	return "Removed label '$self->{'label'}' from tapelist file.";
+	return "Removed volume '$self->{'pool'}:$self->{'label'}' from catalog '$self->{'catalog_name'}'";
     } elsif ($self->{'code'} == 1000053) {
 	return "Failed to erase volume with label '$self->{'label'}'.";
     } elsif ($self->{'code'} == 1000054) {
@@ -144,7 +144,7 @@ sub local_message {
     } elsif ($self->{'code'} == 1000056) {
 	return "Failed to rewrite label '$self->{'label'}' to volume: $self->{'dev_error'}.";
     } elsif ($self->{'code'} == 1000057) {
-	return "Set datestamp to \"0\" for label '$self->{'label'} in tapelist file.";
+	return "Set datestamp to \"0\" for volume '$self->{'pool'}:$self->{'label'} in catalog '$self->{'catalog_name'}'";
     } elsif ($self->{'code'} == 1000058) {
 	return "Can't remove the pool of label '$self->{'label'}'.";
     } elsif ($self->{'code'} == 1000059) {
@@ -155,6 +155,8 @@ sub local_message {
 	return "No label matching '$self->{'label'}' in the tapelist file";
     } elsif ($self->{'code'} == 1000062) {
 	return "$self->{'dev_error'}";
+    } elsif ($self->{'code'} == 1000063) {
+	return "More than one volume matching label '$self->{'pool'}:$self->{'label'}' in catalog '$self->{'catalog_name'}', you must specify the pool";
     } else {
 	return "no message for code $self->{'code'}";
     }
@@ -176,7 +178,6 @@ use Amanda::Storage;
 use Amanda::Changer;
 use Amanda::Header qw( :constants );
 use Amanda::MainLoop;
-use Amanda::Tapelist;
 use Amanda::Paths;
 
 
@@ -188,7 +189,7 @@ Amanda::Label - Amanda module to handle label on volume.
 
   # create a Label class
   my $Label = Amanda::Label->new(storage  => $storage,
-				 tapelist => $tl,
+				 catalog  => $catalog,
 				 user_msg => \&user_msg);
 
   $Label->assign(...);
@@ -292,7 +293,13 @@ sub user_msg {
     my $msg = shift;
 
     if (defined $self->{'user_msg'}) {
-	$self->{'user_msg'}->($msg);
+	if (UNIVERSAL::isa($msg, 'ARRAY')) {
+	    foreach my $amsg (@{$msg}) {
+		$self->{'user_msg'}->($amsg);
+	    }
+	} else {
+	    $self->{'user_msg'}->($msg);
+	}
     }
 }
 
@@ -301,7 +308,10 @@ sub assign {
     my %params = @_;
 
     my $finished_cb = $params{'finished_cb'};
-    my $chg;
+    my @labels;
+    @labels = @{$params{'labels'}} if defined $params{'labels'};
+    push @labels, $params{'label'} if defined $params{'label'};
+
     my $count = 0;
     my $exit_status = 0;
 
@@ -310,173 +320,21 @@ sub assign {
 
     step start => sub {
 
-	$chg = $self->{'storage'}->{'chg'};
-
-	return $steps->{'assign'}->();
-    };
-
-    step assign => sub {
-	my $matched = 0;
-	my $changed = 0;
-	$self->{'tapelist'}->reload(1);
-	for my $tle (@{$self->{'tapelist'}->{'tles'}}) {
-	  if ($tle->{'label'} =~ /$params{'label'}/ or
-	      $tle->{'label'} eq $params{'label'}) {
-		my $changed1 = 0;
-		my $error = 0;
-		$matched = 1;
-		if ($tle->{'config'} &&
-		    $tle->{'config'} ne Amanda::Config::get_config_name()) {
-		    $self->user_msg(Amanda::Label::Message->new(
-					source_filename => __FILE__,
-					source_line => __LINE__,
-					code   => 1000000,
-					severity => $Amanda::Message::ERROR,
-					label  => $tle->{'label'},
-					config => $tle->{'config'}));
-		    $error = 1;
-		} else {
-		    if (!$tle->{'config'} && $tle->{'datestamp'} ne "0") {
-			$tle->{'config'} = Amanda::Config::get_config_name();
-			$changed1 = 1;
-		    }
-		    if (defined $params{'meta'}) {
-			if (defined($tle->{'meta'}) &&
-			    $params{'meta'} ne $tle->{'meta'} &&
-			    !$params{'force'}) {
-			    $self->user_msg(Amanda::Label::Message->new(
-						source_filename => __FILE__,
-						source_line => __LINE__,
-						code   => 1000001,
-						severity => $Amanda::Message::ERROR,
-						label  => $tle->{'label'},
-						meta => $tle->{'meta'}));
-			    $error = 1;
-			} elsif (!defined $tle->{'meta'} or
-				 $tle->{'meta'} ne $params{'meta'}) {
-			    $tle->{'meta'} = $params{'meta'};
-			    $tle->{'meta'} = undef if $params{'meta'} eq '';
-			    $changed1 = 1;
-			}
-		    }
-		    if (defined $params{'barcode'}) {
-			if (defined($tle->{'barcode'}) &&
-			    $params{'barcode'} ne $tle->{'barcode'} &&
-			    !$params{'force'}) {
-			    $self->user_msg(Amanda::Label::Message->new(
-						source_filename => __FILE__,
-						source_line => __LINE__,
-						code    => 1000002,
-						severity => $Amanda::Message::ERROR,
-						label   => $tle->{'label'},
-						barcode => $tle->{'barcode'}));
-			    $error = 1;
-			} elsif (!defined $tle->{'barcode'} or
-				 $tle->{'barcode'} ne $params{'barcode'}) {
-			    $tle->{'barcode'} = $params{'barcode'};
-			    $tle->{'barcode'} = undef if $params{'barcode'} eq '';
-			    $changed1 = 1;
-			}
-		    }
-		    if (defined $params{'pool'}) {
-			if ($params{'pool'} eq '') {
-			    $self->user_msg(Amanda::Label::Message->new(
-						source_filename => __FILE__,
-						source_line => __LINE__,
-						code   => 1000058,
-						severity => $Amanda::Message::ERROR,
-						label  => $tle->{'label'}));
-			    $error = 1;
-			} elsif (defined($tle->{'pool'}) &&
-			    $params{'pool'} ne $tle->{'pool'} &&
-			    !$params{'force'}) {
-			    $self->user_msg(Amanda::Label::Message->new(
-						source_filename => __FILE__,
-						source_line => __LINE__,
-						code   => 1000003,
-						severity => $Amanda::Message::ERROR,
-						label  => $tle->{'label'},
-						pool   => $tle->{'pool'}));
-			    $error = 1;
-			} elsif (!defined $tle->{'pool'} or
-				 $tle->{'pool'} ne $params{'pool'}) {
-			    $tle->{'pool'} = $params{'pool'};
-			    $changed1 = 1;
-			}
-		    }
-		    if (defined $params{'storage'}) {
-			if ($params{'storage'} eq '') {
-			    $self->user_msg(Amanda::Label::Message->new(
-						source_filename => __FILE__,
-						source_line => __LINE__,
-						code   => 1000059,
-						severity => $Amanda::Message::ERROR,
-						label  => $tle->{'label'}));
-			    $error = 1;
-			} elsif (defined($tle->{'storage'}) &&
-			    $params{'storage'} ne $tle->{'storage'} &&
-			    !$params{'force'}) {
-			    $self->user_msg(Amanda::Label::Message->new(
-						source_filename => __FILE__,
-						source_line => __LINE__,
-						code    => 1000004,
-						severity => $Amanda::Message::ERROR,
-						label   => $tle->{'label'},
-						storage => $tle->{'storage'}));
-			    $error = 1;
-			} elsif ($tle->{'datestamp'} eq "0") {
-			    $self->user_msg(Amanda::Label::Message->new(
-						source_filename => __FILE__,
-						source_line => __LINE__,
-						code   => 1000005,
-						severity => $Amanda::Message::ERROR,
-						label  => $tle->{'label'}));
-			} elsif (!defined $tle->{'storage'} or
-				 $tle->{'storage'} ne $params{'storage'}) {
-			    $tle->{'storage'} = $params{'storage'};
-			    $changed1 = 1;
-			}
-		    }
-		}
-
-		if ($changed1 && !$error) {
-		    if (exists $params{'comment'}) {
-			$tle->{'comment'} = $params{'comment'};
-		    }
-		    $self->user_msg(Amanda::Label::Message->new(
-					source_filename => __FILE__,
-					source_line => __LINE__,
-					code   => 1000006,
-					severity => $Amanda::Message::SUCCESS,
-					label  => $tle->{'label'}));
-		    $changed++;
-		}
-		$exit_status |= $error;
-	    }
-	}
-	if ($exit_status == 1) {
-	    return $finished_cb->();
-	} elsif ($changed) {
-	    $self->{'tapelist'}->write();
-	} elsif ($matched) {
-	    $self->{'tapelist'}->unlock();
-	    $self->user_msg(Amanda::Label::Message->new(
-				source_filename => __FILE__,
-				source_line => __LINE__,
-				code   => 1000007,
-				severity => $Amanda::Message::INFO));
-	} else {
-	    $self->{'tapelist'}->unlock();
-	    return $finished_cb->(Amanda::Label::Message->new(
-					source_filename => __FILE__,
-					source_line => __LINE__,
-					code    => 1000061,
-					severity => $Amanda::Message::ERROR,
-					label => $params{'label'}));
+	foreach my $label (@labels) {
+	    $self->user_msg($self->{'catalog'}->volume_assign(
+				$params{'force'},
+                                $self->{'storage'}->{'tapepool'}, $label,
+				$params{'pool'},
+				$params{'barcode'},
+				$params{'storage'},
+				$params{'meta'},
+				$params{'reuse'}));
 	}
 
-	return $finished_cb->() if !$params{'meta'};
-	$chg->inventory(inventory_cb => $steps->{'assign_inventory'});
+	if (defined $params{'meta'} && !defined $params{'storage'}) {
+	    return $self->{'storage'}->{'chg'}->inventory(inventory_cb => $steps->{'assign_inventory'});
+	}
+	$steps->{'assign_reuse'}->();
     };
 
     step assign_inventory => sub {
@@ -496,7 +354,8 @@ sub assign {
 	    if (defined $sl->{'label'} && ($sl->{'label'} =~ /$params{'label'}/ ||
 					   $sl->{'label'} eq $params{'label'})) {
 		$count++;
-		$chg->set_meta_label(meta => $params{'meta'},
+		$self->{'storage'}->{'chg'}->set_meta_label(
+					    meta => $params{'meta'},
 					    slot => $sl->{'slot'},
 					    finished_cb => $steps->{'assign_done'});
 	    }
@@ -509,8 +368,33 @@ sub assign {
     };
 
     step maybe_done => sub {
-	return $finished_cb->() if $count == 0;
+	return $steps->{'assign_reuse'}->() if $count == 0;
 	return $steps->{'maybe_done'}->();
+    };
+
+    step assign_reuse => sub {
+	if (defined $params{'reuse'}) {
+	    if ($params{'reuse'} == 1) {
+		return $self->{'storage'}->{'chg'}->set_reuse(
+				labels => \@labels,
+				finished_cb => $steps->{'reuse_done'});
+	    } else {
+		return $self->{'storage'}->{'chg'}->set_no_reuse(
+				labels => \@labels,
+				finished_cb => $steps->{'reuse_done'});
+	    }
+	}
+	return $finished_cb->();
+    };
+
+    step reuse_done => sub {
+	my $err = shift;
+	if ($err and $err->notimpl) {
+	    $err = undef;
+	}
+
+	$self->user_msg($err) if $err;
+	$finished_cb->();
     }
 }
 
@@ -545,13 +429,16 @@ sub label {
 	$comment  = $params{'comment'};
 
 	if (defined($params{'label'}) && !$params{'force'}) {
-	    if ($self->{'tapelist'}->lookup_tapelabel($params{'label'})) {
+	    my $volume = $self->{'catalog'}->find_volume($tapepool, $params{'label'});
+	    if ($volume) {
 		return $steps->{'releasing'}->(Amanda::Label::Message->new(
-					source_filename => __FILE__,
-					source_line => __LINE__,
-					code   => 1000023,
-					severity => $Amanda::Message::ERROR,
-					label  => $params{'label'}));
+			source_filename => __FILE__,
+			source_line => __LINE__,
+			code   => 1000023,
+			severity => $Amanda::Message::ERROR,
+			label  => $params{'label'},
+			pool   => $tapepool,
+			catalog_name => $self->{'catalog'}->{'catalog_name'}));
 	    }
 	}
 
@@ -560,10 +447,10 @@ sub label {
 
     step load => sub {
 	$self->user_msg(Amanda::Label::Message->new(
-				source_filename => __FILE__,
-				source_line => __LINE__,
-				code   => 1000008,
-				severity => $Amanda::Message::INFO));
+			source_filename => __FILE__,
+			source_line => __LINE__,
+			code   => 1000008,
+			severity => $Amanda::Message::INFO));
 	if ($params{'slot'}) {
 	    $chg->load(slot => $params{'slot'}, mode => "write",
 		       res_cb => $steps->{'loaded'});
@@ -661,14 +548,16 @@ sub label {
 	    my $label = $dev->volume_label;
 	    my $barcode = $res->{'barcode'};
 	    my $meta = $res->{'meta'};
-	    my $tle = $self->{'tapelist'}->lookup_tapelabel($label);
+	    my $volumes = $self->{'catalog'}->find_volume_all($tapepool, $label);
+	    my $volume = $volumes->[0];
 
-	    if ($label && !$tle) {
+	    if ($label && !$volume) {
 		$self->user_msg(Amanda::Label::Message->new(
 					source_filename => __FILE__,
 					source_line => __LINE__,
 					code      => 1000019,
 					severity  => $params{'force'}?$Amanda::Message::INFO:$Amanda::Message::ERROR,
+					pool	  => $tapepool,
 					label     => $label));
 		$dev_ok = 0 unless ($params{'force'});
 	    } elsif ($label &&
@@ -679,36 +568,41 @@ sub label {
 					source_line => __LINE__,
 					code      => 1000016,
 					severity  => $Amanda::Message::ERROR,
+					pool      => $tapepool,
 					label     => $label,
 					labelstr  => $labelstr));
 		$dev_ok = 0 unless ($params{'force'});
-	    } elsif ($tle) {
-		if ($tle->{'config'} && $tle->{'config'} ne Amanda::Config::get_config_name()) {
+	    } elsif ($volume) {
+debug("volume: " . Data::Dumper::Dumper($volume));
+		if ($volume->{'config'} && $volume->{'config'} ne Amanda::Config::get_config_name()) {
 		    $self->user_msg(Amanda::Label::Message->new(
 					source_filename => __FILE__,
 					source_line => __LINE__,
 					code      => 1000014,
 					severity  => $Amanda::Message::ERROR,
+					pool      => $tapepool,
 					label     => $label,
-					config    => $tle->{'config'}));
+					config    => $volume->{'config'}));
 		    $dev_ok = 0 unless ($params{'force'});
-		} elsif ($tle->{'pool'} &&
-			 $tle->{'pool'} ne $tapepool) {
+		} elsif ($volume->{'pool'} &&
+			 $volume->{'pool'} ne $tapepool) {
 		    $self->user_msg(Amanda::Label::Message->new(
 					source_filename => __FILE__,
 					source_line => __LINE__,
 					code      => 1000015,
 					severity  => $Amanda::Message::ERROR,
+					pool      => $tapepool,
 					label     => $label,
-					pool      => $tle->{'pool'}));
+					oldpool   => $volume->{'pool'}));
 		    $dev_ok = 0 unless ($params{'force'});
-		} elsif (!$tle->{'pool'} &&
+		} elsif (!$volume->{'pool'} &&
 			 !match_labelstr($labelstr, $autolabel, $label, $barcode, $meta, $storage_name)) {
 		    $self->user_msg(Amanda::Label::Message->new(
 					source_filename => __FILE__,
 					source_line => __LINE__,
 					code      => 1000016,
 					severity  => $Amanda::Message::ERROR,
+					pool      => $tapepool,
 					label     => $label,
 					labelstr  => $labelstr));
 		    $dev_ok = 0 unless ($params{'force'});
@@ -718,6 +612,7 @@ sub label {
 					source_line => __LINE__,
 					code      => 1000017,
 					severity  => $params{'force'}?$Amanda::Message::INFO:$Amanda::Message::ERROR,
+					pool      => $tapepool,
 					label     => $label));
 		    if ($params{'force'}) {
 			# if -f, then the user should clean things up..
@@ -726,13 +621,23 @@ sub label {
 					source_line => __LINE__,
 					code      => 1000018,
 					severity  => $Amanda::Message::INFO,
+					pool      => $tapepool,
 					label     => $label));
 			# note that we don't run amrmtape automatically, as it could result in data loss when
 			# multiple volumes have (perhaps accidentally) the same label
 		    } else {
-			$dev_ok = 0 unless ($params{'force'});
+			$dev_ok = 0;
 		    }
 		}
+	    } else {
+		$self->user_msg(Amanda::Label::Message->new(
+					source_filename => __FILE__,
+					source_line => __LINE__,
+					code      => 1000019,
+					severity  => $params{'force'}?$Amanda::Message::INFO:$Amanda::Message::ERROR,
+					pool      => $tapepool,
+					label     => $label));
+		$dev_ok = 0 unless ($params{'force'});
 	    }
 	}
 
@@ -844,14 +749,8 @@ sub label {
 					got_timestamp => $got));
 	    }
 
-	    # update the tapelist
-	    $self->{'tapelist'}->reload(1);
-	    $self->{'tapelist'}->remove_tapelabel($label);
-	    # the label is not yet assigned a config
-	    $self->{'tapelist'}->add_tapelabel("0", $label, $comment, 1, $meta, $res->{'barcode'},
-			       $dev->block_size/1024,
-			       $tapepool, $storage_name, Amanda::Config::get_config_name());
-	    $self->{'tapelist'}->write();
+	    # update the catalog
+	    $self->{'catalog'}->add_volume($tapepool, $label, 0, $storage_name, $meta, $res->{'barcode'}, $dev->block_size/1024, 1, 0, 0, 0, 0);
 
 	    $self->user_msg(Amanda::Label::Message->new(
 				source_filename => __FILE__,
@@ -922,6 +821,7 @@ sub erase {
     my $chg;
     my $res;
     my $label;
+    my $pool;
     my $gerr;
     my $backup_tapelist_file;
     my $tmp_curinfo_file;
@@ -933,7 +833,6 @@ sub erase {
 	finalize => sub { $storage->quit() if defined $storage;
 			  $chg->quit() if defined $chg };
 
-
     step start => sub {
 	$label = shift @{$params{'labels'}};
 
@@ -941,85 +840,59 @@ sub erase {
 	    return $steps->{'cleanup'}->();
 	}
 
-	my $tle = $self->{'tapelist'}->lookup_tapelabel($label);
-	if (!defined $tle) {
+	$pool = $params{'pool'};
+	if (!defined $pool && $params{'storage'}) {
+	    my $st = lookup_storage($params{'storage'});
+	    if ($st) {
+		$pool = storage_getconf($st, $STORAGE_TAPEPOOL);
+	    }
+	}
+	if (!defined $pool && $self->{'storage'}) {
+	    my $st = lookup_storage($self->{'storage'});
+	    if ($st) {
+		$pool = storage_getconf($st, $STORAGE_TAPEPOOL);
+	    }
+	}
+	my $volumes = $self->{'catalog'}->find_volume_all($pool, $label);
+	if (@$volumes == 0) {
 	    $self->user_msg(Amanda::Label::Message->new(
 			source_filename => __FILE__,
 			source_line => __LINE__,
 			code   => 1000035,
 			severity  => $Amanda::Message::ERROR,
 			label  => $label,
-			tapelist_filename =>$self->{'tapelist'}->{'filename'}));
+			pool  => $pool,
+			catalog_name => $self->{'catalog'}->{'catalog_name'}));
 	    return $steps->{'start'}->();
 	}
-
-	my $storage_name = $tle->{'storage'};
-	if ($storage_name) {
-	    return $steps->{'erase'}->($storage_name);
+	if (@$volumes > 1) {
+	    $self->user_msg(Amanda::Label::Message->new(
+			source_filename => __FILE__,
+			source_line => __LINE__,
+			code   => 1000063,
+			severity  => $Amanda::Message::ERROR,
+			label  => $label,
+			pool  => $pool,
+			catalog_name => $self->{'catalog'}->{'catalog_name'}));
+	    return $steps->{'start'}->();
 	}
+	$pool = $volumes->[0]->{'pool'};
 
-	$storage_name = $params{'storage'};
-	if ($storage_name) {
-	    return $steps->{'erase'}->($storage_name);
-	}
-
-	# no storage in the tapelist, use the first storage with the same pool
-	if ($tle->{'pool'}) {
-	    if (getconf_seen($CNF_STORAGE)) {
-		my $storage_list = getconf($CNF_STORAGE);
-		my $done = 0;
-		for $storage_name (@{$storage_list}) {
-		    if (defined $storage and $storage->{'name'} ne $storage_name) {
-			$storage->quit(); $storage = undef;
-			$chg->quit(); $chg = undef;
-		    }
-		    if (!$storage) {
-			$storage = Amanda::Storage->new(
-						storage_name => $storage_name,
-						tapelist => $self->{'tapelist'});
-			if (!$storage->isa("Amanda::Changer::Error")) {
-			    if ($storage->{'tapepool'} eq $tle->{'pool'}) {
-				debug("Using storage '$storage_name' because it use the same '$tle->{'pool'}' tape pool");
-				return $steps->{'erase'}->($storage_name);
-				$done = 1;
-				last;
-			    }
-			}
-		    }
-		}
-		next if $done;
-	    }
-	}
-
-	# try in the default storage
-	if (getconf_seen($CNF_STORAGE)) {
-	    my $storage_list = getconf($CNF_STORAGE);
-	    for $storage_name (@{$storage_list}) {
-		return $steps->{'erase'}->($storage_name);
-	    }
-	    next;
-	}
-
-	# try in the config_name storage;
-	$storage_name = get_config_name();
-	if (defined $storage_name) {
-	    return $steps->{'erase'}->($storage_name);
-	}
-
-	return $steps->{'start'}->();
+	return $steps->{'erase'}->($volumes->[0]);
     };
 
     step erase => sub {
-	my $storage_name = shift;
+	my $volume = shift;
 
 	if ($params{'erase'}) {
-	    if (defined $storage and $storage->{'storage_name'} ne $storage_name) {
+	    if (defined $storage and
+		$storage->{'storage_name'} ne $volume->{'storage'}) {
 		$storage->quit() if defined $storage; $storage = undef;
 		$chg->quit() if defined $chg; $chg = undef;
 	    }
 	    if (!$storage) {
-		$storage = Amanda::Storage->new(storage_name => $storage_name,
-						tapelist => $self->{'tapelist'});
+		$storage = Amanda::Storage->new(storage_name => $volume->{'storage'},
+						catalog => $self->{'catalog'});
 	    }
 	    if ($storage->isa("Amanda::Changer::Error")) {
 		return $steps->{'done'}->($storage);
@@ -1062,6 +935,7 @@ sub erase {
 					source_line => __LINE__,
 					code      => 1000051,
 					severity  => $Amanda::Message::ERROR,
+					pool      => $pool,
 					label     => $label));
 	    return $steps->{'releasing'}->();
 	}
@@ -1073,6 +947,7 @@ sub erase {
 					source_line => __LINE__,
 					code      => 1000053,
 					severity  => $Amanda::Message::ERROR,
+					pool      => $pool,
 					label     => $label));
 		return $steps->{'releasing'}->();
 	    }
@@ -1081,6 +956,7 @@ sub erase {
 					source_line => __LINE__,
 					code      => 1000049,
 					severity  => $Amanda::Message::SUCCESS,
+					pool      => $pool,
 					label     => $label));
 	    return $res->set_label(finished_cb => sub {
 		$dev->finish();
@@ -1145,54 +1021,23 @@ sub erase {
     };
 
     step scrub_db => sub {
-	my $tle = $self->{'tapelist'}->lookup_tapelabel($label);
-	my $tapelist_code;
-	if (!defined $tle) {
-	    $self->user_msg(Amanda::Label::Message->new(
-				source_filename => __FILE__,
-				source_line => __LINE__,
-				code      => 1000035,
-				severity  => $Amanda::Message::ERROR,
-				label     => $label,
-				tapelist_filename => $self->{'tapelist'}->{'filename'}));
-	    return $steps->{'start'}->();
-	} elsif ($params{'external_copy'}) {
-	    #do nothing
-	} elsif ($params{'keep_label'}) {
-            $tle->{'datestamp'} = 0 if $tle;
-            $tle->{'storage'} = undef if $tle;
-            $tle->{'config'} = undef if $tle;
-	    $tapelist_code = 1000057;
-	} else {
-            $self->{'tapelist'}->remove_tapelabel($label);
-	    $tapelist_code = 1000052;
-	}
-
-	#take a copy in case we roolback
-	$backup_tapelist_file = dirname($self->{'tapelist'}->{'filename'}) . "-backup-amrmtape-" . time();
-	if (-x $self->{'tapelist'}->{'filename'}) {
-	    if (!copy($self->{'tapelist'}->{'filename'}, $backup_tapelist_file)) {
-		$self->user_msg(Amanda::Label::Message->new(
-				source_filename => __FILE__,
-				source_line => __LINE__,
-				code      => 1000036,
-				severity  => $Amanda::Message::ERROR,
-				tapelist_filename =>$self->{'tapelist'}->{'filename'},
-				backup_tapelist   =>$backup_tapelist_file,
-				strerror          => $!));
-		return $steps->{'scrub_cleanup'}->();
+	if (!$params{'external_copy'} && !$params{'dry_run'}) {
+	    my $message_code;
+	    if ($params{'keep_label'}) {
+		my $volume = $self->{'catalog'}->reset_volume($pool, $label);
+		$message_code = 1000057;
+	    } else {
+		$self->{'catalog'}->remove_volume($pool, $label);
+		$message_code = 1000052;
 	    }
-	}
-
-	unless ($params{'dry_run'}) {
-            $self->{'tapelist'}->write();
 	    $self->user_msg(Amanda::Label::Message->new(
 				source_filename => __FILE__,
 				source_line => __LINE__,
-				code      => $tapelist_code,
+				code      => $message_code,
 				severity  => $Amanda::Message::SUCCESS,
 				label     => $label,
-				tapelist_filename => $self->{'tapelist'}->{'filename'}));
+				pool      => $pool,
+				catalog_name => $self->{'catalog'}->{'catalog_name'}));
 	}
 
 	$tmp_curinfo_file = "$AMANDA_TMPDIR/curinfo-amrmtape-" . time() . "-" . $$;
@@ -1329,17 +1174,6 @@ sub erase {
     step rollback_from_curinfo => sub {
 	unlink $tmp_curinfo_file;
 	return if $params{'keep_label'};
-	if (!move($backup_tapelist_file, $self->{'tapelist'}->{'filename'})) {
-	    $self->user_msg(Amanda::Label::Message->new(
-			source_filename => __FILE__,
-			source_line => __LINE__,
-			code        => 1000042,
-			severity    => $Amanda::Message::ERROR,
-			tapelist_filename=> $self->{'tapelist'}->{'filename'},
-			backup_tapelist   =>$backup_tapelist_file,
-			strerror    => $!,
-			exit_value  => $?));
-	}
 	return $steps->{'scrub_clean'}->();
     };
 
@@ -1347,10 +1181,6 @@ sub erase {
 	if ($tmp_curinfo_file) {
 	    unlink $tmp_curinfo_file;
 	    $tmp_curinfo_file = undef;
-	}
-	if ($backup_tapelist_file) {
-	    unlink $backup_tapelist_file;
-	    $backup_tapelist_file = undef;
 	}
 
 	return $steps->{'start'}->(); # or abort;
@@ -1396,7 +1226,6 @@ sub reuse {
 
     my $finished_cb = $params{'finished_cb'};
 
-    my $need_write = 0;
     my $label;
     my @labels = @{$params{'labels'}};
 
@@ -1410,48 +1239,12 @@ sub reuse {
 	    return $steps->{'write_tapelist'}->();
         }
 
-	my $tle = $self->{'tapelist'}->lookup_tapelabel($label);
-
-	if (!defined $tle) {
-	    $self->user_msg(Amanda::Label::Message->new(
-			source_filename => __FILE__,
-			source_line => __LINE__,
-			code   => 1000035,
-			severity => $Amanda::Message::ERROR,
-			label  => $label,
-			tapelist_filename =>$self->{'tapelist'}->{'filename'}));
-            return $steps->{'start'}->();
-        }
-
-        if ($tle->{'reuse'} == 0) {
-            $self->{'tapelist'}->reload(1) if $need_write == 0;;
-            $self->{'tapelist'}->remove_tapelabel($label);
-            $self->{'tapelist'}->add_tapelabel($tle->{'datestamp'},
-				$label, $tle->{'comment'},
-				1, $tle->{'meta'}, $tle->{'barcode'},
-				$tle->{'blocksize'}, $tle->{'pool'},
-				$tle->{'storage'}, $tle->{'config'});
-            $need_write = 1;
-	    $self->user_msg(Amanda::Label::Message->new(
-			source_filename => __FILE__,
-			source_line => __LINE__,
-			code   => 1000045,
-			severity => $Amanda::Message::INFO,
-			label  => $label));
-        } else {
-	    $self->user_msg(Amanda::Label::Message->new(
-			source_filename => __FILE__,
-			source_line => __LINE__,
-			code   => 1000046,
-			severity => $Amanda::Message::INFO,
-			label  => $label));
-        }
+	$self->user_msg($self->{'catalog'}->volume_set_reuse(
+				$self->{'storage'}->{'tapepool'}, $label, 1));
         return $steps->{'start'}->();
     };
 
     step write_tapelist => sub {
-	$self->{'tapelist'}->write() if $need_write == 1;
-
 	return $self->{'storage'}->{'chg'}->set_reuse(
 				labels => \@labels,
 				finished_cb => $steps->{'reuse_done'});
@@ -1475,7 +1268,6 @@ sub no_reuse {
 
     my $finished_cb = $params{'finished_cb'};
 
-    my $need_write = 0;
     my $label;
     my @labels = @{$params{'labels'}};
 
@@ -1489,54 +1281,18 @@ sub no_reuse {
 	    return $steps->{'write_tapelist'}->();
         }
 
-	my $tle = $self->{'tapelist'}->lookup_tapelabel($label);
-
-	if (!defined $tle) {
-	    $self->user_msg(Amanda::Label::Message->new(
-			source_filename => __FILE__,
-			source_line => __LINE__,
-			code   => 1000035,
-			severity => $Amanda::Message::ERROR,
-			label  => $label,
-			tapelist_filename =>$self->{'tapelist'}->{'filename'}));
-            return $steps->{'start'}->();
-        }
-
-        if ($tle->{'reuse'} == 1) {
-            $self->{'tapelist'}->reload(1) if $need_write == 0;;
-            $self->{'tapelist'}->remove_tapelabel($label);
-            $self->{'tapelist'}->add_tapelabel($tle->{'datestamp'},
-				$label, $tle->{'comment'},
-				0, $tle->{'meta'}, $tle->{'barcode'},
-				$tle->{'blocksize'}, $tle->{'pool'},
-				$tle->{'storage'}, $tle->{'config'});
-            $need_write = 1;
-	    $self->user_msg(Amanda::Label::Message->new(
-			source_filename => __FILE__,
-			source_line => __LINE__,
-			code   => 1000047,
-			severity => $Amanda::Message::SUCCESS,
-			label  => $label));
-        } else {
-	    $self->user_msg(Amanda::Label::Message->new(
-			source_filename => __FILE__,
-			source_line => __LINE__,
-			code   => 1000048,
-			severity => $Amanda::Message::INFO,
-			label  => $label));
-        }
+	$self->user_msg($self->{'catalog'}->volume_set_reuse(
+				$self->{'storage'}->{'tapepool'}, $label, 0));
         return $steps->{'start'}->();
     };
 
     step write_tapelist => sub {
-	$self->{'tapelist'}->write() if $need_write == 1;
-
 	return $self->{'storage'}->{'chg'}->set_no_reuse(
 				labels => \@labels,
-			        finished_cb => $steps->{'no_reuse_done'});
+				finished_cb => $steps->{'reuse_done'});
     };
 
-    step no_reuse_done => sub {
+    step reuse_done => sub {
 	my $err = shift;
 	if ($err and $err->notimpl) {
 	    $err = undef;

@@ -28,12 +28,14 @@ use Installcheck::Dumpcache;
 use Installcheck::Config;
 use Installcheck::Run qw(run run_err $diskname amdump_diag);
 use Installcheck::Catalogs;
+use Installcheck::DBCatalog2;
 use Amanda::Paths;
 use Amanda::Device qw( :constants );
 use Amanda::Debug;
 use Amanda::MainLoop;
 use Amanda::Config qw( :init :getconf config_dir_relative );
 use Amanda::Changer;
+use Amanda::DB::Catalog2;
 
 eval 'use Installcheck::Rest;';
 if ($@) {
@@ -98,9 +100,11 @@ localhost diskname2 $diskname {
     }
 }
 EODLE
-$testconf->write();
+$testconf->write( do_catalog => 0 );
 
 config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
+my $catalog = Amanda::DB::Catalog2->new(undef, create => 1, drop_tables => 1, load => 1);
+$catalog->quit();
 my $diskfile = Amanda::Config::config_dir_relative(getconf($CNF_DISKFILE));
 my $infodir = getconf($CNF_INFOFILE);
 
@@ -225,10 +229,13 @@ is_deeply (Installcheck::Config::remove_source_line($reply),
 
 my $cat;
 $testconf = Installcheck::Run::setup();
-$testconf->write();
+$testconf->write( do_catalog => 0 );
 
 $cat = Installcheck::Catalogs::load('normal');
 $cat->install();
+config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
+$catalog = Amanda::DB::Catalog2->new(undef, create => 1, drop_tables => 1, load => 1);
+$catalog->quit();
 
 my $current_time;
 my $datestr;
@@ -240,7 +247,7 @@ my $dump_time;
 my $logdir = config_dir_relative(getconf($CNF_LOGDIR));
 rmtree $Amanda::Paths::AMANDA_TMPDIR . "/cache_status/TESTCONF";
 $tracefile = "$logdir/amdump";
-$logfile = "$logdir/log";
+$logfile = "$logdir/log.20090225080737";
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/status?tracefile=$tracefile");
 $datestr = $reply->{body}[0]{status}{datestr};
 $starttime = $reply->{body}[0]{status}{starttime};
@@ -709,7 +716,7 @@ is_deeply (Installcheck::Config::remove_source_line($reply),
                                                        'storage' => {
                                                                       'TESTCONF' => {
                                                                                       'use' => [
-                                                                                                 'DIRO-TEST-003'
+                                                                                                 'Conf-001'
                                                                                                ],
                                                                                       'next_to_use' => 1,
                                                                                       'new' => 1
@@ -717,14 +724,14 @@ is_deeply (Installcheck::Config::remove_source_line($reply),
                                                                     }
                                                      },
                                        'notes' => [
-                                                    '  taper: tape DIRO-TEST-003 kb 39240 fm 10 [OK]'
+                                                    '  taper: tape Conf-001 kb 39240 fm 10 [OK]'
                                                   ],
                                        'usage_by_tape' => [
                                                             {
                                                               'percent_use' => '4465306.42578125',
                                                               'nb' => 9,
                                                               'dump_timestamp' => undef,
-                                                              'tape_label' => 'DIRO-TEST-003',
+                                                              'tape_label' => 'Conf-001',
                                                               'configuration_id' => 1,
                                                               'time_duration' => '2.255013',
                                                               'nc' => 9,
@@ -747,10 +754,15 @@ is_deeply (Installcheck::Config::remove_source_line($reply),
     },
     "status") || diag("reply: " . Data::Dumper::Dumper($reply));
 
+$logfile = "$logdir/log";
+
 # now test a file with spaces and other funny characters in filenames
 $cat = Installcheck::Catalogs::load('quoted');
 $cat->install();
 rmtree $Amanda::Paths::AMANDA_TMPDIR . "/cache_status/TESTCONF";
+config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
+$catalog = Amanda::DB::Catalog2->new(undef, create => 1, drop_tables => 1, load => 1);
+$catalog->quit();
 $tracefile = "$logdir/amdump";
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/status?tracefile=$tracefile");
 $datestr = $reply->{body}[0]{status}{datestr};
@@ -984,6 +996,9 @@ is_deeply (Installcheck::Config::remove_source_line($reply),
 $cat = Installcheck::Catalogs::load('chunker-partial');
 $cat->install();
 rmtree $Amanda::Paths::AMANDA_TMPDIR . "/cache_status/TESTCONF";
+config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
+$catalog = Amanda::DB::Catalog2->new(undef, create => 1, drop_tables => 1, load => 1);
+$catalog->quit();
 $tracefile = "$logdir/amdump";
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/status?tracefile=$tracefile");
 $datestr = $reply->{body}[0]{status}{datestr};
@@ -1224,6 +1239,9 @@ is_deeply (Installcheck::Config::remove_source_line($reply),
 $cat = Installcheck::Catalogs::load('taper-parallel-write');
 $cat->install();
 rmtree $Amanda::Paths::AMANDA_TMPDIR . "/cache_status/TESTCONF";
+config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
+$catalog = Amanda::DB::Catalog2->new(undef, create => 1, drop_tables => 1, load => 1);
+$catalog->quit();
 $tracefile = "$logdir/amdump";
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/status?tracefile=$tracefile");
 $datestr = $reply->{body}[0]{status}{datestr};
@@ -1556,6 +1574,9 @@ is_deeply (Installcheck::Config::remove_source_line($reply),
 
 $cat = Installcheck::Catalogs::load('doublefailure');
 $cat->install();
+config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
+$catalog = Amanda::DB::Catalog2->new(undef, create => 1, drop_tables => 1, load => 1);
+$catalog->quit();
 
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/report?tracefile=$tracefile");
 is_deeply (Installcheck::Config::remove_source_line($reply),
@@ -1734,6 +1755,9 @@ is_deeply (Installcheck::Config::remove_source_line($reply),
 
 $cat = Installcheck::Catalogs::load('strontium');
 $cat->install();
+config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
+$catalog = Amanda::DB::Catalog2->new(undef, create => 1, drop_tables => 1, load => 1);
+$catalog->quit();
 
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/report?logfile=$logfile");
 is_deeply (Installcheck::Config::remove_source_line($reply),
@@ -1930,6 +1954,9 @@ is_deeply (Installcheck::Config::remove_source_line($reply),
 
 $cat = Installcheck::Catalogs::load('amflush');
 $cat->install();
+config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
+$catalog = Amanda::DB::Catalog2->new(undef, create => 1, drop_tables => 1, load => 1);
+$catalog->quit();
 
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/report?logfile=$logfile");
 is_deeply (Installcheck::Config::remove_source_line($reply),
@@ -2140,6 +2167,9 @@ is_deeply (Installcheck::Config::remove_source_line($reply),
 
 $cat = Installcheck::Catalogs::load('resultsmissing');
 $cat->install();
+config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
+$catalog = Amanda::DB::Catalog2->new(undef, create => 1, drop_tables => 1, load => 1);
+$catalog->quit();
 
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/report?logfile=$logfile");
 is_deeply (Installcheck::Config::remove_source_line($reply),
@@ -2355,6 +2385,9 @@ is_deeply (Installcheck::Config::remove_source_line($reply),
 
 $cat = Installcheck::Catalogs::load('shortstrange');
 $cat->install();
+config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
+$catalog = Amanda::DB::Catalog2->new(undef, create => 1, drop_tables => 1, load => 1);
+$catalog->quit();
 
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/report?logfile=$logfile");
 is_deeply (Installcheck::Config::remove_source_line($reply),
@@ -2518,6 +2551,9 @@ is_deeply (Installcheck::Config::remove_source_line($reply),
 
 $cat = Installcheck::Catalogs::load('longstrange');
 $cat->install();
+config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
+$catalog = Amanda::DB::Catalog2->new(undef, create => 1, drop_tables => 1, load => 1);
+$catalog->quit();
 
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/report?logfile=$logfile");
 is_deeply (Installcheck::Config::remove_source_line($reply),
@@ -2774,6 +2810,9 @@ is_deeply (Installcheck::Config::remove_source_line($reply),
 
 $cat = Installcheck::Catalogs::load('bigestimate');
 $cat->install();
+config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
+$catalog = Amanda::DB::Catalog2->new(undef, create => 1, drop_tables => 1, load => 1);
+$catalog->quit();
 
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/report?logfile=$logfile");
 is_deeply (Installcheck::Config::remove_source_line($reply),
@@ -2920,6 +2959,9 @@ is_deeply (Installcheck::Config::remove_source_line($reply),
 
 $cat = Installcheck::Catalogs::load('retried');
 $cat->install();
+config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
+$catalog = Amanda::DB::Catalog2->new(undef, create => 1, drop_tables => 1, load => 1);
+$catalog->quit();
 
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/report?logfile=$logfile");
 is_deeply (Installcheck::Config::remove_source_line($reply),
@@ -3074,6 +3116,9 @@ is_deeply (Installcheck::Config::remove_source_line($reply),
 
 $cat = Installcheck::Catalogs::load('retried-strange');
 $cat->install();
+config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
+$catalog = Amanda::DB::Catalog2->new(undef, create => 1, drop_tables => 1, load => 1);
+$catalog->quit();
 
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/report?logfile=$logfile");
 is_deeply (Installcheck::Config::remove_source_line($reply),
@@ -3245,6 +3290,9 @@ is_deeply (Installcheck::Config::remove_source_line($reply),
 
 $cat = Installcheck::Catalogs::load('retried-nofinish');
 $cat->install();
+config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
+$catalog = Amanda::DB::Catalog2->new(undef, create => 1, drop_tables => 1, load => 1);
+$catalog->quit();
 
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/report?logfile=$logfile");
 is_deeply (Installcheck::Config::remove_source_line($reply),
@@ -3403,6 +3451,9 @@ is_deeply (Installcheck::Config::remove_source_line($reply),
 
 $cat = Installcheck::Catalogs::load('taperr');
 $cat->install();
+config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
+$catalog = Amanda::DB::Catalog2->new(undef, create => 1, drop_tables => 1, load => 1);
+$catalog->quit();
 
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/report?logfile=$logfile");
 is_deeply (Installcheck::Config::remove_source_line($reply),
@@ -3536,6 +3587,9 @@ is_deeply (Installcheck::Config::remove_source_line($reply),
 
 $cat = Installcheck::Catalogs::load('spanned');
 $cat->install();
+config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
+$catalog = Amanda::DB::Catalog2->new(undef, create => 1, drop_tables => 1, load => 1);
+$catalog->quit();
 
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/report?logfile=$logfile");
 is_deeply (Installcheck::Config::remove_source_line($reply),
@@ -3694,6 +3748,9 @@ is_deeply (Installcheck::Config::remove_source_line($reply),
 
 $cat = Installcheck::Catalogs::load('fatal');
 $cat->install();
+config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
+$catalog = Amanda::DB::Catalog2->new(undef, create => 1, drop_tables => 1, load => 1);
+$catalog->quit();
 
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/report?logfile=$logfile");
 is_deeply (Installcheck::Config::remove_source_line($reply),
@@ -3831,6 +3888,9 @@ is_deeply (Installcheck::Config::remove_source_line($reply),
 
 $cat = Installcheck::Catalogs::load('flush-origsize');
 $cat->install();
+config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
+$catalog = Amanda::DB::Catalog2->new(undef, create => 1, drop_tables => 1, load => 1);
+$catalog->quit();
 
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/report?logfile=$logfile");
 is_deeply (Installcheck::Config::remove_source_line($reply),
@@ -3976,6 +4036,9 @@ is_deeply (Installcheck::Config::remove_source_line($reply),
 
 $cat = Installcheck::Catalogs::load('flush-noorigsize');
 $cat->install();
+config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
+$catalog = Amanda::DB::Catalog2->new(undef, create => 1, drop_tables => 1, load => 1);
+$catalog->quit();
 
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/report?logfile=$logfile");
 is_deeply (Installcheck::Config::remove_source_line($reply),
@@ -4121,6 +4184,9 @@ is_deeply (Installcheck::Config::remove_source_line($reply),
 
 $cat = Installcheck::Catalogs::load('plannerfail');
 $cat->install();
+config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
+$catalog = Amanda::DB::Catalog2->new(undef, create => 1, drop_tables => 1, load => 1);
+$catalog->quit();
 
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/report?logfile=$logfile");
 is_deeply (Installcheck::Config::remove_source_line($reply),
@@ -4309,6 +4375,9 @@ is_deeply (Installcheck::Config::remove_source_line($reply),
 
 $cat = Installcheck::Catalogs::load('skipped');
 $cat->install();
+config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
+$catalog = Amanda::DB::Catalog2->new(undef, create => 1, drop_tables => 1, load => 1);
+$catalog->quit();
 
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/report?logfile=$logfile");
 is_deeply (Installcheck::Config::remove_source_line($reply),
@@ -4451,6 +4520,9 @@ is_deeply (Installcheck::Config::remove_source_line($reply),
 
 $cat = Installcheck::Catalogs::load('filesystemstaped');
 $cat->install();
+config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
+$catalog = Amanda::DB::Catalog2->new(undef, create => 1, drop_tables => 1, load => 1);
+$catalog->quit();
 
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/report?logfile=$logfile");
 is_deeply (Installcheck::Config::remove_source_line($reply),
@@ -4615,6 +4687,9 @@ is_deeply (Installcheck::Config::remove_source_line($reply),
 
 $cat = Installcheck::Catalogs::load('multi-taper');
 $cat->install();
+config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
+$catalog = Amanda::DB::Catalog2->new(undef, create => 1, drop_tables => 1, load => 1);
+$catalog->quit();
 $logfile = "$logdir/log.20100908110856.0";
 
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/report?logfile=$logfile");
@@ -4641,8 +4716,8 @@ is_deeply (Installcheck::Config::remove_source_line($reply),
                                                         'dumpdisks' => '',
                                                         'run_time' => '3.390',
                                                         'Avg_tape_write_speed' => {
-                                                                                    'incr' => 44610,
-                                                                                    'total' => 44610,
+                                                                                    'incr' => 114364.850792453,
+                                                                                    'total' => 114364.850792453,
                                                                                     'full' => undef
                                                                                   },
                                                         'tapeparts' => '1:28',
@@ -4657,8 +4732,8 @@ is_deeply (Installcheck::Config::remove_source_line($reply),
                                                                          'full' => 0
                                                                        },
                                                         'tape_time' => {
-                                                                         'incr' => 5,
-                                                                         'total' => 5,
+                                                                         'incr' => 1.950337,
+                                                                         'total' => 1.950337,
                                                                          'full' => 0
                                                                        },
                                                         'estimate_time' => 0,
@@ -4702,7 +4777,7 @@ is_deeply (Installcheck::Config::remove_source_line($reply),
                                                       {
                                                         'last_tape_label' => undef,
                                                         'dle_status' => 'nodump-FLUSH',
-                                                        'tape_duration' => '1.000000',
+                                                        'tape_duration' => '0.471276',
                                                         'configuration_id' => 1,
                                                         'backup_level' => '1',
                                                         'hostname' => 'localhost.localdomain',
@@ -4719,7 +4794,7 @@ is_deeply (Installcheck::Config::remove_source_line($reply),
                                                       {
                                                         'last_tape_label' => undef,
                                                         'dle_status' => 'nodump-FLUSH',
-                                                        'tape_duration' => '1.000000',
+                                                        'tape_duration' => '0.411393',
                                                         'configuration_id' => 1,
                                                         'backup_level' => '1',
                                                         'hostname' => 'localhost.localdomain',
@@ -4736,7 +4811,7 @@ is_deeply (Installcheck::Config::remove_source_line($reply),
                                                       {
                                                         'last_tape_label' => undef,
                                                         'dle_status' => 'nodump-FLUSH',
-                                                        'tape_duration' => '1.000000',
+                                                        'tape_duration' => '0.411393',
                                                         'configuration_id' => 1,
                                                         'backup_level' => '1',
                                                         'hostname' => 'localhost.localdomain',
@@ -4753,7 +4828,7 @@ is_deeply (Installcheck::Config::remove_source_line($reply),
                                                       {
                                                         'last_tape_label' => undef,
                                                         'dle_status' => 'nodump-FLUSH',
-                                                        'tape_duration' => '1.000000',
+                                                        'tape_duration' => '0.338927',
                                                         'configuration_id' => 1,
                                                         'backup_level' => '1',
                                                         'hostname' => 'localhost.localdomain',
@@ -4770,7 +4845,7 @@ is_deeply (Installcheck::Config::remove_source_line($reply),
                                                       {
                                                         'last_tape_label' => undef,
                                                         'dle_status' => 'nodump-FLUSH',
-                                                        'tape_duration' => '1.000000',
+                                                        'tape_duration' => '0.317348',
                                                         'configuration_id' => 1,
                                                         'backup_level' => '1',
                                                         'hostname' => 'localhost.localdomain',
@@ -4797,7 +4872,7 @@ is_deeply (Installcheck::Config::remove_source_line($reply),
                                                                                                  'DIRO-TEST-001'
                                                                                                ],
                                                                                       'next_to_use' => 1,
-                                                                                      'new' => 1
+                                                                                      'next' => [ 'DIRO-TEST-001' ]
                                                                                     }
                                                                     }
                                                      },
@@ -4891,10 +4966,13 @@ Installcheck::Run::cleanup();
 $testconf = Installcheck::Run::setup();
 $testconf->add_param("autolabel", '"TESTCONF%%" any');
 $testconf->add_dle("localhost $diskname installcheck-test");
-$testconf->write();
+$testconf->write( do_catalog => 0 );
 
 # add a holding file that's in the disklist
 write_holding_file("localhost", $Installcheck::Run::diskname);
+config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
+$catalog = Amanda::DB::Catalog2->new(undef, create => 1, drop_tables => 1, load => 1);
+$catalog->quit();
 
 $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/runs/amflush","");
 foreach my $message (@{$reply->{'body'}}) {
@@ -4963,6 +5041,7 @@ is_deeply (Installcheck::Config::remove_source_line($reply),
 #wait until it is done
 do {
     $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/runs");
+    #diag("reply: " . Data::Dumper::Dumper($reply));
 } while ($reply->{'body'}[0]->{'code'} == 2000004 and
 	 $reply->{'body'}[0]->{'status'} ne 'done');
 is_deeply (Installcheck::Config::remove_source_line($reply),

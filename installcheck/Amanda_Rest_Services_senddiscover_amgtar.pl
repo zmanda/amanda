@@ -67,7 +67,7 @@ my $amperldir = $Amanda::Paths::amperldir;
 my $testconf;
 
 $testconf = Installcheck::Run::setup();
-$testconf->write();
+$testconf->write( do_catalog => 0 );
 
 #CODE 3700012
 #my $test_dir = "$Installcheck::TMP/test_amgtar_discover";

@@ -112,6 +112,7 @@ typedef struct sched_s {
     off_t origsize, dumpsize;
     time_t dumptime;
     char *dumpdate, *degr_dumpdate;
+    char *based_on_timestamp, *degr_based_on_timestamp;
     unsigned long est_kps, degr_kps;
     char *destname;                             /* file/port name */
     assignedhd_t **holdp;

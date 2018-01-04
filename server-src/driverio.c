@@ -267,6 +267,7 @@ start_one_tape_process(
 	    /*NOTREACHED*/
 
 	case 0:	/* child process */
+	    quit_amcatalog();
 	    aclose(fd[0]);
 	    if (dup2(fd[1], 0) == -1 || dup2(fd[1], 1) == -1)
 	        error(_("taper dup2: %s"), strerror(errno));
@@ -313,6 +314,7 @@ startup_dump_process(
 	/*NOTREACHED*/
 
     case 0:		/* child process */
+	quit_amcatalog();
 	aclose(fd[0]);
 	if(dup2(fd[1], 0) == -1 || dup2(fd[1], 1) == -1)
 	    error(_("%s dup2: %s"), dumper->name, strerror(errno));
@@ -383,6 +385,7 @@ startup_chunk_process(
 	/*NOTREACHED*/
 
     case 0:		/* child process */
+	quit_amcatalog();
 	aclose(fd[0]);
 	if(dup2(fd[1], 0) == -1 || dup2(fd[1], 1) == -1) {
 	    error(_("%s dup2: %s"), chunker->name, strerror(errno));
@@ -841,6 +844,7 @@ dumper_cmd(
         g_ptr_array_add(array, quote_string(device));
         g_ptr_array_add(array, g_strdup_printf("%d", sp->level));
         g_ptr_array_add(array, g_strdup(sp->dumpdate));
+        g_ptr_array_add(array, g_strdup(sp->based_on_timestamp));
 
 
         /*

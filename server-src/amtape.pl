@@ -38,11 +38,11 @@ use Amanda::MainLoop;
 use Amanda::Taper::Scan;
 use Amanda::Recovery::Scan;
 use Amanda::Interactivity;
-use Amanda::Tapelist;
+use Amanda::DB::Catalog2;
 use Amanda::Message qw( :severity );
 
 my $exit_status = 0;
-my $tl;
+my $catalog;
 
 ##
 # Subcommand handling
@@ -194,8 +194,6 @@ sub {
 	return usage($finished_cb);
     }
 
-    Amanda::Tapelist::compute_retention();
-
     # TODO -- support an --xml option
 
     my $inventory_cb = make_cb(inventory_cb => sub {
@@ -219,7 +217,7 @@ sub {
 
 	for my $sl (@$inv) {
 	    my $line = "Storage '$storage->{'storage_name'}': slot $sl->{slot}:";
-	    my $tle;
+	    my $volume;
 	    my $meta;
 	    if ($sl->{'state'} == Amanda::Changer::SLOT_EMPTY) {
 		$line .= " empty";
@@ -228,11 +226,11 @@ sub {
 	    } else {
 		if (defined $sl->{label}) {
 		    $line .= " label $sl->{label}";
-		    $tle = $tl->lookup_tapelabel($sl->{label});
-		    if (defined $tle) {
-			if ($tle->{'meta'}) {
-				$line .= " ($tle->{'meta'})";
-				$meta = $tle->{'meta'};
+		    $volume = $catalog->find_volume($storage->{'tapepool'}, $sl->{label});
+		    if (defined $volume) {
+			if ($volume->{'meta'}) {
+				$line .= " ($volume->{'meta'})";
+				$meta = $volume->{'meta'};
 			}
 		    }
 		} elsif ($sl->{'device_status'} == $DEVICE_STATUS_VOLUME_UNLABELED) {
@@ -275,13 +273,13 @@ sub {
 		    $line .= " (label do not match labelstr)";
 		}
 	    }
-	    if (defined $tle) {
-		my $retention_type = Amanda::Tapelist::get_retention_type($tle->{pool}, $tle->{label});
+	    if (defined $volume) {
+		my $retention_type = $volume->retention_type();
 		$line .= " [" . Amanda::Config::get_retention_name($retention_type) . "]";
 		if (defined $sl->{'barcode'} and
-		    defined $tle->{'barcode'} and
-		    $sl->{'barcode'} ne $tle->{'barcode'}) {
-		$line .= " MISTMATCH barcode in tapelist: $tle->{'barcode'}";
+		    defined $volume->{'barcode'} and
+		    $sl->{'barcode'} ne $volume->{'barcode'}) {
+		    $line .= " MISTMATCH barcode in catalog $volume->{'barcode'}";
 		}
 	    }
 
@@ -552,7 +550,7 @@ sub {
     my $taperscan = Amanda::Taper::Scan->new(algorithm => $scan_name,
 					     storage => $chg->{'storage'},
 					     changer => $chg,
-					     tapelist => $tl);
+					     catalog  => $catalog);
 
     my $result_cb = make_cb(result_cb => sub {
 	my ($err, $res, $label, $mode) = @_;
@@ -664,7 +662,7 @@ sub {
 sub load_changer {
     my ($finished_cb) = @_;
 
-    my $storage  = Amanda::Storage->new(tapelist => $tl);
+    my $storage  = Amanda::Storage->new(catalog => $catalog);
     return failure("$storage", $finished_cb) if $storage->isa("Amanda::Changer::Error");
     my $chg = $storage->{'chg'};
     if ($chg->isa("Amanda::Changer::Error")) {
@@ -733,15 +731,7 @@ if ($cfgerr_level >= $CFGERR_WARNINGS) {
 
 Amanda::Util::finish_setup($RUNNING_AS_DUMPUSER);
 
-my $tlf = Amanda::Config::config_dir_relative(getconf($CNF_TAPELIST));
-($tl, my $message) = Amanda::Tapelist->new($tlf);
-if (defined $message) {
-    if ($message->{'severity'} >= $Amanda::Message::CRITICAL) {
-	die("error loading tapelist: $message");
-    }
-    print STDERR "ERROR: $message\n";
-}
-
+$catalog = Amanda::DB::Catalog2->new();
 
 #make STDOUT not line buffered
 my $previous_fh = select(STDOUT);
@@ -763,5 +753,6 @@ sub main {
 
 main(\&Amanda::MainLoop::quit);
 Amanda::MainLoop::run();
+$catalog->quit() if defined $catalog;
 Amanda::Util::finish_application();
 exit($exit_status);

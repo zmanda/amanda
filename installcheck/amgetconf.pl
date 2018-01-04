@@ -50,7 +50,7 @@ like(run_err('amgetconf', 'this-probably-doesnt-exist', 'tapedev'),
 # Next, work against a basically empty config
 
 $testconf = Installcheck::Config->new();
-$testconf->write();
+$testconf->write( do_catalog => 0 );
 
 # test some defaults
 is(run_get('amgetconf', 'TESTCONF', "reserve"), "100", 
@@ -178,7 +178,7 @@ SKIP: {
 
 $testconf = Installcheck::Config->new();
 $testconf->add_param("foos_per_bar", "10");
-$testconf->write();
+$testconf->write(do_catalog => 0);
 
 like(run_err('amgetconf', 'TESTCONF', "foos_per_bar"), qr/errors processing config file/, 
     "gives error on invalid configuration");
@@ -190,7 +190,7 @@ $testconf = Installcheck::Config->new();
 $testconf->add_param("reserved-udp-port", '100,200');
 $testconf->add_param("printer", '"/dev/lp"');
 $testconf->add_param("reserve", '27');
-$testconf->write();
+$testconf->write( do_catalog => 0 );
 
 is(run_get('amgetconf', 'TESTCONF', "reserved-udp-port"), "100,200", 
     "correctly returns intrange parameters from the file");
@@ -216,7 +216,7 @@ chdir($olddir) or die("Could not 'cd' back to my original directory");
 $testconf = Installcheck::Config->new();
 $testconf->add_param("device_property", '"power" "on"');
 $testconf->add_param("device_property", '"turbo" "engaged"');
-$testconf->write();
+$testconf->write( do_catalog => 0 );
 
 is_deeply([sort(+split(qr/\n/, run_get('amgetconf', 'TESTCONF', 'device_property')))],
 	  [sort('visible "power" "on"', 'visible "turbo" "engaged"')],
@@ -238,7 +238,7 @@ $testconf->add_application('app_amgtar', [ plugin => '"amgtar"' ]);
 $testconf->add_application('app_amstar', [ plugin => '"amstar"' ]);
 $testconf->add_script('my_script', [ "execute-on" => 'pre-dle-amcheck', 'plugin' => '"foo"' ]);
 $testconf->add_device('my_device', [ "tapedev" => '"foo:/bar"' ]);
-$testconf->write();
+$testconf->write( do_catalog => 0 );
 
 is_deeply([sort(+split(/\n/, run_get('amgetconf', 'TESTCONF', '--list', 'tapetype')))],
 	  [sort("cassette", "reel2reel", "scotch", "TEST-TAPE")],
@@ -337,7 +337,7 @@ $testconf->add_dumptype("testdump", [
     "include file" => '"ifo"',
     "include list optional" => '"ilo"',
     ]);
-$testconf->write();
+$testconf->write( do_catalog => 0 );
 
 is_deeply([sort(+split(qr/\n/, run_get('amgetconf', 'TESTCONF', 'dumptype:testdump:exclude')))],
 	  [sort('FILE "f1" "f2"',
@@ -353,7 +353,7 @@ $testconf = Installcheck::Config->new();
 $testconf->add_param("property", '"prop1" "value1"');
 $testconf->add_param("property", '"prop2" "value2"');
 $testconf->add_param("property", '"prop3" "value3"');
-$testconf->write();
+$testconf->write( do_catalog => 0 );
 
 is(run_get('amgetconf', 'TESTCONF', "property:prop1"), "value1",
     "correctly returns property prop1 from the file");

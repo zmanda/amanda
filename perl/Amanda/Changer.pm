@@ -163,7 +163,7 @@ sub local_message {
     } elsif ($self->{'code'} == 1100051) {
 	return "No '\$s' in autolabel template";
     } elsif ($self->{'code'} == 1100052) {
-	return "label '$self->{'label'}' doesn't match autolabel";
+	return "label '$self->{'label'}' (template '$self->{'template'}') doesn't match autolabel";
     } elsif ($self->{'code'} == 1100053) {
 	return "Can't generate label: '%' and '!' in autolabel";
     } elsif ($self->{'code'} == 1100054) {
@@ -407,6 +407,7 @@ use Amanda::Config qw( :getconf );
 use Amanda::Device qw( :constants );
 use Amanda::Debug qw( debug );
 use Amanda::MainLoop;
+require Amanda::Storage;
 
 =head1 NAME
 
@@ -448,7 +449,7 @@ continue.
 A new object is created with the C<new> function as follows:
 
   my $chg = Amanda::Changer->new($changer_name,
-				 tapelist       => $tapelist,
+				 catalog        => $catalog,
 				 labelstr       => $labelstr,
 				 autolabel      => $autolabel,
 				 meta_autolabel => $meta_autolabel);
@@ -457,7 +458,7 @@ to create a named changer (a name provided by the user, either specifying a
 changer directly or specifying a changer definition), or
 
   my $chg = Amanda::Changer->new(undef,
-				 tapelist       => $tapelist,
+				 catalog        => $catalog,
 				 labelstr       => $labelstr,
 				 autolabel      => $autolabel,
 				 meta_autolabel => $meta_autolabel);
@@ -474,7 +475,7 @@ creating a new changer is
     die("Error creating changer $changer_name: $chg");
   }
 
-C<tapelist> must be an Amanda::Tapelist object. It is required if you want to
+C<catalog> must be an Amanda::DB::Catalog2 object. It is required if you want to
 use $chg->make_new_tape_label(), $chg->make_new_meta_label(),
 $res->make_new_tape_label() or $res->make_new_meta_label().
 C<labelstr> must be like getconf($CNF_LABELSTR), that value is used if C<labelstr> is not set.
@@ -1118,10 +1119,30 @@ sub new {
     my ($name) = shift;
     Amanda::Util::push_component_module("changer", "changer");
     my %params = @_;
+#die("No catalog in Changer->new %params") if !defined $params{'catalog'};
     my ($uri, $cc);
-Amanda::Debug::debug("paramsY: " . Data::Dumper::Dumper(\%params));
     my $storage_name = $params{'storage'}->{'storage_name'};
     $storage_name = Amanda::Config::get_config_name() if !defined $storage_name;
+    my $storage;
+
+    if (!$params{'storage'}) {
+	$name = getconf($CNF_TPCHANGER) if !defined $name;
+	$storage = Amanda::Storage->new(storage_name => $name,
+					changer_name => $name,
+					%params);
+	if ($storage->isa('Amanda::Changer::Error')) {
+	    $storage = Amanda::Storage->new(
+				storage_name => $storage_name,
+				changer_name => $name,
+				%params);
+	}
+	if ($storage->isa('Amanda::Changer::Error')) {
+            return $storage;
+	}
+	if (!defined $storage->{'chg'}) { die("AAAAAA: " . Data::Dumper::Dumper($storage)); };
+	$storage->{'chg'}->{'storage'} = $storage;
+	return $storage->{'chg'};
+    }
 
     # creating a named changer is a bit easier
     if (defined($name)) {
@@ -1379,7 +1400,7 @@ sub _new_from_uri { # (note: this sub is patched by the installcheck)
     } else {
 	$rv->{'storage'}->{'storage_name'} = Amanda::Config::get_config_name();
     }
-    $rv->{'tapelist'} = $params{'tapelist'};
+    $rv->{'catalog'} = $params{'catalog'} || $rv->{'storage'}->{'catalog'};
 
     $rv->{'autolabel'} = $params{'autolabel'};
     $rv->{'autolabel'} = $rv->{'storage'}->{'autolabel'}
@@ -1400,6 +1421,7 @@ sub _new_from_uri { # (note: this sub is patched by the installcheck)
 	if !defined $rv->{'meta_autolabel'};
 
     $rv->{'chg_name'} = $name;
+    $rv->{'uri_name'} = $uri;
 
     if (!$params{'no_validate'} && $rv->can('_validate')) {
         my $err = $rv->_validate();
@@ -1754,8 +1776,9 @@ sub label_to_slot {
     my $self = shift;
     my %params = @_;
 
-    my $tl = $self->{'tapelist'};
-    die ("label_to_slot: no tapelist") if !$tl;
+    my $slot = $self->{'label_to_slot'}->{$params{'label'}};
+    return $slot  if defined $slot;
+
     if (!defined $self->{'autolabel'}) {
 	return (undef, Amanda::Changer::Message->new(
 					chg => $self,
@@ -1814,7 +1837,7 @@ sub label_to_slot {
 
     my $label = $params{'label'};
     $label =~ $qtemplate;
-    my $slot = $1;
+    $slot = $1;
 
     if (!defined $slot) {
 	return (undef, Amanda::Changer::Message->new(
@@ -1822,9 +1845,11 @@ sub label_to_slot {
 					source_filename => __FILE__,
 					source_line => __LINE__,
 					label  => $params{'label'},
+					template  => $qtemplate,
 					code   => 1100052,
 					severity => $Amanda::Message::ERROR));
     }
+    $self->{'label_to_slot'}->{$params{'label'}} = $slot;
     return $slot;
 }
 
@@ -1832,8 +1857,8 @@ sub make_new_tape_label {
     my $self = shift;
     my %params = @_;
 
-    my $tl = $self->{'tapelist'};
-    die ("make_new_tape_label: no tapelist") if !$tl;
+    my $catalog = $self->{'catalog'};
+    die ("make_new_tape_label: no catalog") if !$catalog;
     if (!defined $self->{'autolabel'}) {
 	return (undef, "autolabel not set");
 	return (undef, Amanda::Changer::Message->new(
@@ -1931,7 +1956,8 @@ sub make_new_tape_label {
 					source_line => __LINE__,
 					code   => 1100056,
 					severity => $Amanda::Message::ERROR));
-	} elsif (!$params{'label_exist'} and $tl->lookup_tapelabel($label)) {
+	#} elsif (!$params{'label_exist'} and $tl->lookup_tapelabel($label)) {
+	} elsif (!$params{'label_exist'} and $catalog->find_volume($self->{'storage'}->{'tapepool'}, $label)) {
 	    return (undef, Amanda::Changer::Message->new(
 					chg => $self,
 					source_filename => __FILE__,
@@ -1941,18 +1967,6 @@ sub make_new_tape_label {
 					severity => $Amanda::Message::ERROR), 1);
 	}
     } else {
-	my %existing_labels;
-	for my $tle (@{$tl->{'tles'}}) {
-	    if (defined $tle && defined $tle->{'label'}) {
-		my $tle_label = $tle->{'label'};
-		my $tle_barcode = $tle->{'barcode'};
-		if (defined $tle_barcode) {
-		    $tle_label =~ s/$tle_barcode/SUBSTITUTE_BARCODE/g;
-		}
-		$existing_labels{$tle_label} = 1 if defined $tle_label;
-	    }
-	}
-
 	my $nlabels;
         my $i = 0;
 	if ($npercents > 0) {
@@ -1962,7 +1976,7 @@ sub make_new_tape_label {
 
 	    for ($i = 1; $i < $nlabels; $i++) {
 		$label = sprintf($sprintf_pat, $i);
-		last unless (exists $existing_labels{$label});
+		last unless $catalog->find_volume($self->{'storage'}->{'tapepool'}, $label);
 	    }
 	} else { # $nexclamations > 0
 	    $nlabels = 26 ** $nexclamations;
@@ -1976,7 +1990,7 @@ sub make_new_tape_label {
 	    while (1) {
 		$j = $nexclamations-1;
 		$label = sprintf($sprintf_pat, @i);
-		last unless (exists $existing_labels{$label});
+		last unless $catalog->find_volume($self->{'storage'}->{'tapepool'}, $label);
 		while ($j >= 0 and $i[$j] eq 'Z') {
 		    $i[$j] = 'A';
 		    $j--;
@@ -2022,12 +2036,11 @@ sub make_new_meta_label {
     my $self = shift;
     my %params = @_;
 
-    my $tl = $self->{'tapelist'};
-    die ("make_new_meta_label: no tapelist") if !$tl;
+    my $catalog = $self->{'catalog'};
+    die ("make_new_meta_label: no catalog") if !$catalog;
     return undef if !defined $self->{'meta_autolabel'};
     my $template = $self->{'meta_autolabel'};
     return if !defined $template;
-    return if !$template;
 
     if (!$template) {
 	return (undef, Amanda::Changer::Message->new(
@@ -2072,8 +2085,8 @@ sub make_new_meta_label {
 					code   => 1100062,
 					severity => $Amanda::Message::ERROR));
     } else {
-	my %existing_meta_labels =
-	    map { $_->{'meta'} => 1 } grep { defined $_->{'meta'} } @{$tl->{'tles'}};
+#	my %existing_meta_labels =
+#	    map { $_->{'meta'} => 1 } grep { defined $_->{'meta'} } @{$tl->{'tles'}};
 
 	my $nlabels;
 	my $i = 0;
@@ -2084,7 +2097,7 @@ sub make_new_meta_label {
 
 	    for ($i = 1; $i < $nlabels; $i++) {
 		$meta = sprintf($sprintf_pat, $i);
-		last unless (exists $existing_meta_labels{$meta});
+		last unless $catalog->find_meta($meta);
 	    }
 	} else { # $nexclamations > 0
 	    $nlabels = 26 ** $nexclamations;
@@ -2098,7 +2111,7 @@ sub make_new_meta_label {
 	    while (1) {
 		$j = $nexclamations-1;
 		$meta = sprintf($sprintf_pat, @i);
-		last unless (exists $existing_meta_labels{$meta});
+		last unless $catalog->find_meta($meta);
 		while ($j >= 0 and $i[$j] eq 'Z') {
 		    $i[$j] = 'A';
 		    $j--;

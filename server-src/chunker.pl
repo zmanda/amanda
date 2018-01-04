@@ -31,6 +31,7 @@ use Amanda::Logfile qw( :logtype_t log_add $amanda_log_trace_log );
 use Amanda::Debug qw( debug );
 use Amanda::Chunker::Controller;
 use Getopt::Long;
+use Amanda::DB::Catalog2;
 
 Amanda::Util::setup_application("chunker", "server", $CONTEXT_DAEMON, "amanda", "amanda");
 
@@ -69,10 +70,12 @@ Amanda::Debug::add_amanda_log_handler($amanda_log_trace_log);
 
 Amanda::Util::finish_setup($RUNNING_AS_DUMPUSER);
 
+my $catalog = Amanda::DB::Catalog2->new();
 # transfer control to the Amanda::Chunker::Controller class implemented above
-my $controller = Amanda::Chunker::Controller->new();
+my $controller = Amanda::Chunker::Controller->new(catalog => $catalog);
 $controller->start();
 Amanda::MainLoop::run();
 
+$catalog->quit();
 log_add($L_INFO, "pid-done $$");
 Amanda::Util::finish_application();

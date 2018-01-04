@@ -35,6 +35,7 @@ use Amanda::MainLoop;
 use Amanda::Config qw( :init :getconf config_dir_relative );
 use Amanda::Changer;
 use Amanda::Constants;
+use Amanda::DB::Catalog2;
 use Cwd qw (getcwd);
 
 eval 'use Installcheck::Rest;';
@@ -90,9 +91,12 @@ localhost diskname2 $diskname {
     server-encrypt "$cwd/amcat-error"
 }
 EODLE
-$testconf->write();
+$testconf->write( do_catalog => 0 );
 
 config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
+my $catalog = Amanda::DB::Catalog2->new(undef, create => 1, drop_tables => 1, load => 1);
+$catalog->quit();
+
 $diskfile = Amanda::Config::config_dir_relative(getconf($CNF_DISKFILE));
 $infodir = getconf($CNF_INFOFILE);
 

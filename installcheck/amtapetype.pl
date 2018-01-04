@@ -48,7 +48,7 @@ $testconf->add_device("smallvtape", [
     "tapedev" => '"file:' . vtape_dir() . '/drive0"',
     "device_property" => '"MAX_VOLUME_USAGE" "2m"', # need at least 1M
 ]);
-$testconf->write();
+$testconf->write( do_catalog => 0 );
 mkdir vtape_dir() . '/drive0';
 symlink "../slot1",  vtape_dir() . '/drive0/data';
 

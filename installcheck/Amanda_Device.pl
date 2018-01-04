@@ -162,7 +162,7 @@ sub properties_include {
 ## get stuff set up
 
 $testconf = Installcheck::Config->new();
-$testconf->write();
+$testconf->write( do_catalog => 0 );
 config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF') == $CFGERR_OK
     or die("Could not load configuration");
 
@@ -966,7 +966,7 @@ $testconf->add_device("mytape2", [
     "tapedev" => "\"file:$vtape2\"",
     "device_property" => "\"BLOCK_SIZE\" \"64k\""
 ]);
-$testconf->write();
+$testconf->write( do_catalog => 0 );
 config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF') == $CFGERR_OK
     or die("Could not load configuration");
 
@@ -1093,7 +1093,7 @@ SKIP: {
 
 	$testconf = Installcheck::Config->new();
 	$testconf->add_param("device_property", "\"verbose\" \"$v->{'val'}\"");
-	$testconf->write();
+	$testconf->write( do_catalog => 0 );
 	config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF') == $CFGERR_OK
 	    or die("Could not load configuration");
 
@@ -1114,7 +1114,7 @@ SKIP: {
 
     $testconf = Installcheck::Config->new();
     $testconf->add_param("device_property", "\"verbose\" \"foo\"");
-    $testconf->write();
+    $testconf->write( do_catalog => 0 );
     config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF') == $CFGERR_OK
 	or die("Could not load configuration");
 
@@ -1661,7 +1661,7 @@ SKIP: {
 
     my $dev;
     my $testconf = Installcheck::Config->new();
-    $testconf->write();
+    $testconf->write( do_catalog => 0 );
 
     my $cfg_result = config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF');
     if ($cfg_result != $CFGERR_OK) {

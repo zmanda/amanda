@@ -88,7 +88,7 @@ sub test_interface {
 	    property => "       \"tape-device\" \"0=ndmp:127.0.0.1:$ndmp->{port}\@$ndmp->{drive0}\"",
 	    property => "append \"tape-device\" \"1=ndmp:127.0.0.1:$ndmp->{port}\@$ndmp->{drive1}\"",
 	]);
-	$testconf->write();
+	$testconf->write( do_catalog => 0 );
 
 	my $cfg_result = config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF');
 	if ($cfg_result != $CFGERR_OK) {
@@ -318,7 +318,7 @@ sub test_changer {
 	    property => "\"verbose\" \"1\"",
 	    @ignore_barcodes,
 	]);
-	$testconf->write();
+	$testconf->write( do_catalog => 0 );
 
 	config_uninit();
 	my $cfg_result = config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF');

@@ -41,7 +41,7 @@ $testconf = Installcheck::Run::setup();
 $testconf->add_dle("localhost \"\\\\\\\\windows\\\\share\" installcheck-test");
 $testconf->add_dle("localhost \"\\\\\\\\windows\\\\share-a\" installcheck-test");
 $testconf->add_dle("localhost \"\\\\\\\\windows\\\\share-b\" installcheck-test");
-$testconf->write();
+$testconf->write( do_catalog => 0 );
 
 config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
 my ($cfgerr_level, @cfgerr_errors) = config_errors();

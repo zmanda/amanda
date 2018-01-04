@@ -49,7 +49,7 @@ Installcheck::log_test_output();
 my $testconf;
 $testconf = Installcheck::Config->new();
 $testconf->add_param('debug_recovery', '9');
-$testconf->write();
+$testconf->write( do_catalog => 0 );
 
 my $cfg_result = config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF');
 if ($cfg_result != $CFGERR_OK) {

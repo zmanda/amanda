@@ -125,65 +125,6 @@ read_tapelist(
     return 0;
 }
 
-int
-write_tapelist(
-    char *tapefile)
-{
-    tape_t *tp;
-    FILE *tapef;
-    char *newtapefile;
-    int   rc;
-    char *pid_str;
-    char *last_read_str;
-
-    newtapefile = g_strconcat(tapefile, ".new", NULL);
-
-    if((tapef = fopen(newtapefile,"w")) == NULL) {
-	amfree(newtapefile);
-	return 1;
-    }
-
-    for(tp = tape_list; tp != NULL; tp = tp->next) {
-	g_fprintf(tapef, "%s %s", tp->datestamp, tp->label);
-	if(tp->reuse) g_fprintf(tapef, " reuse");
-	else g_fprintf(tapef, " no-reuse");
-	if (tp->barcode)
-	    g_fprintf(tapef, " BARCODE:%s", tp->barcode);
-	if (tp->meta)
-	    g_fprintf(tapef, " META:%s", tp->meta);
-	if (tp->blocksize)
-	    g_fprintf(tapef, " BLOCKSIZE:%jd", (intmax_t)tp->blocksize);
-	if (tp->pool)
-	    g_fprintf(tapef, " POOL:%s", tp->pool);
-	if (tp->storage)
-	    g_fprintf(tapef, " STORAGE:%s", tp->storage);
-	if (tp->config)
-	    g_fprintf(tapef, " CONFIG:%s", tp->config);
-	if (tp->comment)
-	    g_fprintf(tapef, " #%s", tp->comment);
-	g_fprintf(tapef, "\n");
-    }
-
-    if (fclose(tapef) == EOF) {
-	g_fprintf(stderr,_("error [closing %s: %s]"), newtapefile, strerror(errno));
-	amfree(newtapefile);
-	return 1;
-    }
-    pid_str = g_strdup_printf("%d", (int)getpid());
-    last_read_str = g_strdup_printf("%s.last_write", tapefile);
-    unlink(last_read_str);
-    rc = rename(newtapefile, tapefile);
-    if (symlink(pid_str, last_read_str) == -1) {
-	g_debug("failed to symlink %s to %s: %s", last_read_str, pid_str,
-		strerror(errno));
-    }
-    amfree(newtapefile);
-    amfree(pid_str);
-    amfree(last_read_str);
-
-    return(rc != 0);
-}
-
 void
 clear_tapelist(void)
 {
@@ -299,7 +240,8 @@ get_last_reusable_tape_label(
     int   retention_full,
     int   skip)
 {
-    tape_t *tp = lookup_last_reusable_tape(l_template, tapepool, storage,
+    tape_t *tp;
+    tp = lookup_last_reusable_tape(l_template, tapepool, storage,
 					   retention_tapes,
 					   retention_days, retention_recover,
 					   retention_full, skip);

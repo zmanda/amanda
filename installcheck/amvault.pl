@@ -27,6 +27,7 @@ use File::Path;
 use Data::Dumper;
 use Installcheck;
 use Installcheck::Dumpcache;
+use Installcheck::DBCatalog2;
 use Installcheck::Config;
 use Installcheck::Mock;
 use Installcheck::Run qw(run run_err run_out run_get $diskname);
@@ -35,6 +36,7 @@ use Amanda::Paths;
 use Amanda::Config qw( :init );
 use Amanda::Changer;
 use Amanda::Debug;
+use Amanda::DB::Catalog2;
 
 Amanda::Debug::dbopen("installcheck");
 Installcheck::log_test_output();
@@ -76,6 +78,8 @@ if ($cfgerr_level >= $CFGERR_WARNINGS) {
     config_print_errors();
     die "config errors";
 }
+my $catalog = Amanda::DB::Catalog2->new(undef, create => 1, drop_tables => 1, load => 1);
+$catalog->quit();
 
 # and then set up a new vtape to vault onto
 my $tertiary_chg = setup_chg_disk();
@@ -143,6 +147,8 @@ if ($cfgerr_level >= $CFGERR_WARNINGS) {
     config_print_errors();
     die "config errors";
 }
+$catalog = Amanda::DB::Catalog2->new(undef, create => 1, drop_tables => 1, load => 1);
+$catalog->quit();
 
 sub get_dry_run {
     my $stdout = run_get(@_);
@@ -177,17 +183,19 @@ is_deeply([ get_dry_run("$sbindir/amvault",
     [ "holding", "",     "localhost", "$diskname/dir",     "1" ],
     [ "TESTCONF01", "1", "localhost", "$diskname/dir",     "0" ],
     [ "TESTCONF02", "1", "localhost", "$diskname/dir",     "1" ]
-    ], "amvault with a disk expression dumps only that disk");
+    ], "amvault with a disk expression vault only that disk");
 
 # Test NDMP-to-NDMP vaulting.  This will test all manner of goodness:
 #  - specifying a named changer on the amvault command line
 #  - exporting
 #  - directtcp vaulting (well, not really, since we don't support connecting yet)
 SKIP: {
-    skip "not built with ndmp and server", 2 unless
+    skip "not built with ndmp and server", 1 unless
 	Amanda::Util::built_with_component("ndmp") and Amanda::Util::built_with_component("server");
 
     Installcheck::Dumpcache::load("ndmp");
+    $catalog = Amanda::DB::Catalog2->new(undef, create => 1, drop_tables => 1, load => 1);
+    $catalog->quit();
 
     my $ndmp = Installcheck::Mock::NdmpServer->new(no_reset => 1);
     $ndmp->edit_config();

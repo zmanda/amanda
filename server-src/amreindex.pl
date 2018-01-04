@@ -31,7 +31,7 @@ use Symbol;
 use Amanda::Device qw( :constants );
 use Amanda::Debug qw( :logging );
 use Amanda::Config qw( :init :getconf config_dir_relative );
-use Amanda::Tapelist;
+use Amanda::DB::Catalog2;
 use Amanda::Logfile;
 use Amanda::Util qw( :constants );
 use Amanda::Storage;
@@ -40,7 +40,6 @@ use Amanda::Recovery::Clerk;
 use Amanda::Recovery::Scan;
 use Amanda::Recovery::Planner;
 use Amanda::Constants;
-use Amanda::DB::Catalog;
 use Amanda::Cmdline;
 use Amanda::MainLoop;
 use Amanda::Xfer qw( :constants );
@@ -285,7 +284,6 @@ sub find_index_command {
 sub main {
     my ($finished_cb) = @_;
 
-    my $tapelist;
     my $interactivity;
     my %scan;
     my $clerk;
@@ -306,6 +304,7 @@ sub main {
     my $source_crc;
     my $dest_crc;
     my $dest_native_crc;
+    my $catalog;
 
     my $steps = define_steps
 	cb_ref => \$finished_cb,
@@ -315,21 +314,19 @@ sub main {
 			};
 
     step start => sub {
-	# set up the tapelist
-	my $tapelist_file = config_dir_relative(getconf($CNF_TAPELIST));
-	($tapelist, my $message) = Amanda::Tapelist->new($tapelist_file);
-	return $steps->{'quit'}->($message) if defined $message;
+	# set up the catalog
+	$catalog = Amanda::DB::Catalog2->new();
 
 	# get the timestamp
 	$timestamp = $opt_timestamp;
-	$timestamp = Amanda::DB::Catalog::get_latest_write_timestamp()
+	$timestamp = $catalog->get_latest_write_timestamp()
 	    if !defined $opt_timestamp and @opt_dumpspecs == 0;
 
 	# make an interactivity plugin
 	$interactivity = Amanda::Interactivity::amreindex->new();
 
 	# make a changer
-	my ($storage) = Amanda::Storage->new(tapelist => $tapelist);
+	my ($storage) = Amanda::Storage->new(catalog => $catalog);
 	return  $steps->{'quit'}->($storage) if $storage->isa("Amanda::Message");
 	$storage{$storage->{"storage_name"}} = $storage;
 	my $chg = $storage->{'chg'};
@@ -363,6 +360,7 @@ sub main {
 	    $only_in_storage = 1;
 	}
         Amanda::Recovery::Planner::make_plan(
+	    catalog => $catalog,
             dumpspecs => @spec,
 	    storage_list => $storage_list,
 	    only_in_storage => $only_in_storage,
@@ -422,7 +420,7 @@ sub main {
 	my $storage_name = $dump->{'storage'};
 	if (!$storage{$storage_name}) {
 	    my ($storage) = Amanda::Storage->new(storage_name => $storage_name,
-						 tapelist     => $tapelist);
+						 catalog      => $catalog);
             #return  $steps->{'quit'}->($storage) if $storage->isa("Amanda::Changer::Error");
 	    $storage{$storage_name} = $storage;
 

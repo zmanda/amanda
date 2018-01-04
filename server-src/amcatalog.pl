@@ -347,6 +347,37 @@ sub _add_flush_cmd {
     print "$id\n";
 }
 
+sub _add_copy_cmd {
+    my $catalog = shift;
+    my $config = shift;
+    my $src_storage = shift;
+    my $label = shift;
+    my $hostname = shift;
+    my $diskname = shift;
+    my $dump_timestamp = shift;
+    my $level = shift;
+    my $dst_storage = shift;
+    my $working_pid = shift;
+    my $status = shift;
+    my $size = shift;
+    my $start_time = shift;
+
+    my $id = $catalog->add_copy_cmd(
+		config => $config,
+		src_storage => $src_storage,
+		label => $label,
+		hostname => $hostname,
+		diskname => $diskname,
+		dump_timestamp => $dump_timestamp,
+		level => $level,
+		dst_storage => $dst_storage,
+		working_pid => $working_pid,
+		status => $status,
+		size => $size,
+		start_time => $start_time);
+    print "$id\n";
+}
+
 sub __write_command {
     my $cmd = shift;
 
@@ -399,8 +430,8 @@ sub _get_flush_command {
     my $catalog = shift;
     my $id = shift;
 
-    my @cmds = $catalog->get_flush_command();
-    foreach my $cmd (@cmds) {
+    my $cmds = $catalog->get_flush_command();
+    foreach my $cmd (@$cmds) {
 	__write_command($cmd);
     }
 }
@@ -409,8 +440,8 @@ sub _get_copy_command {
     my $catalog = shift;
     my $id = shift;
 
-    my @cmds = $catalog->get_copy_command();
-    foreach my $cmd (@cmds) {
+    my $cmds = $catalog->get_copy_command();
+    foreach my $cmd (@$cmds) {
 	__write_command($cmd);
     }
 }
@@ -437,12 +468,13 @@ sub _add_image {
 				    $dump_timestamp, $level,
 				    $based_on_timestamp, $pid);
     debug("_add_image: $image->{'image_id'}");
-    print "$image->{'image_id'}\n";
+    print "$image->{'image_id'} $image->{'disk_id'}\n";
 }
 
 sub _finish_image {
     my $catalog        = shift;
     my $image_id       = shift;
+    my $disk_id        = shift;
     my $orig_kb        = shift;
     my $dump_status    = shift;
     my $nb_files       = shift;
@@ -453,7 +485,7 @@ sub _finish_image {
     my $message        = shift;
 
     debug("_finish_image $image_id");
-    my $image = $catalog->get_image($image_id);
+    my $image = $catalog->get_image($image_id, $disk_id);
     $image->finish_image($orig_kb, $dump_status, $nb_files, $nb_directories,
 			 $native_crc, $client_crc, $server_crc, $message);
     print "$image_id\n";
@@ -512,7 +544,7 @@ sub _rm_volume {
     my $pool = shift;
     my $label = shift;
 
-    $catalog->rm_volume($pool, $label);
+    $catalog->remove_volume($pool, $label);
 }
 
 sub _dump {
@@ -533,18 +565,18 @@ sub _part {
 
     my @dumpspecs = Amanda::Cmdline::parse_dumpspecs([@$argv],
 			$Amanda::Cmdline::CMDLINE_PARSE_DATESTAMP);
-    print "config dump_timestamp hostname diskname level storage pool label dump_status copy_status part_status filenum nb_parts partnum\n";
+    print "config dump_timestamp hostname diskname level storage pool label dump_status copy_status part_status filenum nb_parts partnum nb_files nb_directories\n";
     $catalog->print_catalog(\@dumpspecs, parts => 1, all_configs => $opt_all_configs, exact_match => $opt_exact_match, timestamp => $opt_timestamp);
 }
 
 sub _get_log_names {
     my $catalog = shift;
 
-    my @volumes = $catalog->find_volumes(
+    my $volumes = $catalog->find_volumes(
 			config => get_config_name());
 
     my %log_names;
-    for my $volume (@volumes) {
+    for my $volume (@$volumes) {
 	my $log_name = "log.$volume->{'write_timestamp'}.0";
 	$log_names{$log_name} += 1;
     }
@@ -636,14 +668,18 @@ sub run_command {
 
     $catalog_conf = lookup_catalog($catalog_name) if $catalog_name && !$catalog_conf;
     if ($command eq "create") {
+	my $drop_tables = 0;
+	$drop_tables = 1 if $argv[1] eq 'drop_tables';
 	$catalog = Amanda::DB::Catalog2->new($catalog_conf, config_name => $opt_config,
+							    drop_tables => $drop_tables,
 							    create => 1,
 							    load => 1);
 	return;
     } elsif ($command eq "import") {
 	$catalog = Amanda::DB::Catalog2->new($catalog_conf, config_name => $opt_config,
-							    create => 1);
-	_import($catalog, $argv[2]);
+							    create => 1,
+							    empty => 1);
+	_import($catalog, $argv[1]);
 	return;
     } elsif ($command eq "upgrade") {
 	$catalog = Amanda::DB::Catalog2->new($catalog_conf, config_name => $opt_config,
@@ -687,8 +723,8 @@ sub run_command {
 	_remove_cmd($catalog, $argv[1]);
     } elsif ($command eq "add-flush-cmd") {
 	_add_flush_cmd($catalog, $argv[1], $argv[2], $argv[3], $argv[4], $argv[5], $argv[6], $argv[7], $argv[8], $argv[9]);
-    #} elsif ($command eq "add-copy-cmd") {
-	#_add_copy_cmd($catalog, $argv[1], $argv[2], $argv[3], $argv[4], $argv[5], $argv[6], $argv[7], $argv[8], $argv[9])
+    } elsif ($command eq "add-copy-cmd") {
+	_add_copy_cmd($catalog, $argv[1], $argv[2], $argv[3], $argv[4], $argv[5], $argv[6], $argv[7], $argv[8], $argv[9], $argv[10], $argv[11], $argv[12]);
     #} elsif ($command eq "add-restore-cmd") {
 	#_add_restore_cmd($catalog, $argv[1], $argv[2], $argv[3], $argv[4], $argv[5], $argv[6], $argv[7], $argv[8], $argv[9]);
     } elsif ($command eq "get-cmd-from-id") {

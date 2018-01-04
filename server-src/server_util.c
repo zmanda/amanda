@@ -30,6 +30,8 @@
  *
  */
 
+#include <sys/wait.h>
+
 #include "amanda.h"
 #include "server_util.h"
 #include "logfile.h"
@@ -40,7 +42,6 @@
 #include "conffile.h"
 #include "infofile.h"
 #include "backup_support_option.h"
-#include "sys/wait.h"
 
 const char *cmdstr[] = {
     "BOGUS", "QUIT", "QUITTING", "DONE", "PARTIAL",
@@ -59,6 +60,8 @@ const char *cmdstr[] = {
     NULL
 };
 
+static void start_amcatalog(void);
+static GPtrArray *run_amcatalog_multi(char *command, int n_args, ...);
 
 struct cmdargs *
 getcmd(void)
@@ -800,3 +803,448 @@ server_can_do_estimate(
     return stats;
 }
 
+int amcatalog_pid = -1;
+int amcatalog_infd = -1;
+int amcatalog_outfd = -1;
+int amcatalog_errfd = 2;
+FILE *amcatalog_in = NULL;
+FILE *amcatalog_out = NULL;
+
+static void
+start_amcatalog(void)
+{
+    gchar     *amcatalog = g_strdup_printf("%s/amcatalog", sbindir);
+
+    g_debug("start_amcatalog");
+    amcatalog_pid = pipespawn(amcatalog, STDIN_PIPE|STDOUT_PIPE, 0,
+			      &amcatalog_infd, &amcatalog_outfd, &amcatalog_errfd,
+			      amcatalog, get_config_name(), "--interactive", NULL);
+    amcatalog_in = fdopen(amcatalog_infd, "w");
+    amcatalog_out = fdopen(amcatalog_outfd, "r");
+}
+
+char *
+run_amcatalog(
+    char *command,
+    int n_args,
+    ...)
+{
+    gchar     *arg;
+    GPtrArray *argv_ptr = g_ptr_array_new();
+    char      *out_line;
+    char       line[1000];
+    char      *result;
+    char      *return_result = NULL;
+    va_list    ap;
+    int        i;
+    gboolean   in_reply = FALSE;
+    gboolean   first_reply = TRUE;
+
+    if (amcatalog_pid == -1) {
+	start_amcatalog();
+    }
+
+    va_start(ap, n_args);
+    g_ptr_array_add(argv_ptr, command);
+    for (i=0; i<n_args; i++) {
+	arg = va_arg(ap, char *);
+	if (arg) {
+	    g_ptr_array_add(argv_ptr, arg);
+	} else {
+	    g_ptr_array_add(argv_ptr, "");
+	}
+    }
+    g_ptr_array_add(argv_ptr, NULL);
+    va_end(ap);
+
+    out_line = g_strjoinv(" ", (char **)argv_ptr->pdata);
+    g_debug("run_amcatalog cmd: %s", out_line);
+    fprintf(amcatalog_in, "%s\n", out_line);
+    fflush(amcatalog_in);
+    g_free(out_line);
+    g_ptr_array_free(argv_ptr, TRUE);
+
+    while((result = fgets(line, 1000, amcatalog_out))) {
+	if (result[strlen(result)-1] == '\n')
+	    result[strlen(result)-1] = '\0';
+	g_debug("run_amcatalog result: %s", result);
+	if (!in_reply) {
+	    if (strcmp(result, "BEGIN") == 0) {
+		in_reply = 1;
+	    } else {
+		g_debug("result before BEGIN line: %s", result);
+	    }
+	} else {
+	    if (strcmp(result, "END") == 0) {
+		break;
+	    } else if (first_reply) {
+		return_result = g_strdup(result);
+		first_reply = FALSE;
+	    } else {
+		g_debug("ignore result: %s", result);
+	    }
+	}
+    }
+
+    g_debug("run_amcatalog return_result: %s", return_result);
+    return return_result;
+}
+
+static GPtrArray *
+run_amcatalog_multi(
+    char *command,
+    int n_args,
+    ...)
+{
+    gchar     *arg;
+    GPtrArray *argv_ptr = g_ptr_array_new();
+    char      *out_line;
+    char       line[1000];
+    char      *result;
+    GPtrArray *return_result = g_ptr_array_new();
+    va_list    ap;
+    int        i;
+    gboolean   in_reply = FALSE;
+    int        result_count = 0;
+
+    if (amcatalog_pid == -1) {
+	start_amcatalog();
+    }
+
+    va_start(ap, n_args);
+    g_ptr_array_add(argv_ptr, command);
+    for (i=0; i<n_args; i++) {
+	arg = va_arg(ap, char *);
+	if (arg) {
+	    g_ptr_array_add(argv_ptr, arg);
+	} else {
+	    g_ptr_array_add(argv_ptr, "");
+	}
+    }
+    g_ptr_array_add(argv_ptr, NULL);
+    va_end(ap);
+
+    out_line = g_strjoinv(" ", (char **)argv_ptr->pdata);
+    g_debug("run_amcatalog_multi cmd: %s", out_line);
+    fprintf(amcatalog_in, "%s\n", out_line);
+    fflush(amcatalog_in);
+    g_free(out_line);
+    g_ptr_array_free(argv_ptr, TRUE);
+
+    while((result = fgets(line, 1000, amcatalog_out))) {
+	if (result[strlen(result)-1] == '\n')
+	    result[strlen(result)-1] = '\0';
+	result_count++;
+	if (result_count < 11) {
+	    g_debug("run_amcatalog_multi result: %s", result);
+	} else if (result_count == 11) {
+	    g_debug("run_amcatalog_multi result: ...");
+	}
+	if (!in_reply) {
+	    if (strcmp(result, "BEGIN") == 0) {
+		in_reply = 1;
+	    } else {
+		g_debug("result before BEGIN line: %s", result);
+	    }
+	} else {
+	    if (strcmp(result, "END") == 0) {
+		break;
+	    } else if (*result == '\0') {
+		// ignore empty line
+	    } else {
+		g_ptr_array_add(return_result, g_strdup(result));
+	    }
+	}
+    }
+
+    return return_result;
+}
+
+void
+quit_amcatalog(void)
+{
+    if (amcatalog_pid != -1) {
+	fclose(amcatalog_in);
+	fclose(amcatalog_out);
+	amcatalog_pid = -1;
+    }
+}
+
+void
+amcatalog_remove_working_cmd(
+    int pid)
+{
+    char  pid_str[50];
+
+    g_snprintf(pid_str, 50, "%d", pid);
+    run_amcatalog("remove-working-cmd", 1, pid_str);
+}
+
+void
+amcatalog_remove_cmd(
+    int id)
+{
+    char  id_str[50];
+
+    g_snprintf(id_str, 50, "%d", id);
+    run_amcatalog("remove-cmd", 1, id_str);
+}
+
+int
+amcatalog_add_cmd(
+    cmddata_t *cmddata)
+{
+    int id;
+    char *line = NULL;
+    char *config = quote_string(cmddata->config);
+    char *hostname = quote_string(cmddata->hostname);
+    char *diskname = quote_string(cmddata->diskname);
+    char *dump_timestamp = quote_string(cmddata->dump_timestamp);
+    char *dst_storage = quote_string(cmddata->dst_storage);
+    char status_str[NUM_STR_SIZE];
+
+    g_snprintf(status_str, sizeof(status_str), "%d", cmddata->status);
+
+    if (cmddata->operation == CMD_FLUSH) {
+	char *holding_file = quote_string(cmddata->holding_file);
+	char level_str[NUM_STR_SIZE];
+	char working_pid_str[NUM_STR_SIZE];
+	g_snprintf(level_str, sizeof(level_str), "%d", cmddata->level);
+	g_snprintf(working_pid_str, sizeof(working_pid_str), "%d", cmddata->working_pid);
+	line = run_amcatalog("add-flush-cmd", 9, config, holding_file,
+				hostname, diskname, dump_timestamp, level_str,
+				dst_storage, working_pid_str, status_str);
+	amfree(holding_file);
+    } else if (cmddata->operation == CMD_COPY) {
+	char *src_storage = quote_string(cmddata->src_storage);
+	char *src_label = quote_string(cmddata->src_label);
+	char level_str[NUM_STR_SIZE];
+	char working_pid_str[NUM_STR_SIZE];
+	char size_str[NUM_STR_SIZE];
+	char start_time_str[NUM_STR_SIZE];
+	g_snprintf(level_str, sizeof(level_str), "%d", cmddata->level);
+	g_snprintf(working_pid_str, sizeof(working_pid_str), "%d", cmddata->working_pid);
+	g_snprintf(size_str, sizeof(size_str), "%ld", cmddata->size);
+	g_snprintf(start_time_str, sizeof(start_time_str), "%ld", cmddata->start_time);
+	line = run_amcatalog("add-copy-cmd", 12, config, src_storage, src_label,
+				hostname, diskname, dump_timestamp, level_str,
+				dst_storage, working_pid_str, status_str,
+				size_str, start_time_str);
+    } else if (cmddata->operation == CMD_RESTORE) {
+	g_critical("add RESTORE command unimplemented");
+    } else {
+	g_critical("add UNKNOWN command unimplemented");
+    }
+    if (!line) {
+	g_critical("no output from amcatalog");
+    }
+    id = atoi(line);
+    amfree(dst_storage);
+    amfree(dump_timestamp);
+    amfree(diskname);
+    amfree(hostname);
+    amfree(config);
+    cmddata->id = id;
+    return id;
+}
+
+cmddata_t *
+amcatalog_get_cmd_from_id(
+    int id)
+{
+    char *line;
+    cmddata_t *cmddata = NULL;
+    char  id_str[50];
+
+    g_snprintf(id_str, 50, "%d", id);
+    line = run_amcatalog("get-cmd-from-id", 1, id_str);
+    if (line) {
+	cmddata = cmdfile_parse_line(line, NULL, NULL);
+    }
+    return cmddata;
+}
+
+GPtrArray *
+amcatalog_get_flush_cmd(void)
+{
+    GPtrArray *lines;
+    GPtrArray *result = g_ptr_array_new();
+    guint      i;
+
+    lines = run_amcatalog_multi("get-flush-cmd", 0 );
+    for (i = 0; i < lines->len; i++) {
+	char *line = g_ptr_array_index(lines, i);
+	cmddata_t *cmddata = cmdfile_parse_line(line, NULL, NULL);
+	if (cmddata) {
+	    g_ptr_array_add(result ,cmddata);
+	}
+    }
+    return result;
+}
+
+GPtrArray *
+amcatalog_get_copy_cmd(void)
+{
+    GPtrArray *lines;
+    GPtrArray *result = g_ptr_array_new();
+    guint      i;
+
+    lines = run_amcatalog_multi("get-copy-cmd", 0 );
+    for (i = 0; i < lines->len; i++) {
+	char *line = g_ptr_array_index(lines, i);
+	cmddata_t *cmddata = cmdfile_parse_line(line, NULL, NULL);
+	if (cmddata) {
+	    g_ptr_array_add(result ,cmddata);
+	}
+    }
+    return result;
+}
+
+gboolean
+amcatalog_holding_have_cmd(
+    char *holding)
+{
+    char *line;
+
+    line = run_amcatalog("get-cmd-ids-for-holding", 1, holding);
+    if (!line || *line == '\0') {
+	return FALSE;
+    }
+    return TRUE;
+}
+
+GHashTable *
+amcatalog_get_log_names(void)
+{
+    GPtrArray *lines;
+    guint      i;
+
+    GHashTable *log_names = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
+
+    lines = run_amcatalog_multi("get-log-names", 0);
+    for (i = 0; i < lines->len; i++) {
+	char *log_name = g_ptr_array_index(lines, i);
+	char *dot = strchr(log_name, '.');
+	if (dot) {
+	    dot++;
+	    dot = strchr(dot, '.');
+	    if (dot) {
+		*dot = '\0';
+		g_hash_table_insert(log_names, log_name, log_name);
+	    }
+	}
+    }
+    g_ptr_array_free(lines, TRUE);
+
+    return log_names;
+}
+
+GHashTable *
+amcatalog_get_dump_list(void)
+{
+    GPtrArray *lines;
+    guint      i;
+
+    GHashTable *dumps = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
+
+    lines = run_amcatalog_multi("dump", 1, "--timestamp");
+    for (i = 1; i < lines->len; i++) {
+	gchar **one_dump = split_quoted_strings(g_ptr_array_index(lines, i));
+	gchar *key = g_strdup_printf("%s : %s : %s : %s", one_dump[1],
+				     one_dump[2], one_dump[3], one_dump[4]);
+	if (g_str_equal(one_dump[1],"dump_timestamp"))
+	    continue;
+
+	g_hash_table_insert(dumps, key, key);
+	g_strfreev(one_dump);
+    }
+    g_ptr_array_free(lines, TRUE);
+
+    return dumps;
+}
+
+GHashTable *
+amcatalog_get_parts(
+    char *Xhostname,
+    char *Xdiskname)
+{
+    GPtrArray *lines;
+    guint      i;
+
+    GHashTable *dumps = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
+
+    lines = run_amcatalog_multi("part", 4, "--timestamp", "--exact-match", Xhostname, Xdiskname);
+    for (i = 1; i < lines->len; i++) {
+	gchar **one_part = split_quoted_strings(g_ptr_array_index(lines, i));
+	//gchar *dump_config = one_part[0];
+	gchar *timestamp = one_part[1];
+	gchar *hostname = one_part[2];
+	gchar *diskname = one_part[3];
+	gchar *level = one_part[4];
+	gchar *storage = one_part[5];
+	gchar *pool = one_part[6];
+	gchar *label = one_part[7];
+	gchar *dump_status = one_part[8];
+	gchar *copy_status = one_part[9];
+	gchar *part_status = one_part[10];
+	gchar *filenum = one_part[11];
+	gchar *nb_parts = one_part[12];
+	gchar *partnum = one_part[12];
+	gchar *nb_files = one_part[13];
+	gchar *nb_directory = one_part[14];
+	gchar *key = g_strdup_printf("%s : %s : %s : %s",
+				     timestamp, hostname, diskname, level);
+	GPtrArray *parts;
+	part_result_t *apart;
+
+	if (g_str_equal(timestamp,"dump_timestamp"))
+	    continue;
+
+	apart = g_new0(part_result_t, 1);
+	apart->timestamp = g_strdup(timestamp);
+	apart->hostname = g_strdup(hostname);
+	apart->diskname = g_strdup(diskname);
+	apart->level = atoi(level);
+	apart->storage = g_strdup(storage);
+	apart->pool = g_strdup(pool);
+	apart->label = g_strdup(label);
+	apart->dump_status = g_strdup(dump_status);
+	apart->copy_status = g_strdup(copy_status);
+	apart->part_status = g_strdup(part_status);
+	apart->filenum = atoi(filenum);
+	apart->nb_parts = atoi(nb_parts);
+	apart->partnum = atoi(partnum);
+	apart->nb_files = atoi(nb_files);
+	apart->nb_directory = atoi(nb_directory);
+	parts = g_hash_table_lookup(dumps, key);
+	if (parts) {
+	    g_ptr_array_add(parts, apart);
+	} else {
+	    parts = g_ptr_array_new();
+	    g_ptr_array_add(parts, apart);
+	    g_hash_table_insert(dumps, key, parts);
+	}
+	g_strfreev(one_part);
+    }
+    g_ptr_array_free(lines, TRUE);
+
+    return dumps;
+}
+
+gboolean
+cat_dump_hash_exist(
+    GHashTable *dump_hash,
+    char *hostname,
+    char *diskname,
+    char *timestamp,
+    int level)
+{
+    gchar *key = g_strdup_printf("%s : %s : %s : %d", hostname,
+				 diskname, timestamp, level);
+
+    if (g_hash_table_lookup(dump_hash, key)) {
+	return TRUE;
+    } else {
+	return FALSE;
+    }
+}

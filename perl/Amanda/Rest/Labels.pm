@@ -21,7 +21,7 @@
 package Amanda::Rest::Labels;
 use Amanda::Config qw( :init :getconf config_dir_relative );
 use Amanda::Rest::Configs;
-use Amanda::Tapelist;
+use Amanda::DB::Catalog2;
 use Amanda::Util qw( match_datestamp );
 use Symbol;
 use Data::Dumper;
@@ -51,7 +51,7 @@ Amanda::Rest::Labels -- Rest interface to get a list of labels
   HTTP status: 200 OK
   [
      {
-        "code" : "1600001",
+        "code" : "2600001",
         "message" : "List of labels",
         "severity" : "16",
         "source_filename" : "/usr/lib/amanda/perl/Amanda/Rest/Labels.pm",
@@ -86,20 +86,8 @@ Amanda::Rest::Labels -- Rest interface to get a list of labels
 sub init {
     my %params = @_;
 
-    my $filename = config_dir_relative(getconf($CNF_TAPELIST));
-
-    my ($tl, $message) = Amanda::Tapelist->new($filename);
-    if (defined $message) {
-	return (405, $message);
-    } elsif (!defined $tl) {
-	return (405, Amanda::Tapelist::Message->new(
-				source_filename => __FILE__,
-				source_line     => __LINE__,
-				code => 1600000,
-				severity => $Amanda::Message::ERROR,
-				tapefile => $filename));
-    }
-    return (-1, $tl);
+    my $catalog = Amanda::DB::Catalog2->new();
+    return (-1, $catalog);
 }
 
 sub list {
@@ -109,32 +97,37 @@ sub list {
     my ($status, @result_messages) = Amanda::Rest::Configs::config_init(@_);
     return (status, \@result_messages) if @result_messages;
 
-    my $tl = Amanda::Rest::Labels::init();
-    if ($tl->isa("Amanda::Message")) {
-	push @result_messages, $tl;
-	return (-1, \@result_messages);
+    my ($status, $catalog) = Amanda::Rest::Labels::init();
+    if ($catalog->isa("Amanda::Message")) {
+	push @result_messages, $catalog;
+	return ($status, \@result_messages);
     }
-    Amanda::Tapelist::compute_retention();
-    @tles = @{$tl->{'tles'}};
-    @tles = grep {defined $_->{'config'}    and $_->{'config'}  eq $params{'config'}}                     @tles if defined $params{'config'};
-    @tles = grep {defined $_->{'storage'}   and $_->{'storage'} eq $params{'storage'}}                    @tles if defined $params{'storage'};
-    @tles = grep {defined $_->{'pool'}      and $_->{'pool'}    eq $params{'pool'}}                       @tles if defined $params{'pool'};
-    @tles = grep {defined $_->{'meta'}      and $_->{'meta'}    eq $params{'meta'}}                       @tles if defined $params{'meta'};
-    @tles = grep {defined $_->{'reuse'}     and $_->{'reuse'}   eq $params{'reuse'}}                      @tles if defined $params{'reuse'};
-    @tles = grep {defined $_->{'datestamp'} and match_datestamp($params{'datestamp'}, $_->{'datestamp'})} @tles if defined $params{'datestamp'};
+    my $volumes = $catalog->find_volumes(
+			config => $params{'config'},
+			storage => $params{'storage'},
+			pool => $params{'pool'},
+			meta => $params{'meta'},
+			reuse => $params{'reuse'},
+			order_write_timestamp => $params{'order_write_timestamp'},
+			no_bless => 1,
+			retention_name => 1);
+    if (defined $params{'datestamp'}) {
+	my @volumes = grep {defined $_->{'write_timestamp'} and match_datestamp($params{'datestamp'}, $_->{'write_timestamp'})} @$volumes;
 
-    foreach my $tle (@tles) {
-	my $retention_type = Amanda::Tapelist::get_retention_type($tle->{pool}, $tle->{label});
-Amanda::Debug::debug("XX: $retention_type");
-	$tle->{'retention_type'} = Amanda::Config::get_retention_name($retention_type);
-    }
-
-    push @result_messages, Amanda::Tapelist::Message->new(
+	push @result_messages, Amanda::DB::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
-				code => 1600001,
+				code => 2600001,
 				severity => $Amanda::Message::SUCCESS,
-				tles => \@tles);
+				volumes => \@volumes);
+    } else {
+	push @result_messages, Amanda::DB::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code => 2600001,
+				severity => $Amanda::Message::SUCCESS,
+				volumes => $volumes);
+    }
     return (-1, \@result_messages);
 }
 

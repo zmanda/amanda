@@ -180,7 +180,7 @@ sub res2arr {
 # set up a basic config
 my $testconf = Installcheck::Config->new();
 $testconf->add_param("tapecycle", "20");
-$testconf->write();
+$testconf->write( do_catalog => 0 );
 
 # load the config
 config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF") == $CFGERR_OK

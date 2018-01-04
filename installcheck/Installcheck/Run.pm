@@ -304,8 +304,8 @@ sub setup_new_vtapes {
 	'length' => '30 mbytes',
 	'filemark' => '4 kbytes',
     ]);
-$testconf->write();
-    load_vtape(1);
+#$testconf->write( do_catalog => 0);
+#    load_vtape(1);
 
 }
 
@@ -602,7 +602,6 @@ sub diag_diff
 	diag("+$lb");
     }
     ok(!$fail, "$text: match");
-
 }
 
 sub is_sort_array

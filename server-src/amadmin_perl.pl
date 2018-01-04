@@ -35,7 +35,7 @@ use Amanda::Storage;
 use Amanda::Changer;
 use Amanda::Constants;
 use Amanda::MainLoop;
-use Amanda::Tapelist;
+use Amanda::DB::Catalog2;
 use Amanda::Label;
 use Amanda::Disklist;
 use Amanda::Curinfo;
@@ -137,14 +137,8 @@ sub main {
     };
 
     step reuse => sub {
-	my $tlf = Amanda::Config::config_dir_relative(getconf($CNF_TAPELIST));
-	my ($tl, $message) = Amanda::Tapelist->new($tlf);
-	if (defined $message) {
-            print STDERR "amadmin: Could not read the tapelist: $message";
-	    $exit_status = 1;
-	    $finished_cb->();
-        }
-	$storage  = Amanda::Storage->new(tapelist => $tl);
+	my $catalog = Amanda::DB::Catalog2->new();
+	$storage  = Amanda::Storage->new(catalog => $catalog);
 	if ($storage->isa("Amanda::Changer::Error")) {
 	    print STDERR "amadmin: $storage\n";
 	    $exit_status = 1;
@@ -158,7 +152,7 @@ sub main {
 	}
 
 	my $Label = Amanda::Label->new(storage  => $storage,
-				       tapelist => $tl,
+				       catalog  => $catalog,
 				       user_msg => \&user_msg_err);
 
 	if ($opt_command eq "reuse") {
@@ -183,30 +177,28 @@ sub main {
     };
 
     step retention => sub {
-	my $tlf = Amanda::Config::config_dir_relative(getconf($CNF_TAPELIST));
-	my ($tl, $message) = Amanda::Tapelist->new($tlf);
-	if (defined $message) {
-            print STDERR "amadmin: Could not read the tapelist: $message";
-	    $exit_status = 1;
-	    $finished_cb->();
-        }
-	Amanda::Tapelist::compute_retention();
+	my $catalog = Amanda::DB::Catalog2->new();
+	$storage  = Amanda::Storage->new(catalog => $catalog);
 	if (@ARGV) {
 	    foreach my $label (@ARGV) {
-		my $tle = $tl->lookup_tapelabel($label);
-		if ($tle) {
-		    my $retention_type = Amanda::Tapelist::get_retention_type($tle->{pool}, $tle->{label});
+		my $volume = $catalog->find_volume($storage->{'tapepool'}, $label);
+		if ($volume) {
+		    my $retention_type = $volume->retention_type();
 		    my $retention_name = Amanda::Config::get_retention_name($retention_type);
-		    print "$tle->{storage} $tle->{pool} $tle->{label} $retention_name\n";
+		    print "$storage->{'storage_name'} $storage->{'tapepool'} $label $retention_name\n";
 		} else {
 		    print "No '$label' label.\n";
 		}
 	    }
 	} else {
-	    foreach my $tle (@{$tl->{'tles'}}) {
-		my $retention_type = Amanda::Tapelist::get_retention_type($tle->{pool}, $tle->{label});
+	    my $volumes = $catalog->find_volumes(
+					pool => $storage->{'tapepool'},
+					config => get_config_name(),
+					storage_name => $storage->{'storage_name'});
+	    foreach my $volume (@$volumes) {
+		my $retention_type = $volume->retention_type();
 		my $retention_name = Amanda::Config::get_retention_name($retention_type);
-		print "$tle->{storage} $tle->{pool} $tle->{label} $retention_name\n";
+		print "$storage->{'storage_name'} $storage->{'tapepool'} $volume->{'label'} $retention_name\n";
 	    }
 	}
 	$finished_cb->();

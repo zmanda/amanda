@@ -31,13 +31,16 @@ use lib '@amperldir@';
 use Installcheck;
 use Installcheck::Run qw( $diskname $holdingdir );
 use Installcheck::Dumpcache;
+use Installcheck::DBCatalog2;
 use Installcheck::ClientService qw( :constants );
+use Amanda::Config qw( :init );
 use Amanda::Debug;
 use Amanda::MainLoop;
 use Amanda::Header;
 use Amanda::Feature;
 use Amanda::Paths;
 use Amanda::Util qw( slurp burp );
+use Amanda::DB::Catalog2;
 
 Amanda::Debug::dbopen("installcheck");
 Installcheck::log_test_output();
@@ -693,6 +696,7 @@ sub run_amidxtaped {
 
 	    if (!$ok) {
 		fail($testmsg);
+		exit;
 	    }
 	}
 
@@ -803,6 +807,9 @@ sub make_holding_file {
 ## normal operation
 
 Installcheck::Dumpcache::load('basic');
+config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
+my $catalog = Amanda::DB::Catalog2->new(undef, create => 1, drop_tables => 1, load => 1);
+$catalog->quit();
 my $loaded_dumpcache = 'basic';
 my $holdingfile;
 my $emulate;
@@ -811,6 +818,9 @@ for my $splits (0, 'basic', 'parts') { # two flavors of 'true'
     if ($splits and $splits ne $loaded_dumpcache) {
 	Installcheck::Dumpcache::load($splits);
 	$loaded_dumpcache = $splits;
+	config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
+	$catalog = Amanda::DB::Catalog2->new(undef, create => 1, drop_tables => 1, load => 1);
+	$catalog->quit();
     }
     for $emulate ('inetd', 'amandad') {
 	# note that 'directtcp' here expects amidxtaped to reply with AMANDA
@@ -822,6 +832,9 @@ for my $splits (0, 'basic', 'parts') { # two flavors of 'true'
 		    for my $holding (0, 1) {
 			if ($holding and (!$holdingfile or ! -e $holdingfile)) {
 			    $holdingfile = make_holding_file();
+			    config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
+			    $catalog = Amanda::DB::Catalog2->new(undef, create => 1, drop_tables => 1, load => 1);
+			    $catalog->quit();
 			}
 			test(
 			    emulate => $emulate,
@@ -851,6 +864,9 @@ for my $splits (0, 'basic', 'parts') { # two flavors of 'true'
 
 Installcheck::Dumpcache::load("basic");
 $holdingfile = make_holding_file();
+config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
+$catalog = Amanda::DB::Catalog2->new(undef, create => 1, drop_tables => 1, load => 1);
+$catalog->quit();
 $loaded_dumpcache = 'basic';
 
 ## miscellaneous edge cases
@@ -889,6 +905,9 @@ test(emulate => 'amandad', bad_cmd => 1);
 ## check decompression
 
 Installcheck::Dumpcache::load('compress');
+config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
+$catalog = Amanda::DB::Catalog2->new(undef, create => 1, drop_tables => 1, load => 1);
+$catalog->quit();
 
 test(dumpspec => 0, emulate => 'amandad',
      datapath => 'none', header => 1,
@@ -904,6 +923,9 @@ SKIP: {
     my $ndmp = Installcheck::Mock::NdmpServer->new();
     Installcheck::Dumpcache::load('ndmp');
     $ndmp->edit_config();
+    config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
+    $catalog = Amanda::DB::Catalog2->new(undef, create => 1, drop_tables => 1, load => 1);
+    $catalog->quit();
 
     # test a real directtcp transfer both with and without a header
     test(emulate => 'amandad', splits => 'basic',

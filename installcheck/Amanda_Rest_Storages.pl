@@ -28,11 +28,13 @@ use lib '@amperldir@';
 use Installcheck;
 use Installcheck::Run;
 use Installcheck::Catalogs;
+use Installcheck::DBCatalog2;
 use Amanda::Paths;
 use Amanda::Config qw( :init :getconf config_dir_relative );
 use Amanda::DB::Catalog;
 use Amanda::Cmdline;
 use Amanda::Xfer qw( :constants );
+use Amanda::DB::Catalog2;
 
 eval 'use Installcheck::Rest;';
 if ($@) {
@@ -56,7 +58,7 @@ my$taperoot = "$rtaperoot/flat";
 
 # set up and load a simple config
 my $testconf = Installcheck::Run::setup();
-$testconf->write();
+$testconf->write( do_catalog => 0 );
 
 my $reply;
 my $amperldir = $Amanda::Paths::amperldir;
@@ -94,7 +96,7 @@ $testconf->add_storage("DISKFLAT", [
 	policy => '"DISKFLAT"',
 	runtapes => 4,
 ]);
-$testconf->write();
+$testconf->write( do_catalog => 0 );
 
 $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storages/DISKFLAT/create","");
 is_deeply (Installcheck::Config::remove_source_line($reply),
@@ -122,7 +124,7 @@ is_deeply (Installcheck::Config::remove_source_line($reply),
 
 $testconf->remove_param("tapedev");
 $testconf->add_param("tapedev", '""');
-$testconf->write();
+$testconf->write( do_catalog => 0 );
 
 $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storages/DISKFLAT/create","");
 is_deeply (Installcheck::Config::remove_source_line($reply),
@@ -149,7 +151,7 @@ $testconf->add_storage("DISKFLAT", [
 	tpchanger => '"DISKFLAT"',
 	runtapes => 4,
 ]);
-$testconf->write();
+$testconf->write( do_catalog => 0 );
 
 $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storages/DISKFLAT/create","");
 is_deeply (Installcheck::Config::remove_source_line($reply),
@@ -177,7 +179,7 @@ $testconf->add_changer("DISKFLAT", [
 	property  => '"num-slot" "5"',
 	property  => '"auto-create-slot" "yes"'
 ]);
-$testconf->write();
+$testconf->write( do_catalog => 0 );
 
 $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storages/DISKFLAT/create","");
 is_deeply (Installcheck::Config::remove_source_line($reply),
@@ -259,7 +261,10 @@ $testconf->add_storage("DISKFLAT", [
 	labelstr  => 'MATCH-AUTOLABEL',
 	runtapes  => '5',
 ]);
-$testconf->write();
+$testconf->write( do_catalog => 0 );
+config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
+my $catalog = Amanda::DB::Catalog2->new(undef, create => 1, drop_tables => 1, load => 1);
+$catalog->quit();
 
 $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storages/DISKFLAT/inventory","");
 is_deeply (Installcheck::Config::remove_source_line($reply),
@@ -329,6 +334,9 @@ my $file = $taperoot ."/DISKFLAT-001";
 open AA, ">$taperoot/DISKFLAT-001";
 print AA "AMANDA: TAPESTART DATE 20140509113436 TAPE DISKFLAT-001\n";
 close AA;
+config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
+$catalog = Amanda::DB::Catalog2->new(undef, create => 1, drop_tables => 1, load => 1);
+$catalog->quit();
 
 $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storages/DISKFLAT/inventory","");
 is_deeply (Installcheck::Config::remove_source_line($reply),
@@ -708,7 +716,7 @@ $testconf->add_storage("aggregate", [
         tpchanger => '"aggregateC"',
 ]);
 $testconf->add_param("storage", '"aggregate"');
-$testconf->write();
+$testconf->write(do_catalog => 0);
 
 unlink $aggregate_statefile;
 rmtree($taperoot0);
@@ -724,6 +732,8 @@ if ($cfg_result != $CFGERR_OK) {
     my ($level, @errors) = Amanda::Config::config_errors();
     die(join "\n", @errors);
 }
+$catalog = Amanda::DB::Catalog2->new(undef, create => 1, drop_tables => 1, load => 1);
+$catalog->quit();
 
 $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storages/aggregate/show","");
 is_deeply (Installcheck::Config::remove_source_line($reply),
@@ -883,7 +893,7 @@ $testconf->add_storage("aggregate", [
         autolabel => '"$m-$1s" empty'
 ]);
 $testconf->add_param("storage", '"aggregate"');
-$testconf->write();
+$testconf->write(do_catalog => 0);
 
 unlink $aggregate_statefile;
 rmtree($taperoot0);
@@ -899,6 +909,8 @@ if ($cfg_result != $CFGERR_OK) {
     my ($level, @errors) = Amanda::Config::config_errors();
     die(join "\n", @errors);
 }
+$catalog = Amanda::DB::Catalog2->new(undef, create => 1, drop_tables => 1, load => 1);
+$catalog->quit();
 
 $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storages/aggregate/show","");
 is_deeply (Installcheck::Config::remove_source_line($reply),

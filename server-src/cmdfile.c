@@ -133,12 +133,8 @@ read_cmdfile(
     char *filename)
 {
     cmddatas_t *cmddatas = g_new0(cmddatas_t, 1);
-    cmddata_t  *cmddata;
-    char  *s, *fp, *operation;
-    char   ch;
     char **xlines;
     int    i;
-    int    pid;
     pid_t  pids[NB_PIDS];
     pid_t  new_pids[NB_PIDS];
     int    nb_pids = 0;
@@ -172,13 +168,71 @@ read_cmdfile(
 
     // read cmd
     for (i=2; xlines[i] != NULL; i++) {
-	int id;
-	s = xlines[i];
-	if (*s == '\0') continue;
+	cmddata_t *cmddata = cmdfile_parse_line(xlines[i],
+				&generic_command_restore,
+				&specific_command_restore);
+
+	if (!cmddata) continue;
+	/* validate working_pid */
+	if (!checked_working_pid && cmddata->working_pid != 0) {
+	    int   i;
+
+	    for (i = 0; i < nb_pids; i++) {
+		if (pids[i] == cmddata->working_pid) {
+		    cmddata->working_pid = new_pids[i];
+		    i += 100;
+		    continue;
+		}
+	    }
+	    if (nb_pids < NB_PIDS) {
+		pids[nb_pids] = cmddata->working_pid;
+		if (kill(cmddata->working_pid, 0) != 0)
+		    cmddata->working_pid =0;
+		new_pids[nb_pids] = cmddata->working_pid;
+		nb_pids++;
+	    }
+	}
+
+	g_hash_table_insert(cmddatas->cmdfile, GINT_TO_POINTER(cmddata->id), cmddata);
+    }
+
+    if (generic_command_restore) {
+	if (specific_command_restore) {
+	    /* set expire to NOW+24h of all genric command_restore */
+	    g_hash_table_foreach(cmddatas->cmdfile, &cmdfile_set_expire, NULL);
+	} else {
+	    /* check start_time of all generic command_restore and remove them */
+	    g_hash_table_foreach(cmddatas->cmdfile, &cmdfile_set_to_DONE, NULL);
+	}
+    }
+    g_strfreev(xlines);
+    checked_working_pid = 1;
+
+    if (need_rewrite) {
+	write_cmdfile(cmddatas);
+	return read_cmdfile(filename);
+    }
+    return cmddatas;
+}
+
+cmddata_t *
+cmdfile_parse_line (
+    char     *line,
+    gboolean *generic_command_restore,
+    gboolean *specific_command_restore)
+{
+    int    pid;
+    char  *s, *fp, *operation;
+    char   ch;
+    cmddata_t *cmddata;
+    int id;
+
+	s = line;
+	if (*s == '\0') return NULL;
 	ch = *s++;
 	skip_whitespace(s, ch);
 	if (ch == '\0' || sscanf((s - 1), "%d", &id) != 1) {
-	    continue;
+	    return NULL;
 	}
 	skip_integer(s, ch);
 	skip_whitespace(s, ch);
@@ -189,7 +243,7 @@ read_cmdfile(
 	    !g_str_equal(operation, "COPY") &&
 	    !g_str_equal(operation, "RESTORE")) {
 	    g_debug("BAD operation %s: %s", operation, s);
-	    continue;
+	    return NULL;
 	}
 	cmddata = g_new0(cmddata_t, 1);
 	cmddata->id = id;
@@ -323,10 +377,13 @@ read_cmdfile(
 	}
 	cmddata->working_pid = pid;
 	if (cmddata->operation == CMD_RESTORE) {
-	    if (cmddata->working_pid == 0)
-		generic_command_restore = TRUE;
-	    else
-		specific_command_restore = TRUE;
+	    if (cmddata->working_pid == 0) {
+		if (generic_command_restore)
+		    *generic_command_restore = TRUE;
+	    } else {
+		if (specific_command_restore)
+		    *specific_command_restore = TRUE;
+	   }
 	}
 	skip_whitespace(s, ch);
 	fp = s - 1;
@@ -346,46 +403,7 @@ read_cmdfile(
 	} else {
 	}
 
-	/* validate working_pid */
-	if (!checked_working_pid && cmddata->working_pid != 0) {
-	    int   i;
-
-	    for (i = 0; i < nb_pids; i++) {
-		if (pids[i] == cmddata->working_pid) {
-		    cmddata->working_pid = new_pids[i];
-		    i += 100;
-		    continue;
-		}
-	    }
-	    if (nb_pids < NB_PIDS) {
-		pids[nb_pids] = cmddata->working_pid;
-		if (kill(cmddata->working_pid, 0) != 0)
-		    cmddata->working_pid =0;
-		new_pids[nb_pids] = cmddata->working_pid;
-		nb_pids++;
-	    }
-	}
-
-	g_hash_table_insert(cmddatas->cmdfile, GINT_TO_POINTER(cmddata->id), cmddata);
-    }
-
-    if (generic_command_restore) {
-	if (specific_command_restore) {
-	    /* set expire to NOW+24h of all genric command_restore */
-	    g_hash_table_foreach(cmddatas->cmdfile, &cmdfile_set_expire, NULL);
-	} else {
-	    /* check start_time of all generic command_restore and remove them */
-	    g_hash_table_foreach(cmddatas->cmdfile, &cmdfile_set_to_DONE, NULL);
-	}
-    }
-    g_strfreev(xlines);
-    checked_working_pid = 1;
-
-    if (need_rewrite) {
-	write_cmdfile(cmddatas);
-	return read_cmdfile(filename);
-    }
-    return cmddatas;
+    return cmddata;
 }
 
 static void

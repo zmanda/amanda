@@ -35,7 +35,7 @@ Installcheck::log_test_output();
 
 # set up a basic TESTCONF, and then burp the example configs over amanda.conf
 my $testconf = Installcheck::Config->new();
-$testconf->write();
+$testconf->write( do_catalog => 0 );
 my $example_dir = "$amdatadir/example";
 my $testconf_dir = "$CONFIG_DIR/TESTCONF";
 my ($cfgerr_level, @cfgerr_errors);

@@ -25,6 +25,7 @@ use warnings;
 use lib '@amperldir@';
 use Installcheck::Config;
 use Installcheck::Run qw(run run_err run_get load_vtape vtape_dir);
+use Installcheck::DBCatalog2;
 use Amanda::Device qw( :constants );
 use Amanda::Config qw( :init :getconf );
 use Amanda::Paths;
@@ -32,6 +33,7 @@ use Amanda::Debug;
 use Amanda::Tapelist;
 use Amanda::Changer;
 use Amanda::MainLoop;
+use Amanda::DB::Catalog2;
 
 my $testconf;
 
@@ -39,7 +41,7 @@ Amanda::Debug::dbopen("installcheck");
 Installcheck::log_test_output();
 
 $testconf = Installcheck::Run::setup();
-$testconf->write();
+$testconf->write( do_catalog => 0 );
 
 config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
 my ($cfgerr_level, @cfgerr_errors) = config_errors();
@@ -47,6 +49,8 @@ if ($cfgerr_level >= $CFGERR_WARNINGS) {
     config_print_errors();
     BAIL_OUT("config errors");
 }
+my $catalog = Amanda::DB::Catalog2->new(undef, create => 1, drop_tables => 1, load => 1);
+$catalog->quit();
 
 # label slot 2 with "MyTape", slot 3 with "TESTCONF13", and add
 # the latter to the tapelist
@@ -79,11 +83,11 @@ sub setup_vtapes {
 				BAIL_OUT("device error 5");
 			    }
 			    $dev = $reservation->{'device'};
-		
+
 			    ($dev && ($dev->status == $DEVICE_STATUS_SUCCESS ||
 				      $dev->status == $DEVICE_STATUS_VOLUME_UNLABELED))
 			        or BAIL_OUT("device error 6");
-		
+
 			    $dev->start($ACCESS_WRITE, "TESTCONF13", undef)
 			        or BAIL_OUT("device error 7");
 			    $dev->finish()
@@ -102,7 +106,11 @@ sub setup_vtapes {
     my ($tl, $message) = Amanda::Tapelist->new($tlf, 1);
     $tl->add_tapelabel("0", "TESTCONF13", "test tape");
     $tl->write($tlf);
+    $catalog->quit() if $catalog;
+    $catalog = Amanda::DB::Catalog2->new(undef, create => 1, drop_tables => 1, load => 1);
 }
+
+my $r;
 
 like(run_err('amtape'),
     qr/^Usage:/,
@@ -120,11 +128,13 @@ ok(run('amtape', 'TESTCONF', 'reset'),
     "'amtape TESTCONF reset'");
 like($Installcheck::Run::stderr,
     qr/changer is reset/,
-    "..result correct");
+    "..result correct"),
+  or diag($Installcheck::Run::stderr);
 
 # TODO: chg-disk doesn't support "eject"
 #ok(run('amtape', 'TESTCONF', 'eject'),
-#    "'amtape TESTCONF eject'");
+#    "'amtape TESTCONF eject'")
+#      or diag($r);
 #like($Installcheck::Run::stderr,
 #    qr/drive ejected/,
 #    "..result correct");
@@ -135,41 +145,48 @@ ok(run('amtape', 'TESTCONF', 'slot', '2'),
     "'amtape TESTCONF slot 2'");
 like($Installcheck::Run::stderr,
     qr/changed to slot 2/,
-    "..result correct");
+    "..result correct"),
+  or diag($Installcheck::Run::stderr);
 
 ok(run('amtape', 'TESTCONF', 'slot', 'current'),
     "'amtape TESTCONF slot current'");
 like($Installcheck::Run::stderr,
     qr/changed to slot 2/,
-    "..result correct");
+    "..result correct"),
+  or diag($Installcheck::Run::stderr);
 
 ok(run('amtape', 'TESTCONF', 'slot', 'next'),
     "'amtape TESTCONF slot next'");
 like($Installcheck::Run::stderr,
     qr/changed to slot 3/,
-    "..result correct");
+    "..result correct")
+  or diag($Installcheck::Run::stderr);
 
 ok(run('amtape', 'TESTCONF', 'slot', 'next'),
     "'amtape TESTCONF slot next'");
 like($Installcheck::Run::stderr,
     qr/changed to slot 1/, # loop around to slot 1
-    "..result correct");
+    "..result correct"),
+  or diag($Installcheck::Run::stderr);
 
 ok(run('amtape', 'TESTCONF', 'label', 'MyTape'),
     "'amtape TESTCONF label MyTape'");
 like($Installcheck::Run::stderr,
     qr/slot +2:.*label MyTape/,
-    "..result correct");
+    "..result correct"),
+  or diag($Installcheck::Run::stderr);
 
 ok(run('amtape', 'TESTCONF', 'current'),
     "'amtape TESTCONF current'");
 like($Installcheck::Run::stderr,
     qr/slot +2:.*label MyTape/,
-    "..result correct");
+    "..result correct"),
+  or diag($Installcheck::Run::stderr);
 
 # TODO: chg-disk doesn't support "update"
-#ok(run('amtape', 'TESTCONF', 'update'),
-#    "'amtape TESTCONF update'");
+#ok($r = run('amtape', 'TESTCONF', 'update'),
+#    "'amtape TESTCONF update'"),
+#      diag($r);
 #like($Installcheck::Run::stderr,
 #    qr/update complete/,
 #    "..result correct");
@@ -178,26 +195,33 @@ ok(run('amtape', 'TESTCONF', 'show'),
     "'amtape TESTCONF show'");
 like($Installcheck::Run::stderr,
     qr/Storage 'TESTCONF': slot +2:.*label MyTape \(label do not match labelstr\)\nStorage 'TESTCONF': slot +3/,
-    "'amtape TESTCONF show' ..result correct");
+    "'amtape TESTCONF show' ..result correct")
+  or diag($Installcheck::Run::stderr);
 
-ok(run('amtape', 'TESTCONF', 'show', '2'),
-    "'amtape TESTCONF show'");
+ok($r = run('amtape', 'TESTCONF', 'show', '2'),
+    "'amtape TESTCONF show'") or
+  diag($r . $Installcheck::Run::stderr);
 like($Installcheck::Run::stderr,
     qr/^Storage 'TESTCONF': slot +2:.*label MyTape \(label do not match labelstr\)$/,
-    "'amtape TESTCONF show 2' ..result correct");
+    "'amtape TESTCONF show 2' ..result correct")
+  or diag($Installcheck::Run::stderr);
 
-ok(run('amtape', 'TESTCONF', 'show', '1,3'),
-    "'amtape TESTCONF show'");
+ok($r = run('amtape', 'TESTCONF', 'show', '1,3'),
+    "'amtape TESTCONF show'") or
+  diag($r . $Installcheck::Run::stderr);
 like($Installcheck::Run::stderr,
     qr/^Storage 'TESTCONF': slot +1: unlabeled volume\nStorage 'TESTCONF': slot +3: date \d{14} label TESTCONF13$/,
 #    qr/slot +1: unlabeled volume\nslot +3: date 20111121133419 label TESTCONF13/,
-    "'amtape TESTCONF show 1,3' ..result correct");
+    "'amtape TESTCONF show 1,3' ..result correct")
+  or diag($Installcheck::Run::stderr);
 
-ok(run('amtape', 'TESTCONF', 'taper'),
-    "'amtape TESTCONF taper'");
+ok($r = run('amtape', 'TESTCONF', 'taper'),
+    "'amtape TESTCONF taper'") or
+  diag($r . $Installcheck::Run::stderr);
 like($Installcheck::Run::stderr,
     qr/Will write to volume 'TESTCONF13' in slot 3/,
-    "'amtape TESTCONF taper' ..result correct");
+    "'amtape TESTCONF taper' ..result correct")
+  or diag($Installcheck::Run::stderr);
 
 ###
 ## shift to using the new Amanda::Changer::disk
@@ -205,66 +229,87 @@ like($Installcheck::Run::stderr,
 $testconf->remove_param("tapedev");
 $testconf->remove_param("tpchanger");
 $testconf->add_param("tpchanger", "\"chg-disk:" . vtape_dir(). "\"");
-$testconf->write();
+$testconf->write( do_catalog => 0 );
 
 setup_vtapes();
 
-ok(run('amtape', 'TESTCONF', 'reset'),
-    "'amtape TESTCONF reset'");
+ok($r = run('amtape', 'TESTCONF', 'reset'),
+    "'amtape TESTCONF reset'") or
+  diag($r . $Installcheck::Run::stderr);
 like($Installcheck::Run::stderr,
     qr/changer is reset/,
-    "..result correct");
+    "..result correct")
+  or diag($Installcheck::Run::stderr);
 
-ok(run('amtape', 'TESTCONF', 'slot', '2'),
-    "'amtape TESTCONF slot 2'");
+ok($r = run('amtape', 'TESTCONF', 'slot', '2'),
+    "'amtape TESTCONF slot 2'") or
+  diag($r . $Installcheck::Run::stderr);
 like($Installcheck::Run::stderr,
     qr/changed to slot 2/,
-    "..result correct");
+    "..result correct")
+  or diag($Installcheck::Run::stderr);
 
-ok(run('amtape', 'TESTCONF', 'slot', 'current'),
-    "'amtape TESTCONF slot current'");
+ok($r = run('amtape', 'TESTCONF', 'slot', 'current'),
+    "'amtape TESTCONF slot current'") or
+  diag($r . $Installcheck::Run::stderr);
 like($Installcheck::Run::stderr,
     qr/changed to slot 2/,
-    "..result correct");
+    "..result correct"),
+  or diag($Installcheck::Run::stderr);
 
-ok(run('amtape', 'TESTCONF', 'slot', 'next'),
-    "'amtape TESTCONF slot next'");
+ok($r = run('amtape', 'TESTCONF', 'slot', 'next'),
+    "'amtape TESTCONF slot next'") or
+  diag($r . $Installcheck::Run::stderr);
 like($Installcheck::Run::stderr,
     qr/changed to slot 3/,
-    "..result correct");
+    "..result correct"),
+  or diag($Installcheck::Run::stderr);
 
-ok(run('amtape', 'TESTCONF', 'label', 'MyTape'),
-    "'amtape TESTCONF label MyTape'");
+ok($r = run('amtape', 'TESTCONF', 'label', 'MyTape'),
+    "'amtape TESTCONF label MyTape'") or
+  diag($r . $Installcheck::Run::stderr);
 like($Installcheck::Run::stderr,
     qr/label MyTape is now loaded from slot 2/,
-    "..result correct");
+    "..result correct"),
+  or diag($Installcheck::Run::stderr);
 
-ok(run('amtape', 'TESTCONF', 'current'),
-    "'amtape TESTCONF current'");
+ok($r = run('amtape', 'TESTCONF', 'current'),
+    "'amtape TESTCONF current'") or
+  diag($r . $Installcheck::Run::stderr);
 like($Installcheck::Run::stderr,
     qr/slot +2:.*label MyTape/,
-    "..result correct");
+    "..result correct"),
+  or diag($Installcheck::Run::stderr);
 
-like(run_err('amtape', 'TESTCONF', 'update'),
+like($r = run_err('amtape', 'TESTCONF', 'update'),
     qr/does not support update/,
-    "'amtape TESTCONF update' fails gracefully");
+    "'amtape TESTCONF update' fails gracefully") or
+  diag($r . $Installcheck::Run::stderr);
 
-ok(run('amtape', 'TESTCONF', 'show'),
-    "'amtape TESTCONF show'");
+ok($r = run('amtape', 'TESTCONF', 'show'),
+    "'amtape TESTCONF show'") or
+  diag($r . $Installcheck::Run::stderr);
 like($Installcheck::Run::stderr,
     qr/Storage 'TESTCONF': slot +2:.*label MyTape \(label do not match labelstr\)\nStorage 'TESTCONF': slot +3/,
-    "..result correct");
+    "..result correct")
+  or diag($Installcheck::Run::stderr);
 
-ok(run('amtape', 'TESTCONF', 'inventory'),
-    "'amtape TESTCONF inventory'");
+ok($r = run('amtape', 'TESTCONF', 'inventory'),
+    "'amtape TESTCONF inventory'") or
+  diag($r . $Installcheck::Run::stderr);
 like($Installcheck::Run::stdout,
     qr/Storage 'TESTCONF': slot +1: blank\nStorage 'TESTCONF': slot +2: label MyTape \(current\) \(label do not match labelstr\)\nStorage 'TESTCONF': slot +3/,
-    "..result correct");
+    "..result correct")
+  or diag($Installcheck::Run::stderr);
 
-ok(run('amtape', 'TESTCONF', 'taper'),
-    "'amtape TESTCONF taper'");
+ok($r = run('amtape', 'TESTCONF', 'taper'),
+    "'amtape TESTCONF taper'") or
+  diag($r . $Installcheck::Run::stderr);
 like($Installcheck::Run::stderr,
     qr/Will write to volume 'TESTCONF13' in slot 3/,
-    "'amtape TESTCONF taper' ..result correct");
+    "'amtape TESTCONF taper' ..result correct"),
+  or diag($Installcheck::Run::stderr);
+
+$catalog->quit();
 
 Installcheck::Run::cleanup();

@@ -183,6 +183,7 @@ sub make_plan {
 	if exists $params{'dumpspec'};
 
     my $plan = Amanda::Recovery::Planner::Plan->new({
+	catalog => $params{'catalog'},
 	algo => $params{'algorithm'},
 	storage => $params{'storage'},
 	debug => $params{'debug'},
@@ -212,7 +213,7 @@ use Amanda::Header;
 use Amanda::Config qw( :getconf config_dir_relative );
 use Amanda::Debug qw( :logging );
 use Amanda::MainLoop;
-use Amanda::DB::Catalog;
+use Amanda::DB::Catalog2;
 use Amanda::Tapelist;
 
 sub new {
@@ -248,18 +249,19 @@ sub make_plan {
     my $src_labelstr = $params{'src_labelstr'};
 
     # first, get the set of dumps that match these dumpspecs
-    my @dumps = Amanda::DB::Catalog::get_dumps(dumpspecs => $dumpspecs,
-					       hostname => $hostname,
-					       diskname => $diskname,
-					       dump_timestamp => $dump_timestamp,
-					       level => $level,
-					       status => $status,
-					       labelstr  => $src_labelstr);
+    my $dumps = $self->{'catalog'}->get_dumps(parts => 1,
+					      dumpspecs => $dumpspecs,
+					      hostname => $hostname,
+					      diskname => $diskname,
+					      dump_timestamp => $dump_timestamp,
+					      level => $level,
+					      status => $status,
+					      labelstr  => $src_labelstr);
 
     # Create a hash of the latest datestamp of each dle.
     my %datestamp;
     if ($params{'latest_fulls'}) {
-	for my $dump (@dumps) {
+	for my $dump (@{$dumps}) {
 	    my $kd = join("\0", $dump->{'hostname'}, $dump->{'diskname'});
 	    if (exists $datestamp{$kd}) {
 		if ($dump->{'dump_timestamp'} > $datestamp{$kd}) {
@@ -273,7 +275,7 @@ sub make_plan {
 
     # now "bin" those by host/disk/dump_ts/level
     my %dumps;
-    for my $dump (@dumps) {
+    for my $dump (@{$dumps}) {
 	next if !defined $dump;
 	my $k = join("\0", $dump->{'hostname'}, $dump->{'diskname'},
 			   $dump->{'dump_timestamp'}, $dump->{'level'});
@@ -296,7 +298,7 @@ sub make_plan {
     #     1            1         0		all
     #     1            1         1		all in storage_list
     # now select the "best" of each set of dumps, and put that in @dumps
-    @dumps = ();
+    my @dumps = ();
     for my $options (values %dumps) {
 	my @options = @$options;
 
@@ -351,20 +353,25 @@ sub make_plan {
 	# media if it hasn't been overwritten, otherwise the dump on tertiary media,
 	# etc.  Note that this also prefers dumps on holding disk, since they are
 	# tagged with a write_timestamp of 0
-	@options = Amanda::DB::Catalog::sort_dumps(['write_timestamp'], @options);
-	if ($options[0]->{'write_timestamp'} =~ /^0+$/) {
+	@options = $self->{'catalog'}->sort_dumps(['write_timestamp'], @options);
+	if ($options[0]->{'storage'} eq 'HOLDING') {
 	    # use holding disk if available
 	    push @dumps, $options[0];
 	} else {
 	    # find one that match the labelstr
-	    my $j = 0;
-	    for (my $i = 0; $i < @options; $i++) {
-		if ($options[$i]->{'parts'}[1]{'label'} =~ /^$params{'labelstr'}$/) {
-		    $j = $i;
-		    last;
+	    if (defined $params{'labelstr'}) {
+		my $j = -1;
+		for (my $i = 0; $i < @options; $i++) {
+		    if (defined $options[$i]->{'parts'}[1]{'label'} &&
+			$options[$i]->{'parts'}[1]{'label'} =~ /^$params{'labelstr'}$/) {
+			$j = $i;
+			last;
+		    }
 		}
+		push @dumps, $options[$j];
+	    } else {
+		push @dumps, $options[0];
 	    }
-	    push @dumps, $options[$j];
 	}
     }
 
@@ -381,15 +388,17 @@ sub make_plan {
     # using the tapelist to order the labels.  Where labels match, it sorts on
     # the part's filenum.  This should sort the dumps into the order in which
     # they were written, with holding dumps coming in at the head of the list.
-    my $tapelist_filename = config_dir_relative(getconf($CNF_TAPELIST));
-    my ($tapelist, $message) = Amanda::Tapelist->new($tapelist_filename);
+#    my $tapelist_filename = config_dir_relative(getconf($CNF_TAPELIST));
+#    my ($tapelist, $message) = Amanda:Tapelist->new($tapelist_filename);
 
     my $sortfn = sub {
 	my $rv;
 	my $tle;
 
-	return $rv
-	    if ($rv = $a->{'write_timestamp'} cmp $b->{'write_timestamp'});
+	return -1 if ((    exists $a->{'parts'}[1]{'holding_file'}) &&
+		      (not exists $b->{'parts'}[1]{'holding_file'}));
+	return 1 if ((not exists $a->{'parts'}[1]{'holding_file'}) &&
+		     (    exists $b->{'parts'}[1]{'holding_file'}));
 
 	# above will take care of comparing a holding dump to an on-media dump, but
 	# if both are on holding then we need to compare them lexically
@@ -398,25 +407,28 @@ sub make_plan {
 	    return $a->{'parts'}[1]{'holding_file'} cmp $b->{'parts'}[1]{'holding_file'};
 	}
 
+	return $rv
+	    if ($rv = $a->{'write_timestamp'} cmp $b->{'write_timestamp'});
+
 	my ($alabel, $blabel) = (
 	    $a->{'parts'}[1]{'label'},
 	    $b->{'parts'}[1]{'label'},
 	);
 
-	my ($apos, $bpos);
-	$apos = $tle->{'position'}
-	    if (($tle = $tapelist->lookup_tapelabel($alabel)));
-	$bpos = $tle->{'position'}
-	    if (($tle = $tapelist->lookup_tapelabel($blabel)));
-	return ($bpos <=> $apos) # not: reversed for "oldest to newest"
-	    if defined $bpos && defined $apos && ($bpos <=> $apos);
+#	my ($apos, $bpos);
+#	$apos = $tle->{'position'}
+#	    if (($tle = $tapelist->lookup_tapelabel($alabel)));
+#	$bpos = $tle->{'position'}
+#	    if (($tle = $tapelist->lookup_tapelabel($blabel)));
+#	return ($bpos <=> $apos) # not: reversed for "oldest to newest"
+#	    if defined $bpos && defined $apos && ($bpos <=> $apos);
 
 	# if a tape wasn't in the tapelist, just sort the labels lexically (this
 	# really shouldn't happen)
-	if (!defined $bpos || !defined $apos) {
+#	if (!defined $bpos || !defined $apos) {
 	    return $alabel cmp $blabel
 		if defined $alabel and defined $blabel and $alabel cmp $blabel ;
-	}
+#	}
 
 	# finally, the dumps are on the same volume, so just sort by filenum
 	return $a->{'parts'}[1]{'filenum'} <=> $b->{'parts'}[1]{'filenum'};
@@ -455,7 +467,8 @@ sub make_holding_plan {
     my $hostname = $hdr->{'name'};
     my $diskname = $hdr->{'disk'};
     my $level = $hdr->{'dumplevel'};
-    my @dumps = Amanda::DB::Catalog::get_dumps(
+    my $dumps = $self->{'catalog'}->get_dumps(
+	    parts => 1,
 	    $params{'dumpspec'}? (dumpspecs => [ $params{'dumpspec'} ]) : (),
 	    dump_timestamp => $dump_timestamp,
 	    hostname => $hostname,
@@ -464,17 +477,17 @@ sub make_holding_plan {
 	    holding => 1,
 	);
 
-    if (!@dumps) {
+    if (!@$dumps) {
 	return $params{'plan_cb'}->(
 		"Specified holding file does not match dumpspec");
     }
 
     # this would be weird..
-    $self->dbg("got multiple dumps from Amanda::DB::Catalog for a holding file!")
-	if (@dumps > 1);
+    $self->dbg("got multiple dumps from catalog for a holding file!")
+	if (@$dumps > 1);
 
     # arbitrarily keepy the first dump if we got several
-    $self->{'dumps'} = [ $dumps[0] ];
+    $self->{'dumps'} = [ $dumps->[0] ];
 
     Amanda::MainLoop::call_later($params{'plan_cb'}, undef, $self);
 }
@@ -516,21 +529,43 @@ sub make_plan_from_filelist {
 	    push @labels, $label;
 	    $files{$label} = shift @filelist;
 	}
-	my @parts = Amanda::DB::Catalog::get_parts(
+	my $dumps = $self->{'catalog'}->get_dumps(
+		parts => 1,
 		$params{'dumpspec'}? (dumpspecs => [ $params{'dumpspec'} ]) : (),
 		storage => $storage,
 		labels => [ @labels ]);
 
+	# grep dump with parts
+	my @dumps = grep { exists $_->{'parts'}[1] } @$dumps;
+
+	# filter dump with at least one parts in the filelist
+	foreach my $dump (@dumps) {
+	    my $dump_ok = 0;
+	    foreach my $part (@{$dump->{'parts'}}) {
+		if (defined $part->{'filenum'} && defined $files{$part->{'label'}} &&
+		    defined $files{$part->{'label'}} &&
+		    grep { $_ == $part->{'filenum'} } @{$files{$part->{'label'}}}) {
+		    $dump_ok = 1;
+		}
+	    }
+	    if ($dump_ok == 0) {
+		delete $dump->{'parts'};
+	    }
+	}
+
+	# grep dump with parts
+	@dumps = grep { exists $_->{'parts'}[1] } @dumps;
+
 	# filter down to the parts that match filelist (using %files)
-	@parts = grep {
-	    my $filenum = $_->{'filenum'};
-	    grep { $_ == $filenum } @{$files{$_->{'label'}}};
-	} @parts;
+#	@parts = grep {
+#	    my $filenum = $_->{'filenum'};
+#	    grep { $_ == $filenum } @{$files{$_->{'label'}}};
+#	} @parts;
 
 	# extract the dumps, using a hash (on the perl identity of the dump) to
 	# ensure uniqueness
-	my %dumps = map { my $d = $_->{'dump'}; ($d, $d) } @parts;
-	my @dumps = values %dumps;
+#	my %dumps = map { my $d = $_->{'dump'}; ($d, $d) } @parts;
+#	my @dumps = values %dumps;
 
 	if (!@dumps) {
 	    return $params{'plan_cb'}->(
@@ -589,12 +624,13 @@ sub make_plan_from_filelist {
 	if ($storage && $storage ne $dumps[0]->{'storage'}) {
 	    die("bad storage $storage : $dumps[0]->{'storage'}");
 	}
-	# now, because of the weak linking used by Amanda::DB::Catalog, we need to
+	# now, because of the weak linking used by Amanda:DB:Catalog, we need to
 	# re-query for this dump.  If we don't do this, the parts will all be
 	# garbage-collected when we hand back the plan.  This is, chartiably, "less
 	# than ideal".  Note that this has the side-effect of filling in any parts of
 	# the dump that were missing from the filelist.
-	@dumps = Amanda::DB::Catalog::get_dumps(
+	$dumps = $self->{'catalog'}->get_dumps(
+	    parts => 1,
 	    hostname => $dumps[0]->{'hostname'},
 	    diskname => $dumps[0]->{'diskname'},
 	    level => $dumps[0]->{'level'},
@@ -604,8 +640,8 @@ sub make_plan_from_filelist {
 	    dumpspecs => $params{'dumpspecs'});
 
 	# sanity check
-	confess "no dumps" unless @dumps;
-	$self->{'dumps'} = [ $dumps[0] ];
+	confess "no dumps" unless @$dumps;
+	$self->{'dumps'} = [ $dumps->[0] ];
 
 	Amanda::MainLoop::call_later($params{'plan_cb'}, undef, $self);
     };

@@ -34,6 +34,7 @@
 #ifndef TAPEFILE_H
 #define TAPEFILE_H
 
+#include "conffile.h"
 #include "amanda.h"
 #include "conffile.h"
 
@@ -61,7 +62,6 @@ gchar **list_retention(void);
 gchar **list_no_retention(void);
 
 int read_tapelist(char *tapefile);
-int write_tapelist(char *tapefile);
 void clear_tapelist(void);
 void reset_tapelist(void);
 tape_t *lookup_tapepoollabel(const char *pool, const char *label);

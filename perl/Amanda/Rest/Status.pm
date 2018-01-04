@@ -27,7 +27,6 @@ use Amanda::Storage;
 use Amanda::Changer;
 use Amanda::Header;
 use Amanda::MainLoop;
-use Amanda::Tapelist;
 use Amanda::Label;
 use Amanda::Curinfo;
 use Amanda::Status;

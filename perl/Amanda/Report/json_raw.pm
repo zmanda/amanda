@@ -32,7 +32,6 @@ use JSON; # imports encode_json, decode_json, to_json and from_json.
 use Amanda::Config qw(:getconf config_dir_relative);
 use Amanda::Util qw(:constants quote_string );
 use Amanda::Holding;
-use Amanda::Tapelist;
 use Amanda::Debug qw( debug );
 use Amanda::Util qw( quote_string );
 

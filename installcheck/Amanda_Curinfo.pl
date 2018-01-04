@@ -46,7 +46,7 @@ BEGIN {
 }
 
 my $testconf = Installcheck::Config->new();
-$testconf->write();
+$testconf->write( do_catalog => 0 );
 
 my $infodir = "$Installcheck::TMP/infodir";
 

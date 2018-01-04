@@ -90,6 +90,7 @@ use Amanda::MainLoop qw( :GIOCondition );
 use Amanda::Recovery::Clerk;
 use Amanda::Restore;
 use Amanda::Extract;
+use Amanda::DB::Catalog2;
 
 use parent -norequire, 'Amanda::Recovery::Clerk::Feedback';
 
@@ -140,8 +141,10 @@ sub run {
     $| = 1;
 
     my $timestamp = $params{'timestamp'};
-    $timestamp = Amanda::DB::Catalog::get_latest_write_timestamp()
+    my $catalog = Amanda::DB::Catalog2->new();
+    $timestamp = $catalog->get_latest_write_timestamp()
 			unless defined $timestamp;
+    $timestamp .= ""; # must be a string
     my @spec = Amanda::Cmdline::dumpspec_t->new(undef, undef, undef, undef, $timestamp);
     my $validate_finish_cb = sub {
 

@@ -33,7 +33,7 @@ use Amanda::Debug qw( :logging );
 use Amanda::Disklist;
 use Amanda::Paths;
 use Amanda::MainLoop;
-use Amanda::Tapelist;
+use Amanda::DB::Catalog2;
 use Amanda::Util qw( :constants );
 use Amanda::Label;
 use File::Copy;
@@ -47,6 +47,7 @@ my $amtrmlog = "$amlibexecdir/amtrmlog";
 my $dry_run;
 my $cleanup;
 my $erase;
+my $pool;
 my $keep_label;
 my $external_copy;
 my $verbose = 1;
@@ -111,6 +112,7 @@ my $opts_ok = GetOptions(
     "cleanup" => \$cleanup,
     "dryrun|n" => \$dry_run,
     "erase" => \$erase,
+    "pool" => \$pool,
     "help|h" => \$help,
     "keep-label" => \$keep_label,
     "external-copy" => \$external_copy,
@@ -168,9 +170,13 @@ sub user_msg {
 
 sub main {
     my ($finished_cb) = @_;
+    my $catalog;
 
     my $steps = define_steps
-	cb_ref => \$finished_cb;
+	cb_ref => \$finished_cb,
+	finalize => sub { $catalog->quit() if defined $catalog;
+			  $catalog = undef;
+	};
 
     step start => sub {
 	# amadmin may later try to load this and will die if it has errors
@@ -181,39 +187,36 @@ sub main {
 	    die "Errors processing disklist";
 	}
 
-	my $tapelist_file = config_dir_relative(getconf($CNF_TAPELIST));
-	my ($tapelist, $message) = Amanda::Tapelist->new($tapelist_file, !$dry_run);
-	if (defined $message) {
-	    die "Could not read the tapelist: $message";
-	}
-	unless ($tapelist) {
-	    die "Could not read the tapelist";
+	$catalog = Amanda::DB::Catalog2->new();
+	if ($catalog->isa("Amanda::Message")) {
+	   die "$catalog";
 	}
 
 	if ($list_retention) {
-	    my @list = Amanda::Tapelist::list_retention();
+	    my @list = $catalog->list_retention();
 	    foreach my $label (@list) {
 		print "$label\n";
 	    }
 	} elsif ($list_no_retention) {
-	    my @list = Amanda::Tapelist::list_no_retention();
+	    my @list = $catalog->list_no_retention();
 	    foreach my $label (@list) {
 		print "$label\n";
 	    }
 	} else {
 	    my @list;
 	    if ($remove_no_retention) {
-		@list = Amanda::Tapelist::list_no_retention();
+		@list = $catalog->list_no_retention();
 	    } else {
 		@list = @label;
 	    }
-	    my $Label = Amanda::Label->new(tapelist => $tapelist,
+	    my $Label = Amanda::Label->new(catalog  => $catalog,
 					   user_msg => \&user_msg);
 
 	    return $Label->erase(labels        => \@list,
 				 cleanup       => $cleanup,
 				 dry_run       => $dry_run,
 				 erase         => $erase,
+				 pool          => $pool,
 				 keep_label    => $keep_label,
 				 external_copy => $external_copy,
 				 finished_cb   => $steps->{'erase_finished'});

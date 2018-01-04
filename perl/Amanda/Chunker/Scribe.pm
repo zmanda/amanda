@@ -249,7 +249,6 @@ use Amanda::Xfer qw( :constants );
 use Amanda::Header;
 use Amanda::Debug qw( :logging );
 use Amanda::MainLoop;
-use Amanda::Tapelist;
 use Amanda::Config qw( :getconf config_dir_relative );
 use base qw( Exporter );
 

@@ -21,6 +21,7 @@
 
 package Installcheck::Config;
 use Installcheck;
+use Installcheck::DBCatalog2 qw( create_db_catalog2 recreate_db_catalog2 check_db_catalog2 );
 use Amanda::Paths;
 use Amanda::Constants;
 use File::Path;
@@ -134,6 +135,50 @@ sub new {
 	'length' => '50 mbytes',
 	'filemark' => '4 kbytes'
     ]);
+
+    my $amanda_catalog = $ENV{'AMANDA_CATALOG'};
+    if (!defined $amanda_catalog || $amanda_catalog eq 'SQLite') {
+	mkdir ("$Installcheck::TMP/TESTCONF");
+	$self->add_catalog('my_catalog', [
+	    'comment'  => '"SQLite catalog"',
+	    'plugin'   => '"SQLite"',
+	    'property' => "\"dbname\" \"$Installcheck::TMP/TESTCONF/SQLite.db\""
+	]);
+    } elsif ($amanda_catalog eq 'MySQL') {
+	my $catalog_database = $ENV{'CATALOG_MYSQL_DATABASE'};
+	my $catalog_host = $ENV{'CATALOG_MYSQL_HOST'};
+	my $catalog_port = $ENV{'CATALOG_MYSQL_PORT'};
+	my $catalog_username = $ENV{'CATALOG_MYSQL_USERNAME'};
+	my $catalog_password = $ENV{'CATALOG_MYSQL_PASSWORD'};
+	my $params = [];
+	push @{$params}, 'comment'  => '"MySQL catalog"';
+	push @{$params}, 'plugin'   => '"MySQL"';
+	push @{$params}, 'property' => "\"database\" \"$catalog_database\"" if defined $catalog_database;
+	push @{$params}, 'property' => "\"host\" \"$catalog_host\"" if defined $catalog_host;
+	push @{$params}, 'property' => "\"port\" \"$catalog_port\"" if defined $catalog_port;
+	push @{$params}, 'property' => "\"username\" \"$catalog_username\"" if defined $catalog_username;
+	push @{$params}, 'property' => "\"password\" \"$catalog_password\"" if defined $catalog_password;
+	$self->add_catalog('my_catalog', $params);
+    } elsif ($amanda_catalog eq 'PgSQL') {
+	my $catalog_database = $ENV{'CATALOG_PGSQL_DATABASE'};
+	my $catalog_host = $ENV{'CATALOG_PGSQL_HOST'};
+	my $catalog_port = $ENV{'CATALOG_PGSQL_PORT'};
+	my $catalog_username = $ENV{'CATALOG_PGSQL_USERNAME'};
+	my $catalog_password = $ENV{'CATALOG_PGSQL_PASSWORD'};
+	my $params = [];
+	push @{$params}, 'comment'  => '"PgSQL catalog"';
+	push @{$params}, 'plugin'   => '"PgSQL"';
+	push @{$params}, 'property' => "\"database\" \"$catalog_database\"" if defined $catalog_database;
+	push @{$params}, 'property' => "\"host\" \"$catalog_host\"" if defined $catalog_host;
+	push @{$params}, 'property' => "\"port\" \"$catalog_port\"" if defined $catalog_port;
+	push @{$params}, 'property' => "\"username\" \"$catalog_username\"" if defined $catalog_username;
+	push @{$params}, 'property' => "\"password\" \"$catalog_password\"" if defined $catalog_password;
+	$self->add_catalog('my_catalog', $params);
+    } else {
+	die("AMANDA_CATALOG set to uknown value: $amanda_catalog");
+    }
+    $self->add_param('catalog','"my_catalog"');
+
     return $self;
 }
 
@@ -151,6 +196,7 @@ sub add_param {
     my $self = shift;
     my ($param, $value) = @_;
 
+    $param =~ s/_/-/g;
     push @{$self->{'params'}}, $param, $value;
 }
 
@@ -217,6 +263,7 @@ sub remove_param {
     my $self = shift;
     my ($param) = @_;
 
+    $param =~ s/_/-/g;
     my @new_params;
 
     while (@{$self->{'params'}}) {
@@ -311,12 +358,6 @@ sub add_device {
     $self->_add_subsec("devices", $name, 1, $values);
 }
 
-sub add_catalog {
-    my $self = shift;
-    my ($name, $values) = @_;
-    $self->_add_subsec("catalogs", $name, 1, $values);
-}
-
 sub add_changer {
     my $self = shift;
     my ($name, $values) = @_;
@@ -345,6 +386,12 @@ sub add_storage {
     my $self = shift;
     my ($name, $values) = @_;
     $self->_add_subsec("storages", $name, 1, $values);
+}
+
+sub add_catalog {
+    my $self = shift;
+    my ($name, $values) = @_;
+    $self->_add_subsec("catalogs", $name, 1, $values);
 }
 
 =item C<add_text($text)>
@@ -380,6 +427,7 @@ files necessary to run Amanda.
 
 sub write {
     my $self = shift;
+    my %params = @_;
 
     cleanup();
 
@@ -397,20 +445,27 @@ sub write {
 	    or die("Could not create '$gnutar_listdir'");
     }
 
-    $self->_write_tapelist("$testconf_dir/tapelist");
+    $self->_write_tapelist("$testconf_dir/tapelist", $params{tapelist});
     $self->_write_disklist("$testconf_dir/disklist");
     $self->_write_amanda_conf("$testconf_dir/amanda.conf");
     $self->_write_amandates($amandates);
     $self->_write_amanda_client_conf("$CONFIG_DIR/amanda-client.conf");
     $self->_write_amanda_client_config_conf("$testconf_dir/amanda-client.conf");
+
+    #if (!defined $params{'do_catalog'} || $params{'do_catalog'}) {
+    if (defined $params{'do_catalog'} && $params{'do_catalog'}) {
+	recreate_db_catalog2('TESTCONF');
+    }
 }
 
 sub _write_tapelist {
     my $self = shift;
-    my ($filename) = @_;
+    my $filename = shift;
+    my $data = shift;
 
     # create an empty tapelist
     open(my $tapelist, ">", $filename);
+    print {$tapelist} $data if ($data);
     close($tapelist);
 }
 
@@ -442,6 +497,7 @@ sub _write_amanda_conf {
     my $saw_tapetype = 0;
     my $taperscan;
     my $interactivity;
+    my $catalog;
     while (@params) {
 	$param = shift @params;
 	$value = shift @params;
@@ -453,6 +509,10 @@ sub _write_amanda_conf {
 	    next;
 	} elsif ($param eq 'interactivity') {
 	    $interactivity = $value;
+	    next;
+	}
+	if ($param eq 'catalog') {
+	    $catalog = $value;
 	    next;
 	}
 	print $amanda_conf "$param $value\n";

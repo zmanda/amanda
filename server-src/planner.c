@@ -31,7 +31,6 @@
  * backup schedule planner for the Amanda backup system.
  */
 #include "amanda.h"
-#include "find.h"
 #include "conffile.h"
 #include "diskfile.h"
 #include "tapefile.h"
@@ -88,9 +87,10 @@ typedef struct one_est_s {
     gint64  nsize;	/* native size     */
     gint64  csize;	/* compressed size */
     char   *dumpdate;
+    char   *based_on_timestamp;
     int     guessed;    /* If server guessed the estimate size */
 } one_est_t;
-static one_est_t default_one_est = {-1, -1, -1, "INVALID_DATE", 0};
+static one_est_t default_one_est = {-1, -1, -1, "INVALID_DATE", "INVALID_DATE", 0};
 
 typedef struct est_s {
     disk_t *disk;
@@ -187,8 +187,6 @@ static int promote_hills(void);
 static void output_scheduleline(est_t *est);
 static void server_estimate(est_t *est, int i, info_t *info, int level,
 			    tapetype_t *tapetype);
-static void cmdfile_flush(gpointer key G_GNUC_UNUSED, gpointer value,
-			  gpointer user_data);
 
 static void enqueue_est(estlist_t *list, est_t *est);
 static void insert_est(estlist_t *list, est_t *est, int (*cmp)(est_t *a, est_t *b));
@@ -215,7 +213,6 @@ main(
     gint64 initial_size;
     char *conf_diskfile;
     char *conf_tapelist;
-    char *conf_cmdfile;
     char *conf_infofile;
     times_t section_start;
     char *qname;
@@ -235,7 +232,6 @@ main(
     policy_s  *policy;
     char *storage_name;
     identlist_t il;
-    cmddatas_t *cmddatas;
 
     if (argc > 1 && argv && argv[1] && g_str_equal(argv[1], "--version")) {
 	printf("planner-%s\n", VERSION);
@@ -534,22 +530,22 @@ main(
 	dumpfile_t  file;
 	GSList *holding_list, *holding_file;
 	char *qdisk, *qhname;
-	cmdfile_data_t data;
 	GPtrArray *flush_ptr = g_ptr_array_sized_new(100);
 	char     *line;
 	gpointer *xline;
-
-	conf_cmdfile = config_dir_relative(getconf_str(CNF_CMDFILE));
-	cmddatas = read_cmdfile(conf_cmdfile);
-	g_free(conf_cmdfile);
+	GPtrArray *flush_cmds;
+	guint i;
 
 	holding_cleanup(NULL, stderr);
 
 	/* get *all* flushable files in holding, without checking against
 	 * the disklist (which may not contain some of the dumps) */
 	holding_list = holding_get_files_for_flush(NULL);
+	flush_cmds = amcatalog_get_flush_cmd();
 	for(holding_file=holding_list; holding_file != NULL;
 				       holding_file = holding_file->next) {
+	    char *ids = NULL;
+	    char *holding_name = NULL;
 	    if (!holding_file_get_dumpfile((char *)holding_file->data, &file)) {
 		continue;
 	    }
@@ -579,11 +575,35 @@ main(
 	    }
 
 	    /* find all cmdfile for that dump */
-	    data.ids = NULL;
-	    data.holding_file = (char *)holding_file->data;
+	    holding_name = (char *)holding_file->data;
 
-	    g_hash_table_foreach(cmddatas->cmdfile, &cmdfile_flush, &data);
-	    if (!data.ids) {
+	    for (i=0; i<flush_cmds->len; i++) {
+		cmddata_t *cmddata = flush_cmds->pdata[i];
+		if (g_str_equal(holding_name, cmddata->holding_file)) {
+		    storage_t *storage = lookup_storage(cmddata->dst_storage);
+		    if (storage) {
+			if (storage_get_autoflush(storage)) {
+			    if (ids) {
+				char *tmp_ids = g_strdup_printf("%s,%d;%s", ids, cmddata->id, cmddata->dst_storage);
+				g_free(ids);
+				ids = tmp_ids;
+			    } else {
+				ids = g_strdup_printf("%d;%s", cmddata->id, cmddata->dst_storage);
+			    }
+			} else {
+			    if (!ids) {
+				ids = strdup("");
+			    }
+			}
+		    } else {
+			if (!ids) {
+			    ids = strdup("");
+			}
+		    }
+
+		}
+	    }
+	    if (!ids) { // no cmd, flush to first storage
 		identlist_t  il = getconf_identlist(CNF_STORAGE);
 		storage_t   *storage = lookup_storage((char *)il->data);
 
@@ -592,29 +612,27 @@ main(
 
 		    cmddata->operation = CMD_FLUSH;
 		    cmddata->config = g_strdup(get_config_name());
-		    cmddata->holding_file = g_strdup(data.holding_file);
+		    cmddata->holding_file = g_strdup(holding_name);
 		    cmddata->hostname = g_strdup(file.name);
 		    cmddata->diskname = g_strdup(file.disk);
 		    cmddata->dump_timestamp = g_strdup(file.datestamp);
+		    cmddata->level = file.dumplevel;
 
 		    /* add to the first storage only */
 		    cmddata->dst_storage = g_strdup((char *)il->data);
 
 		    cmddata->working_pid = getpid();
 		    cmddata->status = CMD_TODO;
-		    cmddatas->max_id++;
-		    cmddata->id = cmddatas->max_id;
-		    g_hash_table_insert(cmddatas->cmdfile,
-				    GINT_TO_POINTER(cmddatas->max_id), cmddata);
-		    data.ids = g_strdup_printf("%d;%s", cmddata->id, (char *)il->data);
+		    amcatalog_add_cmd(cmddata);
+		    ids = g_strdup_printf("%d;%s", cmddata->id, (char *)il->data);
 		}
 	    }
 
-	    if (data.ids && *data.ids) {
+	    if (ids && *ids) {
 		qdisk = quote_string(file.disk);
 		qhname = quote_string((char *)holding_file->data);
 		line = g_strdup_printf("FLUSH %s %s %s %s %d %s",
-				       data.ids,
+				       ids,
 				       file.name,
 				       qdisk,
 				       file.datestamp,
@@ -625,15 +643,13 @@ main(
 		amfree(qdisk);
 		amfree(qhname);
 	    }
-	    g_free(data.ids);
+	    g_free(ids);
 	    dumpfile_free_data(&file);
 	}
 	// NULL terminate the array
 	g_ptr_array_add(flush_ptr, NULL);
 	slist_free_full(holding_list, g_free);
 	holding_list = NULL;
-	write_cmdfile(cmddatas);
-	close_cmdfile(cmddatas); cmddatas = NULL;
 	for (xline = flush_ptr->pdata; *xline != NULL; xline++) {
 	    g_fprintf(stderr, "%s\n", (char *)*xline);
 	    g_fprintf(stdout, "%s\n", (char *)*xline);
@@ -888,6 +904,7 @@ static void askfor(
     if (lev == -1) {
 	ep->estimate[seq].level = -1;
 	ep->estimate[seq].dumpdate = (char *)0;
+	ep->estimate[seq].based_on_timestamp = (char *)0;
 	ep->estimate[seq].nsize = (gint64)-3;
 	ep->estimate[seq].csize = (gint64)-3;
 	ep->estimate[seq].guessed = 0;
@@ -897,6 +914,7 @@ static void askfor(
     ep->estimate[seq].level = lev;
 
     ep->estimate[seq].dumpdate = g_strdup(get_dumpdate(info,lev));
+    ep->estimate[seq].based_on_timestamp = get_based_on_timestamp(info,lev);
 
     ep->estimate[seq].nsize = (gint64)-3;
     ep->estimate[seq].csize = (gint64)-3;
@@ -916,8 +934,6 @@ setup_estimate(
     int overwrite_runs;
 
     assert(dp && dp->host);
-
-    compute_retention();
     qname = quote_string(dp->name);
     g_fprintf(stderr, _("%s: time %s: setting up estimates for %s:%s\n"),
 		    get_pname(), walltime_str(curclock()),
@@ -3487,6 +3503,7 @@ static void output_scheduleline(
     char degr_time_str[NUM_STR_SIZE];
     char degr_kps_str[NUM_STR_SIZE];
     char *dump_date, *degr_date;
+    char *based_on_timestamp, *degr_based_on_timestamp;
     char *features;
     char *qname = quote_string(dp->name);
 
@@ -3504,6 +3521,8 @@ static void output_scheduleline(
 
     dump_date = ep->dump_est->dumpdate;
     degr_date = ep->degr_est->dumpdate;
+    based_on_timestamp = ep->dump_est->based_on_timestamp;
+    degr_based_on_timestamp = ep->degr_est->based_on_timestamp;
 
 #define fix_rate(rate) (rate < 1.0 ? DEFAULT_DUMPRATE : rate)
 
@@ -3534,6 +3553,7 @@ static void output_scheduleline(
 		    "%.0lf", degr_kps);
 	degr_str = g_strjoin(NULL, " ", degr_level_str,
 			     " ", degr_date,
+			     " ", degr_based_on_timestamp,
 			     " ", degr_nsize_str,
 			     " ", degr_csize_str,
 			     " ", degr_time_str,
@@ -3569,6 +3589,7 @@ static void output_scheduleline(
 			  " ", dump_priority_str,
 			  " ", dump_level_str,
 			  " ", dump_date,
+			  " ", based_on_timestamp,
 			  " ", dump_nsize_str,
 			  " ", dump_csize_str,
 			  " ", dump_time_str,
@@ -3605,42 +3626,6 @@ server_estimate(
     ep->estimate[i].nsize = size;
     if (stats == 0) {
 	ep->estimate[i].guessed = 1;
-    }
-}
-
-static void
-cmdfile_flush(
-    gpointer key G_GNUC_UNUSED,
-    gpointer value,
-    gpointer user_data)
-{
-    int id = GPOINTER_TO_INT(key);
-    cmddata_t *cmddata = value;
-    cmdfile_data_t *data = user_data;
-
-    if (cmddata->operation == CMD_FLUSH &&
-	g_str_equal(data->holding_file, cmddata->holding_file)) {
-	storage_t *storage = lookup_storage(cmddata->dst_storage);
-	if (storage) {
-	    if (storage_get_autoflush(storage)) {
-		if (data->ids) {
-		    char *ids = g_strdup_printf("%s,%d;%s", data->ids, id, cmddata->dst_storage);
-		    g_free(data->ids);
-		    data->ids = ids;
-		} else {
-		    data->ids = g_strdup_printf("%d;%s", id, cmddata->dst_storage);
-		}
-		cmddata->working_pid = getppid();
-	    } else {
-		if (!data->ids) {
-		    data->ids = strdup("");
-		}
-	    }
-	} else {
-	    if (!data->ids) {
-		data->ids = strdup("");
-	    }
-	}
     }
 }
 

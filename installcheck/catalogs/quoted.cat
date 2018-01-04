@@ -59,7 +59,7 @@ planner: time 0.091: analysis took 0.000 secs
 
 GENERATING SCHEDULE:
 --------
-DUMP clienthost ffffffff9ffeffffffff1f "C:\\Some Dir\\" 20080618130147 14050 0 1970:1:1:0:0:0 100 100 0 1024
+DUMP clienthost ffffffff9ffeffffffff1f "C:\\Some Dir\\" 20080618130147 14050 0 1970:1:1:0:0:0 19700101000000 100 100 0 1024
 --------
 dumper: pid 4086 executable dumper0 version 9.8.7
 dumper: pid 4095 executable dumper3 version 9.8.7
@@ -118,3 +118,5 @@ driver: send-cmd time 6.418 to taper0: QUIT
 taper: DONE
 driver: FINISHED time 7.426
 amdump: end at Wed Jun 18 13:01:55 EDT 2008
+%F tapelist
+20080618130147 conf-001 reuse

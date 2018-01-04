@@ -31,7 +31,6 @@ use POSIX;
 
 use Amanda::Config qw( :init :getconf config_dir_relative );
 use Amanda::Util qw( :constants );
-use Amanda::Tapelist;
 use Amanda::Disklist;
 use Amanda::Constants;
 use Amanda::Debug qw( debug warning );
@@ -60,7 +59,7 @@ my ($opt_mailto, $opt_filename, $opt_logfname, $opt_psfname, $opt_xml);
 my $from_amdump = 1;
 my ($config_name, $report, $outfh);
 my $mode = MODE_NONE;
-my $tl;
+my $exit_status;
 
 # list of [ report-spec, output-spec ]
 my (@outputs, @output_queue);
@@ -203,10 +202,8 @@ sub calculate_legacy_outputs {
     # Part of the "options" is the configuration.  Do we have a template?  And a
     # mailto? And mailer?
 
-    my $storage = Amanda::Storage->new(
-			storage_name => $report->{'storage_list'}[0],
-			tapelist => $tl);
-    my $tapetype_name = $storage->{'tapetype_name'};
+    my $st = lookup_storage($report->{'storage_list'}[0]);
+    my $tapetype_name = storage_getconf($st, $STORAGE_TAPETYPE) if $st;
     my $tt = lookup_tapetype($tapetype_name) if $tapetype_name;
     my $cfg_template = "" . tapetype_getconf($tt, $TAPETYPE_LBL_TEMPL) if $tt;
 
@@ -260,7 +257,6 @@ sub calculate_legacy_outputs {
     if ($opt_psfname and $cfg_template) {
 	push @outputs, [ [ 'postscript', $cfg_template ], [ 'file', $opt_psfname ] ];
     }
-    $storage->quit();
 }
 
 sub legacy_send_amreport
@@ -406,7 +402,10 @@ sub open_mail_output
 
     my $done = "";
     if (  !$report->get_flag("got_finish")
-	|| $report->get_flag("dump_failed") != 0) {
+	|| $report->get_flag("dump_failed") != 0
+	|| $exit_status & Amanda::Report::STATUS_ERROR
+	|| $exit_status & Amanda::Report::STATUS_FAILED
+	|| $exit_status & Amanda::Report::STATUS_TAPE) {
 	$done = " FAIL:";
     } elsif ($report->get_flag("results_missing") != 0) {
 	$done = " MISSING:";
@@ -599,13 +598,6 @@ if ( $cfgerr_level >= $CFGERR_WARNINGS ) {
 
 Amanda::Util::finish_setup($RUNNING_AS_DUMPUSER);
 
-# read the tapelist
-my $tl_file = config_dir_relative(getconf($CNF_TAPELIST));
-($tl, my $message) = Amanda::Tapelist->new($tl_file);
-if (defined $message) {
-    debug("Could not read the tapelist: $message");
-}
-
 # read the disklist
 my $diskfile = config_dir_relative(getconf($CNF_DISKFILE));
 $cfgerr_level = Amanda::Disklist::read_disklist('filename' => $diskfile);
@@ -629,7 +621,7 @@ if ($report->isa("Amanda::Message")) {
     print $report, "\n";
     exit(1);
 }
-my $exit_status = $report->get_flag("exit_status");
+$exit_status = $report->get_flag("exit_status");
 
 if ($mode == MODE_CMDLINE) {
     debug("operating in cmdline mode");

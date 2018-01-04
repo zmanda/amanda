@@ -126,7 +126,7 @@ my $taperoot_single = "$Installcheck::TMP/Amanda_Recovery_Scan_Single";
     ]);
 }
 
-$testconf->write();
+$testconf->write( do_catalog => 0 );
 
 Amanda::Config::config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
 

@@ -31,6 +31,8 @@ use Installcheck::Run qw(run run_err $diskname);
 use Amanda::Paths;
 use Amanda::Header;
 use Amanda::Debug;
+use Amanda::Config qw( :init );
+use Amanda::DB::Catalog2;
 
 Amanda::Debug::dbopen("installcheck");
 Installcheck::log_test_output();
@@ -65,10 +67,13 @@ Installcheck::Run::cleanup();
 $testconf = Installcheck::Run::setup();
 $testconf->add_param("autolabel", '"TESTCONF%%" any');
 $testconf->add_dle("localhost $diskname installcheck-test");
-$testconf->write();
+$testconf->write( do_catalog => 0 );
 
 # add a holding file that's in the disklist
 write_holding_file("localhost", $Installcheck::Run::diskname);
+config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
+my $catalog = Amanda::DB::Catalog2->new(undef, create => 1, drop_tables => 1, load => 1);
+$catalog->quit();
 
 ok(run("$sbindir/amflush", '-f', '-b', 'TESTCONF'),
     "amflush runs successfully")
@@ -82,10 +87,13 @@ Installcheck::Run::cleanup();
 $testconf = Installcheck::Run::setup();
 $testconf->add_param("autolabel", '"TESTCONF%%" any');
 # don't add anything to the disklist; it should still flush it
-$testconf->write();
+$testconf->write( do_catalog => 0 );
 
 # add a holding file that's not in the disklist
 write_holding_file("localhost", $Installcheck::Run::diskname);
+config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
+$catalog = Amanda::DB::Catalog2->new(undef, create => 1, drop_tables => 1, load => 1);
+$catalog->quit();
 
 ok(run("$sbindir/amflush", '-f', '-b', 'TESTCONF'),
     "amflush runs successfully")

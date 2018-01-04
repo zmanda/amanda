@@ -33,7 +33,7 @@ use Amanda::Device qw( :constants );
 use Amanda::Debug qw( debug );
 use Amanda::MainLoop;
 use Amanda::Policy;
-use Amanda::Changer;
+require Amanda::Changer;
 use Amanda::Paths;
 
 =head1 NAME
@@ -45,11 +45,11 @@ Amanda::Storage -- interface to storage scripts
     use Amanda::Storage;
 
     # load defaulf storage and changer
-    my $storage = Amanda::Storage->new(tapelist => $tapelist);
+    my $storage = Amanda::Storage->new(catalog => $catalog);
     # load specific storage and changer
     my $storage = Amanda::Storage->new(storage_name => $storage,
 				       changer_name => $changer,
-				       tapelist     => $tapelist);
+				       catalog      => $catalog);
     my $chg = $storage->{'chg'};
     $storage->quit();
 
@@ -65,7 +65,7 @@ A new object is created with the C<new> function as follows:
 
   my $storage = Amanda::Storage->new(storage_name   => $storage_name,
 				     changer_name   => $changer_name,
-				     tapelist       => $tapelist,
+				     catalog        => $catalog,
 				     labelstr       => $labelstr,
 				     autolabel      => $autolabel,
 				     meta_autolabel => $meta_autolabel);
@@ -78,7 +78,7 @@ Amanda::Changer::Error.
 
 Thus the usual recipe for creating a new storage is
 
-  my $storage = Amanda::Storage->new(tapelist => $tapelist);
+  my $storage = Amanda::Storage->new(catalog => $catalog);
   if ($storage->isa("Amanda::Changer::Error")) {
     die("Error creating storage: $sorage");
   }
@@ -87,7 +87,7 @@ Thus the usual recipe for creating a new storage is
     die("Error creating changer:  $chg");
   }
 
-C<tapelist> must be an Amanda::Tapelist object. It is required if you want to
+C<catalog> must be an Amanda::DB::Catalog2 object. It is required if you want to
 use $chg->volume_is_labelable(), $chg->make_new_tape_label(),
 $chg->make_new_meta_label(), $res->make_new_tape_label() or
 $res->make_new_meta_label().
@@ -121,6 +121,7 @@ sub new {
     $class eq 'Amanda::Storage'
 	or die("Do not call the Amanda::Storage constructor from subclasses");
     my %params = @_;
+#die("No catalog in Storage->new") if !defined $params{'catalog'};
     my $storage_name = $params{'storage_name'};
     my $changer_name = $params{'changer_name'};
     my ($uri, $cc);
@@ -211,9 +212,9 @@ sub new {
 
     $self->{'tapetype'} = lookup_tapetype($self->{'tapetype_name'});
     $self->{'chg'} = Amanda::Changer->new($changer_name, storage => $self,
-					  tapelist => $params{'tapelist'},
+					  catalog => $params{'catalog'},
 					  no_validate => $params{'no_validate'})
-				if defined $changer_name;
+				if defined $changer_name && !$params{'no_changer'};
     return $self;
 
 }

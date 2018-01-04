@@ -17,7 +17,7 @@
 # Contact information: Carbonite Inc., 756 N Pastoria Ave
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 12;
+use Test::More tests => 19;
 use strict;
 use warnings;
 
@@ -71,7 +71,7 @@ $testconf->add_tapetype("tape-1500",
 $testconf->rm_param("tapetype");
 $testconf->add_param("tapetype", '"tape-1500"');
 $testconf->add_param("device-property", "\"ENFORCE_MAX_VOLUME_USAGE\" \"TRUE\"");
-$testconf->write();
+$testconf->write( do_catalog=> 1 );
 
 #ok(!run('amdump', 'TESTCONF'), "amdump failed with runtapes=1")
 #    or amdump_diag();
@@ -84,7 +84,7 @@ $testconf->write();
 #}
 #clean_taperoot(3);
 $testconf->add_param("runtapes", "2");
-$testconf->write();
+$testconf->write( do_catalog=> 1 );
 
 #ok(run('amdump', 'TESTCONF'), "amdump runs successfully")
 #    or amdump_diag();
@@ -105,7 +105,7 @@ $testconf->add_param("tapetype", '"tape-800"');
 $testconf->rm_param("runtapes", "2");
 $testconf->add_param("runtapes", "4");
 $testconf->add_param("taper-parallel-write", "2");
-$testconf->write();
+$testconf->write( do_catalog=> 1 );
 #ok(run('amdump', 'TESTCONF'), "amdump runs successfully")
 #    or amdump_diag();
 #is($exit_code, 0, "exit code is not 0");
@@ -118,7 +118,7 @@ $testconf->write();
 #clean_taperoot(5);
 $testconf->add_param("device-property", "\"SLOW_WRITE\" \"YES\"");
 $testconf->add_param("debug-driver", "9");
-$testconf->write();
+$testconf->write( do_catalog=> 1 );
 #ok(run('amdump', 'TESTCONF'), "amdump runs successfully")
 #    or amdump_diag();
 #is($exit_code, 0, "exit code is not 0");
@@ -134,8 +134,8 @@ $testconf->add_tapetype("tape-900",
 $testconf->rm_param("tapetype");
 $testconf->add_param("tapetype", '"tape-900"');
 $testconf->add_param("device-property", "\"SLOW_WRITE\" \"YES\"");
-$testconf->add_param("debug-driver", "9");
-$testconf->write();
+#$testconf->add_param("debug-driver", "9");
+$testconf->write( do_catalog=> 1 );
 my $result;
 
 ok(run('amdump', 'TESTCONF'), "amdump runs successfully")
@@ -223,7 +223,7 @@ $testconf->add_param("flush_threshold_scheduled", '500');
 $testconf->add_param("taperflush", '100');
 $testconf->add_param("runtapes", '5');
 $testconf->add_param("debug-driver", '9');
-$testconf->write();
+$testconf->write( do_catalog=> 1 );
 ok(run('amdump', 'TESTCONF'), "amdump runs successfully")
     or amdump_diag();
 is($exit_code, 0, "exit code is not 0");
@@ -294,7 +294,7 @@ $testconf->add_param("flush_threshold_scheduled", '500');
 $testconf->add_param("taperflush", '100');
 $testconf->add_param("runtapes", '5');
 $testconf->add_param("debug-driver", '9');
-$testconf->write();
+$testconf->write( do_catalog=> 1 );
 ok(!run('amdump', 'TESTCONF'), "amdump exited with no zero")
     or amdump_diag();
 is($exit_code, 16, "exit code is not 16");
@@ -377,3 +377,5 @@ sub dump_amdump {
     }
     close($amdump);
 }
+
+Installcheck::Run::cleanup();

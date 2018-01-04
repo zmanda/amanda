@@ -35,7 +35,7 @@ Installcheck::log_test_output();
 
 my $input_filename = "$Installcheck::TMP/amservice_input.txt";
 my $testconf = Installcheck::Run::setup();
-$testconf->write();
+$testconf->write( do_catalog => 0 );
 my $input;
 
 sub write_input_file {

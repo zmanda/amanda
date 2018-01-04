@@ -93,7 +93,7 @@ use Amanda::Xfer qw( :constants );
 use Amanda::Header qw( :constants );
 use Amanda::MainLoop;
 use Amanda::Util qw( quote_string );
-use Amanda::DB::Catalog;
+use Amanda::DB::Catalog2;
 use Amanda::Recovery::Planner;
 use Amanda::Recovery::Scan;
 use Amanda::Recovery::Clerk;
@@ -137,6 +137,7 @@ sub new {
 	user_msg => $params{'user_msg'},
 	is_tty => $params{'is_tty'},
 	delay => $params{'delay'},
+	catalog => $params{'catalog'},
 
 	src_write_timestamp => $params{'src_write_timestamp'},
 	dst_write_timestamp => $params{'dst_write_timestamp'},
@@ -343,16 +344,11 @@ sub setup_src {
 
     my $src = $self->{'src'} = {};
 
-    my $tlf = Amanda::Config::config_dir_relative(getconf($CNF_TAPELIST));
-    my ($tl, $message) = Amanda::Tapelist->new($tlf);
-    if (defined $message) {
-	return $self->failure($message);
-    }
-    $self->{'tapelist'} = $tl;
+    $self->{'catalog'} = Amanda::DB::Catalog2->new() if !defined $self->{'catalog'};
     # put together a clerk, which of course requires a changer, scan,
     # interactivity, and feedback
     my $storage = Amanda::Storage->new(storage_name => $self->{'src_storage_name'},
-				       tapelist => $self->{'tapelist'});
+				       catalog  => $self->{'catalog'});
     return $self->failure($storage)
 	if $storage->isa("Amanda::Changer::Error");
     my $chg = $storage->{'chg'};
@@ -381,7 +377,7 @@ sub setup_src {
     # translate "latest" into the most recent timestamp that wasn't created by amvault
     if (defined $self->{'src_write_timestamp'} && $self->{'src_write_timestamp'} eq "latest") {
 	my $ts = $self->{'src_write_timestamp'} =
-	    Amanda::DB::Catalog::get_latest_write_timestamp(types => ['amdump', 'amflush']);
+	    $self->{'catalog'}->get_latest_write_timestamp(types => ['amdump', 'amflush']);
 	if (!defined $ts) {
 	    return $self->failure(Amanda::Vault::Message->new(
 				source_filename => __FILE__,
@@ -503,6 +499,7 @@ sub setup_src {
 	$only_in_storage = 1;
     }
     Amanda::Recovery::Planner::make_plan(
+	    catalog => $self->{'catalog'},
 	    latest_fulls => $self->{'latest_fulls'},
 	    dumpspecs => \@dumpspecs,
 	    src_labelstr => $self->{'src_labelstr'},
@@ -588,7 +585,7 @@ sub setup_dst {
     my $vault_storage = $vault_storages->[0];
     my $storage = Amanda::Storage->new(
 				storage_name => $self->{'dest_storage_name'},
-				tapelist     => $self->{'tapelist'});
+				catalog  => $self->{'catalog'});
     return $self->failure($storage)
 	if $storage->isa("Amanda::Changer::Error");
     my $chg = $storage->{'chg'};
@@ -608,12 +605,14 @@ sub setup_dst {
 	algorithm => $scan_name,
 	storage => $storage,
 	changer => $dst->{'chg'},
+	catalog  => $self->{'catalog'},
 	interactivity => $interactivity,
-	tapelist => $self->{'tapelist'});
+	catalog  => $self->{'catalog'});
 
     $dst->{'scribe'} = Amanda::Taper::Scribe->new(
 	taperscan => $dst->{'scan'},
-	feedback => $self);
+	feedback => $self,
+	catalog  => $self->{'catalog'});
 
     $dst->{'scribe'}->start(
 	write_timestamp => $self->{'dst_write_timestamp'},
@@ -930,6 +929,7 @@ sub quit {
     };
 
     step roll_log => sub {
+	$self->{'catalog'}->write_tapelist(1);
 	if (defined $self->{'src'}->{'storage'}) {
 	    $self->{'src'}->{'storage'}->quit();
 	    $self->{'src'}->{'storage'} = undef;

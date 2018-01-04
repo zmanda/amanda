@@ -32,11 +32,10 @@ use Amanda::Config qw(:getconf config_dir_relative);
 use Amanda::Util qw(:constants quote_string );
 use Amanda::Holding;
 use Amanda::Policy;
-use Amanda::Storage;
-use Amanda::Changer;
-use Amanda::Tapelist;
 use Amanda::Debug qw( debug );
 use Amanda::Util qw( quote_string );
+use Amanda::DB::Catalog2;
+use Amanda::Storage;
 
 use Amanda::Report;
 
@@ -516,13 +515,14 @@ sub output_tapeinfo
     }
 
     for my $storage_n (@{$report->{'storage_list'}}) {
-	my $st = Amanda::Config::lookup_storage($storage_n);
-	if (!$st) {
+	my $st = Amanda::Storage->new(storage_name => $storage_n,
+				      catalog => $report->{'catalog'});
+	if ($st->isa('Amanda::Message')) {
 	    debug("Storage '%s' not found", $storage_n);
 	    next;
 	}
-	if (storage_getconf($st, $STORAGE_REPORT_NEXT_MEDIA)) {
-	    my $run_tapes   = storage_getconf($st, $STORAGE_RUNTAPES);
+	if ($st->{'report_next_media'}) {
+	    my $run_tapes   = $st->{'runtapes'};
 	    my $nb_new_tape = 0;
 	    my $first = 1;
 
@@ -535,29 +535,9 @@ sub output_tapeinfo
 	          : "The next tape Amanda expects to use" . $for_storage . " is: ";
 	    }
 
-	    my $tlf = Amanda::Config::config_dir_relative(getconf($CNF_TAPELIST));
-	    my ($tl, $message) = Amanda::Tapelist->new($tlf);
-
-	    my $labelstr = storage_getconf($st, $STORAGE_LABELSTR);
-	    my $tapepool = storage_getconf($st, $STORAGE_TAPEPOOL);
-	    my $policy = Amanda::Policy->new(policy => storage_getconf($st, $STORAGE_POLICY));
-	    my $retention_tapes = $policy->{'retention_tapes'};
-	    my $retention_days = $policy->{'retention_days'};
-	    my $retention_recover = $policy->{'retention_recover'};
-	    my $retention_full = $policy->{'retention_full'};
-
-	    foreach my $i ( 0 .. ( $run_tapes - 1 ) ) {
-
-		if ( my $tape_label =
-		    Amanda::Tapelist::get_last_reusable_tape_label(
-					$labelstr->{'template'},
-					$tapepool,
-					$storage_n,
-					$retention_tapes,
-					$retention_days,
-					$retention_recover,
-					$retention_full,
-					$i) ) {
+	    my $volumes = $report->{'catalog'}->get_last_reusable_volume($st, $run_tapes);
+	    foreach my $volume (@$volumes) {
+		if ($volume) {
 		    if ($nb_new_tape) {
 			$text .= ", " if !$first;
 			$text .= "$nb_new_tape new tape"
@@ -565,16 +545,12 @@ sub output_tapeinfo
 			$nb_new_tape = 0;
 			$first = 0;
 		    }
-
-		    $text .=
-		    ($first ? "" : ", ") .
-		    $tape_label;
+		    $text .= ($first ? "" : ", ") . $volume->{'label'};
 		    $first = 0;
 		} else {
 		    $nb_new_tape++;
 		}
 	    }
-
 	    if ($nb_new_tape) {
 		$text .= ", " if !$first;
 		$text .= "$nb_new_tape new tape"
@@ -582,15 +558,23 @@ sub output_tapeinfo
 	    }
 	    $self->zprint("$text.\n");
 
-	    my @new_tapes = Amanda::Tapelist::list_new_tapes(
-						$storage_n,
-						$run_tapes);
-	    if (@new_tapes == 1) {
-		$self->zprint("The next new tape already labelled is: $new_tapes[0].");
-	    } elsif (@new_tapes > 1) {
-		$self->zprint("The next " . @new_tapes . " tape already labelled are: " . join(',', @new_tapes) . ".");
+	    my $new_volumes = $report->{'catalog'}->find_volumes(
+				pool => $st->{'tapepool'},
+				config => Amanda::Config::get_config_name(),
+				storage_name => $st->{'storage_name'},
+				reuse => 1,
+				write_timestamp => 0,
+				order_write_timestamp => 1,
+				max_volume => $run_tapes);
+
+	    if (@$new_volumes == 1) {
+		$self->zprint("The next new tape already labelled is: $new_volumes->[0]->{'label'}.");
+	    } elsif (@$new_volumes > 1) {
+		my @labels = map { $_->{'label'} } @$new_volumes;
+		$self->zprint("The next " . @labels . " tape already labelled are: " . join(',', @labels) . ".");
 	    }
 	}
+	$st->quit();
     }
 
     return;

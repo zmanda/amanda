@@ -27,7 +27,8 @@ Amanda::Taper::Scribe
   step start_scribe => sub {
       my $scribe = Amanda::Taper::Scribe->new(
 	    taperscan => $taperscan_algo,
-	    feedback => $feedback_obj);
+	    feedback => $feedback_obj,
+	    catalog => $catalog_obj);
     $scribe->start(
 	write_timestamp => $write_timestamp,
 	finished_cb => $steps->{'start_xfer'});
@@ -100,15 +101,16 @@ process and to request permission for each additional volume.
 
 =head1 OPERATING A SCRIBE
 
-The C<Amanda::Taper::Scribe> constructor takes two arguments:
-C<taperscan> and C<feedback>.  The first specifies the taper scan
+The C<Amanda::Taper::Scribe> constructor takes three arguments:
+C<taperscan>, C<feedback> and C<catalog>.  The first specifies the taper scan
 algorithm that the Scribe should use, and the second specifies the
 C<Feedback> object that will receive notifications from the Scribe (see
-below).
+below), the third specify the Amanda::DB::Catalog2 that the scribe will update.
 
   my $scribe = Amanda::Taper::Scribe->new(
         taperscan => $my_taperscan,
-        feedback => $my_feedback);
+        feedback => $my_feedback,
+	catalog => $my_catalog);
 
 Once the object is in place, call its C<start> method.
 
@@ -434,7 +436,6 @@ use Amanda::Device qw( :constants );
 use Amanda::Header;
 use Amanda::Debug qw( :logging );
 use Amanda::MainLoop;
-use Amanda::Tapelist;
 use Amanda::Label;
 use Amanda::Config qw( :getconf config_dir_relative );
 use base qw( Exporter );
@@ -446,7 +447,7 @@ sub new {
     my %params = @_;
 
     my $decide_debug = $Amanda::Config::debug_taper || $params{'debug'};
-    for my $rq_param (qw(taperscan feedback)) {
+    for my $rq_param (qw(taperscan feedback catalog )) {
 	croak "required parameter '$rq_param' missing"
 	    unless exists $params{$rq_param};
     }
@@ -455,6 +456,7 @@ sub new {
 	worker => $params{'worker'},
 	taperscan => $params{'taperscan'},
 	feedback => $params{'feedback'},
+	catalog => $params{'catalog'},
 	debug => $decide_debug,
 	write_timestamp => undef,
 	started => 0,
@@ -481,13 +483,19 @@ sub new {
 	xdt => undef,
 	xdt_ready => undef,
 	start_part_on_xdt_ready => 0,
-	size => 0,
+	size => 0,	# in bytes
 	duration => 0.0,
 	dump_start_time => undef,
 	last_part_successful => 0,
 	started_writing => 0,
 	device_errors => [],
 	config_denial_message => undef,
+
+	# Amanda::DB:Catalog2,
+	image_id => undef,
+	image => undef,
+	copy => undef,
+	volume => undef,
     };
 
     return bless ($self, $class);
@@ -572,6 +580,7 @@ sub quit {
     };
 
     step release => sub {
+#	$self->{'volume'}->close() if defined $self->{'volume'};
 	if ($self->{'reservation'}) {
 	    $self->_release_reservation(finished_cb => $steps->{'released'});
 	} else {
@@ -668,6 +677,7 @@ sub get_xfer_dest {
     $self->{'oldsize'} = 0;
     $self->{'size'} = 0;
     $self->{'crc_size'} = 0;
+    $self->{'server_crc'} = '00000000:0';
     $self->{'duration'} = 0.0;
     $self->{'nparts'} = 0;
     $self->{'dump_start_time'} = undef;
@@ -675,6 +685,9 @@ sub get_xfer_dest {
     $self->{'started_writing'} = 0;
     $self->{'device_errors'} = [];
     $self->{'config_denial_message'} = undef;
+    $self->{'image'} = undef;
+    $self->{'image_id'} = undef;
+    $self->{'copy'} = undef;
 
     # set the callback
     $self->{'dump_cb'} = undef;
@@ -795,6 +808,21 @@ sub start_dump {
     $self->{'xfer'} = $params{'xfer'};
     $self->{'dump_start_time'} = time;
 
+    if($self->{'catalog'}) {
+	$self->{'image'} = $self->{'catalog'}->find_image(
+			$self->{'dump_header'}->{'name'},
+			$self->{'dump_header'}->{'disk'},
+			$self->{'dump_header'}->{'disk'},
+			$self->{'dump_header'}->{'datestamp'}+0,
+			$self->{'dump_header'}->{'dumplevel'});
+	$self->{'copy'} = $self->{'image'}->add_copy(
+		$self->{'taperscan'}->{'storage'}->{'storage_name'},
+		$self->{'write_timestamp'},
+		$self->{'taperscan'}->{'storage'}->{'policy'}->{'retention_days'},
+		$self->{'taperscan'}->{'storage'}->{'policy'}->{'retention_full'},
+		$self->{'taperscan'}->{'storage'}->{'policy'}->{'retention_recover'},
+		$$);
+    }
     # and start the part
     $self->_start_part();
 }
@@ -927,6 +955,7 @@ sub handle_xmsg {
 	    $self->_xmsg_error($src, $msg, $xfer);
 	} elsif ($msg->{'type'} == $XMSG_CRC) {
 	    $self->{'crc_size'} = $msg->{'size'};
+	    $self->{'server_crc'} = "$msg->{'crc'}:$msg->{'size'}";
 	} elsif ($msg->{'type'} == $XMSG_NO_SPACE) {
 	    $self->_xmsg_no_space($src, $msg, $xfer);
 	}
@@ -956,6 +985,9 @@ sub _xmsg_part_done {
 	    size => $msg->{'size'},
 	    duration => $msg->{'duration'});
 
+	$self->{'copy'}->add_part($self->{'volume'}, $self->{'size'},
+		 $msg->{'size'}, $msg->{'fileno'}, $msg->{'partnum'},
+		 $msg->{'successful'} ? "OK" : "PARTIAL", '');
 	# increment nparts here, so empty parts are not counted
 	$self->{'nparts'} = $msg->{'partnum'};
     }
@@ -1109,16 +1141,18 @@ sub _xmsg_no_space {
 		defined $sl->{'device_status'} and
 		$sl->{'device_status'} == $DEVICE_STATUS_SUCCESS and
 		defined $sl->{'label'} and
-		Amanda::Tapelist::volume_is_reusable($sl->{'label'}) and
+		$self->{'taperscan'}->is_reusable_volume(label => $sl->{'label'}) and
 		(!$chg->can("slot_in_same_changer") or
 		 !$self->{'reservation'} or
 		 $chg->slot_in_same_changer($slot, $self->{'reservation'}->{'slot'}))) {
 
-		my $tle = $self->{'taperscan'}->{'tapelist'}->lookup_tapelabel($sl->{'label'});
-		if (defined $tle and $tle->{'datestamp'} ne "0") {
+		my $volume = $self->{'catalog'}->find_volume(
+					$self->{'taperscan'}->{'storage'}->{'tapepool'},
+					$sl->{'label'});
+		if (defined $volume and $volume->{'write_timestamp'} != 0) {
 		    my $Label = Amanda::Label->new(
 				storage  => $self->{'taperscan'}->{'storage'},
-				tapelist => $self->{'taperscan'}->{'tapelist'});
+				catalog  => $self->{'catalog'});
 		    $made_space++;
 		    return $Label->erase(finished_cb => $steps->{'erased'},
 					 labels      => [ $sl->{'label'} ],
@@ -1180,7 +1214,8 @@ sub _dump_done {
 	size => $self->{'size'},
 	duration => $self->{'duration'},
 	total_duration => $total_duration,
-	nparts => $self->{'nparts'});
+	nparts => $self->{'nparts'},
+	server_crc => $self->{'server_crc'});
 
     # reset everything and let the original caller know we're done
     $self->{'xfer'} = undef;
@@ -1189,6 +1224,7 @@ sub _dump_done {
     $self->{'dump_cb'} = undef;
     $self->{'size'} = 0;
     $self->{'crc_size'} = 0;
+    $self->{'server_crc'} = undef;
     $self->{'duration'} = 0.0;
     $self->{'nparts'} = undef;
     $self->{'dump_start_time'} = undef;
@@ -1260,17 +1296,8 @@ sub _release_reservation {
 	    $self->{'feedback'}->scribe_notif_log_info(
 	        message => "tape $label kb $kb fm $fm [OK]");
 	    if ($self->{'taperscan'}->{'storage'}->{'erase_on_failure'} && $self->{'tape_labelled'} && !$self->{'tape_good'}) {
-		# rewrite the tapelist
-		my $tl = $self->{'taperscan'}->{'tapelist'};
-		$tl->reload(1);
-		$label = $self->{'device'}->volume_label;
-		my $tle = $tl->lookup_tapelabel($label);
-		$tl->remove_tapelabel($label);
-		$tl->add_tapelabel('0', $label,
-                           $tle->{'comment'}, 1, $tle->{'meta'},
-                           $tle->{'barcode'}, $self->{'device'}->block_size/1024,
-			   $tle->{'pool'}, undef, undef);
-		$tl->write();
+
+		$self->{'catalog'}->reset_volume($self->{'taperscan'}->{'storage'}->{'tapepool'}, $label);
 		return $steps->{'c1'}->();
 	    } else {
 		return $self->_set_no_reuse(finished_cb => $steps->{'c1'});
@@ -1303,7 +1330,8 @@ sub _release_reservation {
 	$self->{'tape_good'} = 0;
 	$self->{'device'} = undef;
 	$self->{'device_at_eom'} = 0;
-
+	$self->{'volume'}->close() if defined $self->{'volume'};
+	undef $self->{'volume'};
 	$self->{'reservation'}->release(eject => $do_eject, finished_cb => sub {
 	    my ($err) = @_;
 	    push @errors, "$err" if $err;
@@ -1387,12 +1415,16 @@ sub _volume_cb  {
 	$new_scribe->{'start_part_on_xdt_ready'} = $self->{'start_part_on_xdt_ready'};
 	$new_scribe->{'size'} = $self->{'size'};
 	$new_scribe->{'crc_size'} = $self->{'crc_size'};
+	$new_scribe->{'server_crc'} = $self->{'server_crc'};
 	$new_scribe->{'duration'} = $self->{'duration'};
 	$new_scribe->{'dump_start_time'} = $self->{'dump_start_time'};
 	$new_scribe->{'last_part_successful'} = $self->{'last_part_successful'};
 	$new_scribe->{'started_writing'} = $self->{'started_writing'};
 	$new_scribe->{'feedback'} = $self->{'feedback'};
 	$new_scribe->{'devhandling'}->{'feedback'} = $self->{'feedback'};
+	$new_scribe->{'image_id'} = $self->{'image_id'};
+	$new_scribe->{'image'} = $self->{'image'};
+	$new_scribe->{'copy'} = $self->{'copy'};
 	$self->{'dump_header'} = undef;
 	$self->{'dump_cb'} = undef;
 	$self->{'xfer'} = undef;
@@ -1401,6 +1433,9 @@ sub _volume_cb  {
 	$self->{'dump_start_time'} = undef;
 	$self->{'started_writing'} = 0;
 	$self->{'feedback'} = undef;
+	$self->{'image_id'} = undef;
+	$self->{'image'} = undef;
+	$self->{'copy'} = undef;
 
 	my $released_cb = make_cb(released_cb => sub {
 		if (defined $new_scribe->{'device'}) {
@@ -1522,6 +1557,11 @@ sub _volume_cb  {
 		    }
 
 		    if ($erased) {
+			if ($self->{'catalog'}) {
+			    $self->{'catalog'}->remove_volume(
+					$self->{'taperscan'}->{'storage'}->{'tapepool'},
+					$old_label);
+			}
 			return $reservation->set_device_error(
 			    finished_cb => sub {
 				    $self->{'feedback'}->scribe_notif_new_tape(
@@ -1535,6 +1575,12 @@ sub _volume_cb  {
 		    $self->{'feedback'}->scribe_notif_new_tape(
 			error => "while labeling new volume: " . $device->error_or_status(),
 			volume_label => undef);
+
+		    if ($erased and $old_label and $self->{'catalog'}) {
+			$self->{'catalog'}->remove_volume(
+				$self->{'taperscan'}->{'storage'}->{'tapepool'},
+				$old_label);
+		    }
 		    $self->_get_new_volume();
 		    return $cbX->();
 		});
@@ -1572,12 +1618,20 @@ sub _device_start {
     my ($reservation, $access_mode, $new_label, $is_new, $finished_cb) = @_;
 
     my $device = $reservation->{'device'};
-    my $tl = $self->{'taperscan'}->{'tapelist'};
-
-    if (!defined $tl) { # For Mock::Taperscan in installcheck
+    if ($self->{'taperscan'}->isa('Mock::Taperscan')) {
 	if (!$device->start($access_mode, $new_label, $self->{'write_timestamp'})) {
 	    return $finished_cb->(0);
 	} else {
+	    $self->{'volume'} = $self->{'catalog'}->add_volume(
+			$self->{'taperscan'}->{'storage'}->{'tapepool'},
+			$new_label,
+			'1',
+			$self->{'taperscan'}->{'storage'}->{'storage_name'},
+			$reservation->{'meta'},
+			$reservation->{'barcode'},
+			undef,
+			undef, undef, undef, undef,
+			$self->{'taperscan'}->{'storage'}->{'policy'}->{'retention_tapes'});
 	    return $finished_cb->(1);
 	}
     }
@@ -1594,62 +1648,61 @@ sub _device_start {
 	my ($err, $meta) = @_;
 
 	if ($is_new) {
-	    # generate the new label and write it to the tapelist file
-	    $tl->reload(1);
+	    # generate the new label and add it to the catalog
 	    if (!$meta) {
 		($meta, $err) = $reservation->make_new_meta_label();
 		if (defined $err) {
-		    $tl->unlock();
 		    return $finished_cb->($err);
 		}
 	    }
-	    ($new_label, my $err) = $reservation->make_new_tape_label(
+	    do {
+		($new_label, my $err) = $reservation->make_new_tape_label(
 					meta => $meta);
-	    if (!defined $new_label) {
-		$tl->unlock();
-		return $finished_cb->($err);
-	    }
-	    $tl->add_tapelabel('1', $new_label, undef, 0, $meta,
-			       $reservation->{'barcode'}, undef,
-			       $self->{'taperscan'}->{'storage'}->{'tapepool'},
-			       $self->{'taperscan'}->{'storage'}->{'storage_name'},
-			       Amanda::Config::get_config_name());
-	    $tl->write();
+		if (!defined $new_label) {
+		    return $finished_cb->($err);
+		}
+		if ($self->{'catalog'}) {
+		    $self->{'volume'} = $self->{'catalog'}->add_volume(
+			$self->{'taperscan'}->{'storage'}->{'tapepool'},
+			$new_label,
+			'1',
+			$self->{'taperscan'}->{'storage'}->{'storage_name'},
+			$meta,
+			$reservation->{'barcode'},
+			undef,
+			undef, undef, undef, undef,
+			$self->{'taperscan'}->{'storage'}->{'policy'}->{'retention_tapes'});
+		}
+	    } until $self->{'volume'};
 	    $self->dbg("generate new label '$new_label'");
 	} else {
-	    $tl->reload(0);
-	    my $tle = $tl->lookup_tapelabel($new_label);
-	    $meta = $tle->{'meta'} if !defined $meta && $tle->{'meta'};
-	    my $barcode = $tle->{'barcode'};
+	    $self->{'volume'} = $self->{'catalog'}->find_volume(
+			$self->{'taperscan'}->{'storage'}->{'tapepool'},
+			$new_label);
+	    $meta = $self->{'volume'}->{'meta'} if !defined $meta && $self->{'volume'}->{'meta'};
+	    my $barcode = $self->{'volume'}->{'barcode'};
 	    if (defined $barcode and defined $reservation->{'barcode'} and
 		$barcode ne $reservation->{'barcode'}) {
-		return $finished_cb->("tapelist for label '$new_label' have barcode '$barcode' but changer report '" . $reservation->{'barcode'} . "'");
+		return $finished_cb->("database for label '$new_label' have barcode '$barcode' but changer report '" . $reservation->{'barcode'} . "'");
 	    }
+	    $self->{'volume'}->set(
+			$self->{'taperscan'}->{'storage'}->{'storage_name'},
+			'1');
 	}
 
 	# write the label to the device
 	if (!$device->start($access_mode, $new_label, $self->{'write_timestamp'})) {
 	    if ($is_new) {
-		# remove the generated label from the tapelist file
-		$tl->reload(1);
-		$tl->remove_tapelabel($new_label);
-		$tl->write();
-            }
+		$self->{'volume'}->remove();
+		delete $self->{'volume'};
+            } else {
+		$self->{'volume'}->unset(undef, 0);
+	    }
 	    return $finished_cb->(0);
 	}
 
-	# rewrite the tapelist file
-	$tl->reload(1);
-	my $tle = $tl->lookup_tapelabel($new_label);
-	$meta = $tle->{'meta'} if !$meta && $tle->{'meta'};
-	$tl->remove_tapelabel($new_label);
-	$tl->add_tapelabel($self->{'write_timestamp'}, $new_label,
-			   $tle? $tle->{'comment'} : undef, 1, $meta,
-			   $reservation->{'barcode'}, $device->block_size/1024,
-			   $self->{'taperscan'}->{'storage'}->{'tapepool'},
-			   $self->{'taperscan'}->{'storage'}->{'storage_name'},
-			   Amanda::Config::get_config_name());
-	$tl->write();
+	# set the write_timestamp
+	$self->{'volume'}->set_write_timestamp($self->{'write_timestamp'}, $self->{'taperscan'}->{'storage'});
 
 	$reservation->set_meta_label(meta => $meta,
 				     finished_cb => $steps->{'set_meta_label'});
@@ -1662,13 +1715,13 @@ sub _device_start {
 
 sub dbg {
     my ($self, $msg) = @_;
-    if ($self->{'debug'}) {
+#    if ($self->{'debug'}) {
 	if (defined $self->{'worker'}->{'handle'}) {
 	    debug("$self->{'worker'}->{'handle'} Amanda::Taper::Scribe: $msg");
 	} else {
 	    debug("Amanda::Taper::Scribe: $msg");
 	}
-    }
+#    }
 }
 
 sub get_splitting_args_from_config {
@@ -1813,25 +1866,8 @@ sub _set_no_reuse {
 
     return $finished_cb->() if !$self->{'taperscan'}->{'storage'}->{'set_no_reuse'};
 
-    # reload and lock tapelist
-    my $tl = $self->{'taperscan'}->{'tapelist'};
-    $tl->reload(1);
-
     my $label = $self->{'device'}->volume_label;
-    my $tle = $tl->lookup_tapelabel($label);
-    if (!defined $tle) {
-	debug("label '%s' not found in tapelist", $label);
-	return $finished_cb->();
-    }
-
-    $tl->remove_tapelabel($label);
-    $tl->add_tapelabel($tle->{'datestamp'}, $label, $tle->{'comment'},
-		       0, $tle->{'meta'}, $tle->{'barcode'},
-		       $tle->{'blocksize'}, $tle->{'pool'},
-		       $tle->{'storage'}, $tle->{'config'});
-
-    # write tapelist
-    $tl->write();
+    $self->{'catalog'}->set_no_reuse($self->{'taperscan'}->{'storage'}->{'tapepool'}, $label);
     $self->{'taperscan'}->{'chg'}->set_no_reuse(labels => [ $label ],
                        finished_cb => $finished_cb);
 }

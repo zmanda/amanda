@@ -35,7 +35,7 @@ use Amanda::Storage;
 use Amanda::Changer;
 use Amanda::Header qw( :constants );
 use Amanda::MainLoop;
-use Amanda::Tapelist;
+use Amanda::DB::Catalog2;
 use Amanda::Label;
 
 my $exit_status = 0;
@@ -141,27 +141,27 @@ sub main {
     my $chg;
     my $dev;
     my $dev_ok;
+    my $catalog;
 
     my $steps = define_steps
 	cb_ref => \$finished_cb,
 	finalize => sub { $storage->quit() if defined $storage;
+			  $storage = undef;
 			  $chg->quit() if defined $chg;
+			  $chg = undef;
+			  $catalog->quit() if defined $catalog;
+			  $catalog = undef;
     };
 
     step start => sub {
-	$tlf = Amanda::Config::config_dir_relative(getconf($CNF_TAPELIST));
-	($tl, my $message) = Amanda::Tapelist->new($tlf);
-	if (defined $message) {
-	    return failure("Can't load tapelist file ($tlf): $message", $finished_cb);
-	}
-
-	$storage  = Amanda::Storage->new(tapelist => $tl);
+	$catalog = Amanda::DB::Catalog2->new();
+	$storage  = Amanda::Storage->new(catalog => $catalog);
 	return failure("$storage", $finished_cb) if $storage->isa("Amanda::Massage");
 	$chg = $storage->{'chg'};
 	return failure($chg, $finished_cb) if $chg->isa("Amanda::Message");
 
 	my $Label = Amanda::Label->new(storage  => $storage,
-				       tapelist => $tl,
+				       catalog  => $catalog,
 				       user_msg => \&user_msg);
 
 	if ($opt_assign) {
@@ -175,7 +175,7 @@ sub main {
 	}
 
 	if (defined($opt_label) && !$opt_force) {
-	    if ($tl->lookup_tapelabel($opt_label)) {
+	    if ($catalog->find_volume($storage->{'tapepool'}, $opt_label)) {
 		return failure("Label '$opt_label' already on a volume", $finished_cb);
 	    }
 	}

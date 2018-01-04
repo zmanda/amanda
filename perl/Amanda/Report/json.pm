@@ -122,9 +122,9 @@ use JSON;
 use Amanda::Config qw(:getconf config_dir_relative);
 use Amanda::Util qw(:constants quote_string );
 use Amanda::Holding;
-use Amanda::Tapelist;
 use Amanda::Debug qw( debug );
 use Amanda::Util qw( quote_string );
+use Amanda::DB::Catalog2;
 
 use Amanda::Report;
 
@@ -426,13 +426,15 @@ sub output_tapeinfo
     }
 
     for my $storage_n (@{$report->{'storage_list'}}) {
-        my $st = Amanda::Config::lookup_storage($storage_n);
-        if (!$st) {
+	my $st = Amanda::Storage->new(storage_name => $storage_n,
+				       catalog => $report->{'catalog'});
+#        my $st = Amanda::Config::lookup_storage($storage_n);
+        if ($st->isa('Amanda::Message')) {
             debug("Storage '%s' not found", $storage_n);
             next;
         }
-        if (storage_getconf($st, $STORAGE_REPORT_NEXT_MEDIA)) {
-            my $run_tapes   = storage_getconf($st, $STORAGE_RUNTAPES);
+        if ($st->{'report_next_media'}) {
+            my $run_tapes   = $st->{'runtapes'};
             my $nb_new_tape = 0;
 
             my $for_storage = '';
@@ -443,48 +445,29 @@ sub output_tapeinfo
 		$self->{'sections'}->{'tapeinfo'}->{'storage'}->{$storage_n}->{'next_to_use'} = $run_tapes;
 	    }
 
-            my $tlf = Amanda::Config::config_dir_relative(getconf($CNF_TAPELIST));
-            my ($tl, $message) = Amanda::Tapelist->new($tlf);
+	    my $volumes = $report->{'catalog'}->get_last_reusable_volume($st, $run_tapes);
+	    my @volumes = grep { $_ } @$volumes;
+	    $nb_new_tape = $run_tapes - @volumes;
+	    my $new_volumes = $report->{'catalog'}->find_volumes(
+                                pool => $st->{'tapepool'},
+                                config => Amanda::Config::get_config_name(),
+                                storage_name => $st->{'storage_name'},
+                                reuse => 1,
+                                write_timestamp => 0,
+                                order_write_timestamp => 1,
+                                max_volume => $nb_new_tape);
 
-            my $labelstr = storage_getconf($st, $STORAGE_LABELSTR);
-            my $tapepool = storage_getconf($st, $STORAGE_TAPEPOOL);
-            my $policy = Amanda::Policy->new(policy => storage_getconf($st, $STORAGE_POLICY));
-            my $retention_tapes = $policy->{'retention_tapes'};
-            my $retention_days = $policy->{'retention_days'};
-            my $retention_recover = $policy->{'retention_recover'};
-            my $retention_full = $policy->{'retention_full'};
-
-            foreach my $i ( 0 .. ( $run_tapes - 1 ) ) {
-
-                if ( my $tape_label =
-                    Amanda::Tapelist::get_last_reusable_tape_label(
-                                        $labelstr->{'template'},
-                                        $tapepool,
-                                        $storage_n,
-                                        $retention_tapes,
-                                        $retention_days,
-                                        $retention_recover,
-                                        $retention_full,
-                                        $i) ) {
-
-                    push @tape_labels, $tape_label;
-                } else {
-                    $nb_new_tape++;
-                }
-            }
-            if (@tape_labels) {
-		$self->{'sections'}->{'tapeinfo'}->{'storage'}->{$storage_n}->{'next'} = \@tape_labels;
+            if (@volumes) {
+		my @labels = map { $_->{'label'} } @volumes;
+		$self->{'sections'}->{'tapeinfo'}->{'storage'}->{$storage_n}->{'next'} = \@labels;
             }
 
-            if ($nb_new_tape) {
-		$self->{'sections'}->{'tapeinfo'}->{'storage'}->{$storage_n}->{'new'} = $nb_new_tape;
-            }
+	    if ($run_tapes - @volumes) {
+		$self->{'sections'}->{'tapeinfo'}->{'storage'}->{$storage_n}->{'new'} = $run_tapes - @volumes;
+	    }
 
-            my @new_tapes = Amanda::Tapelist::list_new_tapes(
-                                                $storage_n,
-                                                $run_tapes);
-	    if (@new_tapes) {
-		$self->{'sections'}->{'tapeinfo'}->{'storage'}->{$storage_n}->{'new_labelled'} = \@new_tapes;
+	    if (@$new_volumes) {
+		$self->{'sections'}->{'tapeinfo'}->{'storage'}->{$storage_n}->{'new_labelled'} = map { $_->{'label'} } @$new_volumes;
 	    }
         }
     }

@@ -113,7 +113,7 @@ $flavors{'basic'} = sub {
     basic_settings($testconf);
     use_new_chg_disk($testconf);
     $testconf->add_dle("localhost $diskname installcheck-test");
-    $testconf->write();
+    $testconf->write( do_catalog => 1 );
 
     ok(Installcheck::Run::run('amdump', 'TESTCONF'), "amdump for 'basic'"),
 	or amdump_diag("Amdump run failed for 'basic'");
@@ -139,7 +139,7 @@ $flavors{'multi'} = sub {
     # do the smallest dumps first -- $diskname/dir in particular should
     # be smaller than $diskname
     $testconf->add_param("dumporder", '"ssssssssss"');
-    $testconf->write();
+    $testconf->write( do_catalog => 1 );
 
     ok(Installcheck::Run::run('amdump', 'TESTCONF'), "amdump for 'multi' step 1"),
 	or amdump_diag("Amdump run failed for 'multi' step 1");
@@ -180,7 +180,7 @@ $flavors{'parts'} = sub {
 	"part_cache_type", "memory",
     ]);
     $testconf->add_dle("localhost $diskname installcheck-test");
-    $testconf->write();
+    $testconf->write( do_catalog => 1 );
 
     ok(Installcheck::Run::run('amdump', 'TESTCONF'), "amdump for 'parts'"),
 	or amdump_diag("Amdump run failed for 'part'");
@@ -195,7 +195,7 @@ $flavors{'compress'} = sub {
 	"compress", "server fast",
     ]);
     $testconf->add_dle("localhost $diskname installcheck-test-comp");
-    $testconf->write();
+    $testconf->write( do_catalog => 1 );
 
     # add some compressible data to the dump
     open(my $fh, ">>", "$diskname/compressible");
@@ -229,7 +229,7 @@ if (Amanda::Util::built_with_component("server")
 	$testconf->add_dle("localhost $diskname installcheck-test");
 	my $ndmp = Installcheck::Mock::NdmpServer->new();
 	$ndmp->config($testconf);
-	$testconf->write();
+	$testconf->write( do_catalog => 1 );
 
 	ok(Installcheck::Run::run('amdump', 'TESTCONF'), "amdump for 'ndmp'"),
 	    or amdump_diag("Amdump run failed for 'ndmp'");

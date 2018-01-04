@@ -53,7 +53,7 @@ like(run_err('amcheck', 'this-probably-doesnt-exist'),
 $testconf = Installcheck::Run::setup();
 $testconf->add_param("autolabel", "\"TESTCONF%%\" empty volume_error");
 $testconf->add_dle("localhost $diskname installcheck-test");
-$testconf->write();
+$testconf->write( do_catalog => 0 );
 
 like(run_get('amcheck', 'TESTCONF'),
     qr/Amanda Tape Server Host Check/,

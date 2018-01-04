@@ -116,6 +116,7 @@ use Amanda::Debug qw( :logging );
 use Amanda::Util qw( :constants );
 use Getopt::Long;
 use Amanda::Cmdline qw( :constants parse_dumpspecs );
+use Amanda::DB::Catalog2;
 use Amanda::Vault;
 
 sub usage {
@@ -244,6 +245,8 @@ if ($cfgerr_level >= $CFGERR_ERRORS) {
     exit(1);
 }
 
+my $catalog = Amanda::DB::Catalog2->new();
+
 my $exit_status = 0;
 my $exit_cb = sub {
     ($exit_status) = @_;
@@ -290,6 +293,7 @@ if ($opt_interactivity) {
 my $messages;
 (my $vault, $messages) = Amanda::Vault->new(
     config => $config_name,
+    catalog => $catalog,
     src_write_timestamp => $opt_src_write_timestamp,
     dst_write_timestamp => Amanda::Util::generate_timestamp(),
     src_labelstr => $opt_src_labelstr,
@@ -318,6 +322,8 @@ if (!$vault) {
     Amanda::MainLoop::call_later(sub { $vault->run($exit_cb) });
     Amanda::MainLoop::run();
 }
+
+$catalog->quit();
 
 Amanda::Util::finish_application();
 exit($exit_status);

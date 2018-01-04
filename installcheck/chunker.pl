@@ -39,6 +39,8 @@ use Amanda::Header qw( :constants );
 use Amanda::Debug;
 use Amanda::Holding;
 use Amanda::Util;
+use Amanda::Config qw( :init );
+use Amanda::DB::Catalog2;
 
 # put the debug messages somewhere
 Amanda::Debug::dbopen("installcheck");
@@ -63,7 +65,9 @@ sub run_chunker {
 
     my $testconf = Installcheck::Run::setup();
     $testconf->add_param('debug_chunker', 9);
-    $testconf->write();
+    $testconf->write( do_catalog => 0 );
+    config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
+    my $catalog = Amanda::DB::Catalog2->new(undef, create => 1, drop_tables => 1, load => 1);
 
     if (exists $params{'ENOSPC_at'}) {
 	diag("setting CHUNKER_FAKE_ENOSPC_AT=$params{ENOSPC_at}") if $debug;

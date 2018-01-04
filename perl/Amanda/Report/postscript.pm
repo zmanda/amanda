@@ -51,8 +51,8 @@ sub new
     }, $class;
 
     # get some other parameters we'll need
-    my $storage = Amanda::Storage->new(storage_name => $report->{'storage_list'}[0]);
-    my $tapetype_name = $storage->{'tapetype_name'};
+    my $st = lookup_storage($report->{'storage_list'}[0]);
+    my $tapetype_name = storage_getconf($st, $STORAGE_TAPETYPE) if $st;
     my $tt = lookup_tapetype($tapetype_name) if $tapetype_name;
     my ($tapelen, $marksize, $template_filename);
 
@@ -63,7 +63,6 @@ sub new
         $marksize = "" . tapetype_getconf($tt, $TAPETYPE_FILEMARK);
         $template_filename = "" . tapetype_getconf($tt, $TAPETYPE_LBL_TEMPL);
     }
-    $storage->quit();
 
     # these values should never be zero, so assign defaults
     $self->{'tapelen'} = $tapelen || 100 * 1024 * 1024;

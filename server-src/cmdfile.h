@@ -16,6 +16,9 @@
  */
 /*
  */
+#ifndef CMDFILE_H
+#define CMDFILE_H
+
 #include "amanda.h"
 
 typedef enum cmdoperation_e {
@@ -72,6 +75,7 @@ typedef struct cmdatas_s {
 
 void unlock_cmdfile(cmddatas_t *cmddatas);
 cmddatas_t *read_cmdfile(char *filename);
+cmddata_t *cmdfile_parse_line (char *line, gboolean *generic_command_restore, gboolean *specific_command_restore);
 void close_cmdfile(cmddatas_t *cmddatas);
 void write_cmdfile(cmddatas_t *cmddatas);
 int add_cmd_in_memory(cmddatas_t *cmddatas, cmddata_t *cmddata);
@@ -88,3 +92,4 @@ void cmdfile_remove_for_restore_label(cmddatas_t *cmddatas, char *hostname,
 void cmdfile_remove_for_restore_holding(cmddatas_t *cmddatas, char *hostname,
 				        char *diskname, char *timestamp,
 				        char *holding_file);
+#endif /* CMDFILE_H */

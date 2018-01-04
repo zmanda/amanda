@@ -35,6 +35,7 @@
 #include "amutil.h"
 #include "diskfile.h"
 #include "infofile.h"
+#include "cmdfile.h"
 
 #define MAX_ARGS 32
 
@@ -65,6 +66,24 @@ struct cmdargs {
     int argc;
     char **argv;
 };
+
+typedef struct part_result_t {
+    char *timestamp;
+    char *hostname;
+    char *diskname;
+    int   level;
+    char *storage;
+    char *pool;
+    char *label;
+    char *dump_status;
+    char *copy_status;
+    char *part_status;
+    int   filenum;
+    int   nb_parts;
+    int   partnum;
+    int   nb_files;
+    int   nb_directory;
+} part_result_t;
 
 struct cmdargs *getcmd(void);
 struct cmdargs *get_pending_cmd(void);
@@ -117,5 +136,20 @@ gint64 internal_server_estimate(disk_t *dp, info_t *info,
                                 int level, int *stats, tapetype_t *tapetype);
 int server_can_do_estimate(disk_t *dp, info_t *info, int level,
 			   tapetype_t *tapetype);
+
+char *run_amcatalog(char *command, int n_args, ...);
+void quit_amcatalog(void);
+void amcatalog_remove_working_cmd(int pid);
+void amcatalog_remove_cmd(int id);
+int amcatalog_add_cmd(cmddata_t *cmddata);
+cmddata_t * amcatalog_get_cmd_from_id(int id);
+GPtrArray * amcatalog_get_flush_cmd(void);
+GPtrArray * amcatalog_get_copy_cmd(void);
+gboolean amcatalog_holding_have_cmd(char *holding);
+GHashTable *amcatalog_get_log_names(void);
+GHashTable *amcatalog_get_dump_list(void);
+GHashTable *amcatalog_get_parts(char *hostname, char *diskname);
+gboolean cat_dump_hash_exist(GHashTable *dump_hash, char *hostname,
+			     char *diskname, char *timestamp, int level);
 
 #endif	/* SERVER_UTIL_H */

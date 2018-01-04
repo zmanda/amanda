@@ -36,7 +36,7 @@ use Amanda::MainLoop qw( :GIOCondition );
 use Amanda::Header;
 use Amanda::Holding;
 use Amanda::Cmdline;
-use Amanda::Tapelist;
+use Amanda::DB::Catalog2;
 use Amanda::Xfer qw( :constants );
 
 sub usage {
@@ -166,12 +166,8 @@ sub main {
 	if ($opt_holding) {
 	    $steps->{'read_header'}->();
 	} else {
-	    my $tlf = Amanda::Config::config_dir_relative(getconf($CNF_TAPELIST));
-	    my ($tl, $message) = Amanda::Tapelist->new($tlf);
-	    if (defined $message) {
-		return failure($message, $finished_cb);
-	    }
-	    $chg = Amanda::Changer->new($opt_restore_src, tapelist => $tl);
+	    my $catalog = Amanda::DB::Catalog2->new();
+	    $chg = Amanda::Changer->new($opt_restore_src, catalog => $catalog);
 	    if ($chg->isa("Amanda::Changer::Error")) {
 		return failure($chg, $finished_cb);
 	    }

@@ -86,7 +86,7 @@ $testconf->add_storage("aggregate", [
 	tpchanger => '"aggregate"',
 ]);
 $testconf->add_param("storage", '"aggregate"');
-$testconf->write();
+$testconf->write( do_catalog => 0 );
 
 my $cfg_result = config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF');
 if ($cfg_result != $CFGERR_OK) {

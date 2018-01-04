@@ -33,6 +33,8 @@ sub local_message {
 
     if ($self->{'code'} == 2600000) {
 	return "The dumps";
+    } elsif ($self->{'code'} == 2600001) {
+	return "Volumes list";
     }
 }
 

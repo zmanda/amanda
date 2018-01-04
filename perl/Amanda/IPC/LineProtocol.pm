@@ -390,6 +390,7 @@ sub send {
     my $self = shift;
     my ($name, %info) = @_;
 
+debug("send: $name");
     my $msgspec = $self->{'msgspecs'}->{$name};
     die "No message spec for '$name'" unless defined($msgspec);
 

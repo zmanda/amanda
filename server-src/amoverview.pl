@@ -24,7 +24,7 @@ use warnings;
 
 use Amanda::Config qw( :init :getconf );
 use Amanda::Disklist;
-use Amanda::DB::Catalog;
+use Amanda::DB::Catalog2;
 use FileHandle;
 use Getopt::Long;
 use Carp;
@@ -99,13 +99,15 @@ foreach my $dle (Amanda::Disklist::all_disks()) {
     $disks{$dle->{"host"}->{"hostname"}}{$dle->{"name"}}++;
 }
 
+my $catalog = Amanda::DB::Catalog2->new();
 # Get dumps
 my %dates = ();
 my %level = ();
 my ($date, $host, $disk);
 $opt_verbose and
     print STDERR "Processing $opt_config dumps\n";
-foreach my $dump (Amanda::DB::Catalog::sort_dumps(['hostname','diskname','write_timestamp'],Amanda::DB::Catalog::get_dumps())) {
+my $dumps = $catalog->get_dumps();
+foreach my $dump ($catalog->sort_dumps(['hostname','diskname','write_timestamp'],@$dumps)) {
     $host = $dump->{"hostname"};
     $disk = $dump->{"diskname"};
     $date = substr($dump->{"dump_timestamp"},0,8);
@@ -229,3 +231,5 @@ for $host (sort keys %disks) {
 	    map(fmt_levels($host, $disk, $_), sort keys %dates));
     }
 }
+
+$catalog->quit();

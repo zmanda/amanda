@@ -48,7 +48,7 @@ myhost /mydisk {
     auth "bsd"
 } -1 eth1
 EOF
-$testconf->write();
+$testconf->write( do_catalog => 0 );
 
 if (config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF") != $CFGERR_OK) {
     config_print_errors();

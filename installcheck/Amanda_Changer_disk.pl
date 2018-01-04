@@ -67,7 +67,7 @@ sub is_pointing_to {
 
 # Build a configuration that specifies Amanda::Changer::Disk
 my $testconf = Installcheck::Config->new();
-$testconf->write();
+$testconf->write( do_catalog => 0 );
 
 my $cfg_result = config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF');
 if ($cfg_result != $CFGERR_OK) {

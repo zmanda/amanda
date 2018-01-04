@@ -408,6 +408,12 @@ sub create_customconf{
 	print CONF "}\n";
 	print CONF "storage \"$config\"\n";
 	print CONF "\n";
+	print CONF "define catalog $config {\n";
+	print CONF "    plugin \"SQLite\"\n";
+	print CONF "    property \"dbname\" \"/etc/amanda/database.db\"\n";
+	print CONF "}\n";
+	print CONF "catalog \"$config\"\n";
+	print CONF "\n";
 	print CONF "includefile \"advanced.conf\"\n";
 	print CONF "includefile \"$confdir/template.d/dumptypes\"\n";
 	print CONF "includefile \"$confdir/template.d/tapetypes\"\n";
@@ -617,7 +623,6 @@ unless ( -e $ttype ) {
 &create_curinfo_index_dir;
 &touch_list_files;
 
-
 if ( defined $template ) {
 # if any other parameters are provided, create a workable custom config
 	if ( defined $tapetype || defined $tpchanger || defined $tapedev
@@ -625,6 +630,8 @@ if ( defined $template ) {
 	 || defined $runspercycle || defined $runtapes || defined $tapecycle ) {
 		&mprint("Creating custom configuration using templates\n");
 		create_customconf();
+		&mprint ("Create database\n");
+		system("$sbindir/amcatalog $config create");
 		if ( $template ne "harddisk" ) {
 		  &create_holding;
 		} else {
@@ -637,10 +644,12 @@ if ( defined $template ) {
 		    }
 		  }
 		}
-	      } else {
+	} else {
 		$template_only=1;
 		$tapedev="$def_tapedev/$config";
 		&copy_template_file($template);
+		&mprint ("Create database\n");
+		system("$sbindir/amcatalog $config create");
 		if ($template ne "harddisk") {
 		  unless ( -e "$amandahomedir/holdings/$config" ) {
 		    &create_holding;
@@ -650,10 +659,12 @@ if ( defined $template ) {
 		    &create_vtape;
 		  }
 		}
-	      }
+	}
 	&copy_chg_manual_conf;
-      } else {
-&create_customconf;
+} else {
+    &create_customconf;
+    &mprint ("Create database\n");
+    system("$sbindir/amcatalog $config create");
 }
 
 &check_xinetd;

@@ -32,7 +32,8 @@ use Amanda::Logfile qw( :logtype_t log_add );
 use Amanda::Debug qw( debug );
 use Amanda::Paths;
 use Amanda::Amflush;
-use Amanda::Tapelist;
+use Amanda::DB::Catalog2;
+use Amanda::Storage;
 
 ##
 # Main
@@ -148,55 +149,20 @@ sub pick_datestamp {
 sub confirm {
     my @datestamps = @_;
 
+    my $catalog = Amanda::DB::Catalog2->new();
     my $storages = getconf($CNF_STORAGE);
     foreach my $storage_n (@{$storages}) {
 	print "Flushing dumps from " . join(', ', @datestamps);
-	my $storage = lookup_storage($storage_n);
-	my $tpchanger = storage_getconf($storage, $STORAGE_TPCHANGER);
+	my $st = Amanda::Storage->new(storage_name => $storage_n,
+				      catalog => $catalog);
+	my $tpchanger = $st->{'tpchanger'};
 	print " using storage \"$storage_n\", tape changer \"$tpchanger\".\n";
 
-	my $policy_n = storage_getconf($storage, $STORAGE_POLICY);
-	my $labelstr = storage_getconf($storage, $STORAGE_LABELSTR);
-	my $l_template = $labelstr->{'template'};
-	my $tapepool = storage_getconf($storage, $STORAGE_TAPEPOOL);
-	my $retention_tapes;
-	my $retention_days;
-	my $retention_recover;
-	my $retention_full;
-	if ($policy_n) {
-	    my $policy = lookup_policy($policy_n);
-	    if (policy_seen($policy, $POLICY_RETENTION_TAPES)) {
-	        $retention_tapes = policy_getconf($policy, $POLICY_RETENTION_TAPES);
-	    } else {
-	        $retention_tapes = getconf($CNF_TAPECYCLE);
-	    }
-	    $retention_days = policy_getconf($policy, $POLICY_RETENTION_DAYS);
-	    $retention_recover = policy_getconf($policy, $POLICY_RETENTION_RECOVER);
-	    $retention_full = policy_getconf($policy, $POLICY_RETENTION_FULL);
+	my $volumes = $catalog->get_last_reusable_volume($st);
+	if (@$volumes) {
+	    print "To volume $volumes->[0]->{'label'} or a new volume,";
 	} else {
-	    $retention_tapes = getconf($CNF_TAPECYCLE);
-	    $retention_days = 0;
-	    $retention_recover = 0;
-	    $retention_full = 0;
-	}
-	my $tlf = Amanda::Config::config_dir_relative(getconf($CNF_TAPELIST));
-	my ($tapelist, $message) = Amanda::Tapelist->new($tlf);
-	my $tp = Amanda::Tapelist::get_last_reusable_tape_label($l_template,
-	#my $tp = $tapelist->get_last_reusable_tape_label($l_template,
-			$tapepool, $storage_n, $retention_tapes,
-			$retention_days, $retention_recover,
-			$retention_full, 0);
-	if ($tp) {
-	    my $tle = $tapelist->lookup_tapelabel($tp);
-	    if ($tle) {
-		print "To volume $tp or a new volume,";
-	    } else {
-		print "To a new volume.\n";
-	    }
-	    $tle = $tapelist->lookup_tapepos(1);
-	    if ($tp) {
-		print "  (The last dumps were to volume $tle->{'label'}\n";
-	    }
+	    print "To a new volume.\n";
 	}
     }
 

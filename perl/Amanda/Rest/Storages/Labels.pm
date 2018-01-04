@@ -23,11 +23,11 @@ use warnings;
 
 use Amanda::Config qw( :init :getconf config_dir_relative );
 use Amanda::Device qw( :constants );
+use Amanda::Debug;
 use Amanda::Storage;
 use Amanda::Changer;
 use Amanda::Header;
 use Amanda::MainLoop;
-use Amanda::Tapelist;
 use Amanda::Label;
 use Amanda::Util qw( match_datestamp );
 use Amanda::Rest::Configs;
@@ -62,7 +62,7 @@ You can use the /amanda/v1.0/configs/:CONF/labels endpoint and filter with the s
   HTTP status: 200 OK
   [
      {
-        "code" : "1600001",
+        "code" : "2600001",
         "message" : "List of labels",
         "severity" : "16",
         "source_filename" : "/usr/lib/amanda/perl/Amanda/Rest/Storages/Labels.pm",
@@ -95,7 +95,7 @@ You can use the /amanda/v1.0/configs/:CONF/labels endpoint and filter with the s
   HTTP status: 200 OK
   [
      {
-        "code" : "1600001",
+        "code" : "2600001",
         "message" : "List of labels",
         "severity" : "16",
         "source_filename" : "/usr/lib/amanda/perl/Amanda/Rest/Storages/Labels.pm",
@@ -233,21 +233,12 @@ You can use the /amanda/v1.0/configs/:CONF/labels endpoint and filter with the s
 sub init {
     my %params = @_;
 
-    my $filename = config_dir_relative(getconf($CNF_TAPELIST));
-
-    my ($tl, $message) = Amanda::Tapelist->new($filename);
-    if (defined $message) {
-	return (404, $message);
-    } elsif (!defined $tl) {
-	return (404,
-		Amanda::Tapelist::Message->new(
-				source_filename => __FILE__,
-				source_line     => __LINE__,
-				code => 1600000,
-				severity => $Amanda::Message::ERROR,
-				tapefile => $filename))
+    my ($status, $catalog) = Amanda::Rest::Labels::init();
+    my $storage  = Amanda::Storage->new(catalog  => $catalog);
+    if ($storage->isa("Amanda::Massage")) {
+	return (404, $storage);
     }
-    return (-1, $tl);
+    return ($status, $storage, $catalog);
 }
 
 sub label {
@@ -257,25 +248,30 @@ sub label {
     my ($status, @result_messages) = Amanda::Rest::Configs::config_init(@_);
     return ($status, @result_messages) if @result_messages;
 
-    my $tl = Amanda::Rest::Labels::init();
-    if ($tl->isa("Amanda::Message")) {
-	push @result_messages, $tl;
-	return (-1, \@result_messages);
+    ($status, my $catalog) = Amanda::Rest::Labels::init();
+    if ($catalog->isa("Amanda::Message")) {
+	push @result_messages, $catalog;
+	return ($status, \@result_messages);
     }
 
-    my @tles = grep {$_->{'label'} eq $params{'LABEL'}} @{$tl->{'tles'}};
-    @tles = grep {$_->{'storage'} eq $params{'STORAGE'}} @tles if $params{'storage'};
-    @tles = grep {$_->{'config'}  eq $params{'config'}}  @tles if $params{'config'};
-    @tles = grep {$_->{'storage'} eq $params{'storage'}} @tles if $params{'storage'};
-    @tles = grep {$_->{'pool'}    eq $params{'pool'}}    @tles if $params{'pool'};
-    @tles = grep {$_->{'meta'}    eq $params{'meta'}}    @tles if $params{'meta'};
-    @tles = grep {$_->{'reuse'}   eq $params{'reuse'}}   @tles if $params{'reuse'};
-    push @result_messages, Amanda::Tapelist::Message->new(
+    my $volumes = $catalog->find_volumes(
+		pool => $params{'pool'},
+		label => $params{'LABEL'},
+		reuse => $params{'reuse'},
+		storage => $params{'storage'} || $params{'STORAGE'},
+		config => $params{'config'},
+		meta => $params{'meta'},
+		barcode => $params{'barcode'},
+		retention => $params{'retention'},
+		retention_tape => $params{'retention_tape'},
+		no_bless => 1,
+		retention_name => 1);
+    push @result_messages, Amanda::DB::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
-				code => 1600001,
+				code => 2600001,
 				severity => $Amanda::Message::SUCCESS,
-				tles => \@tles);
+				volumes => $volumes);
     return ($status, \@result_messages);
 }
 
@@ -312,17 +308,22 @@ sub erase {
 		$steps->{'done'}->();
 	    }
 
-            my $tl = Amanda::Rest::Labels::init();
-	    if ($tl->isa("Amanda::Message")) {
-		return $steps->{'done'}->($tl);
+	    ($status, my $catalog) = Amanda::Rest::Labels::init();
+	    if ($catalog->isa("Amanda::Message")) {
+		return $steps->{'done'}->($catalog);
 	    }
-
-	    my $Label = Amanda::Label->new(tapelist => $tl,
-					   user_msg => $user_msg);
+	    my $storage_name = $params{'storage'} || $params{'STORAGE'};
 
 	    my @labels;
 	    if (exists $params{'remove_no_retention'}) {
-		@labels = Amanda::Tapelist::list_no_retention();
+		my $volumes = $catalog->find_volumes(
+			pool => $params{'pool'},
+			storage => $storage_name,
+			config => $params{'config'},
+			retention => 0,
+			retention_tape => 0,
+			no_bless => 1);
+		@labels = map {$_->{'label'}} @$volumes;
 	    } elsif ($params{'labels'}){
 		my $type = Scalar::Util::reftype($params{'labels'});
 		if (defined $type and $type eq "ARRAY") {
@@ -342,10 +343,13 @@ sub erase {
 		return $steps->{'done'}->();
 	    }
 
-	    my $storage = $params{'storage'} || $params{'STORAGE'};
-	    $tl->reload(1);
+	    my $st = Amanda::Storage->new(storage_name => $storage_name,
+					  catalog      => $catalog);
+	    my $Label = Amanda::Label->new(storage  => $st,
+					   catalog  => $catalog,
+					   user_msg => $user_msg);
 	    $Label->erase(labels        => \@labels,
-			  storage       => $storage,
+			  storage       => $storage_name,
 			  cleanup       => $params{'cleanup'},
 			  dry_run       => $params{'dry_run'},
 			  erase         => $params{'erase'},
@@ -394,11 +398,11 @@ sub add_label {
 			      $chg->quit() if defined $chg };
 
 	step start => sub {
-	    my $tl = Amanda::Rest::Labels::init();
-	    if ($tl->isa("Amanda::Message")) {
-		return $steps->{'done'}->($tl);
+	    ($status, my $catalog) = Amanda::Rest::Labels::init();
+	    if ($catalog->isa("Amanda::Message")) {
+		return $steps->{'done'}->($catalog);
 	    }
-	    $storage = Amanda::Storage->new(tapelist => $tl,
+	    $storage = Amanda::Storage->new(catalog  => $catalog,
 					    storage_name => $params{'STORAGE'});
 	    if ($storage->isa("Amanda::Changer::Error")) {
 		return $steps->{'done'}->($storage);
@@ -410,7 +414,7 @@ sub add_label {
 	    }
 
 	    my $Label = Amanda::Label->new(storage  => $storage,
-					   tapelist => $tl,
+					   catalog  => $catalog,
 					   user_msg => $user_msg);
 
 	    $Label->label(slot    => $params{'slot'},
@@ -442,10 +446,12 @@ sub update_label {
     Amanda::Util::set_pname("Amanda::Rest::Storages::Labels");
     my ($status, @result_messages) = Amanda::Rest::Configs::config_init(@_);
     return ($status, @result_messages) if @result_messages;
+    my $message_severity = $Amanda::Message::SUCCESS;
 
     my $user_msg = sub {
 	my $msg = shift;
 	push @result_messages, $msg;
+	$message_severity = $msg->{'severity'};
     };
 
     my $main = sub {
@@ -460,13 +466,13 @@ sub update_label {
 			      $chg->quit() if defined $chg };
 
 	step start => sub {
-            my $tl = Amanda::Rest::Labels::init();
-	    if ($tl->isa("Amanda::Message")) {
-		return $steps->{'done'}->($tl);
+	    ($status, my $catalog) = Amanda::Rest::Labels::init();
+	    if ($catalog->isa("Amanda::Message")) {
+		return $steps->{'done'}->($catalog);
 	    }
 
 	    $storage = Amanda::Storage->new(storage_name => $params{'STORAGE'},
-					    tapelist     => $tl);
+					    catalog  => $catalog);
 	    if ($storage->isa("Amanda::Changer::Error")) {
 		return $steps->{'done'}->($storage);
 	    }
@@ -477,28 +483,15 @@ sub update_label {
 	    }
 
 	    $Label = Amanda::Label->new(storage  => $storage,
-					tapelist => $tl,
+					catalog  => $catalog,
 					user_msg => $user_msg);
 
 
-	    if (defined $params{'reuse'}) {
-		my @labels = ($params{'LABEL'});
-		if ($params{'reuse'}) {
-		    $Label->reuse(labels      => \@labels,
-				  finished_cb => $steps->{'assign'});
-		} else {
-		    $Label->no_reuse(labels      => \@labels,
-				     finished_cb => $steps->{'assign'});
-		}
-	    } else {
-		$steps->{'assign'}->();
-	    }
-	};
-
-	step assign => sub {
-	    if (defined $params{'meta'} || defined $params{'barcode'} ||
+	    if (defined $params{'reuse'} || defined $params{'comment'} ||
+		defined $params{'meta'} || defined $params{'barcode'} ||
 		defined $params{'pool'} || defined $params{'storage'}) {
 		$Label->assign(label   => $params{'LABEL'},
+			       reuse   => $params{'reuse'},
 			       meta    => $params{'meta'},
 			       force   => $params{'force'},
 			       barcode => $params{'barcode'},
@@ -536,26 +529,26 @@ sub list {
     my ($status, @result_messages) = Amanda::Rest::Configs::config_init(@_);
     return ($status, @result_messages) if @result_messages;
 
-    my $tl = Amanda::Rest::Labels::init();
-    if ($tl->isa("Amanda::Message")) {
-	push @result_messages, $tl;
-	return (-1, \@result_messages);
+    ($status, my $catalog) = Amanda::Rest::Labels::init();
+    if ($catalog->isa("Amanda::Message")) {
+	push @result_messages, $catalog;
+	return ($status, \@result_messages);
     }
-    my @tles = @{$tl->{'tles'}};
-    @tles = grep {defined $_->{'storage'}   and $_->{'storage'} eq $params{'STORAGE'}}                    @tles if $params{'STORAGE'};
-    @tles = grep {                              $_->{'label'}   eq $params{'LABEL'}}                      @tles if $params{'LABEL'};
-    @tles = grep {defined $_->{'config'}    and $_->{'config'}  eq $params{'config'}}                     @tles if $params{'config'};
-    @tles = grep {defined $_->{'storage'}   and $_->{'storage'} eq $params{'storage'}}                    @tles if $params{'storage'};
-    @tles = grep {defined $_->{'pool'}      and $_->{'pool'}    eq $params{'pool'}}                       @tles if $params{'pool'};
-    @tles = grep {defined $_->{'meta'}      and $_->{'meta'}    eq $params{'meta'}}                       @tles if $params{'meta'};
-    @tles = grep {                              $_->{'reuse'}   eq $params{'reuse'}}                      @tles if $params{'reuse'};
-    @tles = grep {defined $_->{'datestamp'} and match_datestamp($params{'datestamp'}, $_->{'datestamp'})} @tles if defined $params{'datestamp'};
-    push @result_messages, Amanda::Tapelist::Message->new(
+    my $volumes = $catalog->find_volumes(no_bless => 1,
+					 pool    => $params{'pool'},
+					 label   => $params{'LABEL'},
+					 reuse   => $params{'reuse'},
+					 storage => $params{'STORAGE'},
+					 config  => $params{'config'},
+					 meta    => $params{'meta'},
+					 datestamp => $params{'datestamp'},
+					 retention_name => 1);
+    push @result_messages, Amanda::DB::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
-				code => 1600001,
+				code => 2600001,
 				severity => $Amanda::Message::SUCCESS,
-				tles => \@tles);
+				volumes => $volumes);
     return ($status, \@result_messages);
 }
 
