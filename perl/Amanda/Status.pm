@@ -1140,11 +1140,12 @@ REREAD:
 		} elsif ($line[5] =~ /taper\d*/) {
 		    my $taper = $line[5];
 		    if ($line[6] eq "(eof)") {
+			my $error= "taper CRASH";
+			$state->{'taper'}->{$taper}->{'error'} = $error;
 			# all worker fail
 			foreach my $worker (sort keys %{$self->{'taper'}->{$taper}->{'worker'}}) {
 			    my $serial = $state->{'worker_to_serial'}->{$worker};
 			    my $dle = $state->{'serial_to_dle'}->{$serial};
-			    my $error= "taper CRASH";
 			    $state->{'taper'}->{$taper}->{'worker'}->{$worker}->{'status'} = $TAPE_ERROR;
 			    $state->{'taper'}->{$taper}->{'worker'}->{$worker}->{'error'} = $error;
 			    $state->{'taper'}->{$taper}->{'worker'}->{$worker}->{'wait_for_tape'} = undef;
@@ -2215,7 +2216,7 @@ sub _dump_size() {
     my $use_tmp = !-e "$filename";
     while ($filename ne "") {
 	$filename = "$filename.tmp" if (!(-e "$filename"));
-	$filename = "/dev/null" if (!(-e "$filename"));
+	last if !-e $filename;
 	($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,
 	 $atime,$mtime,$ctime,$blksize,$blocks) = stat($filename);
 	$size=$size-32768 if $size > 32768;

@@ -390,6 +390,12 @@ if ($opt_summary) {
 	    my $taper = $state->{'storage'}->{$storage}->{'taper'};
 	    next if !$taper;
 
+	    if ($state->{'taper'}->{$taper}->{'error'}) {
+		printf "%-11s qlen: %d   (%s)\n", "$storage",
+					   $state->{'qlen'}->{'tapeq'}->{$taper} || 0,
+					   $state->{'taper'}->{$taper}->{'error'};
+		next;
+	    }
 	    printf "%-11s qlen: %d\n", "$storage",
 				       $state->{'qlen'}->{'tapeq'}->{$taper} || 0;
 
