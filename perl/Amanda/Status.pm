@@ -1143,12 +1143,13 @@ REREAD:
 		} elsif ($line[5] =~ /taper\d*/) {
 		    my $taper = $line[5];
 		    if ($line[6] eq "(eof)") {
+			my $error= "taper CRASH";
+			$self->{'taper'}->{$taper}->{'error'} = $error;
 			# all worker fail
 			foreach my $worker (keys %worker_to_serial) {
 			    my $serial = $worker_to_serial{$worker};
 			    my $dle = $dles{$serial};
 			    if (defined $dle) {
-				my $error= "taper CRASH";
 				my $storage = $self->{'taper'}->{$taper}->{'storage'};
 				my $dlet = $dle->{'storage'}->{$storage};
 				if ($dlet->{'status'} == $DUMPING_TO_TAPE ||
