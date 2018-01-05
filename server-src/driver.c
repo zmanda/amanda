@@ -5438,8 +5438,10 @@ tape_action(
 		data_to_go =  t_size - wtaper1->written;
 		if (data_to_go > wtaper1->left) {
 		    if (wtaper1->state & TAPER_STATE_TAPE_STARTED) {
-			data_free -= data_to_go - wtaper1->left;
-			data_lost += wtaper1->written + wtaper1->left;
+			if (taper->max_dle_by_volume - wtaper1->nb_dle > 0) {
+			    data_free -= data_to_go - wtaper1->left;
+			    data_lost += wtaper1->written + wtaper1->left;
+			}
 		    } else {
 			data_free -= data_to_go;
 			data_lost += wtaper1->written;
@@ -5448,7 +5450,9 @@ tape_action(
 		    if (!(wtaper1->state & TAPER_STATE_TAPE_STARTED)) {
 			data_free -= data_to_go;
 		    } else {
-			data_free += wtaper1->left - data_to_go;
+			if (taper->max_dle_by_volume - wtaper1->nb_dle > 0) {
+			    data_free += wtaper1->left - data_to_go;
+			}
 		    }
 		}
 	    } else if (wtaper1->state & TAPER_STATE_TAPE_STARTED) {
@@ -5514,6 +5518,7 @@ tape_action(
 		      (new_data > 0 || force_flush == 1 || dump_to_disk_terminated)) ||
 		     taperflush_criteria;
 
+    driver_debug(2, "action_flush %d\n", action_flush);
     driver_debug(2, "taperflush %lld\n", (long long)taper->taperflush);
     driver_debug(2, "flush_threshold_dumped %lld\n", (long long)taper->flush_threshold_dumped);
     driver_debug(2, "flush_threshold_scheduled %lld\n", (long long)taper->flush_threshold_scheduled);
