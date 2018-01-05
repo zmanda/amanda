@@ -146,7 +146,35 @@ sub run_execute {
     my $read_lock = shift;
     my $write_lock = shift;
 
-    return $fn->($obj, @_);
+    my $dbh = $self->{'dbh'};
+    my $stop_loop = 0;
+    my $result;
+
+    do {
+	eval {
+	    $result = $fn->($obj, @_);
+	};
+	my $error = $@;
+        my $mysql_errno = $dbh->{'mysql_errno'};
+        my $mysql_error = $dbh->{'mysql_error'};
+        my $errstr = $dbh->errstr;
+
+	if ($error) {
+	    debug("error $error") if defined $error;
+	    debug("mysql_errno: $mysql_errno") if defined $mysql_errno;
+	    debug("mysql_error: $mysql_error") if defined $mysql_error;
+	    debug("errstr: $errstr") if defined $errstr;
+
+	    if ($errstr !~ /database is locked/) {
+		die($error);
+	    }
+	    sleep 1;
+	} else {
+	    $stop_loop = 1;
+	}
+    } until $stop_loop;
+
+    return $result;
 }
 
 sub table_exists {
