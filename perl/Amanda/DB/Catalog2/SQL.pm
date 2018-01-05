@@ -2409,6 +2409,37 @@ sub select_or_add_copy {
     return $copy_id;
 }
 
+sub select_or_add_part {
+    my $self = shift;
+    my $copy_id = shift;
+    my $volume_id = shift;
+    my $part_offset = shift || 0;
+    my $part_size = shift || 0;
+    my $filenum = shift || 1;
+    my $part_num = shift || 1;
+    my $part_status = shift || 'OK';
+    my $part_message = shift;
+    #my $write_timestamp = shift;
+    my $dbh = $self->{'dbh'};
+    my $sth;
+    my $part_id;
+
+    $sth = $self->make_statement('sel part_id', 'SELECT part_id FROM parts WHERE copy_id=? AND volume_id=? ORDER BY part_num LIMIT 1');
+    $sth->execute($copy_id, $volume_id)
+	or die "Can't find part copy:$copy_id volume:$volume_id : " . $sth->errstr();
+    my $part_row = $sth->fetchrow_arrayref;
+    if (!defined $part_row) {
+	$sth = $self->make_statement('in par', 'INSERT INTO parts(copy_id, volume_id, part_offset, part_size, filenum, part_num, part_status, part_message) VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
+	$sth->execute($copy_id, $volume_id, $part_offset, $part_size, $filenum, $part_num, $part_status, $part_message)
+	    or die "Can't add part $copy_id:$copy_id " . $sth->errstr();
+	$part_id = $dbh->last_insert_id(undef, undef, "parts", undef);
+    } else {
+	$part_id = $part_row->[0];
+    }
+
+    return $part_id;
+}
+
 sub select_or_add_pool {
     my $self = shift;
     my $pool_name = shift;
@@ -2538,6 +2569,10 @@ sub _add_flush_cmd {
     $sth->execute('HOLDING', $params{'dump_timestamp'}, $params{'level'}, $params{'diskname'}, $params{'hostname'}, $params{'holding_file'})
 	or die "Cannot execute: " . $sth->errstr();
     $row = $sth->fetchrow_arrayref;
+
+    # select or add storage
+    my $storage_id = $self->select_or_add_storage('HOLDING');
+
     if (!$row || !defined $row->[0]) {
 	# select or add host
 	my $host_id = $self->select_or_add_host($params{'hostname'});
@@ -2548,27 +2583,25 @@ sub _add_flush_cmd {
 	# select or add images
 	my ($image_id, $dump_stataus) = $self->select_or_add_image($disk_id, $params{'dump_timestamp'}, $params{'level'}, $params{'based_on_timestamp'}, $params{'pid'});
 
-	# select or add storage
-	my $storage_id = $self->select_or_add_storage('HOLDING');
-
-	# select or add pool
-	my $pool_id = $self->select_or_add_pool('HOLDING');
-
-	# select or add meta
-	my $meta_id = $self->select_or_add_meta('');
-
-	# select or add volumes
-	my $volume_id = $self->select_or_add_holding_volume($pool_id, $storage_id, $meta_id, $params{'holding_file'}, $params{'dump_timestamp'});
-
 	# select or add copys
-	$src_copy_id = $self->select_or_add_copy($image_id, $storage_id, $params{'dump_timestamp'})
-
-	# select or add parts
+	$src_copy_id = $self->select_or_add_copy($image_id, $storage_id, $params{'dump_timestamp'});
 
 	#die ("add_flush_cmd no copy");
     } else {
 	$src_copy_id = $row->[0];
     }
+
+    # select or add pool
+    my $pool_id = $self->select_or_add_pool('HOLDING');
+
+    # select or add meta
+    my $meta_id = $self->select_or_add_meta('');
+
+    # select or add volumes
+    my $volume_id = $self->select_or_add_holding_volume($pool_id, $storage_id, $meta_id, $params{'holding_file'}, $params{'dump_timestamp'});
+
+    # select or add parts
+    my $src_part_id = $self->select_or_add_part($src_copy_id, $volume_id, 0, 1, 0, 1 , 'OK', undef); #JLM check if part is cmplete
 
     # select or add dest storage
     my $dest_storage_id = $self->select_or_add_storage($params{'dst_storage'});

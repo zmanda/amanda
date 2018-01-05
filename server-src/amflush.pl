@@ -242,7 +242,8 @@ if (!$opt_batch && !confirm(@datestamps)) {
 }
 
 open STDERR, ">>&", $amflush->{'amdump_log'} || die("stdout: $!");
-my $to_flushs = $amflush->get_flush(datestamps => \@datestamps);
+my $to_flushs = $amflush->get_flush(datestamps => \@datestamps,
+				    storages => getconf($CNF_STORAGE));
 
 if (!$to_flushs || !@$to_flushs) {
     print "Could not find any valid dump image, check directory.\n";

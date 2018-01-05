@@ -1,4 +1,10 @@
 2018-01-05  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Amflush.pm (get_flush): Only return flush for the
+	  storages
+	* perl/Amanda/DB/Catalog2/SQL.pm (_add_flush_cmd): Add a part
+	* server-src/amflush.pl: Pass the storage list got get_flush
+
+2018-01-05  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/DB/Catalog2/SQLite.pm: Retry on /database is locked/
 
 2018-01-05  Jean-Louis Martineau <JMartineau@carbonite.com>

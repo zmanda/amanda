@@ -243,10 +243,6 @@ sub get_flush {
 	my $hdr = Amanda::Holding::get_header($hfile);
 	my $dle = Amanda::Disklist::get_disk($hdr->{'name'}, $hdr->{'disk'});
 	next if !$dle->{'todo'};
-	if (!defined $disks{$hdr->{'name'}}{$hdr->{'disk'}}) {
-	    log_add($L_DISK, $hdr->{'name'} . " " . quote_string($hdr->{'disk'}));
-	    $disks{$hdr->{'name'}}{$hdr->{'disk'}} = 1;
-	}
 	my $ids = $catalog->get_cmdflush_ids_for_holding($hfile);
 	if (!@$ids) {
 	    my $storages = getconf($CNF_STORAGE);
@@ -263,6 +259,23 @@ sub get_flush {
 		working_pid    => $$,
 		status         => $Amanda::Cmdfile::CMD_TODO);
 	    $ids = ["$id;$storage_name"];
+	} elsif (defined $params{'storages'}) {
+	    my @new_ids;
+	    for my $id (@$ids) {
+		my ($aid,$storage) = split(";",$id);
+		my $command = $catalog->get_command_from_id($aid);
+		if (grep { $command->{'dst_storage'} eq $_ } @{$params{'storages'}}) {
+		    push @new_ids, $id;
+		}
+	    }
+	    if (!@new_ids) {
+		next;
+	    }
+	    $ids = \@new_ids;
+	}
+	if (!defined $disks{$hdr->{'name'}}{$hdr->{'disk'}}) {
+	    log_add($L_DISK, $hdr->{'name'} . " " . quote_string($hdr->{'disk'}));
+	    $disks{$hdr->{'name'}}{$hdr->{'disk'}} = 1;
 	}
 
 	my $to_flush = { hfile     => $hfile,
