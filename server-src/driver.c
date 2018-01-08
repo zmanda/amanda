@@ -5511,6 +5511,7 @@ tape_action(
 
     taperflush_criteria = (((taper->taperflush < tapeq_size) && dump_to_disk_terminated &&
 			    (new_data > 0 || force_flush == 1 || dump_to_disk_terminated)) ||
+			   (new_dle > 0) ||
 			   ((data_lost > ( taper->tape_length - tapeq_size)) &&
 			    (dump_to_disk_terminated)));
     flush_criteria = (taper->flush_threshold_dumped < tapeq_size &&
