@@ -1,4 +1,7 @@
 2018-01-08  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/driver.c (tape_action): fix for max_dle_by_volume
+
+2018-01-08  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* client-src/ambackup.pl: Fix usage message
 
 2018-01-05  Jean-Louis Martineau <JMartineau@carbonite.com>
