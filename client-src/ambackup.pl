@@ -521,7 +521,7 @@ sub get_backup
 }
 
 sub usage {
-    print STDERR "USAGE: ambackup [--config <config>] [--verbose] <config-overwrites> [list|check|dump] <diskname>";
+    print STDERR "USAGE: ambackup [--config <config>] [--verbose] <config-overwrites> [list|check|backup] <diskname>";
 }
 
 Amanda::Util::finish_application();
