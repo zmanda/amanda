@@ -3479,8 +3479,8 @@ sub _clean {
     my @images = $self->_find_dumping_images();
     foreach my $image (@images) {
 	if (kill(0, $image->{'image_pid'}) == 0) {
-	    my @copies = $image->find_copies();
-	    foreach my $copy (@copies) {
+	    my $copies = $image->find_copies();
+	    foreach my $copy (@$copies) {
 		if (kill(0, $copy->{'copy_pid'}) == 0) {
 		    $copy->_finish_copy(1, 0, 0, "PARTIAL", undef);
 		}
@@ -3502,6 +3502,11 @@ sub _clean {
 #    $nb = $dbh->do("DELETE FROM copys WHERE copy_status == 'DUMPING'");
 #    die "Cannot do: " . $dbh->errstr() if !defined $nb;
 #    $clean = 0 if $nb > 0;
+
+    $nb = $dbh->do("DELETE FROM parts WHERE NOT EXISTS (SELECT volume_id FROM volumes WHERE parts.volume_id = volumes.volume_id)");
+    die "Cannot do: " . $dbh->errstr() if !defined $nb;
+    $clean = 0 if $nb > 0;
+    debug("deleted $nb parts") if $nb > 0;
 
     $nb = $dbh->do("DELETE FROM volumes WHERE NOT EXISTS (SELECT volume_id FROM parts WHERE volumes.volume_id = parts.volume_id)");
     die "Cannot do: " . $dbh->errstr() if !defined $nb;
@@ -3547,10 +3552,6 @@ sub _clean {
     debug("deleted $nb hosts") if $nb > 0;
 
     #$nb = $dbh->do("DELETE FROM parts WHERE NOT EXISTS (SELECT copy_id FROM copys WHERE parts.copy_id = copys.copy_id)");
-    #die "Cannot do: " . $dbh->errstr() if !defined $nb;
-    #$clean = 0 if $nb > 0;
-
-    #$nb = $dbh->do("DELETE FROM parts WHERE NOT EXISTS (SELECT volume_id FROM volumes WHERE parts.volume_id = volumes.volume_id)");
     #die "Cannot do: " . $dbh->errstr() if !defined $nb;
     #$clean = 0 if $nb > 0;
 
@@ -4986,7 +4987,7 @@ sub _find_copies {
 	my $copy_pid = $copy_row->[2];
         push @copies, Amanda::DB::Catalog2::SQL::copy->new($self->{'catalog'}, $copy_id, $copy_status, $copy_pid);
     }
-    return @copies;
+    return \@copies;
 }
 
 sub find_copies  {

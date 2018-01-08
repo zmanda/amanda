@@ -1,4 +1,7 @@
 2018-01-08  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/DB/Catalog2/SQL.pm (clean): Delete parts with no volume
+
+2018-01-08  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/driver.c (tape_action): fix for max_dle_by_volume
 
 2018-01-08  Jean-Louis Martineau <JMartineau@carbonite.com>
