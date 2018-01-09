@@ -1,3 +1,7 @@
+2018-01-09  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* installcheck/Installcheck/DBCatalog2.pm,
+	  installcheck/Amanda_Taper_Scan.pl: Use random file name
+
 2018-01-08  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/DB/Catalog2/SQL.pm (clean): Delete parts with no volume
 

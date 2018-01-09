@@ -90,9 +90,10 @@ sub check_db_catalog2 {
     my $confname = shift;
     my $filename = shift;
 
-    my $temp_filename =  "/tmp/aa"; # JLM random name
+    my $temp_filename = "$Amanda::Paths::AMANDA_TMPDIR/check_db_catalog2.$$" . "_" . rand();
+
     ok(!system("$sbindir/amcatalog $confname export $temp_filename 2>/dev/null"), "export catalog")
-	or die("Can't crteate database");
+	or die("Can't export database");
 
     my $a = Amanda::Util::slurp($temp_filename);
     my $b = Amanda::Util::slurp("$srcdir/DB_Catalolog2/$filename");
