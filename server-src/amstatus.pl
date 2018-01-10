@@ -35,6 +35,7 @@ my $exit_status    =  0;
 
 my $opt_detail;
 my $opt_summary;
+my $opt_taped;
 my $opt_stats;
 my $opt_config;
 my $opt_file;
@@ -42,7 +43,7 @@ my $opt_locale_independent_date_format = 0;
 
 sub usage() {
 	print "amstatus [--file amdump_file]\n";
-	print "         [--[no]detail] [--[no]summary] [--[no]stats]\n";
+	print "         [--[no]detail] [--[no]summary] [--[no]taped] [--[no]stats]\n";
 	print "         [--[no]locale-independent-date-format]\n";
 	print "         [--config] <config>\n";
 	exit 0;
@@ -61,6 +62,7 @@ Getopt::Long::Configure(qw{ bundling });
 GetOptions(
     'detail!'                         => \$opt_detail,
     'summary!'                        => \$opt_summary,
+    'taped!'                          => \$opt_taped,
     'stats|statistics!'               => \$opt_stats,
 #    'dumping|d!'                      => \$opt_dumping,
 #    'waitdumping|wdumping!'           => \$opt_waitdumping,
@@ -136,14 +138,17 @@ Amanda::Util::finish_setup($RUNNING_AS_DUMPUSER);
 if ($nb_options == 0) {
 	$opt_detail      = 1;
 	$opt_summary     = 1;
+	$opt_taped       = 1 if !defined $opt_taped;
 	$opt_stats       = 1;
 } elsif ($set_options > 0) {
 	$opt_detail  = 0 if !defined $opt_detail;
 	$opt_summary = 0 if !defined $opt_summary;
+	$opt_taped   = $opt_summary if !defined $opt_taped;
 	$opt_stats   = 0 if !defined $opt_stats;
 } else {
 	$opt_detail  = 1 if !defined $opt_detail;
 	$opt_summary = 1 if !defined $opt_summary;
+	$opt_taped   = $opt_summary if !defined $opt_taped;
 	$opt_stats   = 1 if !defined $opt_stats;
 }
 
@@ -601,7 +606,7 @@ sub summary_storage {
 	$line =~ s/ *$//g; #remove trailing space
 	print "$line\n";
 
-	if ($key eq 'taped') {
+	if ($key eq 'taped' && $opt_taped) {) {
 	    my $taper = $status->{'storage'}->{$storage}->{'taper'};
 	    summary_taped($status, $taper);
 	}

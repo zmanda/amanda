@@ -1,3 +1,8 @@
+2018-01-10  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/amstatus.pl: Add a --[no]taped argument
+	* man/xml-source/amstatus.8.xml: Document it
+	* NEWS, ReleaseNotes: Add it
+
 2018-01-08  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/driver.c (tape_action): fix for max_dle_by_volume
 
