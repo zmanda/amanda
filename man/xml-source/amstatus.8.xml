@@ -32,6 +32,7 @@
     <arg choice='opt'><arg choice='plain'>--file </arg><arg choice='plain'><replaceable>amdumpfile</replaceable></arg></arg>
     <arg choice='opt'>--[no]detail </arg>
     <arg choice='opt'>--[no]summary </arg>
+    <arg choice='opt'>--[no]taped </arg>
     <arg choice='opt'>--[no]stats </arg>
     <arg choice='opt'>--[no]locale-independent-date-format </arg>
     <arg choice='opt'>--config </arg>
@@ -86,6 +87,12 @@ file.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
+  <term><option>--taped</option></term>
+  <listitem>
+<para>Display each tape used in the summary of the state of the run.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
   <term><option>--stats|statistics</option></term>
   <listitem>
 <para>Display statistics about active-time of taper and dumpers.</para>
@@ -98,6 +105,14 @@ file.</para>
   </listitem>
   </varlistentry>
 </variablelist>
+</refsect1>
+
+<refsect1><title>EXAMPLE</title>
+  <para>Run the following command in a shell when a backup is running:
+<programlisting>
+    watch amstatus CONF --summary --notaped
+</programlisting>
+</para>
 </refsect1>
 
 <refsect1><title>EXIT CODE</title>

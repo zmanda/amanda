@@ -1,3 +1,6 @@
+2018-01-10  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/amstatus.pl: Add a --[no]taped argument
+
 2018-01-09  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* installcheck/Installcheck/DBCatalog2.pm,
 	  installcheck/Amanda_Taper_Scan.pl: Use random file name

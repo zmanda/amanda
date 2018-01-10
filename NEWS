@@ -3,6 +3,12 @@ Changes in release 3.6
    * Use a database (SQLite, MySQL or ProstgreSQL) to replace the tapelist
      and log.* file (See Amanda-Catalog file)
 
+Changes in release 3.5.2
+
+   * amstatus
+       o new --[no]taped argument, useful when running
+         'watch amstatus CONF --summary --notaped' if the run have many tapes
+
 Changes in release 3.5.1
 
    * Fix compilation on Solaris
