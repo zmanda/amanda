@@ -1,4 +1,7 @@
 2018-01-10  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/amstatus.pl: Typo
+
+2018-01-10  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/amstatus.pl: Add a --[no]taped argument
 	* man/xml-source/amstatus.8.xml: Document it
 	* NEWS, ReleaseNotes: Add it

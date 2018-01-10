@@ -606,7 +606,7 @@ sub summary_storage {
 	$line =~ s/ *$//g; #remove trailing space
 	print "$line\n";
 
-	if ($key eq 'taped' && $opt_taped) {) {
+	if ($key eq 'taped' && $opt_taped) {
 	    my $taper = $status->{'storage'}->{$storage}->{'taper'};
 	    summary_taped($status, $taper);
 	}
