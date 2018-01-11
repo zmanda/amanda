@@ -1,3 +1,7 @@
+2018-01-11  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/DB/Catalog2/MySQL.pm: Do the 'use DBD::mysql' in eval so
+	  it is not added in the package dependencies
+
 2018-01-10  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/amstatus.pl: Add a --[no]taped argument
 

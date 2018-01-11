@@ -40,7 +40,7 @@ use Amanda::Util qw( quote_string nicedate weaken_ref :quoting match_disk match_
 use Amanda::Debug qw ( :logging );
 use Amanda::Holding;
 use Amanda::Header;
-use DBD::mysql 4.043;
+eval 'use DBD::mysql 4.043;';
 
 sub new {
     my $class = shift;
