@@ -1304,6 +1304,14 @@ days /
   </varlistentry>
 
   <varlistentry>
+  <term><amkeyword>rest-api-port</amkeyword> <amtype>int</amtype></term>
+  <listitem>
+<para>No default. The port number the rest server will listen to,
+ it must be an unused port.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
   <term><amkeyword>runtapes</amkeyword> <amtype>int</amtype></term>
   <listitem>
 <para>Default:

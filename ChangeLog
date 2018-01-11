@@ -1,4 +1,7 @@
 2018-01-11  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* man/xml-source/amanda.conf.5.xml: Add rest-api-port
+
+2018-01-11  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/DB/Catalog2/MySQL.pm: Do the 'use DBD::mysql' in eval so
 	  it is not added in the package dependencies
 
