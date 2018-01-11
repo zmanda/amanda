@@ -1,3 +1,6 @@
+2018-01-11  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* man/xml-source/amanda.conf.5.xml: Add rest-api-port
+
 2018-01-10  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/amstatus.pl: Typo
 
