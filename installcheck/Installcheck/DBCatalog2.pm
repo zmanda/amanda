@@ -86,9 +86,23 @@ Amanda::Debug::debug("create_db_catalog2 $drop_tables");
     }
 }
 
+sub based_on_timestamp_epoch {
+    my ( $sec, $min, $hour, $mday, $mon, $year, $wday, $yday, $isdst ) =
+      localtime 0;
+
+    my $dumpdate = sprintf(
+        '%04d%02d%02d%02d%02d%02d',
+        $year + 1900,
+        $mon + 1, $mday, $hour, $min, $sec);
+
+    return $dumpdate;
+}
+
 sub check_db_catalog2 {
     my $confname = shift;
     my $filename = shift;
+    my $diskname1_path = shift;
+    my $diskname2_path = shift;
 
     my $temp_filename = "$Amanda::Paths::AMANDA_TMPDIR/check_db_catalog2.$$" . "_" . rand();
 
@@ -101,12 +115,16 @@ sub check_db_catalog2 {
 
     my @a = split /\n/, $a;
     my @b = split /\n/, $b;
+    my $based_on_timestampo_epoch = based_on_timestamp_epoch();
     while (defined(my $la = shift @a)) {
 	my $lb = shift @b;
+	$lb =~ s/DISKNAME1_PATH/$diskname1_path/g;
+	$lb =~ s/DISKNAME2_PATH/$diskname2_path/g;
+	$lb =~ s/19691231190000/$based_on_timestampo_epoch/g;
 	if ($la !~ /^$lb$/){
 	    $fail=1;
-	    diag("-$la");
-	    diag("+$lb");
+	    diag("-,$la,");
+	    diag("+,$lb,");
 	}
     }
     foreach my $lb (@b) {

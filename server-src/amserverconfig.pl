@@ -410,7 +410,7 @@ sub create_customconf{
 	print CONF "\n";
 	print CONF "define catalog $config {\n";
 	print CONF "    plugin \"SQLite\"\n";
-	print CONF "    property \"dbname\" \"/etc/amanda/database.db\"\n";
+	print CONF "    property \"dbname\" \"$confdir/database.db\"\n";
 	print CONF "}\n";
 	print CONF "catalog \"$config\"\n";
 	print CONF "\n";
@@ -419,7 +419,7 @@ sub create_customconf{
 	print CONF "includefile \"$confdir/template.d/tapetypes\"\n";
 	close (CONF);
 	mprint ("custom amanda.conf created\n");
-  }
+ }
 
 
 sub check_xinetd{

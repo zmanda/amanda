@@ -109,9 +109,9 @@ $catalog->add_simple_dump("localhost","/boot","/boot", 20090424173002, 0, "TESTC
 $catalog->add_simple_dump("localhost","/boot","/boot", 20090424173001, 0, "TESTCONF", "TESTCONF", "TEST-1", 1, 0, 0, 0);
 my $temp_filename1 =  "$Amanda::Paths::AMANDA_TMPDIR/Amanda_Taper_Scan.$$.1_" . rand();
 my $temp_filename2 =  "$Amanda::Paths::AMANDA_TMPDIR/Amanda_Taper_Scan.$$.2_" . rand();
-system("amcatalog TESTCONF export $temp_filename1");
+system("$sbindir/amcatalog TESTCONF export $temp_filename1");
 $catalog->compute_retention();
-system("amcatalog TESTCONF export $temp_filename2");
+system("$sbindir/amcatalog TESTCONF export $temp_filename2");
 $storage = Amanda::Storage->new(catalog => $catalog);
 $taperscan = Amanda::Taper::Scan->new(
     algorithm => "traditional",

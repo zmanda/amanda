@@ -78,7 +78,7 @@ $catalog->quit();
 
 ok(run('amdump', 'TESTCONF'), "amdump runs successfully")
     or amdump_diag();
-check_db_catalog2('TESTCONF', 'amdump.catalog.1');
+check_db_catalog2('TESTCONF', 'amdump.catalog.1', $diskname, $diskname);
 
 # Dump a nonexistant client, and see amdump fail.
 $testconf = Installcheck::Run::setup();
