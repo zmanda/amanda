@@ -239,7 +239,10 @@ sub info_key {
     };
 
     step locked => sub {
-	return if $self->check_error($info_cb);
+	if ($self->check_error($info_cb)) {
+	    $self->try_unlock();
+	    return;
+	}
 
 	# no need for synchronization -- all of these values are static
 
@@ -355,7 +358,10 @@ sub with_disk_locked_state {
 
     step locked => sub {
 	my $err = shift;
-	return $cb->($err) if $err;
+	if ($err) {
+	    $self->try_unlock();
+	    return;
+	}
 	$self->with_locked_state($self->{'state_filename'},
 	    sub { my @args = @_;
 		  $self->try_unlock();
@@ -851,7 +857,7 @@ sub try_lock {
     if (defined $self->{'lock-timeout'}) {
 	$time = time() + $self->{'lock-timeout'};
     } else {
-	$time = time() + 1000;
+	$time = time() + 10000;
     }
 
 
@@ -869,8 +875,10 @@ sub try_lock {
     step lock => sub {
 	my $rv = $self->{'fl'}->lock_rd();
 	if ($rv == 1 && time() < $time) {
+	    # do not increase the poll otherwise we could never get the lock
+	    $poll += 100 unless $poll >= 100;
 	    # loop until we get the lock, increasing $poll to 10s
-	    $poll += 100 unless $poll >= 10000;
+	    #$poll += 100 unless $poll >= 10000;
 	    return Amanda::MainLoop::call_after($poll, $steps->{'lock'});
 	} elsif ($rv == 1) {
 	    return $self->make_error("fatal", $cb,
