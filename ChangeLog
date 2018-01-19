@@ -1,4 +1,7 @@
 2018-01-19  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/ScanInventory.pm (_scan_): Set scanning to 0 on error
+
+2018-01-19  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/Changer.pm, perl/Amanda/Changer/diskflat.pm: Try to get
 	  the lock more often, otherwise we might never get it if another
 	  thread lock it often
