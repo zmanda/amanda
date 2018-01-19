@@ -1024,7 +1024,7 @@ amcatalog_add_cmd(
 	char start_time_str[NUM_STR_SIZE];
 	g_snprintf(level_str, sizeof(level_str), "%d", cmddata->level);
 	g_snprintf(working_pid_str, sizeof(working_pid_str), "%d", cmddata->working_pid);
-	g_snprintf(size_str, sizeof(size_str), "%ld", cmddata->size);
+	g_snprintf(size_str, sizeof(size_str), "%lld", (long long)cmddata->size);
 	g_snprintf(start_time_str, sizeof(start_time_str), "%ld", cmddata->start_time);
 	line = run_amcatalog("add-copy-cmd", 12, config, src_storage, src_label,
 				hostname, diskname, dump_timestamp, level_str,
