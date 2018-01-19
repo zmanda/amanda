@@ -415,6 +415,10 @@ sub result_cb {
     # consider this a config-derived failure only if there were no errors
     my $failure_from = (defined $params{'config_denial_message'})?  'config' : 'error';
 
+    if (defined $params{'input_errors'}) {
+	push @{$self->{'input_errors'}},  @{$params{'input_errors'}};
+    }
+    delete $params{'input_errors'};
     my @all_messages = (@{$params{'device_errors'}}, @{$self->{'input_errors'}});
     push @all_messages, $params{'config_denial_message'} if $params{'config_denial_message'};
     my $msg = quote_string(join("; ", @all_messages));
@@ -883,12 +887,13 @@ sub setup_and_start_dump {
     };
 
     step quit_clerk_finished => sub {
-	Amanda::Debug::debug("quit_clerk_finished");
-        $self->{'src'}->{'storage'}->quit();
-        delete $self->{'src'}->{'clerk'};
-        delete $self->{'src'}->{'scan'};
-        delete $self->{'src'}->{'storage'};
-        delete $self->{'src'}->{'chg'};
+	Amanda::Debug::debug("quit_clerk_finished $self->{'name'}");
+	$self->{'src'}->{'storage'}->quit();
+	$self->{'src'}->{'clerk'}->quit();
+	delete $self->{'src'}->{'clerk'};
+	delete $self->{'src'}->{'scan'};
+	delete $self->{'src'}->{'storage'};
+	delete $self->{'src'}->{'chg'};
 	$steps->{'get_src_clerk'}->();
     };
 
@@ -962,18 +967,20 @@ sub setup_and_start_dump {
 	if ($err) {
 	    return $params{'dump_cb'}->(
 		result => "FAILED",
-		device_errors => [ 'error', "$err" ],
+		input_errors => [ "$err" ],
 		size => 0,
 		duration => 0.0,
 		total_duration => 0);
 	}
 
-	return $params{'dump_cb'}->(
+	if (!@{$plan->{'dumps'}}) {
+	    return $params{'dump_cb'}->(
                 result => "FAILED",
-                device_errors => [ 'error', "Dump not found" ],
+                input_errors => [ "Dump not found" ],
                 size => 0,
                 duration => 0.0,
-                total_duration => 0) if (!@{$plan->{'dumps'}});
+                total_duration => 0);
+	}
 
 	$self->{'src'}->{'plan'} = $plan;
 
