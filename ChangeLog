@@ -1,4 +1,9 @@
 2018-01-19  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Changer.pm, perl/Amanda/Changer/diskflat.pm: Try to get
+	  the lock more often, otherwise we might never get it if another
+	  thread lock it often
+
+2018-01-19  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/match.c (match_labelstr_template, match_labelstr):
 	  Checklabel is not NULL
 
