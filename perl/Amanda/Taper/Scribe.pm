@@ -1717,9 +1717,9 @@ sub dbg {
     my ($self, $msg) = @_;
 #    if ($self->{'debug'}) {
 	if (defined $self->{'worker'}->{'handle'}) {
-	    debug("$self->{'worker'}->{'handle'} Amanda::Taper::Scribe: $msg");
+	    debug("$self $self->{'worker'}->{'worker_name'} $self->{'worker'}->{'handle'} Amanda::Taper::Scribe: $msg");
 	} else {
-	    debug("Amanda::Taper::Scribe: $msg");
+	    debug("$self: $msg");
 	}
 #    }
 }
