@@ -1,4 +1,8 @@
 2018-01-19  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Taper/Controller.pm: Quit the Clerk on START_TAPER,
+	  Add debugging
+
+2018-01-19  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/ScanInventory.pm (_scan_): Set scanning to 0 on error
 
 2018-01-19  Jean-Louis Martineau <JMartineau@carbonite.com>
