@@ -1,4 +1,7 @@
 2018-01-19  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Taper/Scribe.pm (_dbg): Improve debugging
+
+2018-01-19  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/Taper/Controller.pm: Quit the Clerk on START_TAPER,
 	  Add debugging
 
