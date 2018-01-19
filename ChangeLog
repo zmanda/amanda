@@ -1,3 +1,7 @@
+2018-01-19  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/match.c (match_labelstr_template, match_labelstr):
+	  Checklabel is not NULL
+
 2018-01-11  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* man/xml-source/amanda.conf.5.xml: Add rest-api-port
 

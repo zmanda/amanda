@@ -1264,9 +1264,13 @@ match_labelstr_template(
     const char *meta,
     const char *storage)
 {
-    char *ztemplate = make_template(FALSE, template, barcode, meta, storage);
+    char *ztemplate;
     int   result;
 
+    if (!label)
+	return 0;
+
+    ztemplate = make_template(FALSE, template, barcode, meta, storage);
     result = match(ztemplate, label);
     g_free(ztemplate);
     return result;
@@ -1283,6 +1287,9 @@ match_labelstr(
 {
     char *template;
     int   result;
+
+    if (!label)
+	return 0;
 
     if (labelstr->match_autolabel) {
 	template = make_template(TRUE, autolabel->template, barcode, meta, storage);
