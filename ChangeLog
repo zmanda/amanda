@@ -1,4 +1,8 @@
 2018-01-19  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/DB/Catalog2/SQLite.pm: Retry transaction on
+	  /database schema has changed/
+
+2018-01-19  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/server_util.c: Fix printf formatting
 
 2018-01-19  Jean-Louis Martineau <JMartineau@carbonite.com>

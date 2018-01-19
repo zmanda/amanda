@@ -165,7 +165,8 @@ sub run_execute {
 	    debug("mysql_error: $mysql_error") if defined $mysql_error;
 	    debug("errstr: $errstr") if defined $errstr;
 
-	    if ($errstr !~ /database is locked/) {
+	    if ($errstr !~ /database is locked/ &&
+		$errstr !~ /database schema has changed/) {
 		die($error);
 	    }
 	    sleep 1;
