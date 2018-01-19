@@ -738,6 +738,7 @@ sub _scan {
     step got_meta_label => sub {
 	my ($err, $meta) = @_;
 	if (defined $err) {
+	    $self->{'scanning'} = 0;
 	    return $result_cb->($err, $res);
 	}
 	($label, my $make_err, my $not_fatal) = $res->make_new_tape_label(meta => $meta);
