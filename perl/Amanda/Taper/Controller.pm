@@ -69,9 +69,17 @@ sub new {
 	proto => undef,
 	catalog => $params{'catalog'},
 	storage_name => $params{'storage_name'},
+	debug => getconf($CNF_DEBUG_TAPER),
 	worker => {},
     }, $class;
     return $self;
+}
+
+sub dbg {
+    my ($self, $dbg_level, $msg,) = @_;
+    if ($dbg_level >= $self->{'debug'}) {
+        debug("$self: $msg");
+    }
 }
 
 # The feedback object mediates between messages from the driver and the ongoing
@@ -251,6 +259,14 @@ sub msg_START_TAPER {
     my $self = shift;
     my ($msgtype, %params) = @_;
 
+    $self->dbg(3, "msg_START_TAPER " . Data::Dumper::Dumper(\%params));
+    if ($self->{'worker'}->{$params{'worker_name'}}) {
+	my $worker = $self->{'worker'}->{$params{'worker_name'}};
+	if ($worker->{'src'}->{'clerk'}) {
+	    $worker->{'src'}->{'clerk'}-> quit();
+	}
+    }
+
     my $worker = new Amanda::Taper::Worker($params{'taper_name'}, $params{'worker_name'}, $self,
 				  $params{'timestamp'});
 
@@ -264,7 +280,7 @@ sub msg_FILE_WRITE {
     my $self = shift;
     my ($msgtype, %params) = @_;
 
-debug("msg_FILE_WRITE: " . Data::Dumper::Dumper(\%params));
+    $self->dbg(3, "msg_FILE_WRITE: " . Data::Dumper::Dumper(\%params));
     my $worker = $self->{'worker'}->{$params{'worker_name'}};
     $worker->FILE_WRITE(@_);
 }
@@ -273,7 +289,7 @@ sub msg_PORT_WRITE {
     my $self = shift;
     my ($msgtype, %params) = @_;
 
-debug("msg_PORT_WRITE " . Data::Dumper::Dumper(\%params));
+    $self->dbg(3, "msg_PORT_WRITE " . Data::Dumper::Dumper(\%params));
     my $worker = $self->{'worker'}->{$params{'worker_name'}};
     $worker->PORT_WRITE(@_);
 }
@@ -282,7 +298,7 @@ sub msg_SHM_WRITE {
     my $self = shift;
     my ($msgtype, %params) = @_;
 
-debug("msg_SHM_WRITE " . Data::Dumper::Dumper(\%params));
+    $self->dbg(3, "msg_SHM_WRITE " . Data::Dumper::Dumper(\%params));
     my $worker = $self->{'worker'}->{$params{'worker_name'}};
     $worker->SHM_WRITE(@_);
 }
@@ -291,7 +307,7 @@ sub msg_VAULT_WRITE {
     my $self = shift;
     my ($msgtype, %params) = @_;
 
-debug("msg_VAULT_WRITE " . Data::Dumper::Dumper(\%params));
+    $self->dbg(3, "msg_VAULT_WRITE " . Data::Dumper::Dumper(\%params));
     my $worker = $self->{'worker'}->{$params{'worker_name'}};
     $worker->VAULT_WRITE(@_);
 }
@@ -300,7 +316,7 @@ sub msg_START_SCAN {
     my $self = shift;
     my ($msgtype, %params) = @_;
 
-debug("msg_START_SCAN " . Data::Dumper::Dumper(\%params));
+    $self->dbg(3, "msg_START_SCAN " . Data::Dumper::Dumper(\%params));
     my $worker = $self->{'worker'}->{$params{'worker_name'}};
     $worker->START_SCAN(@_);
 }
@@ -309,6 +325,7 @@ sub msg_NEW_TAPE {
     my $self = shift;
     my ($msgtype, %params) = @_;
 
+    $self->dbg(3, "msg_NEW_TAPE " . Data::Dumper::Dumper(\%params));
     my $worker = $self->{'worker'}->{$params{'worker_name'}};
     $worker->NEW_TAPE(@_);
 }
@@ -317,6 +334,7 @@ sub msg_NO_NEW_TAPE {
     my $self = shift;
     my ($msgtype, %params) = @_;
 
+    $self->dbg(3, "msg_NO_NEW_TAPE " . Data::Dumper::Dumper(\%params));
     my $worker = $self->{'worker'}->{$params{'worker_name'}};
     $worker->NO_NEW_TAPE(@_);
 }
@@ -325,6 +343,7 @@ sub msg_DONE {
     my $self = shift;
     my ($msgtype, %params) = @_;
 
+    $self->dbg(3, "msg_DONE " . Data::Dumper::Dumper(\%params));
     my $worker = $self->{'worker'}->{$params{'worker_name'}};
     $worker->DONE(@_);
 }
@@ -333,6 +352,7 @@ sub msg_FAILED {
     my $self = shift;
     my ($msgtype, %params) = @_;
 
+    $self->dbg(3, "msg_FAILED " . Data::Dumper::Dumper(\%params));
     my $worker = $self->{'worker'}->{$params{'worker_name'}};
     $worker->FAILED(@_);
 }
@@ -341,6 +361,7 @@ sub msg_CLOSE_VOLUME {
     my $self = shift;
     my ($msgtype, %params) = @_;
 
+    $self->dbg(3, "msg_CLOSE_VOLUME " . Data::Dumper::Dumper(\%params));
     my $worker = $self->{'worker'}->{$params{'worker_name'}};
     $worker->CLOSE_VOLUME(@_);
 }
@@ -349,6 +370,7 @@ sub msg_CLOSE_SOURCE_VOLUME {
     my $self = shift;
     my ($msgtype, %params) = @_;
 
+    $self->dbg(3, "msg_CLOSE_SOURCE_VOLUME " . Data::Dumper::Dumper(\%params));
     my $worker = $self->{'worker'}->{$params{'worker_name'}};
     $worker->CLOSE_SOURCE_VOLUME(@_);
 }
@@ -357,6 +379,7 @@ sub msg_TAKE_SCRIBE_FROM {
     my $self = shift;
     my ($msgtype, %params) = @_;
 
+    $self->dbg(3, "msg_TAKE_SCRIBE_FROM " . Data::Dumper::Dumper(\%params));
     my $worker = $self->{'worker'}->{$params{'worker_name'}};
     my $worker1 = $self->{'worker'}->{$params{'from_worker_name'}};
     $worker->TAKE_SCRIBE_FROM($worker1, @_);
@@ -368,6 +391,7 @@ sub msg_QUIT {
     my ($msgtype, %params) = @_;
     my $read_cb;
 
+    $self->dbg(3, "msg_QUIT " . Data::Dumper::Dumper(\%params));
     # because the driver hangs up on us immediately after sending QUIT,
     # and EOF also means QUIT, we tend to get this command repeatedly.
     # So check to make sure this is only called once
