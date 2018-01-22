@@ -1,4 +1,7 @@
 2018-01-22  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/DB/Catalog2/SQL.pm: (_finish_copy): nb_parts default to 0
+
+2018-01-22  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/DB/Catalog2/SQL.pm (remove): Add a keep_label flag to
 	  keep the label in the catalog
 

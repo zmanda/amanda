@@ -5112,7 +5112,7 @@ sub add_part  {
 
 sub _finish_copy {
     my $self        = shift;
-    my $nb_parts    = shift;
+    my $nb_parts    = shift || 0;
     my $kb          = shift;
     my $bytes       = shift;
     my $copy_status = shift;
