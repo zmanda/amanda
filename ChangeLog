@@ -1,4 +1,9 @@
 2018-01-22  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/DB/Catalog2/SQL.pm (Volume::has_retention): New method
+	  to check if a volume have a retention
+	* server-src/amtape.pl (inventory): List all retentions
+
+2018-01-22  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/amanda-rest-server.pl: Create the dbgdir
 
 2018-01-19  Jean-Louis Martineau <JMartineau@carbonite.com>

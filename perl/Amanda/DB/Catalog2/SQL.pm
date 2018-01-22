@@ -4706,6 +4706,30 @@ sub retention_type {
     return $RETENTION_NO;
 }
 
+sub has_retention {
+    my $self = shift;
+    my $retention = shift;
+
+    if ($retention == $RETENTION_OTHER_CONFIG) {
+	return $self->{'config'} ne Amanda::Config::get_config_name();
+    }
+    if ($retention == $RETENTION_NO_REUSE) {
+	return !$self->{'reuse'};
+    }
+    if ($retention == $RETENTION_TAPES) {
+	return $self->{'retention_tape'};
+    }
+    if ($retention == $RETENTION_DAYS) {
+	return $self->{'retention_days'};
+    }
+    if ($retention == $RETENTION_FULL) {
+	return $self->{'retention_full'};
+    }
+    if ($retention == $RETENTION_RECOVER) {
+	return $self->{'retention_recover'};
+    }
+    return 0;
+}
 
 sub _remove {
     my $self = shift;

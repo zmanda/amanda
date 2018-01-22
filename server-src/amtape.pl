@@ -29,7 +29,7 @@ use Text::Wrap;
 
 use Amanda::Device qw( :constants );
 use Amanda::Debug qw( :logging );
-use Amanda::Config qw( :init :getconf config_dir_relative );
+use Amanda::Config qw( :init :getconf config_dir_relative :constants );
 use Amanda::Util qw( :constants match_labelstr );
 use Amanda::Storage;
 use Amanda::Changer;
@@ -274,8 +274,33 @@ sub {
 		}
 	    }
 	    if (defined $volume) {
-		my $retention_type = $volume->retention_type();
-		$line .= " [" . Amanda::Config::get_retention_name($retention_type) . "]";
+		if ($volume->has_retention($RETENTION_OTHER_CONFIG)) {
+		    $line .= " [" . Amanda::Config::get_retention_name($RETENTION_OTHER_CONFIG) . "]";
+		}
+		if ($volume->has_retention($RETENTION_NO_REUSE)) {
+		    $line .= " [" . Amanda::Config::get_retention_name($RETENTION_NO_REUSE) . "]";
+		}
+		if ($volume->has_retention($RETENTION_TAPES)) {
+		    $line .= " [" . Amanda::Config::get_retention_name($RETENTION_TAPES) . "]";
+		}
+		if ($volume->has_retention($RETENTION_DAYS)) {
+		    $line .= " [" . Amanda::Config::get_retention_name($RETENTION_DAYS) . "]";
+		}
+		if ($volume->has_retention($RETENTION_FULL)) {
+		    $line .= " [" . Amanda::Config::get_retention_name($RETENTION_FULL) . "]";
+		}
+		if ($volume->has_retention($RETENTION_RECOVER)) {
+		    $line .= " [" . Amanda::Config::get_retention_name($RETENTION_RECOVER) . "]";
+		}
+		if ($volume->has_retention($RETENTION_CMD_COPY)) {
+		    $line .= " [" . Amanda::Config::get_retention_name($RETENTION_CMD_COPY) . "]";
+		}
+		if ($volume->has_retention($RETENTION_CMD_FLUSH)) {
+		    $line .= " [" . Amanda::Config::get_retention_name($RETENTION_CMD_FLUSH) . "]";
+		}
+		if ($volume->has_retention($RETENTION_CMD_RESTORE)) {
+		    $line .= " [" . Amanda::Config::get_retention_name($RETENTION_CMD_RESTORE) . "]";
+		}
 		if (defined $sl->{'barcode'} and
 		    defined $volume->{'barcode'} and
 		    $sl->{'barcode'} ne $volume->{'barcode'}) {
