@@ -1,4 +1,8 @@
 2018-01-22  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/DB/Catalog2/SQL.pm (remove): Add a keep_label flag to
+	  keep the label in the catalog
+
+2018-01-22  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/Recovery/Scan.pm: Set storage_name in
 	  Amanda::Changer::Error
 

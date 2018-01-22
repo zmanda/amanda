@@ -4598,6 +4598,10 @@ sub _set {
     my $dbh = $catalog->{'dbh'};
     my $sth;
 
+    if ($self->{'write_timestamp'} ne $write_timestamp) {
+	$self->_remove(1);
+    }
+
     $sth = $dbh->prepare("SELECT storage_id, write_timestamp FROM volumes WHERE volume_id=?")
 	or die "Cannot prepare: " . $dbh->errstr();
     $sth->execute($self->{'volume_id'})
@@ -4638,6 +4642,9 @@ sub _unset {
     my $dbh = $catalog->{'dbh'};
     my $sth;
 
+    if ($self->{'write_timestamp'} ne $write_timestamp) {
+	$self->_remove(1);
+    }
     $sth = $dbh->prepare("UPDATE volumes SET storage_id=?, reuse=1, write_timestamp=?, orig_write_timestamp=?, retention_days=0, retention_full=0, retention_recover=0, retention_tape=0 WHERE volume_id=?")
 	or die "Cannot prepare: " . $dbh->errstr();
     $sth->execute($self->{'storage_id'}, $self->{'write_timestamp'}, $self->{'write_timestamp'}, $self->{'volume_id'})
@@ -4665,6 +4672,9 @@ sub _set_write_timestamp {
     my $dbh = $catalog->{'dbh'};
     my $sth;
 
+    if ($self->{'write_timestamp'} ne $write_timestamp) {
+	$self->_remove(1);
+    }
     $sth = $dbh->prepare("UPDATE volumes SET reuse=1, write_timestamp=?, orig_write_timestamp=? WHERE volume_id=?")
 	or die "Cannot prepare: " . $dbh->errstr();
     $sth->execute($write_timestamp, $write_timestamp, $self->{'volume_id'})
@@ -4733,6 +4743,7 @@ sub has_retention {
 
 sub _remove {
     my $self = shift;
+    my $keep_volume = shift;
 
     my $catalog = $self->{'catalog'};
     my $dbh = $catalog->{'dbh'};
@@ -4767,10 +4778,12 @@ sub _remove {
 	or die "Cannot execute: " . $sth->errstr();
 
     # delete the volume
-    $sth = $dbh->prepare("DELETE FROM volumes WHERE volume_id=?")
-	or die "Cannot prepare: " . $dbh->errstr();
-    $sth->execute($volume_id)
-	or die "Cannot execute: " . $sth->errstr();
+    if (!$keep_volume) {
+	$sth = $dbh->prepare("DELETE FROM volumes WHERE volume_id=?")
+	    or die "Cannot prepare: " . $dbh->errstr();
+	$sth->execute($volume_id)
+	    or die "Cannot execute: " . $sth->errstr();
+    }
 
     # delete the copy if all their part are removed
     $sth = $dbh->prepare("DELETE FROM copys WHERE copy_id IN (SELECT copy_id FROM $copy_table) AND NOT EXISTS (SELECT copy_id FROM parts WHERE copys.copy_id=parts.copy_id)")
@@ -4933,7 +4946,7 @@ sub _add_copy {
 
     $sth = $catalog->make_statement('in cop', 'INSERT INTO copys(image_id,storage_id,write_timestamp,parent_copy_id,nb_parts,kb,bytes,copy_status,server_crc,retention_days,retention_full,retention_recover,copy_message,copy_pid) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
     $sth->execute($image_id, $storage_id, $write_timestamp, $parent_id, 0, 0, 0, "DUMPING", undef, $retention_days, $retention_full, $retention_recover, undef, $copy_pid)
-	or die "Can't add copy $image_id $write_timestamp DUMPPING 0: " . $sth->errstr();
+	or die "Can't add copy $image_id $storage_id $write_timestamp $parent_id DUMPPING 0: " . $sth->errstr();
     my $copy_id = $dbh->last_insert_id(undef, undef, "copys", undef);
 
     return Amanda::DB::Catalog2::SQL::copy->new($catalog, $copy_id);
