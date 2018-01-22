@@ -1723,6 +1723,31 @@ start_some_dumps(
 	wtaper = NULL;
 	directq_is_empty = empty(directq);
 	if (!empty(directq)) {  /* to the first allowed storage only */
+	    for (slist = directq.head; slist != NULL; slist = slist_next) {
+		slist_next = slist->next;
+		sp = get_sched(slist);
+
+		/* check the taper is alive */
+		if (sp->prefered_taper) {
+		    if (!sp->prefered_taper->storage_name || !sp->prefered_taper->flush_storage ||
+			sp->prefered_taper->degraded_mode || sp->prefered_taper->down) {
+			sp->prefered_taper = NULL;
+		    }
+		}
+
+		if (!sp->prefered_taper) {
+		    for (taper = tapetable; taper < tapetable+nb_storage && !sp_accept; taper++) {
+			if (taper->storage_name && taper->flush_storage &&
+			    !taper->degraded_mode && !taper->down) {
+			    if (dump_match_selection(taper->storage_name, sp)) {
+				sp->prefered_taper = taper;
+				break;
+			    }
+			}
+		    }
+		}
+	    }
+	    sp = NULL;
 	    for (taper = tapetable; taper < tapetable+nb_storage && !sp_accept; taper++) {
 		if (!taper->storage_name || !taper->flush_storage ||
 		    taper->degraded_mode || taper->down) {
@@ -1765,6 +1790,8 @@ start_some_dumps(
 						   slist = slist_next) {
 			    slist_next = slist->next;
 			    sp = get_sched(slist);
+			    if (sp->prefered_taper != taper)
+				continue;
 		            allow_dump_dle(sp, wtaper_accept, dumptype, &directq, now,
 					   dumper_to_holding, &cur_idle,
 					   &delayed_sp, &sp_accept,
@@ -2540,6 +2567,7 @@ handle_taper_result(
 	    wtaper->left = taper->tape_length;
 	    wtaper->state &= ~TAPER_STATE_WAIT_NEW_TAPE;
 	    wtaper->state |= TAPER_STATE_TAPE_STARTED;
+	    wtaper->state |= TAPER_STATE_RESERVATION;
 	    if (taper->last_started_wtaper == wtaper) {
 		taper->last_started_wtaper = NULL;
 	    }
@@ -3301,6 +3329,7 @@ idle_wtaper(taper_t *taper)
 	 wtaper++) {
 	if ((wtaper->state & TAPER_STATE_IDLE) &&
 	    (wtaper->state & TAPER_STATE_RESERVATION) &&
+	    (wtaper->vaultqs.vaultq.head == NULL) &&
 	    !(wtaper->state & TAPER_STATE_DONE) &&
 	    !(wtaper->state & TAPER_STATE_FILE_TO_TAPE) &&
 	    !(wtaper->state & TAPER_STATE_DUMP_TO_TAPE) &&

@@ -99,44 +99,11 @@ typedef struct assignedhd_s {
 } assignedhd_t;
 
 
-typedef struct sched_s {
-    disk_t *disk;
-    action_t action;
-    int dump_attempted;
-    int taper_attempted;
-    int  priority;
-    int level, degr_level;
-    unsigned long est_time, degr_time;
-    off_t est_nsize, est_csize, est_size;
-    off_t degr_nsize, degr_csize, act_size;
-    off_t origsize, dumpsize;
-    time_t dumptime;
-    char *dumpdate, *degr_dumpdate;
-    char *based_on_timestamp, *degr_based_on_timestamp;
-    unsigned long est_kps, degr_kps;
-    char *destname;                             /* file/port name */
-    assignedhd_t **holdp;
-    time_t timestamp;
-    char *datestamp;
-    int activehd;
-    int no_space;
-    char *degr_mesg;
-    crc_t native_crc;
-    crc_t client_crc;
-    crc_t server_crc;
-    int command_id;
-
-    char *src_storage;
-    char *src_pool;
-    char *src_label;
-    int   src_fileno;
-    char *try_again_message;
-} sched_t;
-
 typedef struct schedlist_s {
     GList *head, *tail;
 } schedlist_t;
 #define get_sched(slist) ((sched_t *)((slist)->data))
+
 
 /* chunker process structure */
 
@@ -231,6 +198,41 @@ typedef struct taper_s {
 GLOBAL dumper_t  *dmptable;
 GLOBAL chunker_t *chktable;
 GLOBAL taper_t   *tapetable;
+
+typedef struct sched_s {
+    disk_t *disk;
+    action_t action;
+    int dump_attempted;
+    int taper_attempted;
+    int  priority;
+    int level, degr_level;
+    unsigned long est_time, degr_time;
+    off_t est_nsize, est_csize, est_size;
+    off_t degr_nsize, degr_csize, act_size;
+    off_t origsize, dumpsize;
+    time_t dumptime;
+    char *dumpdate, *degr_dumpdate;
+    char *based_on_timestamp, *degr_based_on_timestamp;
+    unsigned long est_kps, degr_kps;
+    char *destname;                             /* file/port name */
+    assignedhd_t **holdp;
+    time_t timestamp;
+    char *datestamp;
+    int activehd;
+    int no_space;
+    char *degr_mesg;
+    crc_t native_crc;
+    crc_t client_crc;
+    crc_t server_crc;
+    int command_id;
+
+    char *src_storage;
+    char *src_pool;
+    char *src_label;
+    int   src_fileno;
+    char *try_again_message;
+    taper_t *prefered_taper;
+} sched_t;
 
 /* command/result tokens */
 
