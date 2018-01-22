@@ -1,4 +1,8 @@
 2018-01-22  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/amcatalog.pl: New retention command
+	* man/xml-source/amcatalog.8.xml: Document it
+
+2018-01-22  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/DB/Catalog2/SQL.pm (Volume::has_retention): New method
 	  to check if a volume have a retention
 	* server-src/amtape.pl (inventory): List all retentions

@@ -46,11 +46,12 @@ sub usage {
     print STDERR "    Valid <command>s are:\n";
     print STDERR "        create                          # create the database\n";
     print STDERR "        upgrade                         # upgrade the database\n";
+    print STDERR "        retention                       # recompute the retention\n";
     print STDERR "        validate                        # validate the database\n";
     print STDERR "        clean                           # clean the database\n";
     print STDERR "        export <filename>               # export the database to filename\n";
     print STDERR "        import <filename>               # import the database from filename\n";
-    print STDERR "        merge                           # merge the database with the log files\n";
+#    print STDERR "        merge                           # merge the database with the log files\n";
     print STDERR "        dump [--all-configs] [--exact-match] [host [disk [date [...]]]] # list dump\n";
     print STDERR "        part [--all-configs] [--exact-match] [host [disk [date [...]]]] # list part\n";
     exit(1);
@@ -169,6 +170,12 @@ sub _validate {
     my $catalog = shift;
 
     $catalog->validate();
+}
+
+sub _retention {
+    my $catalog = shift;
+
+    $catalog->compute_retention();
 }
 
 sub _export {
@@ -695,6 +702,8 @@ sub run_command {
 	_export($catalog, $argv[1]);
     } elsif ($command eq "merge") {
 	_merge($catalog);
+    } elsif ($command eq "retention") {
+	_retention($catalog);
     } elsif ($command eq "clean") {
 	_clean($catalog);
     } elsif ($command eq "add-image") {

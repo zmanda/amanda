@@ -23,8 +23,6 @@
 </refnamediv>
 <refentryinfo>
 &author.jlm;
-&author.sgw.xml;
-&author.dustin;
 </refentryinfo>
 <!-- body begins here -->
 <refsynopsisdiv>
@@ -70,6 +68,13 @@ be listed. A volume can be removed from the catalog.</para>
   <listitem>
 <para>Upgrade the database. Required after a new amanda installation if the
 database format changed.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><emphasis remap='B'>retention</emphasis></term>
+  <listitem>
+<para>Recompute the retention.</para>
   </listitem>
   </varlistentry>
 
