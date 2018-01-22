@@ -1,3 +1,6 @@
+2018-01-22  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/driver.c: Set wtaper->current_dest_label
+
 2018-01-19  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/Taper/Worker.pm: Set input_errors on Recovery error
 
