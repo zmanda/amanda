@@ -340,6 +340,15 @@ is_deeply($reply->{'body'}->[0]->{'status'}->{'stat'},
 		'estimated_size' => '0',
 		'real_size' => '0',
 		'estimated_stat' => '0'
+	},
+	'wait_to_vault' => {
+		'name' => 'wait_to_vault'
+	},
+	'vaulting' => {
+		'name' => 'vaulting'
+	},
+	'vaulted' => {
+		'name' => 'vaulted'
 	}
     },
     'stat is correct') || diag("stat: " . Data::Dumper::Dumper($reply->{'body'}->[0]->{'status'}->{'stat'}));
