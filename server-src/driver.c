@@ -5639,7 +5639,7 @@ driver_debug(2, "%d  R%d W%d D%d I%d\n", wtaper->state, TAPER_STATE_TAPE_REQUEST
 	} else if (nb_wtaper_init > 0 && wtaper->allow_take_scribe_from) {
 	    driver_debug(2, "tape_action: TAPER_STATE_TAPE_REQUESTED return TAPE_ACTION_MOVE (nb_wtaper_init > 0)\n");
 	    result |= TAPE_ACTION_MOVE;
-	} else if (taper->last_started_wtaper && taper->last_started_wtaper != wtaper && taper->last_started_wtaper != taper->sent_first_write && wtaper->allow_take_scribe_from) {
+	} else if (taper->last_started_wtaper && taper->last_started_wtaper != wtaper && taper->last_started_wtaper != taper->sent_first_write && wtaper->allow_take_scribe_from && !taper->last_started_wtaper->vaultqs.vaultq.head) {
 	    driver_debug(2, "tape_action: TAPER_STATE_TAPE_REQUESTED return TAPE_ACTION_MOVE (last_started_wtaper)\n");
 	    result |= TAPE_ACTION_MOVE;
 	} else if (taper->current_tape < taper->runtapes &&
@@ -5694,7 +5694,7 @@ driver_debug(2, "%d  R%d W%d D%d I%d\n", wtaper->state, TAPER_STATE_TAPE_REQUEST
 	    ((wtaper->state & TAPER_STATE_TAPE_STARTED) ||
 	     ((!empty(directq) ||
 	       (((action_flush && !empty(taper->tapeq)) ||
-		 (!action_flush && taper->vaultqss)) &&
+		 (!action_flush && (taper->vaultqss || wtaper->vaultqs.vaultq.head))) &&
 	        (!empty(roomq) ||			// holding disk constraint
 	         idle_reason == IDLE_NO_DISKSPACE ||	// holding disk constraint
 	         flush_criteria))) &&			// flush
@@ -5717,9 +5717,12 @@ driver_debug(2, "%d  R%d W%d D%d I%d\n", wtaper->state, TAPER_STATE_TAPE_REQUEST
     } else if (wtaper->state == TAPER_STATE_DEFAULT) {
 	driver_debug(2, "tape_action: TAPER_STATE_DEFAULT\n");
 	if (!taper->degraded_mode &&
+	    taper->nb_scan_volume == 0 &&
 	    (new_dle > 0 || new_data > 0)) {
 	    driver_debug(2, "tape_action: TAPER_STATE_DEFAULT return TAPE_ACTION_START_TAPER\n");
                 result |= TAPE_ACTION_START_TAPER;
+	} else {
+	    driver_debug(2, "tape_action: TAPER_STATE_DEFAULT return NO_ACTION %d\n", wtaper->state);
 	}
     } else {
 	driver_debug(2, "tape_action: NO ACTION %d\n", wtaper->state);
