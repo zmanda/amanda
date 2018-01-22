@@ -159,6 +159,9 @@ static int no_taper_flushing(void);
 static int active_dumper(void);
 static void fix_index_header(sched_t *sp);
 static int all_tapeq_empty(void);
+static gboolean is_label_in_use(char *label);
+static void add_label_in_use(char *label);
+static void remove_label_in_use(char *label);
 
 typedef enum {
     TAPE_ACTION_NO_ACTION         = 0,
@@ -1424,15 +1427,29 @@ start_a_vault_wtaper(
 	if (!empty(wtaper->vaultqs.vaultq)) {
 	    sp = dequeue_sched(&wtaper->vaultqs.vaultq);
 	} else if (wtaper->taper->vaultqss) {
-	    vaultqs_t *vaultqs;
+	    GSList *vsl;
 	    /* JLM must find a vaultqs where each vaultqs->src_labels are closed */
-	    vaultqs = (vaultqs_t *)wtaper->taper->vaultqss->data;
-	    amfree(wtaper->vaultqs.src_labels_str);
-	    slist_free_full(wtaper->vaultqs.src_labels, g_free);
-	    wtaper->vaultqs.src_labels = NULL;
-	    wtaper->vaultqs = *vaultqs;
-	    wtaper->taper->vaultqss = g_slist_remove_link(wtaper->taper->vaultqss, wtaper->taper->vaultqss);
-	    sp = dequeue_sched(&wtaper->vaultqs.vaultq);
+	    for (vsl = wtaper->taper->vaultqss; vsl != NULL; vsl = vsl->next) {
+		vaultqs_t *vaultqs = (vaultqs_t *)vsl->data;
+		GSList *src_label;
+		gboolean label_in_use = FALSE;
+		for (src_label = vaultqs->src_labels; src_label != NULL; src_label = src_label->next) {
+		    char *label = (char *)src_label->data;
+		    label_in_use |= is_label_in_use(label);
+		}
+		if (!label_in_use) {
+		    for (src_label = vaultqs->src_labels; src_label != NULL; src_label = src_label->next) {
+			char *label = (char *)src_label->data;
+			add_label_in_use(label);
+		    }
+		    amfree(wtaper->vaultqs.src_labels_str);
+		    slist_free_full(wtaper->vaultqs.src_labels, g_free);
+		    wtaper->vaultqs.src_labels = NULL;
+		    wtaper->vaultqs = *vaultqs;
+		    wtaper->taper->vaultqss = g_slist_remove_link(wtaper->taper->vaultqss, wtaper->taper->vaultqss);
+		    sp = dequeue_sched(&wtaper->vaultqs.vaultq);
+		}
+	    }
 	}
 
 	if (sp) {
@@ -2500,6 +2517,7 @@ handle_taper_result(
 		/*NOTREACHED*/
             }
 
+	    add_label_in_use(result_argv[3]);
 	    nb_sent_new_tape--;
 	    taper->nb_scan_volume--;
 
@@ -2676,7 +2694,7 @@ handle_taper_result(
         case CLOSED_VOLUME: /* <worker_name> */
 	    g_debug("got CLOSED_VOLUME message");
 	    wtaper = wtaper_from_name(taper, result_argv[1]);
-
+	    remove_label_in_use(wtaper->current_dest_label);
 	    if (wtaper->state & TAPER_STATE_WAIT_CLOSED_VOLUME) {
 		wtaper->state &= ~TAPER_STATE_WAIT_CLOSED_VOLUME;
 		taper->nb_wait_reply--;
@@ -2719,6 +2737,7 @@ handle_taper_result(
         case CLOSED_SOURCE_VOLUME: /* worker_name */
 	    g_debug("got CLOSED_SOURCE_VOLUME message");
 	    wtaper = wtaper_from_name(taper, result_argv[1]);
+	    remove_label_in_use(wtaper->current_source_label);
 	    amfree(wtaper->current_source_label);
 
 	    if (wtaper->state & TAPER_STATE_WAIT_CLOSED_SOURCE_VOLUME) {
@@ -5860,3 +5879,56 @@ dump_state(
     fflush(stdout);
 }
 #endif
+
+char *label_in_use_array[1024];
+int   nb_label_in_use = 0;
+
+static gboolean
+is_label_in_use(
+    char *label)
+{
+    int i;
+    for (i=0; i < nb_label_in_use; i++) {
+	if (label_in_use_array[i] &&
+	    strcmp(label_in_use_array[i], label) == 0) {
+	    return TRUE;
+	}
+    }
+    return FALSE;
+}
+
+static void
+add_label_in_use(
+    char *label)
+{
+    int i;
+    for (i=0; i <= nb_label_in_use; i++) {
+	if (label_in_use_array[i] == NULL) {
+	    label_in_use_array[i] = g_strdup(label);
+	    if (i == nb_label_in_use)
+		nb_label_in_use = i+1;
+	    return;
+	}
+    }
+}
+
+static void
+remove_label_in_use(
+    char *label)
+{
+    int i;
+    for (i=0; i <= nb_label_in_use; i++) {
+	if (label_in_use_array[i] &&
+	    strcmp(label_in_use_array[i], label) == 0) {
+	    g_free(label_in_use_array[i]);
+	    label_in_use_array[i] = NULL;
+	    nb_label_in_use--;
+	    if (i < nb_label_in_use) {
+		label_in_use_array[i] = label_in_use_array[nb_label_in_use];
+		label_in_use_array[nb_label_in_use] = NULL;
+	    }
+	    return;
+	}
+    }
+}
+

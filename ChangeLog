@@ -1,4 +1,7 @@
 2018-01-22  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/driver.c: Keep track of all label in use
+
+2018-01-22  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/driver.c: Set wtaper->current_source_label
 
 2018-01-22  Jean-Louis Martineau <JMartineau@carbonite.com>
