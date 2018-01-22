@@ -2716,11 +2716,11 @@ handle_taper_result(
 	    start_a_vault();
 	    break;
 
-        case OPENED_SOURCE_VOLUME: /* worker_name label */
+        case OPENED_SOURCE_VOLUME: /* <worker_name> <handle> <label> */
 	    g_debug("got OPENED_SOURCE_VOLUME message");
 	    wtaper = wtaper_from_name(taper, result_argv[1]);
 	    amfree(wtaper->current_source_label);
-	    wtaper->current_source_label = g_strdup(result_argv[2]);
+	    wtaper->current_source_label = g_strdup(result_argv[3]);
 	    break;
 
         case CLOSED_SOURCE_VOLUME: /* worker_name */
