@@ -1,4 +1,7 @@
 2018-01-22  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/server_util.c (amcatalog_add_cmd): Fix memory leak
+
+2018-01-22  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/amcatalog.pl: New retention command
 	* man/xml-source/amcatalog.8.xml: Document it
 

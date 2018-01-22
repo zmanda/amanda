@@ -1030,6 +1030,8 @@ amcatalog_add_cmd(
 				hostname, diskname, dump_timestamp, level_str,
 				dst_storage, working_pid_str, status_str,
 				size_str, start_time_str);
+	amfree(src_label);
+	amfree(src_storage);
     } else if (cmddata->operation == CMD_RESTORE) {
 	g_critical("add RESTORE command unimplemented");
     } else {
