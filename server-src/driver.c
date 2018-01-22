@@ -3334,6 +3334,7 @@ idle_wtaper(taper_t *taper)
 	 wtaper++) {
 	if ((wtaper->state & TAPER_STATE_IDLE) &&
 	    (wtaper->state & TAPER_STATE_TAPE_STARTED) &&
+	    (wtaper->vaultqs.vaultq.head == NULL) &&
 	    !(wtaper->state & TAPER_STATE_DONE) &&
 	    !(wtaper->state & TAPER_STATE_FILE_TO_TAPE) &&
 	    !(wtaper->state & TAPER_STATE_DUMP_TO_TAPE) &&
@@ -3360,6 +3361,7 @@ idle_wtaper(taper_t *taper)
 	 wtaper < taper->wtapetable + taper->nb_worker;
 	 wtaper++) {
 	if ((wtaper->state & TAPER_STATE_IDLE) &&
+	    (wtaper->vaultqs.vaultq.head == NULL) &&
 	    !(wtaper->state & TAPER_STATE_DONE) &&
 	    !(wtaper->state & TAPER_STATE_FILE_TO_TAPE) &&
 	    !(wtaper->state & TAPER_STATE_DUMP_TO_TAPE) &&

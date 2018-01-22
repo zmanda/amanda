@@ -1,4 +1,7 @@
 2018-01-22  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/driver.c (idle_taper): Check wtaper->vaultqs.vaultq.head
+
+2018-01-22  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/driver.c: Set sent_first_write and last_started_wtaper
 
 2018-01-22  Jean-Louis Martineau <JMartineau@carbonite.com>
