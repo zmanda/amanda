@@ -43,7 +43,7 @@ if ($@) {
 
 my $catalog_pgsql_database = $ENV{CATALOG_PGSQL_DATABASE};
 
-if (!defined $catalog_pgsql_database) {
+if (!defined $catalog_pgsql_database || !$catalog_pgsql_database) {
     plan skip_all => "Not configured for PgSQL Database";
     exit 1;
 }

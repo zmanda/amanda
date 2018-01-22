@@ -43,7 +43,7 @@ if ($@) {
 
 my $catalog_mysql_database = $ENV{CATALOG_MYSQL_DATABASE};
 
-if (!defined $catalog_mysql_database) {
+if (!defined $catalog_mysql_database || !$catalog_mysql_database) {
     plan skip_all => "Not configured for MySQL Database";
     exit 1;
 }
