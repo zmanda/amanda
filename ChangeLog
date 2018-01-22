@@ -1,3 +1,6 @@
+2018-01-22  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/amanda-rest-server.pl: Create the dbgdir
+
 2018-01-19  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/DB/Catalog2/SQLite.pm: Retry transaction on
 	  /database schema has changed/

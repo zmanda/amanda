@@ -70,6 +70,7 @@ config_init($CONFIG_INIT_GLOBAL, undef);
 Amanda::Util::finish_setup($RUNNING_AS_DUMPUSER);
 
 my $dbgdir = $Amanda::Paths::AMANDA_DBGDIR;
+mkdir $dbgdir if !-e $dbgdir;
 my $pid_file = $dbgdir . '/rest-api-pid';
 my $pid;
 if (-f $pid_file) {
