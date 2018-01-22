@@ -1,4 +1,8 @@
 2018-01-22  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Recovery/Scan.pm: Set storage_name in
+	  Amanda::Changer::Error
+
+2018-01-22  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/server_util.c (amcatalog_add_cmd): Fix memory leak
 
 2018-01-22  Jean-Louis Martineau <JMartineau@carbonite.com>

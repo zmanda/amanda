@@ -298,7 +298,7 @@ sub find_volume {
 		    return $steps->{'handle_error'}->(
 			    Amanda::Changer::Error->new('failed',
 				reason => 'volinuse',
-				storage => $self->{'chg'}->{'storage'}->{'storage_name'},
+				storage_name => $self->{'chg'}->{'storage'}->{'storage_name'},
 				message => "Source volume '$label' in slot $slot_scanned is reserved"),
 			    undef);
 		}
@@ -440,7 +440,7 @@ sub find_volume {
 	    return $steps->{'handle_error'}->(
 		    Amanda::Changer::Error->new('failed',
 			    reason => 'notfound',
-			    storage => $self->{'chg'}->{'storage'}->{'storage_name'},
+			    storage_name => $self->{'chg'}->{'storage'}->{'storage_name'},
 			    message => "Source Volume '$label' not found"),
 		    undef);
 	}
@@ -498,7 +498,7 @@ sub find_volume {
 		$last_err = undef;
 	    } else {
 		$last_err = Amanda::Changer::Error->new('fatal',
-				storage => $self->{'chg'}->{'storage'}->{'storage_name'},
+				storage_name => $self->{'chg'}->{'storage'}->{'storage_name'},
 				message => $res->{device}->error_or_status());
 	    }
 	    return $res->release(finished_cb => $steps->{'load_released'});
