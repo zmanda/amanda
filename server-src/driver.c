@@ -1480,9 +1480,18 @@ start_a_vault_wtaper(
 	    }
 	    taper->nb_wait_reply++;
 	    wtaper->nb_dle++;
+	    if (!(wtaper->state & TAPER_STATE_TAPE_STARTED)) {
+		assert(taper->sent_first_write == NULL);
+		taper->sent_first_write = wtaper;
+		wtaper->nb_dle = 1;
+		wtaper->left = taper->tape_length;
+	    }
 	    taper_cmd(taper, wtaper, VAULT_WRITE, sp, sp->destname,
 		      sp->level,
 		      sp->datestamp);
+	    if (taper->last_started_wtaper == wtaper) {
+		taper->last_started_wtaper = NULL;
+	    }
 	    g_fprintf(stderr,
 		      _("driver: start_a_vault: %s %s %s %lld %lld\n"),
 		      taperalgo2str(taperalgo), dp->host->hostname, qname,
@@ -2015,8 +2024,17 @@ start_vault_on_same_wtaper(
 	}
 	taper->nb_wait_reply++;
 	wtaper->nb_dle++;
+	if (!(wtaper->state & TAPER_STATE_TAPE_STARTED)) {
+	    assert(taper->sent_first_write == NULL);
+	    taper->sent_first_write = wtaper;
+	    wtaper->nb_dle = 1;
+	    wtaper->left = taper->tape_length;
+	}
 	taper_cmd(taper, wtaper, VAULT_WRITE, sp, sp->destname,
 		  sp->level, sp->datestamp);
+	    if (taper->last_started_wtaper == wtaper) {
+		taper->last_started_wtaper = NULL;
+	    }
 	g_fprintf(stderr,
 		 _("driver: start_a_vault: %s %s %s %lld %lld\n"),
 		 "samewtape", dp->host->hostname, qname,
