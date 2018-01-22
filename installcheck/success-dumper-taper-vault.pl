@@ -108,8 +108,6 @@ EODLE
 $testconf->write();
 
 config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
-my $catalog = Amanda::DB::Catalog2->new(undef, create => 1, drop_tables => 1, load => 1);
-$catalog->quit();
 $diskfile = Amanda::Config::config_dir_relative(getconf($CNF_DISKFILE));
 $infodir = getconf($CNF_INFOFILE);
 
