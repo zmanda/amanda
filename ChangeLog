@@ -1,4 +1,9 @@
 2018-01-22  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Status.pm: Add vaulting information
+	* server-src/amstatus.pl: Print vaulting information
+	* installcheck/success-dumper-taper.pl: Fix for vaulting information
+
+2018-01-22  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/driver.c: Keep track of all label in use
 
 2018-01-22  Jean-Louis Martineau <JMartineau@carbonite.com>

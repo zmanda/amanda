@@ -509,6 +509,8 @@ REREAD:
 			$line[12] =~ /(\d+)K/;
 			$dle->{'esize'} = $1 * 1024;
 			#$getest{$hostpart} = "";
+			$self->{'estimated'}++;
+			$self->{'estimated_size'} = $dle->{'esize'};
 		    } elsif($line[4] eq "partial") {
 			my $host = $line[8];
 			my $disk = $line[10];
@@ -563,8 +565,12 @@ REREAD:
 	} elsif ($line[0] eq "--------") {
 	    if ($generating_schedule == 1) {
 		$generating_schedule = 2;
+		$self->{'estimated1'} = 0;
+		$self->{'estimated_size1'} = 0;
 	    } elsif ($generating_schedule == 2) {
 		$generating_schedule = 3;
+		$self->{'estimated'} = $self->{'estimated1'};
+		$self->{'estimated_size'} = $self->{'estimated_size1'};
 	    }
 	} elsif ($line[0] eq "DUMP") {
 	    if ($generating_schedule == 2 ) {
@@ -586,6 +592,8 @@ REREAD:
 		    $esize=32768 if $esize<32768;
 		    $dle->{'degr_size'} = $esize;
 		}
+		$self->{'estimated1'}++;
+		$self->{'estimated_size1'} += $dle->{'esize'};
 	    }
 	} elsif ($line[0] eq "FLUSH") {
 	    my $ids = $line[1];
@@ -948,17 +956,19 @@ REREAD:
 			$dle->{'storage'}->{$storage_name} = {} if !defined $dle->{'storage'}->{$storage_name};
 			my $dlet = $dle->{'storage'}->{$storage_name};
 			$dlet->{'will_retry'} = 0;
-			if ($dle->{'status'} != $WAIT_FOR_DUMPING and
+			if ($dle->{'status'} != $WAIT_FOR_DUMPING &&
+			    $dle->{'status'} != $VAULTING_FAILED &&
 			    $dle->{'status'} != $DUMP_TO_TAPE_FAILED) {
 			    #die ("bad status on taper VAULT-WRITE (dumper): $dle->{'status'}");
 			}
-			if ($dlet->{'status'} and
-			    $dlet->{'status'} != $WAIT_FOR_DUMPING and
+			if ($dlet->{'status'} &&
+			    $dlet->{'status'} != $WAIT_FOR_DUMPING &&
+			    $dlet->{'status'} != $VAULTING_FAILED &&
 			    $dlet->{'status'} != $DUMP_TO_TAPE_FAILED) {
 			    die ("bad status on taper VAULT-WRITE (taper): $dlet->{'status'}");
 			}
 			#$dle->{'status'} = $VAULTING if !defined $dle->{'status'};
-			#$dle->{'status'} = $VAULTING;
+			$dle->{'status'} = $VAULTING;
 			$dlet->{'status'} = $VAULTING;
 			$dlet->{'taper_time'} = $self->{'current_time'};
 			$dlet->{'taped_size'} = 0;
@@ -1099,12 +1109,6 @@ REREAD:
 			my $serial = $line[7];
 			my $outputsize = $line[8] * 1024;
 			my $dle = $dles{$serial};
-			if ($dle->{'status'} == $DUMPING_DUMPER) {
-			    $dle->{'status'} = $DUMP_DONE;
-			} elsif ($dle->{'status'} == $DUMP_FAILED) {
-			} else {
-			    die("bad status on chunker DONE/PARTIAL: $dle->{'status'}");
-			}
 			$dle->{'size'} = $outputsize;
 			$dle->{'dsize'} = $outputsize;
 			$self->{'busy_time'}->{$line[5]} +=  ($self->{'current_time'} - $dle->{'chunk_time'});
@@ -1115,6 +1119,15 @@ REREAD:
 			} else {
 			    $dle->{'partial'} = 0;
 			    delete $dle->{'error'};
+			}
+			if ($dle->{'status'} == $DUMPING_DUMPER) {
+			    $dle->{'status'} = $DUMP_DONE;
+			    $self->{'dumped'}->{'nb'}++;
+			    $self->{'dumped'}->{'estimated_size'} += $dle->{'esize'};
+			    $self->{'dumped'}->{'real_size'} += $dle->{'size'};
+			} elsif ($dle->{'status'} == $DUMP_FAILED) {
+			} else {
+			    die("bad status on chunker DONE/PARTIAL ($serial): $dle->{'status'}");
 			}
 		    } elsif ($line[6] eq "FAILED") {
 			my $serial = $line[7];
@@ -1201,6 +1214,9 @@ REREAD:
 			    } elsif ($dle->{'status'} == $DUMP_FAILED) {
 			    } elsif ($dle->{'status'} == $DUMPING_TO_TAPE_DUMPER) {
 				$dle->{'status'} = $DUMP_TO_TAPE_DONE;
+				$self->{'dumped'}->{'nb'}++;
+				$self->{'dumped'}->{'estimated_size'} += $dle->{'esize'};
+				$self->{'dumped'}->{'real_size'} += $dle->{'size'};
 			    } elsif ($dle->{'status'} == $DUMP_TO_TAPE_FAILED) {
 				$dle->{'status'} = $DUMP_TO_TAPE_FAILED;
 			    } elsif ($dle->{'status'} == $VAULTING) {
@@ -1374,6 +1390,8 @@ REREAD:
 				$dle->{'status'} == $DUMPING_TO_TAPE_INIT ||
 				$dle->{'status'} == $DUMP_TO_TAPE_FAILED) {
 				$dle->{'status'} = $DUMP_TO_TAPE_FAILED;
+			    } elsif ($dle->{'status'} == $VAULTING) {
+				$dle->{'status'} = $VAULTING_FAILED;
 			    } else {
 				die ("bad status on dle taper FAILED: $dle->{'status'}");
 			    }
@@ -1517,6 +1535,11 @@ sub set_summary {
 
     delete $self->{'stat'};
 
+    $self->{'stat'}->{'estimated'}->{'nb'} = $self->{'estimated'};
+    $self->{'stat'}->{'estimated'}->{'estimated_size'} = $self->{'estimated_size'};
+    $self->{'stat'}->{'dumped'}->{'nb'} = $self->{'dumped'}->{'nb'};
+    $self->{'stat'}->{'dumped'}->{'estimated_size'} = $self->{'dumped'}->{'estimated_size'};
+    $self->{'stat'}->{'dumped'}->{'real_size'} = $self->{'dumped'}->{'real_size'};
     foreach my $host (sort keys %{$self->{'dles'}}) {
 	foreach my $disk (sort keys %{$self->{'dles'}->{$host}}) {
             foreach my $datestamp (sort keys %{$self->{'dles'}->{$host}->{$disk}}) {
@@ -1536,8 +1559,6 @@ sub set_summary {
 		    $dle->{'message'} = "partial estimate";
 		} elsif ($dle->{'status'} == $ESTIMATE_DONE) {
 		    $self->{'stat'}->{'disk'}->{'nb'}++;
-		    $self->{'stat'}->{'estimated'}->{'nb'}++;
-		    $self->{'stat'}->{'estimated'}->{'estimated_size'} += $dle->{'esize'};
 		    $dle->{'message'} = "estimate done";
 		} elsif ($dle->{'status'} == $ESTIMATE_FAILED) {
 		    $self->{'stat'}->{'disk'}->{'nb'}++;
@@ -1545,45 +1566,33 @@ sub set_summary {
 		    $self->{'exit_status'} |= $STATUS_FAILED;
 		} elsif ($dle->{'status'} == $WAIT_FOR_DUMPING) {
 		    $self->{'stat'}->{'disk'}->{'nb'}++;
-		    $self->{'stat'}->{'estimated'}->{'nb'}++;
-		    $self->{'stat'}->{'estimated'}->{'estimated_size'} += $dle->{'esize'};
 		    $self->{'stat'}->{'wait_for_dumping'}->{'nb'}++;
 		    $self->{'stat'}->{'wait_for_dumping'}->{'estimated_size'} += $dle->{'esize'};
 		    $dle->{'message'} = "wait for dumping";
 		} elsif ($dle->{'status'} == $DUMPING_INIT) {
 		    $self->{'stat'}->{'disk'}->{'nb'}++;
-		    $self->{'stat'}->{'estimated'}->{'nb'}++;
-		    $self->{'stat'}->{'estimated'}->{'estimated_size'} += $dle->{'esize'};
 		    $self->{'stat'}->{'dumping'}->{'nb'}++;
 		    $self->{'stat'}->{'dumping'}->{'estimated_size'} += $dle->{'esize'};
 		    $dle->{'message'} = "dumping";
 		} elsif ($dle->{'status'} == $DUMPING) {
 		    $self->{'stat'}->{'disk'}->{'nb'}++;
-		    $self->{'stat'}->{'estimated'}->{'nb'}++;
-		    $self->{'stat'}->{'estimated'}->{'estimated_size'} += $dle->{'esize'};
 		    $self->{'stat'}->{'dumping'}->{'nb'}++;
 		    $self->{'stat'}->{'dumping'}->{'estimated_size'} += $dle->{'esize'};
 		    $dle->{'message'} = "dumping";
 		    $dle->{'wsize'} = $self->_dump_size($dle->{'holding_file'});
 		} elsif ($dle->{'status'} == $DUMPING_DUMPER) {
 		    $self->{'stat'}->{'disk'}->{'nb'}++;
-		    $self->{'stat'}->{'estimated'}->{'nb'}++;
-		    $self->{'stat'}->{'estimated'}->{'estimated_size'} += $dle->{'esize'};
 		    $self->{'stat'}->{'dumping'}->{'nb'}++;
 		    $self->{'stat'}->{'dumping'}->{'estimated_size'} += $dle->{'esize'};
 		    $dle->{'message'} = "dumping";
 		    $dle->{'wsize'} = $self->_dump_size($dle->{'holding_file'});
 		} elsif ($dle->{'status'} == $DUMPING_TO_TAPE_INIT) {
 		    $self->{'stat'}->{'disk'}->{'nb'}++;
-		    $self->{'stat'}->{'estimated'}->{'nb'}++;
-		    $self->{'stat'}->{'estimated'}->{'estimated_size'} += $dle->{'esize'};
 		    $self->{'stat'}->{'dumping_to_tape'}->{'nb'}++;
 		    $self->{'stat'}->{'dumping_to_tape'}->{'estimated_size'} += $dle->{'esize'};
 		    $dle->{'message'} = "dumping to tape";
 		} elsif ($dle->{'status'} == $DUMPING_TO_TAPE) {
 		    $self->{'stat'}->{'disk'}->{'nb'}++;
-		    $self->{'stat'}->{'estimated'}->{'nb'}++;
-		    $self->{'stat'}->{'estimated'}->{'estimated_size'} += $dle->{'esize'};
 		    $self->{'stat'}->{'dumping_to_tape'}->{'nb'}++;
 		    $self->{'stat'}->{'dumping_to_tape'}->{'estimated_size'} += $dle->{'esize'};
 		    $dle->{'message'} = "dumping to tape";
@@ -1591,8 +1600,6 @@ sub set_summary {
 		    $self->{'stat'}->{'dumping_to_tape'}->{'write_size'} += $dle->{'wsize'};
 		} elsif ($dle->{'status'} == $DUMPING_TO_TAPE_DUMPER) {
 		    $self->{'stat'}->{'disk'}->{'nb'}++;
-		    $self->{'stat'}->{'estimated'}->{'nb'}++;
-		    $self->{'stat'}->{'estimated'}->{'estimated_size'} += $dle->{'esize'};
 		    $self->{'stat'}->{'dumping_to_tape'}->{'nb'}++;
 		    $self->{'stat'}->{'dumping_to_tape'}->{'estimated_size'} += $dle->{'esize'};
 		    $dle->{'message'} = "dumping to tape";
@@ -1600,8 +1607,6 @@ sub set_summary {
 		    $self->{'stat'}->{'dumping_to_tape'}->{'write_size'} += $dle->{'wsize'};
 		} elsif ($dle->{'status'} == $DUMP_FAILED) {
 		    $self->{'stat'}->{'disk'}->{'nb'}++;
-		    $self->{'stat'}->{'estimated'}->{'nb'}++;
-		    $self->{'stat'}->{'estimated'}->{'estimated_size'} += $dle->{'esize'};
 		    $self->{'stat'}->{'dump_failed'}->{'nb'}++;
 		    $self->{'stat'}->{'dump_failed'}->{'estimated_size'} += $dle->{'esize'};
 		    $dle->{'error'} = "unknown" if !defined $dle->{'error'};
@@ -1619,8 +1624,6 @@ sub set_summary {
 		    $self->{'exit_status'} |= $STATUS_FAILED;
 		} elsif ($dle->{'status'} == $DUMP_TO_TAPE_FAILED) {
 		    $self->{'stat'}->{'disk'}->{'nb'}++;
-		    $self->{'stat'}->{'estimated'}->{'nb'}++;
-		    $self->{'stat'}->{'estimated'}->{'estimated_size'} += $dle->{'esize'};
 		    $self->{'stat'}->{'dump_to_tape_failed'}->{'nb'}++;
 		    $self->{'stat'}->{'dump_to_tape_failed'}->{'estimated_size'} += $dle->{'esize'};
 		    $dle->{'error'} = "unknown" if !defined $dle->{'error'};
@@ -1629,25 +1632,16 @@ sub set_summary {
 		    $self->{'exit_status'} |= $STATUS_FAILED;
 		} elsif ($dle->{'status'} == $DUMP_DONE) {
 		    $self->{'stat'}->{'disk'}->{'nb'}++;
-		    $self->{'stat'}->{'estimated'}->{'nb'}++;
-		    $self->{'stat'}->{'estimated'}->{'estimated_size'} += $dle->{'esize'};
-		    $self->{'stat'}->{'dumped'}->{'nb'}++;
-		    $self->{'stat'}->{'dumped'}->{'estimated_size'} += $dle->{'esize'};
-		    $self->{'stat'}->{'dumped'}->{'real_size'} += $dle->{'size'};
 		    $dle->{'message'} = "dump done";
 		    #$dle->{'wsize'} = $dle->{'size'};
 		    $dle->{'dsize'} = $dle->{'size'};
 		} elsif ($dle->{'status'} == $DUMP_TO_TAPE_DONE) {
 		    $self->{'stat'}->{'disk'}->{'nb'}++;
-		    $self->{'stat'}->{'estimated'}->{'nb'}++;
-		    $self->{'stat'}->{'estimated'}->{'estimated_size'} += $dle->{'esize'};
-		    $self->{'stat'}->{'dumped'}->{'nb'}++;
-		    $self->{'stat'}->{'dumped'}->{'estimated_size'} += $dle->{'esize'};
-		    $self->{'stat'}->{'dumped'}->{'real_size'} += $dle->{'size'};
 		    $dle->{'message'} = "dump to tape done";
 		    #$dle->{'wsize'} = $dle->{'size'};
 		    $dle->{'dsize'} = $dle->{'size'};
 		} elsif ($dle->{'status'} == $VAULTING) {
+		    $self->{'stat'}->{'disk'}->{'nb'}++;
 		    $self->{'stat'}->{'vaulting'}->{'nb'}++;
 		    $self->{'stat'}->{'vaulting'}->{'estimated_size'} += $dle->{'esize'};
 		    $self->{'stat'}->{'vaulting'}->{'real_size'} += $dle->{'size'};
@@ -1655,11 +1649,10 @@ sub set_summary {
 		    #$dle->{'wsize'} = $dle->{'size'};
 		    $dle->{'dsize'} = $dle->{'size'};
 		} elsif ($dle->{'status'} == $VAULTING_DONE) {
+		    $self->{'stat'}->{'disk'}->{'nb'}++;
 		    $self->{'stat'}->{'vaulted'}->{'nb'}++;
 		    $self->{'stat'}->{'vaulted'}->{'estimated_size'} += $dle->{'esize'};
 		    $self->{'stat'}->{'vaulted'}->{'real_size'} += $dle->{'size'};
-#		    $dle->{'message'} = "vaulting done" if !defined $dle->{'message'};
-		    #$dle->{'wsize'} = $dle->{'size'};
 		    $dle->{'dsize'} = $dle->{'size'};
 		} elsif ($dle->{'status'} == $FLUSH_FAILED) {
 # JLM
@@ -1881,6 +1874,8 @@ sub set_summary {
 			$self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'message'} = "writing";
 		    } elsif ($wstatus == $FLUSHING) {
 			$self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'message'} = "flushing";
+		    } elsif ($wstatus == $VAULTING) {
+			$self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'message'} = "vaulting";
 		    } elsif ($wstatus == $DUMPING_TO_TAPE_INIT) {
 			$self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'message'} = "dumping to tape";
 		    } elsif ($wstatus == $DUMPING_TO_TAPE) {
@@ -1911,10 +1906,13 @@ sub set_summary {
     $self->_summary('dumped', 'dumped', 1, 1, 1, 1);
     $self->_summary_storage('wait_for_writing', 'wait for writing', 1, 1, 1, 1);
     $self->_summary_storage('wait_to_flush'   , 'wait_to_flush'   , 1, 1, 1, 1);
+    $self->_summary_storage('wait_to_vault'   , 'wait_to_vault'   , 1, 1, 1, 1);
     $self->_summary_storage('writing_to_tape' , 'writing to tape' , 1, 1, 1, 1);
     $self->_summary_storage('dumping_to_tape' , 'dumping to tape' , 1, 1, 1, 1);
+    $self->_summary_storage('vaulting'        , 'vaulting'        , 1, 1, 1, 1);
     $self->_summary_storage('failed_to_tape'  , 'failed to tape'  , 1, 1, 1, 1);
     $self->_summary_storage('taped'           , 'taped'           , 1, 1, 1, 1);
+    $self->_summary_storage('vaulted'         , 'vaulted'         , 1, 1, 1, 1);
 
     delete $self->{'busy'};
     delete $self->{'busy_dumper'};

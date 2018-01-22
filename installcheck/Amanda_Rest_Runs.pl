@@ -364,7 +364,16 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                                                     'nb' => 1,
                                                                     'estimated_size' => 102400,
                                                                     'name' => 'estimated'
-                                                                  }
+                                                                  },
+                                                   'wait_to_vault' => {
+                                                                        'name' => 'wait_to_vault'
+                                                                      },
+                                                   'vaulting' => {
+                                                                   'name' => 'vaulting'
+                                                                 },
+                                                   'vaulted' => {
+                                                                  'name' => 'vaulted'
+                                                                },
                                                  },
                                        'dles' => {
                                                    'clienthost' => {
@@ -866,7 +875,16 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                                                     'nb' => 1,
                                                                     'estimated_size' => 102400,
                                                                     'name' => 'estimated'
-                                                                  }
+                                                                  },
+                                                   'wait_to_vault' => {
+                                                                        'name' => 'wait_to_vault'
+                                                                      },
+                                                   'vaulting' => {
+                                                                   'name' => 'vaulting'
+                                                                 },
+                                                   'vaulted' => {
+                                                                  'name' => 'vaulted'
+                                                                },
                                                  },
                                        'dles' => {
                                                    'clienthost' => {
@@ -1090,7 +1108,16 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                                                     'nb' => 1,
                                                                     'estimated_size' => 82761728,
                                                                     'name' => 'estimated'
-                                                                  }
+                                                                  },
+                                                   'wait_to_vault' => {
+                                                                        'name' => 'wait_to_vault'
+                                                                      },
+                                                   'vaulting' => {
+                                                                   'name' => 'vaulting'
+                                                                 },
+                                                   'vaulted' => {
+                                                                  'name' => 'vaulted'
+                                                                },
                                                  },
                                        'dles' => {
                                                    'localhost' => {
@@ -1342,7 +1369,16 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                                                     'nb' => 3,
                                                                     'estimated_size' => 914359296,
                                                                     'name' => 'estimated'
-                                                                  }
+                                                                  },
+                                                   'wait_to_vault' => {
+                                                                        'name' => 'wait_to_vault'
+                                                                      },
+                                                   'vaulting' => {
+                                                                   'name' => 'vaulting'
+                                                                 },
+                                                   'vaulted' => {
+                                                                  'name' => 'vaulted'
+                                                                },
                                                  },
                                        'dles' => {
                                                    'qa-debian6-x64-anuj' => {

@@ -363,18 +363,20 @@ if ($opt_summary) {
     printf "%-16s %4s %10s %10s\n", "----------------", "----", "---------", "---------";
     summary($status, 'disk', 'disk', 0, 0, 0, 0);
     summary($status, 'estimated', 'estimated', 0, 1, 0, 0);
-    summary_storage($status, 'flush', 'flush', 1, 0, 0, 0);
+    summary_storage($status, 'flush', 'flush', 1, 0, 0, 0, 1);
     summary($status, 'dump_failed', 'dump failed', 1, 1, 1, 1);
     summary($status, 'wait_for_dumping', 'wait for dumping', 0, 1, 0, 1);
     summary($status, 'dumping_to_tape', 'dumping to tape', 1, 1, 1, 1);
     summary($status, 'dumping', 'dumping', 1, 1, 1, 1);
     summary($status, 'dumped', 'dumped', 1, 1, 1, 1);
-    summary_storage($status, 'wait_for_writing', 'wait for writing', 1, 1, 1, 1);
-    summary_storage($status, 'wait_to_flush'   , 'wait to flush'   , 1, 1, 1, 1);
-    summary_storage($status, 'writing_to_tape' , 'writing to tape' , 1, 1, 1, 1);
-    summary_storage($status, 'dumping_to_tape' , 'dumping to tape' , 1, 1, 1, 1);
-    summary_storage($status, 'failed_to_tape'  , 'failed to tape'  , 1, 1, 1, 1);
-    summary_storage($status, 'taped'           , 'taped'           , 1, 1, 1, 1);
+    summary_storage($status, 'wait_for_writing', 'wait for writing', 1, 1, 1, 1, 1);
+    summary_storage($status, 'wait_to_flush'   , 'wait to flush'   , 1, 1, 1, 1, 1);
+    summary_storage($status, 'wait_to_vault'   , 'wait to vault'   , 1, 1, 1, 1, 0);
+    summary_storage($status, 'writing_to_tape' , 'writing to tape' , 1, 1, 1, 1, 1);
+    summary_storage($status, 'dumping_to_tape' , 'dumping to tape' , 1, 1, 1, 1, 1);
+    summary_storage($status, 'failed_to_tape'  , 'failed to tape'  , 1, 1, 1, 1, 1);
+    summary_storage($status, 'vaulting'        , 'vaulting'        , 1, 1, 1, 1, 0);
+    summary_storage($status, 'taped'           , 'taped'           , 1, 1, 1, 1, 1);
 
     print "\n";
     if ($status->{'idle_dumpers'} == 0) {
@@ -574,10 +576,13 @@ sub summary_storage {
     my $print_esize = shift;
     my $print_rstat = shift;
     my $print_estat = shift;
+    my $print_if_empty = shift;
 
     if (!$status->{'stat'}->{$key}->{'storage'} ||
 	keys %{$status->{'stat'}->{$key}->{'storage'}} == 0) {
-	printf "$name\n";
+	if ($print_if_empty) {
+	    printf "$name\n";
+	}
 	return;
     }
     if ($nb_storage > 1) {

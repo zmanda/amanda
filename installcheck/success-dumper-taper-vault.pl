@@ -108,6 +108,8 @@ EODLE
 $testconf->write();
 
 config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
+my $catalog = Amanda::DB::Catalog2->new(undef, create => 1, drop_tables => 1, load => 1);
+$catalog->quit();
 $diskfile = Amanda::Config::config_dir_relative(getconf($CNF_DISKFILE));
 $infodir = getconf($CNF_INFOFILE);
 
@@ -243,10 +245,10 @@ is_deeply($reply->{'body'}->[0]->{'status'}->{'dles'},
 				'size' => '1075200',
 				'esize' => '1075200',
 				'retry_level' => '-1',
-				'message' => 'dump to tape done',
+				#'message' => 'dump to tape done',
 				'chunk_time' => undef,
 				'dsize' => '1075200',
-				'status' => '21',
+				'status' => '28',
 				#'partial' => '0',
 				'level' => '0',
 				'dump_time' => undef,
@@ -289,10 +291,10 @@ is_deeply($reply->{'body'}->[0]->{'status'}->{'dles'},
 				'size' => '1075200',
 				'esize' => '1075200',
 				'retry_level' => '-1',
-				'message' => 'dump to tape done',
+				#'message' => 'dump to tape done',
 				'chunk_time' => undef,
 				'dsize' => '1075200',
-				'status' => '21',
+				'status' => '28',
 				#'partial' => '0',
 				'level' => '0',
 				'dump_time' => undef,
@@ -484,6 +486,18 @@ is_deeply($reply->{'body'}->[0]->{'status'}->{'stat'},
 		'estimated_size' => '0',
 		'real_size' => '0',
 		'estimated_stat' => '0'
+	},
+	'wait_to_vault' => {
+		'name' => 'wait_to_vault'
+	},
+	'vaulting' => {
+		'name' => 'vaulting'
+	},
+	'vaulted' => {
+		'name' => 'vaulted',
+		'nb' => '2',
+		'estimated_size' => '2150400',
+		'real_size' => '2150400',
 	}
     },
     'stat is correct');
@@ -564,10 +578,10 @@ my $status = <<"END_STATUS";
 Using: /amanda/h1/etc/amanda/TESTCONF/log/amdump.1
 From Wed Jun 22 08:01:00 EDT 2016
 
-localhost:$diskname2    $timestamp 0      1050k dump to tape done (00:00:00), (storage-1) dump to tape done (00:00:00)
-          $diskname2S                                                              (storage-2) vaulted (00:00:00)
-localhost:$diskname3 $timestamp 0      1050k dump to tape done (00:00:00), (storage-1) dump to tape done (00:00:00)
-          $diskname3S                                                           (storage-2) vaulted (00:00:00)
+localhost:$diskname2    $timestamp 0      1050k (storage-1) dump to tape done (00:00:00)
+          $diskname2S                                (storage-2) vaulted (00:00:00)
+localhost:$diskname3 $timestamp 0      1050k (storage-1) dump to tape done (00:00:00)
+          $diskname3S                             (storage-2) vaulted (00:00:00)
 
 SUMMARY           dle       real  estimated
                             size       size
