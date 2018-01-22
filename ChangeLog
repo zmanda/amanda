@@ -1,4 +1,7 @@
 2018-01-22  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/driver.c: Improve new_tape
+
+2018-01-22  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/driver.c: Set TAPER_STATE_TAPE_STARTED on NEW-TAPE
 
 2018-01-22  Jean-Louis Martineau <JMartineau@carbonite.com>
