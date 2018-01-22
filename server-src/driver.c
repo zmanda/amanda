@@ -5433,6 +5433,7 @@ tape_action(
     for (slist = directq.head; slist != NULL; slist = slist->next) {
 	sp = get_sched(slist);
 	directq_size += sp->est_size;
+	new_dle++;
     }
     driver_debug(2, _("directq_size: %lld\n"), (long long)directq_size);
 
@@ -5440,11 +5441,13 @@ tape_action(
     for (slist = taper->tapeq.head; slist != NULL; slist = slist->next) {
 	sp = get_sched(slist);
 	tapeq_size += sp->act_size;
+	new_dle++;
     }
     for (vsl = taper->vaultqss; vsl != NULL; vsl = vsl->next) {
 	for (slist = ((schedlist_t *)&((vaultqs_t *)vsl->data)->vaultq)->head; slist != NULL; slist = slist->next) {
 	    sp = get_sched(slist);
 	    tapeq_size += sp->act_size;
+	    new_dle++;
 	}
     }
     for (wtaper1 = taper->wtapetable;
@@ -5453,6 +5456,7 @@ tape_action(
 	for (slist = wtaper1->vaultqs.vaultq.head; slist != NULL; slist = slist->next) {
 	    sp = get_sched(slist);
 	    tapeq_size += sp->act_size;
+	    new_dle++;
 	}
     }
 
@@ -5523,7 +5527,8 @@ tape_action(
 	data_free = 0;
     }
 
-    new_dle = queue_length(&taper->tapeq) + queue_length(&directq) - dle_free;
+    //new_dle = queue_length(&taper->tapeq) + queue_length(&directq) - dle_free;
+    new_dle -= dle_free;
     driver_debug(2, _("dle_free: %d\n"), dle_free);
     driver_debug(2, _("new_dle: %d\n"), new_dle);
     if (new_dle > 0) {
@@ -5595,6 +5600,7 @@ tape_action(
     driver_debug(2, "last_started_wtaper %p %p %s\n", taper->last_started_wtaper, wtaper, wtaper->name);
     driver_debug(2, "taper->sent_first_write %p %p %s\n", taper->sent_first_write, wtaper, wtaper->name);
     driver_debug(2, "wtaper->state %d\n", wtaper->state);
+    driver_debug(2, "taper->vaultqss %p\n", taper->vaultqss);
 
 driver_debug(2, "%d  R%d W%d D%d I%d\n", wtaper->state, TAPER_STATE_TAPE_REQUESTED, TAPER_STATE_WAIT_FOR_TAPE, TAPER_STATE_DUMP_TO_TAPE, TAPER_STATE_IDLE);
     // Changing conditionals can produce a driver hang, take care.
