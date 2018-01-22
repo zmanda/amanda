@@ -152,7 +152,6 @@ static void start_a_vault(void);
 static void start_a_flush(void);
 static void start_degraded_mode(schedlist_t *queuep);
 static void start_some_dumps(schedlist_t *rq);
-static void start_vault_on_same_wtaper(wtaper_t *wtaper);
 static void continue_port_dumps(void);
 static void update_failed_dump(sched_t *sp);
 static int no_taper_flushing(void);
@@ -1988,62 +1987,6 @@ start_some_dumps(
 }
 
 
-/* try to find another vault from same source volume with smallest fileno */
-static void
-start_vault_on_same_wtaper(
-    wtaper_t *wtaper)
-{
-
-    sched_t *sp = dequeue_sched(&wtaper->vaultqs.vaultq);
-    if (sp) {
-	job_t    *job   = alloc_job();
-	disk_t   *dp    = sp->disk;
-	taper_t  *taper = wtaper->taper;
-	char     *qname;
-
-	job->wtaper = wtaper;
-	job->sched = sp;
-	wtaper->job = job;
-
-	amfree(wtaper->input_error);
-	amfree(wtaper->tape_error);
-	wtaper->result = LAST_TOK;
-	wtaper->sendresult = FALSE;
-	amfree(wtaper->first_label);
-	amfree(wtaper->dst_labels_str);
-	slist_free_full(wtaper->dst_labels, g_free);
-	wtaper->dst_labels = NULL;
-	wtaper->written = 0;
-	wtaper->state &= ~TAPER_STATE_IDLE;
-	wtaper->state |= TAPER_STATE_VAULT_TO_TAPE;
-	qname = quote_string(dp->name);
-	if (taper->nb_wait_reply == 0) {
-	    taper->ev_read = event_create(taper->fd, EV_READFD,
-					  handle_taper_result, taper);
-	    event_activate(taper->ev_read);
-	}
-	taper->nb_wait_reply++;
-	wtaper->nb_dle++;
-	if (!(wtaper->state & TAPER_STATE_TAPE_STARTED)) {
-	    assert(taper->sent_first_write == NULL);
-	    taper->sent_first_write = wtaper;
-	    wtaper->nb_dle = 1;
-	    wtaper->left = taper->tape_length;
-	}
-	taper_cmd(taper, wtaper, VAULT_WRITE, sp, sp->destname,
-		  sp->level, sp->datestamp);
-	    if (taper->last_started_wtaper == wtaper) {
-		taper->last_started_wtaper = NULL;
-	    }
-	g_fprintf(stderr,
-		 _("driver: start_a_vault: %s %s %s %lld %lld\n"),
-		 "samewtape", dp->host->hostname, qname,
-		 (long long)sp->act_size,
-		 (long long)wtaper->left);
-	amfree(qname);
-    }
-}
-
 /*
  * This gets called when a dumper is delayed for some reason.  It may
  * be because a disk has a delayed start, or amanda is constrained
@@ -2765,7 +2708,6 @@ handle_taper_result(
 		    free_serial_job(wtaper->job);
 		    free_job(wtaper->job);
 		    wtaper->job = NULL;
-		    start_vault_on_same_wtaper(wtaper);
 		}
 	    }
 
@@ -2806,7 +2748,6 @@ handle_taper_result(
 		    free_serial_job(wtaper->job);
 		    free_job(wtaper->job);
 		    wtaper->job = NULL;
-		    start_vault_on_same_wtaper(wtaper);
 		}
 	    }
 	    if (taper->nb_wait_reply == 0) {
@@ -3024,7 +2965,6 @@ vault_taper_result(
 	free_serial_job(job);
 	free_job(job);
 	wtaper->job = NULL;
-	start_vault_on_same_wtaper(wtaper);
     }
 
     taper->nb_wait_reply--;
