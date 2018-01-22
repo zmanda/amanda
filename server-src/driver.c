@@ -1066,6 +1066,9 @@ start_a_flush_wtaper(
 	    wtaper->state |= (wtaper1->state & TAPER_STATE_TAPE_STARTED);
 	    wtaper->left = wtaper1->left;
 	    wtaper->nb_dle = wtaper1->nb_dle+1;
+	    g_free(wtaper->current_dest_label);
+	    wtaper->current_dest_label = wtaper1->current_dest_label;
+	    wtaper1->current_dest_label = NULL;
 	    wtaper1->state = TAPER_STATE_DEFAULT;
 	    if (taper->last_started_wtaper == wtaper) {
 		taper->last_started_wtaper = NULL;
@@ -1383,6 +1386,9 @@ start_a_vault_wtaper(
 	    wtaper->state |= TAPER_STATE_TAPE_STARTED;
 	    wtaper->left = wtaper1->left;
 	    wtaper->nb_dle = wtaper1->nb_dle+1;
+	    g_free(wtaper->current_dest_label);
+	    wtaper->current_dest_label = wtaper1->current_dest_label;
+	    wtaper1->current_dest_label = NULL;
 	    if (taper->last_started_wtaper == wtaper) {
 		taper->last_started_wtaper = NULL;
 	    } else if (taper->last_started_wtaper == wtaper1) {
@@ -2507,6 +2513,8 @@ handle_taper_result(
 	    job = serial2job(result_argv[2]);
 	    wtaper = wtaper_from_name(taper, result_argv[1]);
 	    assert(wtaper == job->wtaper);
+	    g_free(wtaper->current_dest_label);
+	    wtaper->current_dest_label = g_strdup(result_argv[3]);
 
             /* Update our tape counter and reset taper->left */
 	    taper->current_tape++;
@@ -2672,7 +2680,7 @@ handle_taper_result(
 	    event_activate(dumper->ev_read);
 	    break;
 
-        case CLOSED_VOLUME:
+        case CLOSED_VOLUME: /* <worker_name> */
 	    g_debug("got CLOSED_VOLUME message");
 	    wtaper = wtaper_from_name(taper, result_argv[1]);
 
@@ -2680,6 +2688,8 @@ handle_taper_result(
 		wtaper->state &= ~TAPER_STATE_WAIT_CLOSED_VOLUME;
 		taper->nb_wait_reply--;
 	    }
+	    g_free(wtaper->current_dest_label);
+	    wtaper->current_dest_label = NULL;
 
 	    wtaper->state &= ~TAPER_STATE_TAPE_STARTED;
 	    wtaper->state &= ~TAPER_STATE_RESERVATION;

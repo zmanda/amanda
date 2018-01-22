@@ -1,4 +1,7 @@
 2018-01-22  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/driver.c: Set wtaper->current_dest_label
+
+2018-01-22  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* installcheck/Amanda_DB_Catalog2_MySQL.pl,
 	  installcheck/Amanda_DB_Catalog2_PgSQL.pl: Check variable is set
 
