@@ -81,6 +81,7 @@ sub new {
 	'pg-remove-incremental-wal' => 'no',
     };
 
+    $self->{'pg-version'} = $self->_get_pg_version();
     my @PROP_NAMES = qw(pg-host pg-port pg-db pg-user pg-password pg-passfile
 			psql-path pg-datadir pg-archivedir pg-cleanupwal
 			pg-max-wal-wait  pg-full-wal
@@ -236,7 +237,9 @@ sub _run_psql_command {
     push @cmd, "-p", $self->{'props'}->{'pg-port'} if ($self->{'props'}->{'pg-port'});
     push @cmd, "-U", $self->{'props'}->{'pg-user'} if ($self->{'props'}->{'pg-user'});
 
-    if (!($cmd =~ /pg_xlogfile_name_offset/) && !$self->{'args'}->{'verbose'}) {
+    if (!($cmd =~ /pg_xlogfile_name_offset/) &&
+	!($cmd =~ /pg_walfile_name_offset/) &&
+	!$self->{'args'}->{'verbose'}) {
 	push @cmd, '--quiet', '--output', '/dev/null';
     }
     push @cmd, '--command', $cmd;
@@ -264,7 +267,8 @@ sub _run_psql_command {
 	chomp $line;
 	return if $line =~ /^\s*$/;
 	debug("psql stdout: $line");
-	if ($cmd =~ /pg_xlogfile_name_offset/) {
+	if ($cmd =~ /pg_xlogfile_name_offset/ ||
+	    $cmd =~ /pg_walfile_name_offset/) {
 	    return if $line =~ /file_name/;
 	    return if $line =~ /------/;
 	    return if $line =~ /\(1 row\)/;
@@ -778,7 +782,6 @@ EOF
 # wait up to pg-max-wal-wait seconds for a WAL file to appear
 sub _wait_for_wal {
     my ($self, $wal) = @_;
-    my $pg_version = $self->_get_pg_version();
 
     my $archive_dir = $self->{'props'}->{'pg-archivedir'};
     my $maxwait = 0+$self->{'props'}->{'pg-max-wal-wait'};
@@ -799,7 +802,7 @@ sub _wait_for_wal {
 
 	# for versions 8.0 or 8.1, the only way to "force" a WAL archive is to write
 	# garbage to the database.
-	if ($pg_version < 80200) {
+	if ($self->{'pg-version'} < 80200) {
 	    $self->_write_garbage_to_db();
 	} else {
 	    sleep(1);
@@ -979,7 +982,11 @@ sub _incr_backup {
    my $incremental = string_to_boolean($incremental_val);
 
    if ($self->{'action'} eq 'backup') {
-      _run_psql_command($self, "SELECT file_name from pg_xlogfile_name_offset(pg_switch_xlog())");
+      if ($self->{'pg-version'} < 100000) {
+	    _run_psql_command($self, "SELECT file_name from pg_xlogfile_name_offset(pg_switch_xlog())");
+      } else {
+	    _run_psql_command($self, "SELECT file_name from pg_walfile_name_offset(pg_switch_wal())");
+      }
       if (defined($self->{'switch_xlog_filename'})) {
 	 $self->_wait_for_wal($self->{'switch_xlog_filename'});
       }
