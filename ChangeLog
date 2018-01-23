@@ -1,3 +1,7 @@
+2018-01-23  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* application-src/ampgsql.pl: s/xlog/wal/ in function name for version
+  10 and newer
+
 2018-01-22  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* installcheck/success-dumper-taper-vault.pl: Merge error
 
