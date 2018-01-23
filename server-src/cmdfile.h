@@ -65,6 +65,7 @@ typedef struct cmddata_s {
 } cmddata_t;
 
 typedef GHashTable *cmdfile_t; /* hash where each element is a (cmddata_t *) */
+typedef GList *cmdfile_glist_t; /* array where each element is a (cmddata_t *) */
 
 typedef struct cmdatas_s {
     int        version;
@@ -92,4 +93,7 @@ void cmdfile_remove_for_restore_label(cmddatas_t *cmddatas, char *hostname,
 void cmdfile_remove_for_restore_holding(cmddatas_t *cmddatas, char *hostname,
 				        char *diskname, char *timestamp,
 				        char *holding_file);
+
+cmdfile_glist_t cmdfile_get_all_glist(cmddatas_t *cmddatas);
+
 #endif /* CMDFILE_H */

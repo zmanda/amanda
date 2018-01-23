@@ -637,18 +637,83 @@ check_and_load_config(
     return 0;
 }
 
-
-static int
-build_disk_table(void)
-{
+typedef struct build_disk_table_s{
     char *date;
     char *last_timestamp;
     char *last_storage;
     off_t last_filenum;
     int last_level;
     int last_partnum;
-    GHashTableIter iter;
-    gpointer key, value;
+} build_disk_table_t;
+
+static void
+build_disk_table_fn(
+    gpointer key G_GNUC_UNUSED,
+    gpointer value,
+    gpointer user_data)
+{
+    GPtrArray *parts = value;
+    build_disk_table_t *data = user_data;
+
+	guint i;
+	for (i=0; i<parts->len;i++) {
+	    part_result_t *part = parts->pdata[i];
+	    if (g_str_equal("OK", part->dump_status) &&
+		g_str_equal("OK", part->copy_status) &&
+		g_str_equal("OK", part->part_status)) {
+		/*
+		* The sort order puts holding disk entries first.  We want to
+		* use them if at all possible, so ignore any other entries
+		* for the same datestamp after we see a holding disk entry
+		* (as indicated by a filenum of zero).
+		*/
+		if (data->last_timestamp &&
+		    g_str_equal(part->timestamp, data->last_timestamp) &&
+		    part->level == data->last_level &&
+		    data->last_filenum == 0) {
+		    continue;
+		}
+		/* ignore duplicate partnum */
+		if (data->last_timestamp &&
+		    g_str_equal(part->timestamp, data->last_timestamp) &&
+		    part->level == data->last_level &&
+		    part->partnum == data->last_partnum &&
+		    (!am_has_feature(their_features, fe_amindexd_STORAGE) ||
+		     g_str_equal(part->storage, data->last_storage))) {
+		    continue;
+		}
+		if (storage_list) {
+		    char **storage_l;
+		    gboolean found = FALSE;
+		    for (storage_l = storage_list; *storage_l != NULL; storage_l++) {
+			if (g_str_equal(part->storage, *storage_l))
+			    found = TRUE;
+		    }
+		    if (!found)
+			continue;
+		}
+		data->last_timestamp = part->timestamp;
+		data->last_storage = part->storage;
+		data->last_filenum = part->filenum;
+		data->last_level = part->level;
+		data->last_partnum = part->partnum;
+		data->date = amindexd_nicedate(part->timestamp);
+		add_dump(part->hostname, data->date, part->level,
+			 part->storage, part->label, part->filenum,
+			 part->partnum, part->nb_parts);
+		dbprintf("- %s %d %s %lld %d %d\n",
+			 data->date, part->level,
+			 part->label,
+			 (long long)part->filenum,
+			 part->partnum, part->nb_parts);
+	    }
+	}
+}
+
+static int
+build_disk_table(void)
+{
+    build_disk_table_t data;
 
     if (get_config_name() == NULL) {
 	reply(590, _("Must set config,host,disk before building disk table"));
@@ -664,69 +729,14 @@ build_disk_table(void)
     }
 
     clear_list();
-    last_timestamp = NULL;
-    last_storage = NULL;
-    last_filenum = (off_t)-1;
-    last_level = -1;
-    last_partnum = -1;
+    data.date = NULL;
+    data.last_timestamp = NULL;
+    data.last_storage = NULL;
+    data.last_filenum = (off_t)-1;
+    data.last_level = -1;
+    data.last_partnum = -1;
     parts = amcatalog_get_parts(dump_hostname, disk_name);
-    g_hash_table_iter_init (&iter, parts);
-    while (g_hash_table_iter_next (&iter, &key, &value)) {
-	GPtrArray *parts = value;
-	guint i;
-	for (i=0; i<parts->len;i++) {
-	    part_result_t *part = parts->pdata[i];
-	    if (g_str_equal("OK", part->dump_status) &&
-		g_str_equal("OK", part->copy_status) &&
-		g_str_equal("OK", part->part_status)) {
-		/*
-		* The sort order puts holding disk entries first.  We want to
-		* use them if at all possible, so ignore any other entries
-		* for the same datestamp after we see a holding disk entry
-		* (as indicated by a filenum of zero).
-		*/
-		if (last_timestamp &&
-		    g_str_equal(part->timestamp, last_timestamp) &&
-		    part->level == last_level &&
-		    last_filenum == 0) {
-		    continue;
-		}
-		/* ignore duplicate partnum */
-		if (last_timestamp &&
-		    g_str_equal(part->timestamp, last_timestamp) &&
-		    part->level == last_level &&
-		    part->partnum == last_partnum &&
-		    (!am_has_feature(their_features, fe_amindexd_STORAGE) ||
-		     g_str_equal(part->storage, last_storage))) {
-		    continue;
-		}
-		if (storage_list) {
-		    char **storage_l;
-		    gboolean found = FALSE;
-		    for (storage_l = storage_list; *storage_l != NULL; storage_l++) {
-			if (g_str_equal(part->storage, *storage_l))
-			    found = TRUE;
-		    }
-		    if (!found)
-			continue;
-		}
-		last_timestamp = part->timestamp;
-		last_storage = part->storage;
-		last_filenum = part->filenum;
-		last_level = part->level;
-		last_partnum = part->partnum;
-		date = amindexd_nicedate(part->timestamp);
-		add_dump(part->hostname, date, part->level,
-			 part->storage, part->label, part->filenum,
-			 part->partnum, part->nb_parts);
-		dbprintf("- %s %d %s %lld %d %d\n",
-			 date, part->level,
-			 part->label,
-			 (long long)part->filenum,
-			 part->partnum, part->nb_parts);
-	    }
-	}
-    }
+    g_hash_table_foreach(parts, build_disk_table_fn, &data);
 
     clean_dump();
 

@@ -148,20 +148,16 @@ typedef struct {
 					       timestamp, holding_file);
 	}
 
-	%typemap(out) cmdfile_t {
-	    GHashTableIter iter;
-	    gpointer key, value;
+	%typemap(out) cmdfile_glist_t {
+	    GList *aa;
 
-	    int countx=0;
-	    g_hash_table_iter_init (&iter, $1);
-	    while (g_hash_table_iter_next(&iter, &key, &value)) {
+	    int countx = 0;
+	    for (aa = $1; aa != NULL; aa = aa->next) {
 		countx++;
 	    }
 	    EXTEND(SP, countx);
-	    g_hash_table_iter_init (&iter, $1);
-	    while (g_hash_table_iter_next(&iter, &key, &value)) {
-		int id = GPOINTER_TO_INT(key);
-		Cmddata *data = value;
+	    for (aa = $1; aa != NULL; aa = aa->next) {
+		Cmddata *data = (Cmddata *)aa->data;
 		HV *hv = newHV();
 		SV *rv = newRV_noinc((SV *)hv);
 		g_debug("id: %d", data->id);
@@ -189,10 +185,12 @@ typedef struct {
 		$result = sv_2mortal(rv);
 		argvi++;
 	    }
+	    g_list_free($1);
 	}
-	cmdfile_t get_all() {
-	    return self->cmdfile;
+	cmdfile_glist_t get_all() {
+	    return cmdfile_get_all_glist(self);
 	}
+
 	%typemap(out) cmdfile_t;
 
     }

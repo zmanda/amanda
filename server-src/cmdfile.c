@@ -829,3 +829,29 @@ void cmdfile_remove_for_restore_holding(cmddatas_t *cmddatas, char *hostname,
     }
     g_slist_free(data.ids);
 }
+
+static void
+cmdfile_get_all_array_fn(
+    gpointer key G_GNUC_UNUSED,
+    gpointer value,
+    gpointer user_data)
+{
+    cmddata_t *cmddata = value;
+    cmdfile_glist_t *data = user_data;
+
+    *data = g_list_prepend(*data, cmddata);
+}
+
+
+cmdfile_glist_t
+cmdfile_get_all_glist(
+    cmddatas_t *cmddatas)
+{
+    cmdfile_glist_t data = NULL;
+
+    g_hash_table_foreach(cmddatas->cmdfile, cmdfile_get_all_array_fn, &data);
+
+    data = g_list_reverse(data);
+
+    return data;
+}

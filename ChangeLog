@@ -1,4 +1,11 @@
 2018-01-23  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/amindexd.c (build_disk_table) Do not use GHashTableIter
+	* server-src/cmdfile.c (cmdfile_get_all_glist): New function
+	  that return all cmddata in a GList
+	* server-src/cmdfile.h (cmdfile_get_all_glist): Add protoype
+	* perl/Amanda/Cmdfile.swg (get_all): Wrap cmdfile_get_all_glist
+
+2018-01-23  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* application-src/ampgsql.pl: s/xlog/wal/ in function name for version
 	  10 and newer
 
