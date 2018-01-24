@@ -1,3 +1,6 @@
+2018-01-24  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/driver.c: fix queue handling
+
 2018-01-23  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/amindexd.c (build_disk_table) Do not use GHashTableIter
 	* server-src/cmdfile.c (cmdfile_get_all_glist): New function

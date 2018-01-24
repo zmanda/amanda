@@ -1446,8 +1446,9 @@ start_a_vault_wtaper(
 		    slist_free_full(wtaper->vaultqs.src_labels, g_free);
 		    wtaper->vaultqs.src_labels = NULL;
 		    wtaper->vaultqs = *vaultqs;
-		    wtaper->taper->vaultqss = g_slist_remove_link(wtaper->taper->vaultqss, wtaper->taper->vaultqss);
+		    wtaper->taper->vaultqss = g_slist_remove_link(wtaper->taper->vaultqss, vsl);
 		    sp = dequeue_sched(&wtaper->vaultqs.vaultq);
+		    break;
 		}
 	    }
 	}
