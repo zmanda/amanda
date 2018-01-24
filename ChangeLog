@@ -1,4 +1,8 @@
 2018-01-24  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/driver.c: Send CLOSE-VOLUME command only if the volume
+	  is opened
+
+2018-01-24  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/driver.c: fix queue handling
 
 2018-01-23  Jean-Louis Martineau <JMartineau@carbonite.com>
