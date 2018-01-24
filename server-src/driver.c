@@ -674,16 +674,18 @@ main(
 		 wtaper < taper->wtapetable + taper->nb_worker;
 		 wtaper++) {
 		if (wtaper->state & TAPER_STATE_RESERVATION) {
-		    if (taper->nb_wait_reply == 0) {
-			taper->ev_read = event_create(taper->fd,
+		    if (wtaper->current_dest_label) {
+			if (taper->nb_wait_reply == 0) {
+			    taper->ev_read = event_create(taper->fd,
 						EV_READFD,
 						handle_taper_result, taper);
-			event_activate(taper->ev_read);
+			    event_activate(taper->ev_read);
+			}
+			taper->nb_wait_reply++;
+			wtaper->state |= TAPER_STATE_WAIT_CLOSED_VOLUME;
+			taper_cmd(taper, wtaper, CLOSE_VOLUME, NULL, NULL, 0, NULL);
 		    }
-		    taper->nb_wait_reply++;
-		    wtaper->state |= TAPER_STATE_WAIT_CLOSED_VOLUME;
 		    wtaper->state &= ~TAPER_STATE_IDLE;
-		    taper_cmd(taper, wtaper, CLOSE_VOLUME, NULL, NULL, 0, NULL);
 		    wtaper->state &= ~TAPER_STATE_TAPE_STARTED;
 		}
 	    }
