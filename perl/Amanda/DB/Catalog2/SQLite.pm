@@ -167,6 +167,7 @@ sub run_execute {
 
 	    if ($errstr !~ /database is locked/ &&
 		$errstr !~ /database schema has changed/) {
+		$errstr !~ /UNIQUE constraint failed/) {
 		die($error);
 	    }
 	    sleep 1;

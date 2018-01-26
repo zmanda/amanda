@@ -446,8 +446,8 @@ sub _reset_volume {
     my $dbh = $self->{'dbh'};
     my $sth;
 
-    $sth = $self->make_statement('reset_volume', 'UPDATE volumes SET write_timestamp=?,orig_write_timestamp=?, storage_id=? WHERE label=? AND pool_id IN (SELECT pool_id FROM pools WHERE pool_name=?)');
-    $sth->execute(0, 0, $self->{'default_storage_id'}, $label, $pool_name)
+    $sth = $self->make_statement('reset_volume', 'UPDATE volumes SET write_timestamp=?,orig_write_timestamp=? WHERE label=? AND pool_id IN (SELECT pool_id FROM pools WHERE pool_name=?)');
+    $sth->execute(0, 0, $label, $pool_name)
 	or die "Cannot execute: " . $sth->errstr();
 
     $self->_write_tapelist();

@@ -1,3 +1,8 @@
+2018-01-26  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/DB/Catalog2/SQL.pm: (reset_volume): Keep the storage_id
+	* perl/Amanda/DB/Catalog2/SQLite.pm: Retry transaction on
+	  /UNIQUE constraint failed/
+
 2018-01-24  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/driver.c: Send CLOSE-VOLUME command only if the volume
 	  is opened
