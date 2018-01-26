@@ -1066,6 +1066,25 @@ amcatalog_get_cmd_from_id(
     return cmddata;
 }
 
+gboolean
+amcatalog_get_nb_image_cmd_for_storage(
+    char *hostname,
+    char *diskname,
+    char *dump_timestamp,
+    int   level,
+    char *dst_storage)
+{
+    char *line;
+    char  level_str[50];
+
+    g_snprintf(level_str, 50, "%d", level);
+    line = run_amcatalog("get-nb-image-cmd-for-storage", 5, hostname, diskname, dump_timestamp, level_str, dst_storage);
+    if (line) {
+	return atoi(line);
+    }
+    return 0;
+}
+
 GPtrArray *
 amcatalog_get_flush_cmd(void)
 {

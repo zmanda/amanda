@@ -1,4 +1,13 @@
 2018-01-26  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/DB/Catalog2/SQL.pm (get_nb_image_command_for_storage):
+	  New method
+	* server-src/amcatalog.pl: New get-nb-image-cmd-for-storage command
+	* server-src/server_util.c (amcatalog_get_nb_image_cmd_for_storage):
+	  New function
+	* server-src/server_util.h (amcatalog_get_nb_image_cmd_for_storage):
+	  Add prototype
+
+2018-01-26  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/DB/Catalog2/SQL.pm: (reset_volume): Keep the storage_id
 	* perl/Amanda/DB/Catalog2/SQLite.pm: Retry transaction on
 	  /UNIQUE constraint failed/

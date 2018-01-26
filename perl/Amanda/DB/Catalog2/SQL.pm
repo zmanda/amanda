@@ -2744,6 +2744,63 @@ sub get_command_from_id {
 			undef, @_);
 }
 
+sub _get_nb_image_command_for_storage {
+    my $self = shift;
+    my $hostname = shift;
+    my $diskname = shift;
+    my $timestamp = shift;
+    my $level = shift;
+    my $dst_storage = shift;
+
+    my $config_id = $self->{'config_id'};
+    my $dbh = $self->{'dbh'};
+    my $sth;
+    my $cmd;
+
+    my $image = $self->_find_image($hostname, $diskname, undef, $timestamp, $level);
+    return 0 if !defined $image;
+
+    my $storage_id = $self->{'storages_id'}{$config_id}{$dst_storage};
+    if (!defined $storage_id) {
+	$sth = $self->make_statement('sel sto_id', 'SELECT storage_id FROM storages WHERE storage_name=? AND config_id=?');
+	$sth->execute($dst_storage, $config_id)
+	    or die "Cannot execute: " . $sth->errstr();
+	# get the first row
+	my $storage_row = $sth->fetchrow_arrayref;
+	return 0 if !defined $storage_row;
+	$storage_id = $storage_row->[0];
+	$self->{'storages_id'}{$config_id}{$dst_storage} = $storage_id;
+    }
+    return 0 if !defined $storage_id;
+
+    $sth = $dbh->prepare("SELECT COUNT(command_id) FROM commands, copys WHERE commands.src_copy_id = copys.copy_id AND copys.image_id=? AND commands.dest_storage_id=? AND copys.copy_status=\"OK\"")
+	or die "Cannot prepare: " . $dbh->errstr();
+    $sth->execute($image->{'image_id'}, $storage_id)
+	or die "Cannot execute: " . $sth->errstr();
+    my $command_row = $sth->fetchrow_arrayref;
+    if ($command_row && $command_row->[0] > 0) {
+	return $command_row->[0];
+    }
+
+    $sth = $dbh->prepare("SELECT COUNT(copy_id) FROM copys WHERE copys.image_id=? AND copys.storage_id=? AND copys.copy_status=\"OK\"")
+	or die "Cannot prepare: " . $dbh->errstr();
+    $sth->execute($image->{'image_id'}, $storage_id)
+	or die "Cannot execute: " . $sth->errstr();
+    my $copy_row = $sth->fetchrow_arrayref;
+    if ($copy_row) {
+	return $copy_row->[0];
+    }
+    return 0;
+}
+
+sub get_nb_image_command_for_storage {
+    my $self = shift;
+
+    return $self->run_execute($self, $self->can('_get_nb_image_command_for_storage'),
+			['commands', 'configs', 'storages', 'copys', 'parts', 'volumes', 'pools', 'images', 'disks', 'hosts'],
+			undef, @_);
+}
+
 sub _get_flush_command {
     my $self = shift;
 

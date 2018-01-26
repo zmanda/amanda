@@ -433,6 +433,18 @@ sub _get_command_from_id {
     __write_command($cmd);
 }
 
+sub _get_nb_image_command_for_storage {
+    my $catalog = shift;
+    my $hostname = shift;
+    my $diskname = shift;
+    my $timestamp = shift;
+    my $level = shift;
+    my $dst_storage = shift;
+
+    my $nb = $catalog->get_nb_image_command_for_storage($hostname, $diskname, $timestamp, $level, $dst_storage);
+    print "$nb\n";
+}
+
 sub _get_flush_command {
     my $catalog = shift;
     my $id = shift;
@@ -738,6 +750,8 @@ sub run_command {
 	#_add_restore_cmd($catalog, $argv[1], $argv[2], $argv[3], $argv[4], $argv[5], $argv[6], $argv[7], $argv[8], $argv[9]);
     } elsif ($command eq "get-cmd-from-id") {
 	_get_command_from_id($catalog, $argv[1]);
+    } elsif ($command eq "get-nb-image-cmd-for-storage") {
+	_get_nb_image_command_for_storage($catalog, $argv[1], $argv[2], $argv[3], $argv[4], $argv[5]);
     } elsif ($command eq "get-flush-cmd") {
 	_get_flush_command($catalog);
     } elsif ($command eq "get-copy-cmd") {
