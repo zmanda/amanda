@@ -1,4 +1,11 @@
 2018-01-26  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Label.pm: Remove debug statement
+	* server-src/driver.c: Do not add a COPY command if the dump is
+	  already on the storage
+	* server-src/driverio.c (startup_vault_tape_process): Use same taper
+	  as storage
+
+2018-01-26  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/DB/Catalog2/SQLite.pm: Typo
 
 2018-01-26  Jean-Louis Martineau <JMartineau@carbonite.com>

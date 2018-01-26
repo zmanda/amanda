@@ -573,7 +573,6 @@ sub label {
 					labelstr  => $labelstr));
 		$dev_ok = 0 unless ($params{'force'});
 	    } elsif ($volume) {
-debug("volume: " . Data::Dumper::Dumper($volume));
 		if ($volume->{'config'} && $volume->{'config'} ne Amanda::Config::get_config_name()) {
 		    $self->user_msg(Amanda::Label::Message->new(
 					source_filename => __FILE__,
