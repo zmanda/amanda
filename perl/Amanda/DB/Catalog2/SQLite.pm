@@ -166,7 +166,7 @@ sub run_execute {
 	    debug("errstr: $errstr") if defined $errstr;
 
 	    if ($errstr !~ /database is locked/ &&
-		$errstr !~ /database schema has changed/) {
+		$errstr !~ /database schema has changed/ &&
 		$errstr !~ /UNIQUE constraint failed/) {
 		die($error);
 	    }

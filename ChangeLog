@@ -1,4 +1,7 @@
 2018-01-26  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/DB/Catalog2/SQLite.pm: Typo
+
+2018-01-26  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/DB/Catalog2/SQL.pm (get_nb_image_command_for_storage):
 	  New method
 	* server-src/amcatalog.pl: New get-nb-image-cmd-for-storage command
