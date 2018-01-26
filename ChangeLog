@@ -1,4 +1,10 @@
 2018-01-26  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/driver.c: Do not add a COPY command if the dump is
+	  already on the storage
+	* server-src/driverio.c (startup_vault_tape_process): Use same taper
+	  as storage
+
+2018-01-26  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/cmdfile.c (cmdfile_get_nb_image_cmd_for_storage): New
 	  function
 	* server-src/cmdfile.h (cmdfile_get_nb_image_cmd_for_storage): Add

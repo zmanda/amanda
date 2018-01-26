@@ -139,10 +139,21 @@ startup_vault_tape_process(
     taper_t     *taper;
 
     for (il = getconf_identlist(CNF_VAULT_STORAGE); il != NULL; il = il->next) {
-	taper = start_one_tape_process(taper_program, (char *)il->data, no_taper, nb_taper);
-	if (taper) {
-	    taper->vault_storage = TRUE;
-	    nb_taper++;
+	char *storage_name = (char *)il->data;
+	gboolean found = FALSE;
+	for (taper = tapetable; taper < tapetable+nb_taper ; taper++) {
+	    if (strcmp(taper->storage_name, storage_name) == 0) {
+		taper->vault_storage = TRUE;
+		found = TRUE;
+		break;
+	    }
+	}
+	if (!found) {
+	    taper = start_one_tape_process(taper_program, storage_name, no_taper, nb_taper);
+	    if (taper) {
+		taper->vault_storage = TRUE;
+		nb_taper++;
+	    }
 	}
     }
     return nb_taper;

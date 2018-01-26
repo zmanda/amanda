@@ -108,6 +108,7 @@ static cmddatas_t *cmddatas = NULL;
 static int no_dump = FALSE;
 //static int no_flush = FALSE;
 static int no_vault = FALSE;
+static GHashTable *dump_storage_hash = NULL;
 
 static int wait_children(int count);
 static void wait_for_children(void);
@@ -231,6 +232,8 @@ main(
     char *storage_n;
     int sum_taper_parallel_write;
     char *argv0;
+    find_result_t *output_find;
+    char *conf_tapelist;
 
     if (argc > 1 && argv && argv[1] && g_str_equal(argv[1], "--version")) {
 	printf("driver-%s\n", VERSION);
@@ -354,6 +357,15 @@ main(
      * holding_files or holding_disklist after this */
 
     cleanup_shm_ring();
+
+    conf_tapelist = config_dir_relative(getconf_str(CNF_TAPELIST));
+    if (read_tapelist(conf_tapelist)) {
+	error(_("could not load tapelist \"%s\""), conf_tapelist);
+	/*NOTREACHED*/
+    }
+
+    output_find = find_dump(&origq, 0);
+    dump_storage_hash = make_dump_storage_hash(output_find);
 
     amfree(driver_timestamp);
     /* read timestamp from stdin */
@@ -669,11 +681,75 @@ main(
 	amfree(qname);
     }
 
+    short_dump_state();
+
+    if (!no_vault) {
+	nb_storage = startup_vault_tape_process(taper_program, no_taper);
+	set_vaultqs();
+	short_dump_state();
+	/* close device for storage */
+	for (taper = tapetable; taper < tapetable+nb_storage ; taper++) {
+	    if (!taper->degraded_mode && taper->storage_name &&
+		(!taper->vault_storage || !taper->vaultqss)) {
+		for (wtaper = taper->wtapetable;
+		     wtaper < taper->wtapetable + taper->nb_worker;
+		     wtaper++) {
+		    if (wtaper->state & TAPER_STATE_RESERVATION) {
+			if (wtaper->current_dest_label) {
+			    if (taper->nb_wait_reply == 0) {
+				taper->ev_read = event_create(taper->fd,
+						EV_READFD,
+						handle_taper_result, taper);
+				event_activate(taper->ev_read);
+			    }
+			    taper->nb_wait_reply++;
+			    wtaper->state |= TAPER_STATE_WAIT_CLOSED_VOLUME;
+			    taper_cmd(taper, wtaper, CLOSE_VOLUME, NULL, NULL, 0, NULL);
+			}
+			wtaper->state &= ~TAPER_STATE_IDLE;
+			wtaper->state &= ~TAPER_STATE_TAPE_STARTED;
+		    }
+		}
+	    }
+	}
+
+	/* wait for the device to be closed */
+	event_loop(0);
+	short_dump_state();
+
+	/* quit no-vault storage */
+	for (taper = tapetable; taper < tapetable+nb_storage ; taper++) {
+	    if (taper->fd >= 0 && !taper->vault_storage) {
+		taper_cmd(taper, NULL, QUIT, NULL, NULL, 0, NULL);
+	    }
+	}
+	for (taper = tapetable; taper < tapetable+nb_storage ; taper++) {
+	    if (!taper->down && taper->storage_name && taper->vault_storage &&
+		taper->wtapetable->state == TAPER_STATE_DEFAULT) {
+		wtaper = taper->wtapetable;
+		wtaper->state = TAPER_STATE_INIT;
+		if (taper->nb_wait_reply == 0) {
+		    taper->nb_wait_reply++;
+		    taper->ev_read = event_create(taper->fd, EV_READFD,
+						  handle_taper_result, taper);
+		    event_activate(taper->ev_read);
+		}
+		taper->nb_scan_volume++;
+		taper_cmd(taper, wtaper, START_TAPER, NULL, taper->wtapetable[0].name, 0, driver_timestamp);
+	    }
+	}
+
+	short_dump_state();
+
+	start_a_vault();
+	event_loop(0);
+    }
+
     short_dump_state();				/* for amstatus */
 
     /* close device for storage */
     for (taper = tapetable; taper < tapetable+nb_storage ; taper++) {
-	if (!taper->degraded_mode && !taper->vault_storage && taper->storage_name) {
+	if (!taper->degraded_mode && taper->storage_name) {
 	    for (wtaper = taper->wtapetable;
 		 wtaper < taper->wtapetable + taper->nb_worker;
 		 wtaper++) {
@@ -696,41 +772,7 @@ main(
 	}
     }
 
-    short_dump_state();
-    /* wait for the device to be closed */
     event_loop(0);
-    short_dump_state();
-
-    if (!no_vault) {
-	/* close device for storage */
-	for (taper = tapetable; taper < tapetable+nb_storage ; taper++) {
-	    if (taper->fd >= 0 && !taper->vault_storage) {
-		taper_cmd(taper, NULL, QUIT, NULL, NULL, 0, NULL);
-	    }
-	}
-
-	nb_storage = startup_vault_tape_process(taper_program, no_taper);
-
-	for (taper = tapetable; taper < tapetable+nb_storage ; taper++) {
-	    if (!taper->down && taper->storage_name) {
-		wtaper = taper->wtapetable;
-		wtaper->state = TAPER_STATE_INIT;
-		taper->nb_wait_reply++;
-		taper->nb_scan_volume++;
-		taper->ev_read = event_create(taper->fd, EV_READFD,
-						handle_taper_result, taper);
-		event_activate(taper->ev_read);
-		taper_cmd(taper, wtaper, START_TAPER, NULL, taper->wtapetable[0].name, 0, driver_timestamp);
-	    }
-	}
-
-	set_vaultqs();
-	short_dump_state();
-
-	start_a_vault();
-	event_loop(0);
-    }
-
     short_dump_state();				/* for amstatus */
 
     g_printf(_("driver: QUITTING time %s telling children to quit\n"),
@@ -1740,7 +1782,8 @@ start_some_dumps(
 		/* check the taper is alive */
 		if (sp->prefered_taper) {
 		    if (!sp->prefered_taper->storage_name || !sp->prefered_taper->flush_storage ||
-			sp->prefered_taper->degraded_mode || sp->prefered_taper->down) {
+			sp->prefered_taper->degraded_mode || sp->prefered_taper->down ||
+			sp->prefered_taper->current_tape >= sp->prefered_taper->runtapes) {
 			sp->prefered_taper = NULL;
 		    }
 		}
@@ -1748,7 +1791,8 @@ start_some_dumps(
 		if (!sp->prefered_taper) {
 		    for (taper = tapetable; taper < tapetable+nb_storage && !sp_accept; taper++) {
 			if (taper->storage_name && taper->flush_storage &&
-			    !taper->degraded_mode && !taper->down) {
+			    !taper->degraded_mode && !taper->down &&
+			    taper->current_tape < taper->runtapes) {
 			    if (dump_match_selection(taper->storage_name, sp)) {
 				sp->prefered_taper = taper;
 				break;
@@ -1760,7 +1804,8 @@ start_some_dumps(
 	    sp = NULL;
 	    for (taper = tapetable; taper < tapetable+nb_storage && !sp_accept; taper++) {
 		if (!taper->storage_name || !taper->flush_storage ||
-		    taper->degraded_mode || taper->down) {
+		    taper->degraded_mode || taper->down ||
+		    taper->current_tape >= taper->runtapes) {
 		    continue;
 		}
 		sp_accept = NULL;
@@ -2903,6 +2948,9 @@ vault_taper_result(
     } else {
         time_t     now = time(NULL);
 
+	add_dump_storage_hash(dump_storage_hash, dp->host->hostname,
+			      dp->name, sp->datestamp, sp->level,
+			      taper->storage_name);
         cmddatas = remove_cmd_in_cmdfile(cmddatas, sp->command_id);
 
         /* this code is duplicated in file_taper_result and dumper_taper_result */
@@ -2913,7 +2961,13 @@ vault_taper_result(
                 vault_list_t vl = storage_get_vault_list(storage);
                 for (; vl != NULL; vl = vl->next) {
                     vault_el_t *v = vl->data;
-                    if (dump_match_selection(v->storage, sp)) {
+                    if (dump_match_selection(v->storage, sp) &&
+			!dump_storage_hash_exist(dump_storage_hash,
+				dp->host->hostname, dp->name, sp->datestamp,
+				sp->level, v->storage) &&
+			!cmdfile_get_nb_image_cmd_for_storage(cmddatas,
+				dp->host->hostname, dp->name, sp->datestamp,
+				sp->level, v->storage)) {
                         cmddata_t *cmddata = g_new0(cmddata_t, 1);
                         cmddata->operation = CMD_COPY;
                         cmddata->config = g_strdup(get_config_name());
@@ -2981,13 +3035,16 @@ file_taper_result(
     disk_t   *dp;
     char    *qname = quote_string(sp->disk->name);
 
+    sp->taper_attempted += 1;
+    dp = sp->disk;
+
     if (wtaper->result == DONE) {
+	add_dump_storage_hash(dump_storage_hash, dp->host->hostname,
+			      dp->name, sp->datestamp, sp->level,
+			      taper->storage_name);
 	update_info_taper(sp, wtaper->first_label, wtaper->first_fileno,
 			  sp->level);
     }
-
-    sp->taper_attempted += 1;
-    dp = sp->disk;
 
     job->wtaper = NULL;
 
@@ -3058,7 +3115,13 @@ file_taper_result(
 		    vault_list_t vl = storage_get_vault_list(storage);
 		    for (; vl != NULL; vl = vl->next) {
 			vault_el_t *v = vl->data;
-			if (dump_match_selection(v->storage, sp)) {
+			if (dump_match_selection(v->storage, sp) &&
+			    !dump_storage_hash_exist(dump_storage_hash,
+				dp->host->hostname, dp->name, sp->datestamp,
+				sp->level, v->storage) &&
+			    !cmdfile_get_nb_image_cmd_for_storage(cmddatas,
+				dp->host->hostname, dp->name, sp->datestamp,
+				sp->level, v->storage)) {
 			    cmddata_t *cmddata = g_new0(cmddata_t, 1);
 			    cmddata->operation = CMD_COPY;
 			    cmddata->config = g_strdup(get_config_name());
@@ -3131,6 +3194,9 @@ dumper_taper_result(
     char     *qname;
 
     if (dumper->result == DONE && wtaper->result == DONE) {
+	add_dump_storage_hash(dump_storage_hash, dp->host->hostname,
+			      dp->name, sp->datestamp, sp->level,
+			      taper->storage_name);
 	update_info_dumper(sp, sp->origsize,
 			   sp->dumpsize, sp->dumptime);
 	update_info_taper(sp, wtaper->first_label, wtaper->first_fileno,
@@ -3176,7 +3242,13 @@ dumper_taper_result(
 		vault_list_t vl = storage_get_vault_list(storage);
 		for (; vl != NULL; vl = vl->next) {
 		    vault_el_t *v = vl->data;
-		    if (dump_match_selection(v->storage, sp)) {
+		    if (dump_match_selection(v->storage, sp) &&
+			!dump_storage_hash_exist(dump_storage_hash,
+				dp->host->hostname, dp->name, sp->datestamp,
+				sp->level, v->storage) &&
+			!cmdfile_get_nb_image_cmd_for_storage(cmddatas,
+				dp->host->hostname, dp->name, sp->datestamp,
+				sp->level, v->storage)) {
 			cmddata_t *cmddata = g_new0(cmddata_t, 1);
 			cmddata->operation = CMD_COPY;
 			cmddata->config = g_strdup(get_config_name());
@@ -3294,6 +3366,7 @@ wtaper_from_name(
 	 wtaper++)
 	if (g_str_equal(wtaper->name, name)) return wtaper;
 
+    g_debug("Did not find wtaper for name '%s' in taper %s", name, taper->name);
     return NULL;
 }
 
@@ -3394,6 +3467,7 @@ dumper_chunker_result(
 		cmddata->hostname = g_strdup(dp->hostname);
 		cmddata->diskname = g_strdup(dp->name);
 		cmddata->dump_timestamp = g_strdup(driver_timestamp);
+		cmddata->level = sp->level;
 		cmddata->dst_storage = g_strdup(storage_name);
 		cmddata->working_pid = getppid();
 		cmddata->status = CMD_TODO;
@@ -4621,6 +4695,15 @@ cmdfile_vault(
     if (!taper)
 	return;
 
+    if ((!cmddata->src_labels_str || *cmddata->src_labels_str == '\0') && cmddata->src_label) {
+	cmddata->src_labels_str = g_strdup_printf(" ;%s ;", cmddata->src_label);
+    }
+
+    // JLM Should parse cmddata->src_labels_str
+    if (!cmddata->src_labels && cmddata->src_label) {
+	cmddata->src_labels = g_slist_append(cmddata->src_labels, g_strdup(cmddata->src_label));
+    }
+
     // create a disk_t and sched_t
     dp = lookup_disk(cmddata->hostname, cmddata->diskname);
     if (!dp) {
@@ -4679,11 +4762,15 @@ cmdfile_vault(
     if (!vaultqs) {
 	g_debug("New VAULTQS");
 	vaultqs = g_new0(vaultqs_t, 1);
-	vaultqs->src_labels_str = g_strdup(cmddata->src_labels_str);
+	if (cmddata->src_labels_str) {
+	    vaultqs->src_labels_str = g_strdup(cmddata->src_labels_str);
+	} else if (cmddata->src_label) {
+	    vaultqs->src_labels_str = g_strdup_printf(" ;%s ;", cmddata->src_label);
+	}
 	taper->vaultqss = g_slist_append(taper->vaultqss, vaultqs);
 	for (sl = cmddata->src_labels; sl != NULL; sl = sl->next) {
 	    vaultqs->src_labels = g_slist_append(vaultqs->src_labels,
-						 g_strdup((char *)sl->data));
+					g_strdup((char *)sl->data));
 	}
     }
     else {
@@ -4775,11 +4862,32 @@ cmdfile_vault(
 static void
 set_vaultqs(void)
 {
+    int i;
 
     close_cmdfile(cmddatas);
     cmddatas = read_cmdfile(conf_cmdfile);
 
     g_hash_table_foreach(cmddatas->cmdfile, &cmdfile_vault, NULL);
+
+    for (i=0; i < nb_storage ; i++) {
+	taper_t *taper = &tapetable[i];
+	GSList *vsl;
+	for (vsl = taper->vaultqss; vsl != NULL; vsl = vsl->next) {
+	    vaultqs_t *vaultqs = (vaultqs_t *)vsl->data;
+	    GSList *src_label;
+	    g_debug("taper: %s", taper->name);
+	    g_debug("vaultqss: %p", vsl);
+	    for (src_label = vaultqs->src_labels; src_label != NULL; src_label = src_label->next) {
+		char *label = (char *)src_label->data;
+		GList *a;
+		g_debug("   label: %s", label);
+		for (a=vaultqs->vaultq.head ; a != NULL ; a = a->next) {
+		    sched_t *s = (sched_t *)a->data;
+		    g_debug("      host: %s   disk: %s", s->disk->hostname, s->disk->name);
+		}
+	    }
+	}
+    }
 
     write_cmdfile(cmddatas);
 }
