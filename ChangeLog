@@ -1,4 +1,7 @@
 2018-01-26  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Vault.pm: Call ->{'copy'}->finish_copy()
+
+2018-01-26  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/Label.pm: Remove debug statement
 	* server-src/driver.c: Do not add a COPY command if the dump is
 	  already on the storage

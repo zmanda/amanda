@@ -794,6 +794,7 @@ sub xfer_dumps {
 	$current->{'duration'} = $params{'duration'};
 	$current->{'nparts'} = $params{'nparts'};
 	$current->{'total_duration'} = $params{'total_duration'};
+	$current->{'server_crc'} = $params{'server_crc'};
 	$steps->{'maybe_done'}->();
     };
 
@@ -803,22 +804,32 @@ sub xfer_dumps {
 
 	# figure out how to log this, based on the results from the clerk (src)
 	# and scribe (dst)
+	my $result_calalog = "FAILED";
 	my $logtype;
 	if ($current->{'src_result'} eq 'DONE') {
 	    if ($current->{'dst_result'} eq 'DONE') {
 		$logtype = $L_DONE;
+		$result_calalog = "OK";
 	    } elsif ($current->{'dst_result'} eq 'PARTIAL') {
 		$logtype = $L_PARTIAL;
+		$result_calalog = "PARTIAL";
 	    } else { # ($current->{'dst_result'} eq 'FAILED')
 		$logtype = $L_FAIL;
+		$result_calalog = "FAILED";
 	    }
 	} else {
 	    if ($current->{'size'} > 0) {
 		$logtype = $L_PARTIAL;
+		$result_calalog = "PARTIAL";
 	    } else {
 		$logtype = $L_FAIL;
+		$result_calalog = "FAILED";
 	    }
 	}
+
+	my $kb = int($current->{'size'}/1024);
+	$self->{'dst'}->{'scribe'}->{'copy'}->finish_copy($current->{'nparts'}, $kb, $current->{'size'},
+	    $result_calalog, $current->{'server_crc'}, undef) if $self->{'dst'}->{'scribe'}->{'copy'};
 
 	my $dump = $current->{'dump'};
 	my $stats = make_stats($current->{'size'}, $current->{'total_duration'},
