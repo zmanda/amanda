@@ -811,3 +811,51 @@ void cmdfile_remove_for_restore_holding(cmddatas_t *cmddatas, char *hostname,
     }
     g_slist_free(data.ids);
 }
+
+typedef struct cmdfile_get_nb_image_cmd_for_storage_s {
+    char *hostname;
+    char *diskname;
+    char *timestamp;
+    int   level;
+    char *storage;
+    int   count;
+} cmdfile_get_nb_image_cmd_for_storage_t;
+
+static void
+cmdfile_get_nb_image_cmd_for_storage_fn(
+    gpointer key G_GNUC_UNUSED,
+    gpointer value,
+    gpointer user_data)
+{
+    cmddata_t *cmddata = value;
+    cmdfile_get_nb_image_cmd_for_storage_t *data = user_data;
+    if (strcmp(cmddata->hostname, data->hostname) == 0 &&
+	strcmp(cmddata->diskname, data->diskname) == 0 &&
+	strcmp(cmddata->dump_timestamp, data->timestamp) == 0 &&
+	cmddata->level == data->level &&
+	strcmp(cmddata->dst_storage, data->storage) == 0) {
+	data->count++;
+    }
+}
+
+int
+cmdfile_get_nb_image_cmd_for_storage(
+    cmddatas_t *cmddatas,
+    char *hostname,
+    char *diskname,
+    char *timestamp,
+    int   level,
+    char *storage)
+{
+    cmdfile_get_nb_image_cmd_for_storage_t data;
+    data.hostname = hostname;
+    data.diskname = diskname;
+    data.timestamp = timestamp;
+    data.level = level;
+    data.storage = storage;
+    data.count = 0;
+    g_hash_table_foreach(cmddatas->cmdfile, &cmdfile_get_nb_image_cmd_for_storage_fn, &data);
+
+    return data.count;
+}
+

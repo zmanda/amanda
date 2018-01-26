@@ -1,3 +1,14 @@
+2018-01-26  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/cmdfile.c (cmdfile_get_nb_image_cmd_for_storage): New
+	  function
+	* server-src/cmdfile.h (cmdfile_get_nb_image_cmd_for_storage): Add
+	  prototype
+	* server-src/find.c (make_dump_storage_hash, add_dump_storage_hash,
+	  dump_storage_hash_exist): New functions to keep track of all
+	  available dump
+	* server-src/find.h (make_dump_storage_hash, add_dump_storage_hash,
+	  dump_storage_hash_exist): Add prototypes
+
 2018-01-24  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/driver.c: Send CLOSE-VOLUME command only if the volume
 	  is opened

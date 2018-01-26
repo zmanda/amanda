@@ -93,8 +93,20 @@ void search_holding_disk(
 
 GHashTable *make_dump_hash(find_result_t *output_find);
 void free_dump_hash(GHashTable *dump_hash);
-find_result_t *dump_hash_exist(GHashTable *dump_hash, char *hostname, char *diskname,
-			       char *datestamp, int level);
+find_result_t *dump_hash_exist(GHashTable *dump_hash, char *hostname,
+			       char *diskname, char *datestamp, int level);
 
+char *make_dump_storage_key(char *hostname, char *dikname, char *timestamp,
+			    int   level, char *storage);
+GHashTable *make_dump_storage_hash(find_result_t *output_find);
+void add_dump_storage_hash(GHashTable *dump_storage_hash, char *hostname,
+			   char *diskname, char *timestamp, int level,
+			   char *storage);
+
+void free_dump_storage_hash(GHashTable *dump_storage_hash);
+find_result_t *dump_storage_hash_exist(GHashTable *dump_storage_hash,
+				       char *hostname, char *diskname,
+				       char *timestamp, int level,
+				       char *storage);
 
 #endif	/* !FIND_H */

@@ -88,3 +88,7 @@ void cmdfile_remove_for_restore_label(cmddatas_t *cmddatas, char *hostname,
 void cmdfile_remove_for_restore_holding(cmddatas_t *cmddatas, char *hostname,
 				        char *diskname, char *timestamp,
 				        char *holding_file);
+int cmdfile_get_nb_image_cmd_for_storage(cmddatas_t *cmddatas, char *hostname,
+					 char *diskname, char *timestamp,
+					 int   level, char *storage);
+

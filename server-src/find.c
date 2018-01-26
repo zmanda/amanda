@@ -1739,3 +1739,93 @@ void free_dump_hash(GHashTable *dump_hash G_GNUC_UNUSED)
     //It fail on some machine
     //g_hash_table_destroy(dump_hash);
 }
+
+char *
+make_dump_storage_key(
+    char *hostname,
+    char *diskname,
+    char *timestamp,
+    int   level,
+    char *storage)
+{
+
+    char level_str[NUM_STR_SIZE];
+    char *key;
+    g_snprintf(level_str, sizeof(level), "%d", level);
+    key = g_strconcat(hostname, " : ",
+		      diskname, " : ",
+		      timestamp, " : ",
+		      level_str, " : ",
+		      storage, NULL);
+    return key;
+}
+
+GHashTable *
+make_dump_storage_hash(
+    find_result_t *output_find)
+{
+    find_result_t *output_find_result;
+    GHashTable *dump_storage_hash = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, g_free);
+
+
+    for (output_find_result=output_find;
+         output_find_result;
+         output_find_result=output_find_result->next) {
+
+	if (strcmp(output_find_result->dump_status, "OK") == 0) {
+	    char *key = make_dump_storage_key(output_find_result->hostname,
+					      output_find_result->diskname,
+					      output_find_result->timestamp,
+					      output_find_result->level,
+					      output_find_result->storage);
+	    g_hash_table_insert(dump_storage_hash, key, output_find_result);
+	}
+    }
+
+    return dump_storage_hash;
+}
+
+void
+add_dump_storage_hash(
+    GHashTable *dump_storage_hash,
+    char *hostname,
+    char *diskname,
+    char *timestamp,
+    int   level,
+    char *storage)
+{
+    char *key = make_dump_storage_key(hostname,
+				      diskname,
+				      timestamp,
+				      level,
+				      storage);
+
+    g_hash_table_insert(dump_storage_hash, key, GINT_TO_POINTER(1));
+}
+
+find_result_t *
+dump_storage_hash_exist(
+    GHashTable *dump_storage_hash,
+    char *hostname,
+    char *diskname,
+    char *timestamp,
+    int   level,
+    char *storage)
+{
+    find_result_t *output_find_result;
+    char *key = make_dump_storage_key(hostname,
+				      diskname,
+				      timestamp,
+				      level,
+				      storage);
+
+    output_find_result = g_hash_table_lookup(dump_storage_hash, key);
+
+    return output_find_result;
+}
+
+void free_dump_storage_hash(GHashTable *dump_storage_hash G_GNUC_UNUSED)
+{
+    //It fail on some machine
+    //g_hash_table_destroy(dump_storage_hash);
+}
