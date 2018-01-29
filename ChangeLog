@@ -1,3 +1,8 @@
+2018-01-29  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* man/xml-source/amanda-changers.7.xml: Document the diskflat changer
+	* man/xml-source/amanda-devices.7.xml: The diskflat device must use
+	  the diskflat changer
+
 2018-01-26  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/Vault.pm: Call ->{'copy'}->finish_copy()
 
