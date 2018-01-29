@@ -392,15 +392,17 @@ main(
     amfree(conf_infofile);
 
     il = getconf_identlist(CNF_STORAGE);
-    storage_name = il->data;
-    storage = lookup_storage(storage_name);
-    conf_tapetype = storage_get_tapetype(storage);
+    if (il) {
+	storage_name = il->data;
+	storage = lookup_storage(storage_name);
+	conf_tapetype = storage_get_tapetype(storage);
+	conf_runtapes = storage_get_runtapes(storage);
+	policy = lookup_policy(storage_get_policy(storage));
+	conf_tapecycle = policy_get_retention_tapes(policy);
+    }
     conf_maxdumpsize = getconf_int64(CNF_MAXDUMPSIZE);
-    conf_runtapes = storage_get_runtapes(storage);
     conf_dumpcycle = getconf_int(CNF_DUMPCYCLE);
     conf_runspercycle = getconf_int(CNF_RUNSPERCYCLE);
-    policy = lookup_policy(storage_get_policy(storage));
-    conf_tapecycle = policy_get_retention_tapes(policy);
     conf_etimeout = (time_t)getconf_int(CNF_ETIMEOUT);
     conf_reserve  = getconf_int(CNF_RESERVE);
     conf_usetimestamps = getconf_boolean(CNF_USETIMESTAMPS);
@@ -490,27 +492,29 @@ main(
     /*
      * do some basic sanity checking
      */
-     if(conf_tapecycle <= runs_per_cycle) {
-	log_add(L_WARNING, _("tapecycle (%d) <= runspercycle (%d)"),
-		conf_tapecycle, runs_per_cycle);
-     }
-    
-    tape = lookup_tapetype(conf_tapetype);
-    if(conf_maxdumpsize > (gint64)0) {
-	tape_length = conf_maxdumpsize;
-	g_fprintf(stderr, "planner: tape_length is set from maxdumpsize (%jd KB)\n",
-			 (intmax_t)conf_maxdumpsize);
+    if (!no_dump) {
+	if(conf_tapecycle <= runs_per_cycle) {
+	    log_add(L_WARNING, _("tapecycle (%d) <= runspercycle (%d)"),
+			conf_tapecycle, runs_per_cycle);
+	}
+
+	tape = lookup_tapetype(conf_tapetype);
+	if(conf_maxdumpsize > (gint64)0) {
+	    tape_length = conf_maxdumpsize;
+	    g_fprintf(stderr, "planner: tape_length is set from maxdumpsize (%jd KB)\n",
+			(intmax_t)conf_maxdumpsize);
+	}
+	else {
+	    tape_length = tapetype_get_length(tape) * (gint64)conf_runtapes;
+	    g_fprintf(stderr, "planner: tape_length is set from tape length (%jd KB) * runtapes (%d) == %jd KB\n",
+			(intmax_t)tapetype_get_length(tape),
+			conf_runtapes,
+			(intmax_t)tape_length);
+	}
+	tape_mark = (size_t)tapetype_get_filemark(tape);
+	tt_blocksize_kb = (size_t)tapetype_get_blocksize(tape);
+	tt_blocksize = tt_blocksize_kb * 1024;
     }
-    else {
-	tape_length = tapetype_get_length(tape) * (gint64)conf_runtapes;
-	g_fprintf(stderr, "planner: tape_length is set from tape length (%jd KB) * runtapes (%d) == %jd KB\n",
-			 (intmax_t)tapetype_get_length(tape),
-			 conf_runtapes,
-			 (intmax_t)tape_length);
-    }
-    tape_mark = (size_t)tapetype_get_filemark(tape);
-    tt_blocksize_kb = (size_t)tapetype_get_blocksize(tape);
-    tt_blocksize = tt_blocksize_kb * 1024;
 
     g_fprintf(stderr, _("%s: time %s: startup took %s secs\n"),
 		    get_pname(),

@@ -400,14 +400,16 @@ main(
     chunker_program = g_strjoin(NULL, amlibexecdir, "/", "chunker", NULL);
 
     il = getconf_identlist(CNF_STORAGE);
-    storage_n = il->data;
-    storage = lookup_storage(storage_n);
-    conf_taperalgo = storage_get_taperalgo(storage);
-    conf_taper_parallel_write = storage_get_taper_parallel_write(storage);
-    conf_runtapes = storage_get_runtapes(storage);
-    conf_max_dle_by_volume = storage_get_max_dle_by_volume(storage);
-    if (conf_taper_parallel_write > conf_runtapes) {
-	conf_taper_parallel_write = conf_runtapes;
+    if (il) {
+	storage_n = il->data;
+	storage = lookup_storage(storage_n);
+	conf_taperalgo = storage_get_taperalgo(storage);
+	conf_taper_parallel_write = storage_get_taper_parallel_write(storage);
+	conf_runtapes = storage_get_runtapes(storage);
+	conf_max_dle_by_volume = storage_get_max_dle_by_volume(storage);
+	if (conf_taper_parallel_write > conf_runtapes) {
+	    conf_taper_parallel_write = conf_runtapes;
+	}
     }
 
     /* set up any configuration-dependent variables */
