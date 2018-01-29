@@ -1,4 +1,8 @@
 2018-01-29  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/driver.c server-src/planner.c: Don't do some check
+	  if --no-dump or no storage defined
+
+2018-01-29  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* man/xml-source/amanda-changers.7.xml: Document the diskflat changer
 	* man/xml-source/amanda-devices.7.xml: The diskflat device must use
 	  the diskflat changer
