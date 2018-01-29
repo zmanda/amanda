@@ -236,6 +236,31 @@ If set, the changer try to umount the removable disk when it is not in use. The 
 </refsect3>
 </refsect2>
 
+<refsect2><title>chg-diskflat:VTAPEROOT</title>
+<programlisting>
+tpchanger "chg-diskflat:/var/mnt/vtapes-flat"
+property "num-slot" "10"
+property "auto-create-slot" "yes"
+property "removable" "yes"
+property "mount" "yes"
+property "umount" "yes"
+property "umount-lockfile" "/etc/amanda/conf/vtapes-flat-lock"
+property "umount-idle" "1"
+</programlisting>
+
+<para>This changer driver can be used only with the diskflat device,
+supporting parallel access to vtapes stored in files named with the <computeroutput>label</computeroutput> in the directory specified after
+<computeroutput>chg-diskflat:</computeroutput>.  It does so by creating
+numbered "drives" so that simultaneous processes can access distinct slots.
+This changer is fast-search capable.</para>
+
+<refsect3><title>Properties</title>
+<!-- PLEASE KEEP THIS LIST IN ALPHABETICAL ORDER -->
+<para>Have the same properties as the chg-disk changers</para>
+</refsect3>
+
+</refsect2>
+
 <refsect2><title>chg-multi:DEVICE-LIST</title>
 <programlisting>
 tpchanger "chg-multi:{/dev/nst0,/dev/nst1,/dev/nst2}"

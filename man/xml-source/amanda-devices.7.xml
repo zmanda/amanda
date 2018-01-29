@@ -834,10 +834,10 @@ tapedev "diskflat:/path/to/diskflat/label-001"
 <para>Each slot is a single file named with the slot label.</para>
 <para>The <amkeyword>MAX-DLE-BY-VOLUME</amkeyword> setting must be set to
 <amdefault>1</amdefault>.</para>
-<para>Must be used with the <amkeyword>multi</amkeyword> changer.</para>
+<para>Must be used with the <amkeyword>diskflat</amkeyword> changer.</para>
 <programlisting>
-    tpchanger "chg-multi:diskflat:/path/to/diskflat/label-{001..010}"
-    autolabel "label-$3s" empty volume-error
+    tpchanger "chg-diskflat:diskflat:/path/to/diskflat/label-{001..010}"
+    autolabel "label-$5s" empty volume-error
     labelstr MATCH-AUTOLABEL
     max-dle-by-volume 1
 </programlisting>
