@@ -1,4 +1,7 @@
 2018-01-29  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/find.c (dump_storage_hash_exist): g_free(key)
+
+2018-01-29  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/driver.c server-src/planner.c: Don't do some check
 	  if --no-dump or no storage defined
 

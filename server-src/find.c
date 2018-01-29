@@ -1820,6 +1820,7 @@ dump_storage_hash_exist(
 				      storage);
 
     output_find_result = g_hash_table_lookup(dump_storage_hash, key);
+    g_free(key);
 
     return output_find_result;
 }
