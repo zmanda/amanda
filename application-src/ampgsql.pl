@@ -865,6 +865,7 @@ sub _base_backup {
        '--directory', $self->{'props'}->{'pg-datadir'},
        '--exclude', 'postmaster.pid',
        '--exclude', 'pg_xlog/*', # contains WAL files; will be handled below
+       '--exclude', 'pg_wal/*', # contains WAL files; will be handled below
        '--exclude', 'postmaster.pid',
        '--exclude', 'postmaster.opts',
        '--exclude', 'pg_replslot/*');
