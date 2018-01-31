@@ -13,6 +13,7 @@
     * amvault
        o new --uniq, --no-uniq argument
        o Behavior change: The default is --uniq
+       o new --delayed argument
 
 
                 Release Notes for amanda-3.5.1

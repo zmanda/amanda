@@ -77,6 +77,8 @@ sub local_message {
 	return "No dest_storage defined";
     } elsif ($self->{'code'} == 2500021) {
 	return "Do not vault '$self->{'hostname'} $self->{'diskname'} $self->{'dump_timestamp'} $self->{'level'}' because it is already on the '$self->{'storage_name'}' storage";
+    } elsif ($self->{'code'} == 2500022) {
+	return "Record vaulting of '$self->{'hostname'} $self->{'diskname'} $self->{'dump_timestamp'} $self->{'level'}' to storage '$self->{'storage_name'}' for later";
     } else {
 	return "No message for code $self->{'code'}";
     }
@@ -90,7 +92,7 @@ use warnings;
 use POSIX qw(strftime);
 use File::Temp;
 use Sys::Hostname;
-use Amanda::Config qw( :getconf config_dir_relative );
+use Amanda::Config qw( :init :getconf config_dir_relative );
 use Amanda::Disklist;
 use Amanda::Debug qw( :logging debug );
 use Amanda::Xfer qw( :constants );
@@ -106,6 +108,7 @@ use Amanda::Taper::Scribe qw( get_splitting_args_from_config );
 use Amanda::Storage qw( :constants );
 use Amanda::Changer qw( :constants );
 use Amanda::Cmdline;
+use Amanda::Cmdfile;
 use Amanda::Paths;
 use Amanda::Logfile qw( :logtype_t log_add log_add_full
 			log_rename $amanda_log_trace_log make_stats );
@@ -138,6 +141,7 @@ sub new {
 	opt_export => $params{'opt_export'},
 	interactivity => $params{'interactivity'},
 	uniq => $uniq,
+	delayed => $params{'delayed'},
 	opt_dumpspecs => $params{'opt_dumpspecs'},
 	opt_dry_run => $params{'opt_dry_run'},
 	config => $params{'config'},
@@ -189,7 +193,7 @@ sub new {
     $self->{'amlibexecdir'} = 0;
 
     # open up a trace log file and put our imprimatur on it, unless dry_runing
-    if (!$self->{'opt_dry_run'}) {
+    if (!$self->{'opt_dry_run'} && !$self->{'delayed'}) {
 	my $logdir = $self->{'logdir'} = config_dir_relative(getconf($CNF_LOGDIR));
 	my @now = localtime;
 	$self->{'longdate'} = strftime "%a %b %e %H:%M:%S %Z %Y", @now;
@@ -475,7 +479,7 @@ sub setup_src {
 				severity	=> $Amanda::Message::ERROR));
     }
 
-    if (!$self->{'opt_dry_run'}) {
+    if (!$self->{'opt_dry_run'} && !$self->{'delayed'}) {
 	# summarize the requested dumps
 	my $request;
 	if ($self->{'src_write_timestamp'}) {
@@ -584,6 +588,34 @@ sub plan_cb {
 				severity        => $Amanda::Message::INFO,
 				total_size_kb   => $total_kb));
 
+	return $self->quit(0);
+    }
+
+    if ($self->{'delayed'}) {
+	for my $dump (@{$plan->{'dumps'}}) {
+	    $self->user_msg(Amanda::Vault::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code            => 2500022,
+				severity        => $Amanda::Message::INFO,
+				hostname        => $dump->{'hostname'},
+				diskname        => $dump->{'diskname'},
+				dump_timestamp  => $dump->{'dump_timestamp'},
+				level           => $dump->{'level'},
+				storage_name	=> $self->{'dest_storage_name'}));
+	    $self->{'catalog'}->add_copy_cmd(config	    => get_config_name(),
+					     src_storage    => $dump->{'storage'},
+					     label	    => $dump->{'parts'}[1]->{'label'},
+					     hostname	    => $dump->{'hostname'},
+					     diskname	    => $dump->{'diskname'},
+					     dump_timestamp => $dump->{'dump_timestamp'},
+					     level	    => $dump->{'level'},
+					     dst_storage    => $self->{'dest_storage_name'},
+					     working_pid    => $$,
+					     status	    => $Amanda::Cmdfile::CMD_TODO,
+					     size	    => $dump->{'bytes'},
+					     start_time	    => time()+0);
+	}
 	return $self->quit(0);
     }
 

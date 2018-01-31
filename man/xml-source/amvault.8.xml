@@ -43,6 +43,7 @@
     <arg choice='opt'><option>--dest-storage</option>
 	    <replaceable>dest-storage</replaceable></arg>
     <arg choice='opt'>--no-uniq</arg>
+    <arg choice='opt'>--delayed</arg>
     <arg choice='plain'><replaceable>config</replaceable></arg>
     <arg choice='opt'>
       <arg choice='plain'><replaceable>hostname</replaceable></arg>
@@ -203,6 +204,13 @@ found.</para>
   <term><option>--no-uniq</option></term>
   <listitem>
 <para>Allow to vault a dump even if the storage already have a copy.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><option>--delayed</option></term>
+  <listitem>
+<para>Schedule the vault to be run later.</para>
   </listitem>
   </varlistentry>
 
