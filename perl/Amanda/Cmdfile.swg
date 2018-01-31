@@ -148,6 +148,13 @@ typedef struct {
 					       timestamp, holding_file);
 	}
 
+	int get_nb_image_cmd_for_storage(char *hostname, char *diskname,
+					 char *timestamp, int level,
+					 char *storage) {
+	    cmdfile_get_nb_image_cmd_for_storage(self, hostname, diskname,
+						 timestamp, level,storage);
+	}
+
     }
 } Cmdfile;
 

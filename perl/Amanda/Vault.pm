@@ -75,6 +75,10 @@ sub local_message {
     #	return "No src_storage defined";
     } elsif ($self->{'code'} == 2500020) {
 	return "No dest_storage defined";
+    } elsif ($self->{'code'} == 2500021) {
+	return "Do not vault '$self->{'hostname'} $self->{'diskname'} $self->{'dump_timestamp'} $self->{'level'}' because it is already on the '$self->{'storage_name'}' storage";
+    } else {
+	return "No message for code $self->{'code'}";
     }
 }
 
@@ -102,6 +106,7 @@ use Amanda::Taper::Scribe qw( get_splitting_args_from_config );
 use Amanda::Storage qw( :constants );
 use Amanda::Changer qw( :constants );
 use Amanda::Cmdline;
+use Amanda::Cmdfile;
 use Amanda::Paths;
 use Amanda::Logfile qw( :logtype_t log_add log_add_full
 			log_rename $amanda_log_trace_log make_stats );
@@ -124,6 +129,8 @@ sub new {
 	$params{'dst_write_timestamp'} = Amanda::Util::generate_timestamp();
     }
 
+    my $uniq = $params{'uniq'};
+    $uniq = 1 if !defined $uniq;
     my $self = bless {
 	quiet => $params{'quiet'},
 	fulls_only => $params{'fulls_only'},
@@ -131,6 +138,7 @@ sub new {
 	incrs_only => $params{'incrs_only'},
 	opt_export => $params{'opt_export'},
 	interactivity => $params{'interactivity'},
+	uniq => $uniq,
 	opt_dumpspecs => $params{'opt_dumpspecs'},
 	opt_dry_run => $params{'opt_dry_run'},
 	config => $params{'config'},
@@ -335,6 +343,13 @@ sub run {
     die "already called" if $self->{'exit_cb'};
     $self->{'exit_cb'} = $exit_cb;
 
+    my $conf_cmdfile = config_dir_relative(getconf($CNF_CMDFILE));
+    $self->{'cmdfile'} = Amanda::Cmdfile->new($conf_cmdfile);
+    $self->{'cmdfile'}->unlock();
+
+
+    Amanda::Logfile::make_dump_storage_hash();
+
     $self->setup_src();
 }
 
@@ -520,6 +535,37 @@ sub plan_cb {
     return $self->failure($err) if $err;
 
     $src->{'plan'} = $plan;
+
+    # remove plan that are already in the destination storage
+    if ($self->{'uniq'}) {
+	for my $dump (@{$plan->{'dumps'}}) {
+	    my $nb = Amanda::Logfile::dump_storage_hash_exist(
+                                $dump->{'hostname'}, $dump->{'diskname'},
+				$dump->{'dump_timestamp'}, $dump->{'level'},
+				$self->{'dest_storage_name'});
+	    $nb += $self->{'cmdfile'}->get_nb_image_cmd_for_storage(
+		$dump->{'hostname'},
+		$dump->{'diskname'},
+		$dump->{'dump_timestamp'},
+		$dump->{'level'},
+		$self->{'dest_storage_name'});
+	    if ($nb) {
+		$dump->{'to_remove'} = 1;
+		$self->user_msg(Amanda::Vault::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code            => 2500021,
+				severity        => $Amanda::Message::INFO,
+				hostname        => $dump->{'hostname'},
+				diskname        => $dump->{'diskname'},
+				dump_timestamp  => $dump->{'dump_timestamp'},
+				level           => $dump->{'level'},
+				storage_name	=> $self->{'dest_storage_name'}));
+	    }
+	}
+	my @plan_array = grep { !$_->{'to_remove'} } @{$plan->{'dumps'}};
+	$plan->{'dumps'} = \@plan_array;
+    }
 
     if ($self->{'opt_dry_run'}) {
 	my $total_kb = Math::BigInt->new(0);

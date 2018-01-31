@@ -3,6 +3,9 @@ Changes in release 3.5.2
    * amstatus
        o new --[no]taped argument, useful when running
          'watch amstatus CONF --summary --notaped' if the run have many tapes
+   * amvault
+       o new --uniq, --no-uniq argument
+       o Behavior change: The default is --uniq
 
 Changes in release 3.5.1
 

@@ -308,6 +308,80 @@ static find_result_t *search_logfile_wrap(char *label, char *datestamp,
 }
 %}
 
+%{
+static GHashTable *Logfile_dump_storage_hash = NULL;
+static void Logfile_make_dump_storage_hash() {
+    disklist_t  *diskp = get_disklist();
+    find_result_t *output_find = find_dump(diskp, 0);
+    Logfile_dump_storage_hash = make_dump_storage_hash(output_find);
+}
+
+static void Logfile_add_dump_storage_hash(
+    char *hostname,
+    char *diskname,
+    char *timestamp,
+    int   level,
+    char *storage) {
+
+    add_dump_storage_hash(Logfile_dump_storage_hash, hostname, diskname,
+			  timestamp, level, storage);
+}
+
+static void Logfile_free_dump_storage_hash()
+{
+    free_dump_storage_hash(Logfile_dump_storage_hash);
+}
+
+static int Logfile_dump_storage_hash_exist(
+    char *hostname,
+    char *diskname,
+    char *timestamp,
+    int   level,
+    char *storage)
+{
+    if (dump_storage_hash_exist(Logfile_dump_storage_hash, hostname,
+			diskname, timestamp, level, storage)) {
+	return 1;
+    } else {
+	return 0;
+    }
+}
+%}
+
+static void Logfile_make_dump_storage_hash();
+static void Logfile_add_dump_storage_hash(
+    char *hostname,
+    char *diskname,
+    char *timestamp,
+    int   level,
+    char *storage);
+static void Logfile_free_dump_storage_hash();
+static int Logfile_dump_storage_hash_exist(
+    char *hostname,
+    char *diskname,
+    char *timestamp,
+    int   level,
+    char *storage);
+%perlcode %{
+
+sub make_dump_storage_hash {
+    Logfile_make_dump_storage_hash();
+}
+
+sub add_dump_storage_hash {
+    my ($hostname, $diskname, $timestamp, $level, $storage) = @_;
+    Logfile_add_dump_storage_hash($hostname, $diskname, $timestamp, $level, $storage);
+}
+
+sub dump_storage_hash_exist {
+    my ($hostname, $diskname, $timestamp, $level, $storage) = @_;
+
+    my $a = Logfile_dump_storage_hash_exist($hostname, $diskname, $timestamp, $level, $storage);
+    return $a;
+}
+%}
+
+
 %rename(search_holding_disk) search_holding_disk_wrap;
 %inline %{
 static find_result_t *search_holding_disk_wrap(int added_todo) {

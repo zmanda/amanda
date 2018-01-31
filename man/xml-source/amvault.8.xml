@@ -42,6 +42,7 @@
 	    <replaceable>src-storage</replaceable></arg>
     <arg choice='opt'><option>--dest-storage</option>
 	    <replaceable>dest-storage</replaceable></arg>
+    <arg choice='opt'>--no-uniq</arg>
     <arg choice='plain'><replaceable>config</replaceable></arg>
     <arg choice='opt'>
       <arg choice='plain'><replaceable>hostname</replaceable></arg>
@@ -66,6 +67,9 @@
 
 <para>This application is not yet in its final form, and is subject to major revision
 in subsequent versions of Amanda.  Backward compatibility is not guaranteed.</para>
+
+<para>Behavior change in 3.5.2: Amvault will not vault a dump if there is
+already a copy of it on the destination storage.</para>
 
 <para>Note that Amanda restore/recover operations will request tertiary media
 by label when dumpfiles are not found on secondary media, but there is no
@@ -192,6 +196,13 @@ import/export slots, where they can be more easily removed by an operator.
   <listitem>
 <para>Disable interactivity if a source or destination volume is not
 found.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><option>--no-uniq</option></term>
+  <listitem>
+<para>Allow to vault a dump even if the storage already have a copy.</para>
   </listitem>
   </varlistentry>
 
