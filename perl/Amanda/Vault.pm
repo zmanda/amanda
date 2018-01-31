@@ -75,6 +75,10 @@ sub local_message {
     #	return "No src_storage defined";
     } elsif ($self->{'code'} == 2500020) {
 	return "No dest_storage defined";
+    } elsif ($self->{'code'} == 2500021) {
+	return "Do not vault '$self->{'hostname'} $self->{'diskname'} $self->{'dump_timestamp'} $self->{'level'}' because it is already on the '$self->{'storage_name'}' storage";
+    } else {
+	return "No message for code $self->{'code'}";
     }
 }
 
@@ -124,6 +128,8 @@ sub new {
 	$params{'dst_write_timestamp'} = Amanda::Util::generate_timestamp();
     }
 
+    my $uniq = $params{'uniq'};
+    $uniq = 1 if !defined $uniq;
     my $self = bless {
 	quiet => $params{'quiet'},
 	fulls_only => $params{'fulls_only'},
@@ -131,6 +137,7 @@ sub new {
 	incrs_only => $params{'incrs_only'},
 	opt_export => $params{'opt_export'},
 	interactivity => $params{'interactivity'},
+	uniq => $uniq,
 	opt_dumpspecs => $params{'opt_dumpspecs'},
 	opt_dry_run => $params{'opt_dry_run'},
 	config => $params{'config'},
@@ -517,6 +524,33 @@ sub plan_cb {
     return $self->failure($err) if $err;
 
     $src->{'plan'} = $plan;
+
+    # remove plan that are already in the destination storage
+    if ($self->{'uniq'}) {
+	for my $dump (@{$plan->{'dumps'}}) {
+	    my $nb = $self->{'catalog'}->get_nb_image_command_for_storage(
+		$dump->{'hostname'},
+		$dump->{'diskname'},
+		$dump->{'dump_timestamp'},
+		$dump->{'level'},
+		$self->{'dest_storage_name'});
+	    if ($nb) {
+		$dump->{'to_remove'} = 1;
+		$self->user_msg(Amanda::Vault::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code            => 2500021,
+				severity        => $Amanda::Message::INFO,
+				hostname        => $dump->{'hostname'},
+				diskname        => $dump->{'diskname'},
+				dump_timestamp  => $dump->{'dump_timestamp'},
+				level           => $dump->{'level'},
+				storage_name	=> $self->{'dest_storage_name'}));
+	    }
+	}
+	my @plan_array = grep { !$_->{'to_remove'} } @{$plan->{'dumps'}};
+	$plan->{'dumps'} = \@plan_array;
+    }
 
     if ($self->{'opt_dry_run'}) {
 	my $total_kb = Math::BigInt->new(0);
