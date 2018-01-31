@@ -120,7 +120,7 @@ sub usage {
 Usage: amvault [-o configoption...] [-q] [--quiet] [-n] [--dry-run]
 	   [--exact-match] [--export] [--nointeractivity]
 	   [--src-labelstr labelstr] [--src-storage storage]
-	   [--no-uniq] [--dest-storage storage]
+	   [--no-uniq] [--delayed] [--dest-storage storage]
 	   [--fulls-only] [--latest-fulls] [--incrs-only]
 	   [--src-timestamp src-timestamp]
 	   config
@@ -142,6 +142,7 @@ Usage: amvault [-o configoption...] [-q] [--quiet] [-n] [--dry-run]
     --src-timestamp: the timestamp of the Amanda run that should be vaulted
     --no-uniq: Vault a dump even if a copy is already in the dest-storage
     --uniq: Do not vault something that is already in the dest-storage
+    --delayed: Schedule the vault to be run later
 
 Copies dumps selected by the specified filters onto volumes on the storage
 <dest-storage>.  If <src-timestamp> is "latest", then the most recent run of
@@ -174,6 +175,7 @@ my $opt_src_storage_name;
 my $opt_dest_storage_name;
 my $opt_interactivity = 1;
 my $opt_uniq = undef;
+my $opt_delayed = 0;
 
 debug("Arguments: " . join(' ', @ARGV));
 Getopt::Long::Configure(qw{ bundling });
@@ -201,6 +203,7 @@ GetOptions(
     'dest-storage=s' => \$opt_dest_storage_name,
     'interactivity!' => \$opt_interactivity,
     'uniq!' => \$opt_uniq,
+    'delayed!' => \$opt_delayed,
     'version' => \&Amanda::Util::version_opt,
     'help' => \&usage,
 ) or usage("usage error");
@@ -305,6 +308,7 @@ my $messages;
     opt_export => $opt_export,
     interactivity => $interactivity,
     uniq => $opt_uniq,
+    delayed => $opt_delayed,
     config_overrides_opts => \@config_overrides_opts,
     user_msg => \&user_msg,
     delay => $delay,
