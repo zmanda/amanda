@@ -89,7 +89,7 @@ package Amanda::Vault;
 use strict;
 use warnings;
 
-use POSIX qw(strftime);
+use POSIX qw( WIFEXITED WEXITSTATUS strftime );
 use File::Temp;
 use Sys::Hostname;
 use Amanda::Config qw( :init :getconf config_dir_relative );
@@ -142,6 +142,7 @@ sub new {
 	interactivity => $params{'interactivity'},
 	uniq => $uniq,
 	delayed => $params{'delayed'},
+	run_delayed => $params{'run_delayed'},
 	opt_dumpspecs => $params{'opt_dumpspecs'},
 	opt_dry_run => $params{'opt_dry_run'},
 	config => $params{'config'},
@@ -353,7 +354,55 @@ sub run {
 
     Amanda::Logfile::make_dump_storage_hash();
 
-    $self->setup_src();
+    if ($self->{'run_delayed'}) {
+	#fork the driver
+	my ($rpipe, $driver_pipe) = POSIX::pipe();
+	my $driver_pid = POSIX::fork();
+	if ($driver_pid == 0) {
+	    my $driver = "$amlibexecdir/driver";
+	    my @log_filename = ('--log-filename', $self->{'trace_log_filename'});
+	    my @config_overrides = ();
+	    if (defined $self->{'config_overrides_opt'} and
+		@{$self->{'config_overrides_opt'}}) {
+		@config_overrides = @{$self->{'config_overrides_opt'}};
+	    }
+	    ## child, exec the driver
+	    POSIX::dup2($rpipe, 0);
+	    POSIX::close($rpipe);
+	    POSIX::close($driver_pipe);
+	    POSIX::dup2(fileno($self->{'amdump_log'}), 1);
+	    POSIX::dup2(fileno($self->{'amdump_log'}), 2);
+	    debug("exec: " . join(' ', $driver, $self->{'config'}, @log_filename, "--no-dump", "--no-vault", @config_overrides));
+	    close($self->{'amdump_log'});
+	    exec $driver, $self->{'config'}, @log_filename, "--no-dump",
+			"--no-flush", "-ostorage=",
+			"-ovault-storage=$self->{'dest_storage_name'}",
+			@config_overrides;
+	    die "Could not exec $driver: $!";
+	}
+
+	debug(" driver: $driver_pid");
+	open my $driver_stream, ">&=$driver_pipe";
+	POSIX::close($rpipe);
+
+	print {$driver_stream} "DATE $self->{'timestamp'}\n";
+	print {$driver_stream} "ENDFLUSH\n";
+	close($driver_stream);
+
+	my $dead = wait();
+	die("Error waiting: $!") if ($dead <= 0);
+	my $s = $? >> 8;
+	debug("driver finished with exit code $s");
+	my $exit = WIFEXITED($?)? WEXITSTATUS($?) : 1;
+	$self->{'exit_code'} |= $exit if $exit;
+
+	my $end_longdate = strftime "%a %b %e %H:%M:%S %Z %Y", localtime;
+	$self->amdump_log("end at $end_longdate");
+
+	$self->quit($self->{'exit_code'});
+    } else {
+	$self->setup_src();
+    }
 }
 
 sub setup_src {
@@ -490,7 +539,7 @@ sub setup_src {
 				severity	=> $Amanda::Message::ERROR));
     }
 
-    if (!$self->{'opt_dry_run'} && !$self->{'delayed'}) {
+    if (!$self->{'opt_dry_run'} && !$self->{'delayed'} && !$self->{'run_delayed'}) {
 	# summarize the requested dumps
 	my $request;
 	if ($self->{'src_write_timestamp'}) {
