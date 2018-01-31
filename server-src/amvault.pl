@@ -118,6 +118,7 @@ use Getopt::Long;
 use Amanda::Cmdline qw( :constants parse_dumpspecs );
 use Amanda::DB::Catalog2;
 use Amanda::Vault;
+use Amanda::Amdump;
 
 sub usage {
     my ($msg) = @_;
@@ -128,7 +129,7 @@ sub usage {
 Usage: amvault [-o configoption...] [-q] [--quiet] [-n] [--dry-run]
 	   [--exact-match] [--export] [--nointeractivity]
 	   [--src-labelstr labelstr] [--src-storage storage]
-	   [--no-uniq] [--delayed] [--dest-storage storage]
+	   [--no-uniq] [--delayed] [run-delayed] [--dest-storage storage]
 	   [--fulls-only] [--latest-fulls] [--incrs-only]
 	   [--src-timestamp src-timestamp]
 	   config
@@ -151,6 +152,7 @@ Usage: amvault [-o configoption...] [-q] [--quiet] [-n] [--dry-run]
     --no-uniq: Vault a dump even if a copy is already in the dest-storage
     --uniq: Do not vault something that is already in the dest-storage
     --delayed: Schedule the vault to be run later
+    --run-delayed: Run the delayed vault
 
 Copies dumps selected by the specified filters onto volumes on the storage
 <dest-storage>.  If <src-timestamp> is "latest", then the most recent run of
@@ -184,6 +186,7 @@ my $opt_dest_storage_name;
 my $opt_interactivity = 1;
 my $opt_uniq = undef;
 my $opt_delayed = 0;
+my $opt_run_delayed = 0;
 
 debug("Arguments: " . join(' ', @ARGV));
 Getopt::Long::Configure(qw{ bundling });
@@ -212,6 +215,7 @@ GetOptions(
     'interactivity!' => \$opt_interactivity,
     'uniq!' => \$opt_uniq,
     'delayed!' => \$opt_delayed,
+    'run-delayed' => \$opt_run_delayed,
     'version' => \&Amanda::Util::version_opt,
     'help' => \&usage,
 ) or usage("usage error");
@@ -314,6 +318,7 @@ my $messages;
     interactivity => $interactivity,
     uniq => $opt_uniq,
     delayed => $opt_delayed,
+    run_delayed => $opt_run_delayed,
     config_overrides_opts => \@config_overrides_opts,
     user_msg => \&user_msg,
     delay => $delay,

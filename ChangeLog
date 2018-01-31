@@ -1,4 +1,10 @@
 2018-01-31  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Vault.pm: Run the driver if run_delayed is set
+	* server-src/amvault.pl: New --run-delayed argument
+	* man/xml-source/amvault.8.xml: Document it
+	* NEWS, ReleaseNotes: Add it
+
+2018-01-31  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/Vault.pm: Add vault command to the commands table if
 	  delayed is set
 	* server-src/amvault.pl: New --delayed argument

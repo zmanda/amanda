@@ -12,6 +12,7 @@ Changes in release 3.5.2
        o new --uniq, --no-uniq argument
        o Behavior change: The default is --uniq
        o new --delayed argument
+       o new --run-delayed argument
 
 Changes in release 3.5.1
 

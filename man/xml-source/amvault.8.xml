@@ -44,6 +44,7 @@
 	    <replaceable>dest-storage</replaceable></arg>
     <arg choice='opt'>--no-uniq</arg>
     <arg choice='opt'>--delayed</arg>
+    <arg choice='opt'>--run-delayed</arg>
     <arg choice='plain'><replaceable>config</replaceable></arg>
     <arg choice='opt'>
       <arg choice='plain'><replaceable>hostname</replaceable></arg>
@@ -211,6 +212,17 @@ found.</para>
   <term><option>--delayed</option></term>
   <listitem>
 <para>Schedule the vault to be run later.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><option>--run-delayed</option></term>
+  <listitem>
+<para>Run the delayed vault, it is the same as running:
+<programlisting>
+amdump CONF --no-flush --no-dump --vault -ostorage= -ovault-storage=$dest-storage
+</programlisting>
+</para>
   </listitem>
   </varlistentry>
 
