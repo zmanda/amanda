@@ -821,6 +821,7 @@ start_amcatalog(void)
 			      amcatalog, get_config_name(), "--interactive", NULL);
     amcatalog_in = fdopen(amcatalog_infd, "w");
     amcatalog_out = fdopen(amcatalog_outfd, "r");
+    g_free(amcatalog);
 }
 
 char *
@@ -1099,7 +1100,9 @@ amcatalog_get_flush_cmd(void)
 	if (cmddata) {
 	    g_ptr_array_add(result ,cmddata);
 	}
+	g_free(line);
     }
+    g_ptr_array_free(lines, TRUE);
     return result;
 }
 
@@ -1117,7 +1120,9 @@ amcatalog_get_copy_cmd(void)
 	if (cmddata) {
 	    g_ptr_array_add(result ,cmddata);
 	}
+	g_free(line);
     }
+    g_ptr_array_free(lines, TRUE);
     return result;
 }
 
@@ -1151,7 +1156,7 @@ amcatalog_get_log_names(void)
 	    dot = strchr(dot, '.');
 	    if (dot) {
 		*dot = '\0';
-		g_hash_table_insert(log_names, log_name, log_name);
+		g_hash_table_replace(log_names, log_name, log_name);
 	    }
 	}
     }
@@ -1170,14 +1175,16 @@ amcatalog_get_dump_list(void)
 
     lines = run_amcatalog_multi("dump", 1, "--timestamp");
     for (i = 1; i < lines->len; i++) {
-	gchar **one_dump = split_quoted_strings(g_ptr_array_index(lines, i));
+	gchar *line = g_ptr_array_index(lines, i);
+	gchar **one_dump = split_quoted_strings(line);
 	gchar *key = g_strdup_printf("%s : %s : %s : %s", one_dump[1],
 				     one_dump[2], one_dump[3], one_dump[4]);
-	if (g_str_equal(one_dump[1],"dump_timestamp"))
-	    continue;
+	if (!g_str_equal(one_dump[1],"dump_timestamp")) {
+	    g_hash_table_replace(dumps, key, key);
+	}
 
-	g_hash_table_insert(dumps, key, key);
 	g_strfreev(one_dump);
+	g_free(line);
     }
     g_ptr_array_free(lines, TRUE);
 
@@ -1196,7 +1203,8 @@ amcatalog_get_parts(
 
     lines = run_amcatalog_multi("part", 4, "--timestamp", "--exact-match", Xhostname, Xdiskname);
     for (i = 1; i < lines->len; i++) {
-	gchar **one_part = split_quoted_strings(g_ptr_array_index(lines, i));
+	gchar *line = g_ptr_array_index(lines, i);
+	gchar **one_part = split_quoted_strings(line);
 	//gchar *dump_config = one_part[0];
 	gchar *timestamp = one_part[1];
 	gchar *hostname = one_part[2];
@@ -1218,6 +1226,7 @@ amcatalog_get_parts(
 	GPtrArray *parts;
 	part_result_t *apart;
 
+	g_free(line);
 	if (g_str_equal(timestamp,"dump_timestamp"))
 	    continue;
 
@@ -1264,8 +1273,10 @@ cat_dump_hash_exist(
 				 diskname, timestamp, level);
 
     if (g_hash_table_lookup(dump_hash, key)) {
+	g_free(key);
 	return TRUE;
     } else {
+	g_free(key);
 	return FALSE;
     }
 }
