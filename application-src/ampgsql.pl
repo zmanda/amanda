@@ -81,7 +81,6 @@ sub new {
 	'pg-remove-incremental-wal' => 'no',
     };
 
-    $self->{'pg-version'} = $self->_get_pg_version();
     my @PROP_NAMES = qw(pg-host pg-port pg-db pg-user pg-password pg-passfile
 			psql-path pg-datadir pg-archivedir pg-cleanupwal
 			pg-max-wal-wait  pg-full-wal
@@ -146,6 +145,8 @@ sub new {
             debug("client property: $pname (undef)");
         }
     }
+
+    $self->{'pg-version'} = $self->_get_pg_version();
 
     if (!exists $self->{'props'}->{'pg-datadir'}) {
 	$self->{'props'}->{'pg-datadir'} =  $self->{'args'}->{'device'};
