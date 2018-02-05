@@ -1,3 +1,7 @@
+2018-02-05  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* application-src/ampgsql.pl: Call _get_pg_version after
+	  setting $self->{'props'}->{'psql-path'}
+
 2018-01-31  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/Vault.pm: Run the driver if run_delayed is set
 	* server-src/amvault.pl: New --run-delayed argument
