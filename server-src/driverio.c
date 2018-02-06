@@ -1162,6 +1162,8 @@ free_sched(
 {
     g_free(sp->dumpdate);
     g_free(sp->degr_dumpdate);
+    g_free(sp->based_on_timestamp);
+    g_free(sp->degr_based_on_timestamp);
     g_free(sp->destname);
     g_free(sp->datestamp);
     g_free(sp->degr_mesg);

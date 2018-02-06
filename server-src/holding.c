@@ -457,7 +457,9 @@ holding_dir_stop_if_pid_fn(
 	return take_holding_pid(hdir, getppid());
     } else {
 	char *pid_file = g_strconcat(hdir, "/pid", NULL);
-	return can_take_holding(pid_file, 0);
+	int r = can_take_holding(pid_file, 0);
+	g_free(pid_file);
+	return r;
     }
 }
 
@@ -813,6 +815,7 @@ holding_cleanup_dir(
     /* Do not cleanup if not from us and their amdump is still running */
     pid_file = g_strconcat(fqpath, "/pid", NULL);
     if (!can_take_holding(pid_file, 1)) {
+	g_free(pid_file);
 	return 0;
     }
     g_free(pid_file);

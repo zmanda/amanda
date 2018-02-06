@@ -74,6 +74,7 @@ typedef struct cmdatas_s {
     cmdfile_t  cmdfile;
 } cmddatas_t;
 
+void free_cmddata(gpointer p);
 void unlock_cmdfile(cmddatas_t *cmddatas);
 cmddatas_t *read_cmdfile(char *filename);
 cmddata_t *cmdfile_parse_line (char *line, gboolean *generic_command_restore, gboolean *specific_command_restore);

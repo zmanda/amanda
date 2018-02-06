@@ -976,9 +976,11 @@ amcatalog_remove_working_cmd(
     int pid)
 {
     char  pid_str[50];
+    char *result;
 
     g_snprintf(pid_str, 50, "%d", pid);
-    run_amcatalog("remove-working-cmd", 1, pid_str);
+    result = run_amcatalog("remove-working-cmd", 1, pid_str);
+    g_free(result);
 }
 
 void
@@ -986,9 +988,11 @@ amcatalog_remove_cmd(
     int id)
 {
     char  id_str[50];
+    char *result;
 
     g_snprintf(id_str, 50, "%d", id);
-    run_amcatalog("remove-cmd", 1, id_str);
+    result = run_amcatalog("remove-cmd", 1, id_str);
+    g_free(result);
 }
 
 int
@@ -1042,6 +1046,7 @@ amcatalog_add_cmd(
 	g_critical("no output from amcatalog");
     }
     id = atoi(line);
+    g_free(line);
     amfree(dst_storage);
     amfree(dump_timestamp);
     amfree(diskname);
@@ -1063,6 +1068,7 @@ amcatalog_get_cmd_from_id(
     line = run_amcatalog("get-cmd-from-id", 1, id_str);
     if (line) {
 	cmddata = cmdfile_parse_line(line, NULL, NULL);
+	g_free(line);
     }
     return cmddata;
 }
@@ -1081,7 +1087,9 @@ amcatalog_get_nb_image_cmd_for_storage(
     g_snprintf(level_str, 50, "%d", level);
     line = run_amcatalog("get-nb-image-cmd-for-storage", 5, hostname, diskname, dump_timestamp, level_str, dst_storage);
     if (line) {
-	return atoi(line);
+	int nb = atoi(line);
+	g_free(line);
+	return nb;
     }
     return 0;
 }
@@ -1134,8 +1142,10 @@ amcatalog_holding_have_cmd(
 
     line = run_amcatalog("get-cmd-ids-for-holding", 1, holding);
     if (!line || *line == '\0') {
+	g_free(line);
 	return FALSE;
     }
+    g_free(line);
     return TRUE;
 }
 
@@ -1186,6 +1196,7 @@ amcatalog_get_dump_list(void)
 	g_strfreev(one_dump);
 	g_free(line);
     }
+    g_free(g_ptr_array_index(lines, 0));
     g_ptr_array_free(lines, TRUE);
 
     return dumps;

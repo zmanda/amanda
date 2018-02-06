@@ -860,6 +860,7 @@ main(
     log_add(L_INFO, "pid-done %ld", (long)getpid());
 
     clear_tapelist();
+    quit_amcatalog();
     amfree(planner_timestamp);
     amfree(our_feature_string);
     am_release_feature_set(our_features);

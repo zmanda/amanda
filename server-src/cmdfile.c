@@ -23,10 +23,9 @@
 #define EXPIRE_DELAY 24*60*60
 #define EXPIRE_ADJUST 23*60*60
 
-static void free_cmddata(gpointer p);
 //static cmddata_t *duplicate_cmddata(cmddata_t *cmddata);
 
-static void
+void
 free_cmddata(
     gpointer p)
 {

@@ -892,7 +892,7 @@ run_client_script(
     pid_t     scriptpid;
     int       scriptin, scriptout, scripterr;
     char     *cmd;
-    GPtrArray *argv_ptr = g_ptr_array_new();
+    GPtrArray *argv_ptr;
     FILE     *streamout;
     FILE     *streamerr;
     char     *line;
@@ -996,6 +996,7 @@ run_client_script(
 	return;
     }
 
+    argv_ptr = g_ptr_array_new();
     cmd = g_strjoin(NULL, APPLICATION_DIR, "/", script->plugin, NULL);
     g_ptr_array_add(argv_ptr, g_strdup(script->plugin));
 
@@ -1349,7 +1350,7 @@ run_client_scripts(
 					client_script_out,
 					&so);
 		}
-		g_ptr_array_free(script->result->output, TRUE);
+		g_ptr_array_free_full(script->result->output);
 		script->result->output = NULL;
 	    }
 	    if (script->result->err) {
@@ -1358,7 +1359,7 @@ run_client_scripts(
 					client_script_err,
 					&so);
 		}
-		g_ptr_array_free(script->result->err, TRUE);
+		g_ptr_array_free_full(script->result->err);
 		script->result->err = NULL;
 	    }
 	}

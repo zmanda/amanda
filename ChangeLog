@@ -1,4 +1,12 @@
 2018-02-05  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/cmdfile.c (free_cmddata): Do not declare static
+	* server-src/cmdfile.h (free_cmddata): Add prototype
+	* client-src/client_util.c, common-src/pipespawn.c
+	  server-src/driver.c server-src/driverio.c
+	  server-src/holding.c server-src/planner.c
+	  server-src/server_util.c: Fix memory leak
+
+2018-02-05  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/server_util.c: Fix memory handling and leak
 
 2018-02-05  Jean-Louis Martineau <JMartineau@carbonite.com>

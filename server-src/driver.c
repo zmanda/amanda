@@ -2123,7 +2123,9 @@ start_degraded_mode(
 	    }
 	    else if(sp->degr_level != -1) {
 		sp->level = sp->degr_level;
+		g_free(sp->dumpdate);
 		sp->dumpdate = g_strdup(sp->degr_dumpdate);
+		g_free(sp->based_on_timestamp);
 		sp->based_on_timestamp = g_strdup(sp->degr_based_on_timestamp);
 		sp->est_nsize = sp->degr_nsize;
 		sp->est_csize = sp->degr_csize;
@@ -2986,6 +2988,7 @@ vault_taper_result(
                         cmddata->status = CMD_TODO;
                         cmddata->start_time = now + v->days * 60*60*24;
 			amcatalog_add_cmd(cmddata);
+			free_cmddata(cmddata);
 			// JLM Should call cmdfile_vault
                     }
                 }
@@ -3134,6 +3137,7 @@ file_taper_result(
 			    cmddata->status = CMD_TODO;
 			    cmddata->start_time = now + v->days * 60*60*24;
 			    amcatalog_add_cmd(cmddata);
+			    free_cmddata(cmddata);
 			    // JLM Should call cmdfile_vault
 			}
 		    }
@@ -3146,6 +3150,7 @@ file_taper_result(
 	    free_sched(sp);
 	    sp = NULL;
 	    g_free(holding_file);
+	    free_cmddata(cmddata);
 	};
     }
 
@@ -3274,6 +3279,7 @@ dumper_taper_result_finish(
 			cmddata->status = CMD_TODO;
 			cmddata->start_time = now + v->days * 60*60*24;
 			amcatalog_add_cmd(cmddata);
+			free_cmddata(cmddata);
 			// JLM Should call cmdfile_vault
 		    }
 		}
@@ -3525,6 +3531,7 @@ dumper_chunker_result_finish(
 		    }
 		}
 		amfree(qname);
+		free_cmddata(cmddata);
 	    }
 	}
 	free_sched(sp);
@@ -4385,6 +4392,7 @@ read_flush(
 			enqueue_sched(&taper->tapeq, sp);
 		    }
 		}
+		free_cmddata(cmddata);
 	    } else {
 //g_error("not in commandfile");
 		// What to do with the holding file?

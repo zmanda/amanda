@@ -120,6 +120,7 @@ pipespawnv_passwd(
     g_strfreev(strings);
 
     dbprintf(_("Spawning \"%s\" in pipeline\n"), cmdline);
+    amfree(cmdline);
 
     /*
      * Create the pipes
@@ -252,6 +253,5 @@ pipespawnv_passwd(
 	error(_("error [exec %s: %s]"), prog, e);
 	/*NOTREACHED*/
     }
-    amfree(cmdline);
     return pid;
 }
