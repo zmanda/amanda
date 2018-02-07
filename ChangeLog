@@ -1,3 +1,6 @@
+2018-02-07  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* installcheck/taper.pl: Fix
+
 2018-02-05  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/cmdfile.c (free_cmddata): Do not declare static
 	* server-src/cmdfile.h (free_cmddata): Add prototype

@@ -761,7 +761,7 @@ taper_cmd("NEW-TAPE worker0-0 $handle");
 like(taper_reply, qr/^NEW-TAPE worker0-0 $handle TESTCONF01$/,
 	"got proper NEW-TAPE worker0-0 $handle") or die;
 like(taper_reply, qr/^READY worker0-0 $handle/);
-like(taper_reply, qr/^PARTIAL worker0-0 $handle INPUT-GOOD TAPE-ERROR "8960acbb:1575936" "\[sec [\d.]+ bytes 0 kps [\d.]+\]" "" "No space left on device: more than MAX_VOLUME_USAGE bytes written, splitting not enabled"$/,
+like(taper_reply, qr/^PARTIAL worker0-0 $handle INPUT-GOOD TAPE-ERROR "[0-9a-f]{8}:\d+" "\[sec [\d.]+ bytes 0 kps [\d.]+\]" "" "No space left on device: more than MAX_VOLUME_USAGE bytes written, splitting not enabled"$/,
 	"got PARTIAL") or die;
 # retry on the next tape
 $handle = "11-88899";
