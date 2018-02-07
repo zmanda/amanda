@@ -190,7 +190,7 @@ is_deeply([ get_dry_run("$sbindir/amvault",
 #  - exporting
 #  - directtcp vaulting (well, not really, since we don't support connecting yet)
 SKIP: {
-    skip "not built with ndmp and server", 1 unless
+    skip "not built with ndmp and server", 2 unless
 	Amanda::Util::built_with_component("ndmp") and Amanda::Util::built_with_component("server");
 
     Installcheck::Dumpcache::load("ndmp");

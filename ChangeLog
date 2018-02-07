@@ -1,4 +1,8 @@
 2018-02-07  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* installcheck/amvault.pl, installcheck/taper.pl: Fix count if
+	  compiled with --without-ndmp
+
+2018-02-07  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/DB/Catalog2/SQL.pm: Do not keep DROP prepared statement
 
 2018-02-07  Jean-Louis Martineau <JMartineau@carbonite.com>
