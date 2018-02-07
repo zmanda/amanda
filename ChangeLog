@@ -1,4 +1,8 @@
 2018-02-07  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* installcheck/Amanda_DB_Catalog2_MySQL.pl: Reorder check
+	* perl/Amanda/DB/Catalog2/SQL.pm: Fix CREATE statement
+
+2018-02-07  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* installcheck/taper.pl: Fix
 
 2018-02-05  Jean-Louis Martineau <JMartineau@carbonite.com>

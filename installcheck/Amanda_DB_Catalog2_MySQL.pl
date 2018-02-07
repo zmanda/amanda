@@ -35,16 +35,16 @@ use Amanda::Cmdline;
 use Amanda::Xfer qw( :constants );
 use POSIX qw( strftime );
 
-eval 'use DBD::mysql 4.043;';
-if ($@) {
-    plan skip_all => "Can't load DBD::mysql: $@";
-    exit 1;
-}
-
 my $catalog_mysql_database = $ENV{CATALOG_MYSQL_DATABASE};
 
 if (!defined $catalog_mysql_database || !$catalog_mysql_database) {
     plan skip_all => "Not configured for MySQL Database";
+    exit 1;
+}
+
+eval 'use DBD::mysql 4.043;';
+if ($@) {
+    plan skip_all => "Can't load DBD::mysql: $@";
     exit 1;
 }
 

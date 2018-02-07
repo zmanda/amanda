@@ -1618,7 +1618,7 @@ sub _compute_retention_storage {
 
 	while(1) {
 	    # C = table to move from drop to keep
-	    $sth = $dbh->prepare("CREATE $self->{'temporary'} TABLE C_$$ AS SELECT DISTINCT B_$$.copy_id,B_$$.parent_copy_id FROM A_$$,B_$$ WHERE A_$$.parent_copy_id=B_$$.copy_id")
+	    $sth = $dbh->prepare("CREATE $self->{'temporary'} TABLE C_$$ AS SELECT DISTINCT B_$$.copy_id AS copy_id,B_$$.parent_copy_id AS parent_copy_id FROM A_$$,B_$$ WHERE A_$$.parent_copy_id=B_$$.copy_id")
 		or die "Cannot prepare: " . $dbh->errstr();
 	    $sth->execute()
 		or die "Cannot execute: " . $sth->errstr();
