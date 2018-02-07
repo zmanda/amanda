@@ -964,7 +964,7 @@ sub _compute_storage_retention_tape {
 	    $result = $sth2->execute()
 		or die "Cannot execute: " . $sth->errstr();
 	    $retention_tapes += 10000;
-	    $sth3 = $self->make_statement('csrt dv', "DROP $self->{'drop_temporary'} TABLE IF EXISTS $volume_table");
+	    $sth3 = $dbh->prepare("DROP $self->{'drop_temporary'} TABLE IF EXISTS $volume_table");
 	    $sth3->execute()
 		or die "Cannot execute: " . $sth->errstr();
 	} until $result == 0;
@@ -1456,10 +1456,10 @@ sub _compute_retention {
     my $copy_table = "copy_ids_$$";
     my $volume_table = "volume_ids_$$";
 
-    $sth = $self->make_statement('dcids', "DROP $self->{'drop_temporary'} TABLE IF EXISTS $copy_table");
+    $sth = $dbh->prepare("DROP $self->{'drop_temporary'} TABLE IF EXISTS $copy_table");
     $sth->execute()
 	or die "Cannot execute: " . $sth->errstr();
-    $sth = $self->make_statement('dvids', "DROP $self->{'drop_temporary'} TABLE IF EXISTS $volume_table");
+    $sth = $dbh->prepare("DROP $self->{'drop_temporary'} TABLE IF EXISTS $volume_table");
     $sth->execute()
 	or die "Cannot execute: " . $sth->errstr();
 
@@ -1516,7 +1516,7 @@ sub _compute_retention {
 	$sth->execute('')
 	    or die "Cannot execute: " . $sth->errstr();
     } else {
-	$sth = $self->make_statement('dvt', "DROP $self->{'drop_temporary'} TABLE IF EXISTS $volume_table");
+	$sth = $dbh->prepare("DROP $self->{'drop_temporary'} TABLE IF EXISTS $volume_table");
 	$sth->execute()
 	    or die "Cannot execute: " . $sth->errstr();
 
@@ -1528,12 +1528,12 @@ sub _compute_retention {
 	$sth->execute()
 	    or die "Cannot execute: " . $sth->errstr();
 
-	$sth = $self->make_statement('dvt', "DROP $self->{'drop_temporary'} TABLE IF EXISTS $volume_table");
+	$sth = $dbh->prepare("DROP $self->{'drop_temporary'} TABLE IF EXISTS $volume_table");
 	$sth->execute()
 	    or die "Cannot execute: " . $sth->errstr();
     }
 
-    $sth = $self->make_statement('cr dct', "DROP $self->{'drop_temporary'} TABLE IF EXISTS $copy_table");
+    $sth = $dbh->prepare("DROP $self->{'drop_temporary'} TABLE IF EXISTS $copy_table");
     $sth->execute()
 	or die "Cannot execute: " . $sth->errstr();
 }
@@ -4809,10 +4809,10 @@ sub _remove {
 
     my $copy_table = "copy_ids_$$";
     my $image_table = "image_ids_$$";
-    $sth = $catalog->make_statement('dcids', "DROP $catalog->{'drop_temporary'} TABLE IF EXISTS $copy_table");
+    $sth = $dbh->prepare("DROP $catalog->{'drop_temporary'} TABLE IF EXISTS $copy_table");
     $sth->execute()
 	or die "Cannot execute: " . $sth->errstr();
-    $sth = $catalog->make_statement('diids', "DROP $catalog->{'drop_temporary'} TABLE IF EXISTS $image_table");
+    $sth = $dbh->prepare("DROP $catalog->{'drop_temporary'} TABLE IF EXISTS $image_table");
     $sth->execute()
 	or die "Cannot execute: " . $sth->errstr();
 
@@ -4866,11 +4866,11 @@ sub _remove {
     $sth->execute()
 	or die "Cannot execute: " . $sth->errstr();
 
-    $sth = $catalog->make_statement('diids', "DROP $catalog->{'drop_temporary'} TABLE IF EXISTS $image_table");
+    $sth = $dbh->prepare("DROP $catalog->{'drop_temporary'} TABLE IF EXISTS $image_table");
     $sth->execute()
 	or die "Cannot execute: " . $sth->errstr();
 
-    $sth = $catalog->make_statement('dcids', "DROP $catalog->{'drop_temporary'} TABLE IF EXISTS $copy_table");
+    $sth = $dbh->prepare("DROP $catalog->{'drop_temporary'} TABLE IF EXISTS $copy_table");
     $sth->execute()
 	or die "Cannot execute: " . $sth->errstr();
 
