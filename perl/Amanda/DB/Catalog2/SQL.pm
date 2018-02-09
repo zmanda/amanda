@@ -1464,7 +1464,7 @@ sub _compute_retention {
 	or die "Cannot execute: " . $sth->errstr();
 
     # get all copy_id for this config
-    $sth = $self->make_statement('cr cct', "CREATE $self->{'temporary'} TABLE $copy_table AS SELECT copy_id,parent_copy_id,storage_id,images.dump_timestamp,level,retention_days,retention_full,retention_recover FROM copys,images,disks,hosts WHERE hosts.config_id=? AND disks.host_id=hosts.host_id AND images.disk_id=disks.disk_id AND copys.image_id=images.image_id");
+    $sth = $self->make_statement('cr cct', "CREATE $self->{'temporary'} TABLE $copy_table AS SELECT copy_id,parent_copy_id,storage_id,dump_timestamp,level,retention_days,retention_full,retention_recover FROM copys,images,disks,hosts WHERE hosts.config_id=? AND disks.host_id=hosts.host_id AND images.disk_id=disks.disk_id AND copys.image_id=images.image_id");
     $sth->execute($self->{'config_id'})
 	or die "Cannot execute: " . $sth->errstr();
 
