@@ -1,4 +1,7 @@
-2018-02-07  Jean-Louis Martineau <JMartineau@carbonite.com>
+2018-02-09  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* installcheck/Amanda_DB_Catalog2_PgSQL.pl: Reorder check
+
+2018-02-09  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/DB/Catalog2/SQL.pm: Fix compatibility issue
 
 2018-02-07  Jean-Louis Martineau <JMartineau@carbonite.com>

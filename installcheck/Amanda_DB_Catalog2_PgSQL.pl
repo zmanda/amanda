@@ -35,18 +35,19 @@ use Amanda::Cmdline;
 use Amanda::Xfer qw( :constants );
 use POSIX qw( strftime );
 
-eval 'use DBD::Pg;';
-if ($@) {
-    plan skip_all => "Can't load DBD::Pg: $@";
-    exit 1;
-}
-
 my $catalog_pgsql_database = $ENV{CATALOG_PGSQL_DATABASE};
 
 if (!defined $catalog_pgsql_database || !$catalog_pgsql_database) {
     plan skip_all => "Not configured for PgSQL Database";
     exit 1;
 }
+
+eval 'use DBD::Pg;';
+if ($@) {
+    plan skip_all => "Can't load DBD::Pg: $@";
+    exit 1;
+}
+
 $ENV{AMANDA_CATALOG} = 'PgSQL';
 
 # send xfer logging somewhere
