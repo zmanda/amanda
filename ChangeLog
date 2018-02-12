@@ -1,4 +1,8 @@
 2018-02-12  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Cmdfile.swg (get_nb_image_cmd_for_storage): Return the
+	  result
+
+2018-02-12  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/Changer/disk.pm: Make slot dit with permission 0700
 
 2018-02-12  Jean-Louis Martineau <JMartineau@carbonite.com>
