@@ -496,7 +496,7 @@ sub _slot_exists {
 
     return 0 if $slot !~ /^\d*$/;
     if ($self->{'num-slot'} && $slot <= $self->{'num-slot'} && $self->{'auto-create-slot'}) {
-	mkdir $self->{'dir'} . "/slot$slot";
+	mkdir($self->{'dir'} . "/slot$slot", 0700);
     }
     return (-d $self->{'dir'} . "/slot$slot");
 }
