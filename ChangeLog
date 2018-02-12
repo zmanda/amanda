@@ -1,4 +1,7 @@
 2018-02-12  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Changer/disk.pm: Make slot dit with permission 0700
+
+2018-02-12  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/protocol.c (protocol_sendreq): Cache the result of
 	  get_platform_and_distro, calling it for each request take too much
 	  time
