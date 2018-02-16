@@ -1,3 +1,8 @@
+2018-02-14  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/DB/Catalog2/log.pm (get_dumps, get_parts): Return ref to
+	  the array
+	* installcheck/Amanda_DB_Catalog2_log.pl: Fix
+
 2018-02-12  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/Changer/disk.pm: Make slot dit with permission 0700
 

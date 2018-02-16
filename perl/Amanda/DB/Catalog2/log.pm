@@ -421,7 +421,8 @@ sub get_dumps {
     my $self = shift;
     my %params = @_;
 
-    return Amanda::DB::Catalog::get_dumps(%params);
+    my @dumps = Amanda::DB::Catalog::get_dumps(%params);
+    return \@dumps;
 }
 
 sub get_parts {
@@ -464,7 +465,7 @@ sub get_parts {
 	$dump->{'parts'} = \@dump_parts;
     }
 
-    return @parts;
+    return \@parts;
 }
 
 sub sort_dumps {

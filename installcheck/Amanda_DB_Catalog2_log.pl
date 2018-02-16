@@ -54,10 +54,10 @@ is_deeply($catalog->get_latest_write_timestamp(), undef,
 is_deeply($catalog->get_latest_write_timestamp(type => 'amvault'), undef,
     "No latest write_timestamp in an empty catalog, even of a specific type");
 
-my @dumps = $catalog->get_dumps();
-is_deeply([ @dumps ], [],
+my $dumps = $catalog->get_dumps();
+is_deeply([ @{$dumps} ], [],
     "No dumps in an empty catalog");
-is_deeply([ $catalog->get_parts(@dumps) ], [],
+is_deeply($catalog->get_parts($dumps), [],
     "No parts in an empty catalog");
 
 # and add some logfiles to query, and a corresponding tapelist, while also gathering
@@ -256,8 +256,32 @@ sub sortdumps {
 	    or $a->{'hostname'} cmp $b->{'hostname'}
 	    or $a->{'diskname'} cmp $b->{'diskname'}
 	    or $a->{'level'} <=> $b->{'level'}
+	    or $a->{'storage'} cmp $b->{'storage'}
+	    or $a->{'dump_status'} cmp $b->{'dump_status'}
     }
     @_;
+}
+
+sub sortdumps_ref {
+    my $dumps = shift;
+    map {
+	# convert bigints to strings and on to integers so is_deeply doesn't get confused
+	$_->{'level'} = "$_->{level}" + 0;
+	$_->{'bytes'} = "$_->{bytes}" + 0;
+	$_->{'kb'} = "$_->{kb}" + 0;
+	$_->{'orig_kb'} = "$_->{orig_kb}" + 0;
+	$_->{'nparts'} = "$_->{nparts}" + 0;
+	$_;
+    } sort {
+	$a->{'write_timestamp'} cmp $b->{'write_timestamp'}
+	    or $a->{'dump_timestamp'} cmp $b->{'dump_timestamp'}
+	    or $a->{'hostname'} cmp $b->{'hostname'}
+	    or $a->{'diskname'} cmp $b->{'diskname'}
+	    or $a->{'level'} <=> $b->{'level'}
+	    or $a->{'storage'} cmp $b->{'storage'}
+	    or $a->{'dump_status'} cmp $b->{'dump_status'}
+    }
+    @{$dumps};
 }
 
 ##
@@ -513,114 +537,114 @@ got_parts([ $catalog->sort_parts(['label'],
 
 ### test dump selecting
 
-got_dumps([ sortdumps $catalog->get_dumps() ],
+got_dumps([ sortdumps_ref $catalog->get_dumps() ],
     [ sortdumps dumps_named qr/.*/ ],
     "get_dumps returns all dumps when given no parameters");
 
-got_dumps([ sortdumps $catalog->get_dumps(write_timestamp => '20080111000000') ],
+got_dumps([ sortdumps_ref $catalog->get_dumps(write_timestamp => '20080111000000') ],
     [ sortdumps dumps_named qr/somebox_lib_20080111/ ],
     "get_dumps parameter write_timestamp");
 
-got_dumps([ sortdumps $catalog->get_dumps(write_timestamp => '20080111') ],
+got_dumps([ sortdumps_ref $catalog->get_dumps(write_timestamp => '20080111') ],
     [ sortdumps dumps_named qr/somebox_lib_20080111/ ],
     "get_dumps accepts a short write_timestamp and zero-pads it");
 
-got_dumps([ sortdumps $catalog->get_dumps(write_timestamps => ['20080111000000','20080222222222']) ],
+got_dumps([ sortdumps_ref $catalog->get_dumps(write_timestamps => ['20080111000000','20080222222222']) ],
     [ sortdumps dumps_named qr/(20080111|20080222222222)$/ ],
     "get_dumps parameter write_timestamps");
 
-got_dumps([ sortdumps $catalog->get_dumps(hostname => 'otherbox') ],
+got_dumps([ sortdumps_ref $catalog->get_dumps(hostname => 'otherbox') ],
     [ sortdumps dumps_named qr/^otherbox/ ],
     "get_dumps parameter hostname");
 
-got_dumps([ sortdumps $catalog->get_dumps(hostname => 'oldbox') ],
+got_dumps([ sortdumps_ref $catalog->get_dumps(hostname => 'oldbox') ],
     [ sortdumps dumps_named qr/^oldbox_.*_holding/ ],
     "get_dumps parameter hostname, holding");
 
-got_dumps([ sortdumps $catalog->get_dumps(hostnames => ['notthere', 'otherbox']) ],
+got_dumps([ sortdumps_ref $catalog->get_dumps(hostnames => ['notthere', 'otherbox']) ],
     [ sortdumps dumps_named qr/^otherbox/ ],
     "get_dumps parameter hostnames");
 
-got_dumps([ sortdumps $catalog->get_dumps(hostname_match => 'other*') ],
+got_dumps([ sortdumps_ref $catalog->get_dumps(hostname_match => 'other*') ],
     [ sortdumps dumps_named qr/^otherbox/ ],
     "get_dumps parameter hostname_match");
 
-got_dumps([ sortdumps $catalog->get_dumps(diskname => '/lib') ],
+got_dumps([ sortdumps_ref $catalog->get_dumps(diskname => '/lib') ],
     [ sortdumps dumps_named qr/^[^_]*_lib_/ ],
     "get_dumps parameter diskname");
 
-got_dumps([ sortdumps $catalog->get_dumps(disknames => ['/lib', '/usr/bin']) ],
+got_dumps([ sortdumps_ref $catalog->get_dumps(disknames => ['/lib', '/usr/bin']) ],
     [ sortdumps dumps_named qr/^[^_]*_(usr_bin|lib)_/ ],
     "get_dumps parameter disknames");
 
-got_dumps([ sortdumps $catalog->get_dumps(diskname_match => 'bin') ],
+got_dumps([ sortdumps_ref $catalog->get_dumps(diskname_match => 'bin') ],
     [ sortdumps dumps_named qr/.*_bin_/ ],
     "get_dumps parameter diskname_match");
 
-got_dumps([ sortdumps $catalog->get_dumps(dump_timestamp => '20080414144444') ],
+got_dumps([ sortdumps_ref $catalog->get_dumps(dump_timestamp => '20080414144444') ],
     [ sortdumps dumps_matching { $_->{'dump_timestamp'} eq '20080414144444' } ],
     "get_dumps parameter dump_timestamp");
 
-got_dumps([ sortdumps $catalog->get_dumps(
+got_dumps([ sortdumps_ref $catalog->get_dumps(
 			dump_timestamps => ['20080414144444', '20080311131133']) ],
     [ sortdumps dumps_matching { $_->{'dump_timestamp'} eq '20080414144444'
 			      or $_->{'dump_timestamp'} eq '20080311131133' } ],
     "get_dumps parameter dump_timestamps");
 
-got_dumps([ sortdumps $catalog->get_dumps(dump_timestamp_match => '200804-7') ],
+got_dumps([ sortdumps_ref $catalog->get_dumps(dump_timestamp_match => '200804-7') ],
     [ sortdumps dumps_matching { $_->{'dump_timestamp'} =~ /^20080[4567]/ } ],
     "get_dumps parameter dump_timestamp_match");
 
-got_dumps([ sortdumps $catalog->get_dumps(level => 0) ],
+got_dumps([ sortdumps_ref $catalog->get_dumps(level => 0) ],
     [ sortdumps dumps_matching { $_->{'level'} == 0 } ],
     "get_dumps parameter level");
 
-got_dumps([ sortdumps $catalog->get_dumps(levels => [ 1 ]) ],
+got_dumps([ sortdumps_ref $catalog->get_dumps(levels => [ 1 ]) ],
     [ sortdumps dumps_matching { $_->{'level'} == 1 } ],
     "get_dumps parameter levels");
 
-got_dumps([ sortdumps $catalog->get_dumps(status => "OK") ],
+got_dumps([ sortdumps_ref $catalog->get_dumps(status => "OK") ],
     [ sortdumps dumps_matching { $_->{'status'} eq "OK" } ],
     "get_dumps parameter status = OK");
 
-got_dumps([ sortdumps $catalog->get_dumps(status => "PARTIAL") ],
+got_dumps([ sortdumps_ref $catalog->get_dumps(status => "PARTIAL") ],
     [ sortdumps dumps_matching { $_->{'status'} eq "PARTIAL" } ],
     "get_dumps parameter status = PARTIAL");
 
-got_dumps([ sortdumps $catalog->get_dumps(status => "FAIL") ],
+got_dumps([ sortdumps_ref $catalog->get_dumps(status => "FAIL") ],
     [ sortdumps dumps_matching { $_->{'status'} eq "FAIL" } ],
     "get_dumps parameter status = FAIL");
 
 @dumpspecs = Amanda::Cmdline::parse_dumpspecs([".*", "/lib"], 0);
-got_dumps([ sortdumps $catalog->get_dumps(dumpspecs => [ @dumpspecs ]) ],
+got_dumps([ sortdumps_ref $catalog->get_dumps(dumpspecs => [ @dumpspecs ]) ],
     [ sortdumps dumps_named qr/_lib_/ ],
     "get_dumps parameter dumpspecs with one dumpspec");
 
 @dumpspecs = Amanda::Cmdline::parse_dumpspecs([".*", "/lib"], 0);
-got_dumps([ sortdumps $catalog->get_dumps(dumpspecs => [ @dumpspecs ], holding => 1) ],
+got_dumps([ sortdumps_ref $catalog->get_dumps(dumpspecs => [ @dumpspecs ], holding => 1) ],
     [ sortdumps dumps_named qr/_lib_.*_holding/ ],
     "get_dumps parameter dumpspecs with one dumpspec");
 
 @dumpspecs = Amanda::Cmdline::parse_dumpspecs([".*", "/lib", "somebox"], 0);
-got_dumps([ sortdumps $catalog->get_dumps(dumpspecs => [ @dumpspecs ]) ],
+got_dumps([ sortdumps_ref $catalog->get_dumps(dumpspecs => [ @dumpspecs ]) ],
     [ sortdumps dumps_matching { $_->{'diskname'} eq '/lib'
 			      or $_->{'hostname'} eq 'somebox' } ],
     "get_dumps parameter dumpspecs with two dumpspecs");
 
 @dumpspecs = Amanda::Cmdline::parse_dumpspecs(["otherbox", "*", "somebox"], 0);
-got_dumps([ sortdumps $catalog->get_dumps(dumpspecs => [ @dumpspecs ]) ],
+got_dumps([ sortdumps_ref $catalog->get_dumps(dumpspecs => [ @dumpspecs ]) ],
     [ sortdumps dumps_matching { $_->{'hostname'} eq 'otherbox'
 			      or $_->{'hostname'} eq 'somebox' } ],
     "get_dumps parameter dumpspecs with two non-overlapping dumpspecs");
 
 @dumpspecs = Amanda::Cmdline::parse_dumpspecs(["does-not-exist"], 0);
-got_dumps([ sortdumps $catalog->get_dumps(dumpspecs => [ @dumpspecs ]) ],
+got_dumps([ sortdumps_ref $catalog->get_dumps(dumpspecs => [ @dumpspecs ]) ],
     [ ],
     "get_dumps parameter dumpspecs with a dumpspec that matches nothing",
     zero_dumps_expected => 1);
 
 @dumpspecs = Amanda::Cmdline::dumpspec_t->new(undef, undef, undef, undef, '20080222222222');
-got_dumps([ sortdumps $catalog->get_dumps(dumpspecs => [ @dumpspecs ]) ],
+got_dumps([ sortdumps_ref $catalog->get_dumps(dumpspecs => [ @dumpspecs ]) ],
     [ sortdumps dumps_matching { $_->{'write_timestamp'} eq '20080222222222' }],
     "get_dumps parameter dumpspecs with write_timestamp");
 
