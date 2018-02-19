@@ -1,3 +1,7 @@
+2018-02-19  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* client-src/sendbackup-dump.c, client-src/sendbackup-gnutar.c,
+	  client-src/sendbackup.c: Fix fd managment
+
 2018-02-12  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/Cmdfile.swg (get_nb_image_cmd_for_storage): Return the
 	  result

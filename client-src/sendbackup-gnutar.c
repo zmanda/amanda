@@ -204,8 +204,10 @@ start_backup(
             return;
         }
         data_out = client_pipe[1];
+	client_pipe[1] = -1;
     } else {
         data_out = dataf;
+	dataf = -1;
     }
 
     error_pn = g_strconcat(get_pname(), "-smbclient", NULL);
@@ -225,6 +227,7 @@ start_backup(
 	aclose(data_out);
     } else {
         compout = data_out;
+	data_out = -1;
         encpid = -1;
     }
     /*  now do the client-side compression */
@@ -668,7 +671,6 @@ start_backup(
 	    native_crc.out = dumpout;
 	    native_crc.thread = g_thread_create(handle_crc_thread,
 					(gpointer)&native_crc, TRUE, NULL);
-	    close(client_pipe[1]);
 	    client_crc.in  = client_pipe[0];
 	    client_crc.out = dataf;
 	    client_crc.shm_ring = shm_ring;
@@ -682,7 +684,6 @@ start_backup(
 					(gpointer)&native_crc, TRUE, NULL);
 
 	if (have_filter) {
-	    close(client_pipe[1]);
 	    client_crc.in  = client_pipe[0];
 	    client_crc.out = dataf;
 	    client_crc.thread = g_thread_create(handle_crc_thread,

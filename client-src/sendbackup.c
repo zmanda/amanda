@@ -596,6 +596,7 @@ main(
 		    return 0;
 		}
 		data_out = client_pipe[1];
+		client_pipe[1] = -1;
 	    } else {
 		data_out = datafd;
 	    }
@@ -609,8 +610,10 @@ main(
 				   &compout, &data_out, &enc_stderr_pipe.fd,
 				   dle->clnt_encrypt, encryptopt, NULL);
 		g_debug("encrypt: pid %ld: %s", (long)encpid, dle->clnt_encrypt);
+		aclose(data_out);
 	    } else {
 		compout = data_out;
+		data_out = -1;
 		encpid = -1;
 	    }
 
@@ -648,6 +651,7 @@ main(
 		aclose(compout);
 	    } else {
 		dumpout = compout;
+		compout = -1;
 		comppid = -1;
 	    }
 
@@ -881,7 +885,6 @@ main(
 		    native_crc.out = dumpout;
 		    native_crc.thread = g_thread_create(handle_crc_thread,
 					 (gpointer)&native_crc, TRUE, NULL);
-		    close(client_pipe[1]);
 		    client_crc.shm_ring = shm_ring;
 		    client_crc.in  = client_pipe[0];
 		    client_crc.out = datafd;
@@ -895,7 +898,6 @@ main(
 					(gpointer)&native_crc, TRUE, NULL);
 
 		if (have_filter) {
-		    close(client_pipe[1]);
 		    client_crc.in  = client_pipe[0];
 		    client_crc.out = datafd;
 		    client_crc.thread = g_thread_create(handle_crc_thread,
