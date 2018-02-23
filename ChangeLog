@@ -1,3 +1,6 @@
+2018-02-23  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/driver.c: s/g_free/amfree/ for sp->try_again_message
+
 2018-02-19  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* client-src/sendbackup-dump.c, client-src/sendbackup-gnutar.c,
 	  client-src/sendbackup.c: Fix fd managment

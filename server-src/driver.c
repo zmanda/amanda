@@ -1920,7 +1920,7 @@ start_some_dumps(
 	    job->dumper = dumper;
 	    dumper->job = job;
 	    sp->timestamp = now;
-	    g_free(sp->try_again_message);
+	    amfree(sp->try_again_message);
 	    amfree(sp->disk->dataport_list);
 
 	    dumper->busy = 1;		/* dumper is now busy */
@@ -1970,7 +1970,7 @@ start_some_dumps(
 	    dumper->job = job;
 
 	    sp->timestamp = now;
-	    g_free(sp->try_again_message);
+	    amfree(sp->try_again_message);
 	    amfree(sp->disk->dataport_list);
 
 	    dumper->busy = 1;		/* dumper is now busy */
