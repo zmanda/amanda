@@ -1,0 +1,263 @@
+/*
+ * Copyright (c) 2009-2012 Zmanda, Inc.  All Rights Reserved.
+ * Copyright (c) 2013-2016 Carbonite, Inc.  All Rights Reserved.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, write to the Free Software Foundation, Inc.,
+ * 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
+ *
+ * Contact information: Carbonite Inc., 756 N Pastoria Ave
+ * Sunnyvale, CA 94085, or: http://www.zmanda.com
+ */
+
+%perlcode %{
+
+=head1 NAME
+
+Amanda::Feature - interface to Amanda feature bitfields
+
+=head1 SYNOPSIS
+
+    # set up features for this instance and print them
+    my $features = Amanda::Feature::Set->mine();
+    print "my features: $features\n";
+
+    # parse the other side's features
+    my $client_feat = Amanda::Feature::Set->from_string($feat_str);
+
+    # or assume the other side's features are old
+    my $client_feat = Amanda::Feature::Set->old()
+
+    # test for a feature
+    if ($feat->has($Amanda::Feature::fe_options_bsd_auth)) {
+	print "has BSD auth\n";
+    }
+
+=head1 DESCRIPTION
+
+C<Amanda::Feature::Set> objects are fairly simple.  The three constructors are
+shown in the SYNOPSIS: C<mine> (all currently-supported features), C<old> (only
+the features present in versions of Amanda before features were invented), or
+C<from_string>.
+
+An object has three methods to address specific bits:
+
+    # set a bit
+    $feat->add($Amanda::Feature::fe_req_xml);
+
+    # clear a bit
+    $feat->remove($Amanda::Feature::fe_req_xml);
+
+    # test a bit
+    if ($feat->has($Amanda::Feature::fe_req_xml)) ..
+
+And C<as_string> which converts the feature into a string.
+
+All features are available in scalars of the same name in the
+C<Amanda::Feature> namespace.
+
+=head1 FEATURE DOCUMENTATION
+
+This section includes as much information as is available for each feature.
+Each subsection begins with a description of the protocols in
+which the feature is relevant, and the end on which the feature is relevant.
+Any known dependencies for the feature are also mentioned.  Assume that any
+omissions in this section are due to limited information.
+
+=over 2
+
+=item fe_recover_splits
+
+ PROTOCOL: amidxtaped
+ FEATURE OF: client
+
+If set, the recovery application supports a DATA connection on a separate TCP
+connection.
+
+Dependencies: this feature is always set when amidxtaped is invoked via
+amandad.
+
+=item fe_amidxtaped_exchange_features
+
+ PROTOCOL: amidxtaped
+ FEATURE OF: server
+
+If set, amidxtaped can process the FEATURES= line in the command.
+The flag is actually tested by amrecover on amindexd's feature matrix, due to
+ordering constraints, so it assumes that amindexd and amidxtaped have the same
+features.
+
+=item fe_amrecover_FEEDME
+
+ PROTOCOL: amidxtaped
+ FEATURE OF: client
+
+If set, amrecover understands FEEDME lines on the control connection.
+
+Dependencies: this feature can only be set if fe_recover_splits is set.
+
+=item fe_amrecover_timestamp
+
+ PROTOCOL: amindexd
+ FEATURE OF: client
+
+If set, the recovery application supports full timestamps; otherwise, it can
+only process datestamps.
+
+=item fe_amidxtaped_options_hostname
+
+=item fe_amidxtaped_options_features
+
+=item fe_amidxtaped_options_auth
+
+ PROTOCOL: amidxtaped
+ FEATURE OF: server
+
+These feature flags indicate what fields amidxtaped supports in the OPTIONS
+line.  Of course, the client would need to know these features before it
+received the OPTIONS line, which would necessitate sending a NOOP request
+first.  In practice, they are completely unused.
+
+=item fe_amrecover_message
+
+ PROTOCOL: amidxtaped
+ FEATURE OF: client
+
+If set, the recovery applications understands MESSAGE lines on the control connection.
+
+Dependencies: a control connection only exists if amidxtaped is launched from
+amandad or I<fe_recover_splits> is used.
+
+=item fe_amrecover_feedme_tape
+
+ PROTOCOL: amidxtaped
+ FEATURE OF: server
+
+If set, amidxtaped recognizes the TAPE response to FEEDME.
+
+=item fe_amrecover_dle_in_header
+
+=item fe_amrecover_origsize_in_header
+
+ PROTOCOL: amidxtaped
+ FEATURE OF: client
+
+If set, amrecover can process a header containing the corresponding attribute.
+If not set, the attribute should be stripped from any headers sent to
+amrecover.
+
+ Feature                Header Attribute
+ -------                ----------------
+ dle_in_header          dle_str
+ origsize_in_header     orig_size
+
+=item fe_amidxtaped_abort
+
+ PROTOCOL: amidxtaped
+ FEATURE OF: server
+
+If set, amidxtaped can handle an ABORT message just before the datapath
+negotiation begins.
+
+=item fe_amidxtaped_datapath
+
+ PROTOCOL: amidxtaped
+ FEATURE OF: client and server
+
+If set on the client, then amrecover expects the server to start a DATAPATH
+negotiation after the header is sent.  If set on the server, then amrecover can
+process a DATAPATH negotiation after the header is sent.  In other words, the
+feature must be present on both sides for this negotiation to take place.  The
+DATAPATH negotiation is a three-way handshake:
+
+  AVAIL-DATAPATH <datapath list>         # to amidxtaped
+  USE-DATAPATH <datapath> [<ip:port> ..] # from amidxtaped
+  DATAPATH-OK                            # to amidxtaped
+
+No data may be transmitted until the handshake is complete.  See the wiki
+article entitled "amidxtaped protocol" for more detail.
+
+=item fe_amidxtaped_fsf
+
+=item fe_amidxtaped_label
+
+=item fe_amidxtaped_device
+
+=item fe_amidxtaped_host
+
+=item fe_amidxtaped_disk
+
+=item fe_amidxtaped_datestamp
+
+=item fe_amidxtaped_header
+
+=item fe_amidxtaped_config
+
+ PROTOCOL: amidxtaped
+ FEATURE OF: server
+
+If set, each feature means that amidxtaped can process the corresponding
+command line.  Note that I<fe_amidxtaped_label> does not indicate whether that
+field contains a label or a tapespec.
+
+=item fe_amidxtaped_nargs
+
+ PROTOCOL: amidxtaped
+ FEATURE OF: server
+
+If set, then amidxtaped can handle the "nargs" form of a command: The first
+line was the number of arguments, folloewd by one argument by line.  Amidxtaped
+forked amrestore with these arguments.
+
+This feature is no longer supported.
+
+=item fe_amrecover_correct_disk_quoting
+
+ PROTOCOL: amidxtaped
+ FEATURE OF: amrecover
+
+Amrecovers that do not have this flag may send incorrectly-quoted DISK lines, so
+those DISK lines should be ignored.
+
+=item fe_amindexd_quote_label
+
+ PROTOCOL: amindexd
+ FEATURE OF: server
+
+If set, amindexd quote the label (holdingdisk filename)
+
+=item fe_amrecover_receive_unfiltered
+
+ PROTOCOL: amidxtaped
+ FEATURE OF: client
+
+If set, amidxtaped do not decompress/decrypt client compressed/decrypted stream.
+
+=item fe_application_client_name
+
+If set, add the 'client_name' for application in the xml code.
+
+=item fe_script_client_name
+
+If set, add the 'client_name' for script in the xml code.
+
+=item fe_dumptype_property
+
+If set, add the dumptype property in the xml code.
+
+=back
+
+=cut
+
+%}
+

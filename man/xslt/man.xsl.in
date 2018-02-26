@@ -1,0 +1,89 @@
+<?xml version='1.0'?>
+<!-- vim:set sts=2 shiftwidth=2 syntax=xml: -->
+<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+                version='1.0'>
+
+
+<!-- the @..@ is substituted by config.status to contain the XSL release selected
+     at configure time -->
+<xsl:import href="http://docbook.sourceforge.net/release/xsl/@XSLREL@/manpages/docbook.xsl"/>
+
+<xsl:import href="settings.xsl"/>
+
+<xsl:param name="chunk.section.depth" select="0"/>
+<xsl:param name="chunk.first.sections" select="1"/>
+<xsl:param name="use.id.as.filename" select="0"/>
+<xsl:param name="refentry.meta.get.quietly" select="1"/>  <!-- silence warnings -->
+
+<!--
+    Our ulink stylesheet omits @url part if content was specified
+-->
+<xsl:template match="ulink">
+  <xsl:variable name="content">
+    <xsl:apply-templates/>
+  </xsl:variable>
+  <xsl:if test="$content = ''">
+    <xsl:text>: </xsl:text>
+  </xsl:if>
+  <xsl:if test="$content != ''">
+    <xsl:value-of select="$content" />
+  </xsl:if>
+  <xsl:if test="$content = ''">
+    <xsl:apply-templates mode="italic" select="@url" />
+  </xsl:if>
+</xsl:template>
+
+<xsl:template match="informalexample|screen|programlisting">
+  <xsl:text>.nf&#10;</xsl:text>
+  <xsl:apply-templates/>
+  <xsl:text>.fi&#10;</xsl:text>
+</xsl:template>
+
+<xsl:template match="para|simpara|remark" mode="list">
+  <xsl:variable name="foo">
+    <xsl:apply-templates/>
+  </xsl:variable>
+  <xsl:choose match="node()">
+    <!-- Don't normalize-space() for verbatim paragraphs        -->
+    <xsl:when test="informalexample|screen|programlisting">
+      <xsl:value-of select="$foo"/>
+    </xsl:when>
+    <xsl:otherwise>
+      <xsl:value-of select="normalize-space($foo)"/>
+      <xsl:text>&#10;</xsl:text>
+    </xsl:otherwise>
+  </xsl:choose>
+  <xsl:text>&#10;</xsl:text>
+  <xsl:if test="following-sibling::para or following-sibling::simpara or
+		following-sibling::remark">
+    <!-- Make sure multiple paragraphs within a list item don't -->
+    <!-- merge together.                                        -->
+    <xsl:text>&#10;</xsl:text>
+  </xsl:if>
+</xsl:template>
+
+<xsl:template match="refsect3">
+  <xsl:text>&#10;.SS "</xsl:text>
+  <xsl:value-of select="title[1]"/>
+  <xsl:text>"&#10;</xsl:text>
+  <xsl:apply-templates/>
+</xsl:template>
+
+<!-- fix authors -->
+<!-- a modified, simplified version of the docbook affiliation template -->
+<xsl:template match="affiliation" mode="authorsect">
+  <xsl:if test="./org/orgname">
+    <xsl:text>.RS 4&#10;</xsl:text>
+    <xsl:apply-templates select="./org/orgname" />
+    <xsl:if test="./org/uri">
+      <xsl:text> (</xsl:text><xsl:apply-templates select="./org/uri" /><xsl:text>)</xsl:text>
+    </xsl:if>
+  </xsl:if>
+  <xsl:text>&#10;.RE&#10;</xsl:text>
+</xsl:template>
+
+<xsl:template name="attribution">
+<!-- no attributions -->
+</xsl:template>
+
+</xsl:stylesheet>

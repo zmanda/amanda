@@ -1,0 +1,21 @@
+diff --git a/config/libtool.m4 b/config/libtool.m4
+index a3bc337..803a2e1 100644
+--- a/config/libtool.m4
++++ b/config/libtool.m4
+@@ -2878,6 +2878,16 @@ linux* | k*bsd*-gnu | kopensolaris*-gnu | gnu*)
+     sys_lib_dlsearch_path_spec="/lib /usr/lib $lt_ld_extra"
+   fi
+ 
++  # Ideally we could use /sbin/ldconfig to report what directories are
++  # searched, but (aside from not being certain /sbin/ldconfig is
++  # available) Fedora on 64bit does not report /usr/lib64, even though
++  # it is searched at run-time.
++  case $host_cpu in
++    # match at least x86_64, ia64, powerpc64*
++    *64*) sys_lib_dlsearch_path_spec="/lib64 /usr/lib64 $sys_lib_dlsearch_path_spec" ;;
++  esac
++
++
+   # We used to test for /lib/ld.so.1 and disable shared libraries on
+   # powerpc, because MkLinux only supported shared libraries with the
+   # GNU dynamic linker.  Since this was broken with cross compilers,

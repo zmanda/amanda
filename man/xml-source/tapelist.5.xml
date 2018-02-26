@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"
+[
+  <!-- entities files to use -->
+  <!ENTITY % global_entities SYSTEM 'global.entities'>
+  %global_entities;
+]>
+
+<refentry id='tapelist.5'>
+
+<refmeta>
+<refentrytitle>tapelist</refentrytitle>
+<manvolnum>5</manvolnum>
+&rmi.source;
+&rmi.version;
+&rmi.manual.5;
+</refmeta>
+<refnamediv>
+<refname>tapelist</refname>
+<refpurpose>The list of Amanda volumes in use</refpurpose>
+</refnamediv>
+<refentryinfo>
+&author.jds;
+&author.sgw.xml;
+&author.dustin;
+</refentryinfo>
+<!-- body begins here -->
+
+<refsect1><title>DESCRIPTION</title>
+
+<para>The <emphasis remap='I'>tapelist</emphasis> file contains the list of
+tapes in active use.  This file is not ordinarily edited or examined
+manually.  Its format may change, or it may be removed altogether, in future
+versions of Amanda.  It contains lines of the form:</para>
+
+<para><programlisting>
+YYYYMMDDHHMMSS label flags [BARCODE:barcode] [META:meta] [BLOCKSIZE:blocksize] [POOL:pool] [STORAGE:storage] [CONFIG:config] [#comment]
+</programlisting></para>
+
+<para>Where
+<emphasis remap='I'>YYYYMMDDHHMMSS</emphasis>
+is the time the tape was written,
+<emphasis remap='I'>label</emphasis>
+is a label for the tape as written by
+<emphasis remap='B'>amlabel</emphasis>
+and
+<emphasis remap='I'>flags</emphasis>
+is one of "reuse" or "no-reuse" and tells Amanda whether the tape may be reused.
+A non-reusable tape will not be overwritten, even if it is older than <emphasis
+remap='B'>dumpcycle</emphasis> dumps.  See the
+<emphasis remap='B'>reuse</emphasis>
+options of
+<manref name="amadmin" vol="8"/>.</para>
+<para>The optional barcode is prefixed with 'BARCODE' if the volume have a barcode.</para>
+<para>The optional meta label is prefixed with 'META' if the volume is on a meta volume.</para>
+<para>The optional blocksize is prefixed with 'BLOCKSIZE'.</para>
+<para>The optional pool is prefixed with 'POOL', it is the name of the tape-pool.</para>
+<para>The optional storage is prefixed with 'STORAGE', it is the name of the storage.</para>
+<para>The optional config is prefixed with 'CONFIG', it is name of the config that</para>
+<para>is using that volume. This is useful to share the tapelist across multiple
+config.</para>
+<para>The optional comment is prefixed with a '#' and continues to the end of
+the line.</para>
+<para>Amanda will maintain this comment until the tape is overwritten.  Note that
+comments are not allowed on blank lines.</para>
+
+<para>An entry without POOL is in the tape-pool with the name of config running name.</para>
+<para>A new labelled volume have a timestamp of "0" and have no STORAGE and CONFIG.</para>
+<para>A used volume with timestamp != "0" without STORAGE is in the storage with the name of the running config</para>
+<para>A used volume with timestamp != "0" without CONFIG is in the running config.</para>
+
+<para>It is possible to share the same tapelist across multiple config If the POOL, STORAGE and CONFIG are correctly set.</para>
+<para>The file is sorted such that the most-recently used tape appears on the first line, and the oldest tape appears on the last line.</para>
+
+<para><emphasis remap='B'>Amdump</emphasis>
+and
+<emphasis remap='B'>amflush</emphasis>
+will by default refuse to write to an unlabeled tape, or to a labeled tape that
+is considered active or marked "no-reuse".  There must be more tapes in active
+rotation (see the
+<emphasis remap='B'>tapecycle</emphasis>
+option) than there are runs in the backup cycle (see the
+<emphasis remap='B'>dumpcycle</emphasis>
+option) to prevent overwriting a backup image that would be needed to do a full recovery.</para>
+</refsect1>
+
+<seealso>
+<manref name="amanda.conf" vol="5"/>
+</seealso>
+
+</refentry>

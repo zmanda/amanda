@@ -1,0 +1,257 @@
+/*
+ * Copyright (c) 2009-2012 Zmanda, Inc.  All Rights Reserved.
+ * Copyright (c) 2013-2016 Carbonite, Inc.  All Rights Reserved.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, write to the Free Software Foundation, Inc.,
+ * 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
+ *
+ * Contact information: Carbonite Inc., 756 N Pastoria Ave
+ * Sunnyvale, CA 94085, or: http://www.zmanda.com
+ */
+
+%perlcode %{
+
+=head1 NAME
+
+Amanda::Archive - Perl access to the  amanda archive library
+
+=head1 SYNOPSIS
+
+  use Amanda::Archive
+
+  # Write to the file descriptor or file handle $fd, and
+  # add /etc/hosts to it
+  my $archive = Amanda::Archive->new($fd, ">");
+  my $file = $archive->new_file("/etc/hosts");
+  my $attr = $file->new_attr(16);
+  open(my $fh, "<", "/etc/hosts");
+  $attr->add_data_fd($fh, 1);
+  $file->close();
+  $archive->close();
+
+  # Read from an archive
+  my $archive = Amanda::Archive->new($fd, "<");
+  $ar->read(
+      file_start => sub {
+	  my ($user_data, $filenum, $filename) = @_;
+	  # ...
+	  return "foo"; # this becomes $file_data
+      },
+      file_finish => sub {
+	  my ($user_data, $file_data, $filenum, $truncated) = @_;
+	  # ...
+      },
+      21 => [ 32768,	# buffer into 32k chunks
+	      sub {
+		  my ($user_data, $filenum, $file_data, $attrid,
+		      $attr_data, $data, $eoa, $truncated) = @_;
+		  return "pants"; # becomes the new $attr_data for
+				  # any subsequent fragments
+	      } ],
+      0 => sub {	# note no buffering here; attrid 0 is "default"
+	  my ($user_data, $filenum, $file_data, $attrid,
+	      $attr_data, $data, $eoa, $truncated) = @_;
+	  return "shorts"; # becomes the new $attr_data for
+			   # any subsequent fragments
+      },
+      user_data => [ "mydata" ], # sent to all callbacks
+  );
+
+=head1 WRITING
+
+=head2 Amanda::Archive::Archive Objects
+
+Note that C<< Amanda::Archive->new >> and C<<
+Amanda::Archive::Archive->new >> are equivalent.
+
+=over
+
+=item C<new($fd, $mode)>
+
+Create a new archive for reading ("<") or writing (">") from or to
+file C<$fd> (a file handle or integer file descriptor).
+
+=item C<size()>
+
+Return the number of bytes already written to the archive.
+
+=item C<new_file($filename, $want_posn)>
+
+Create a new C<Amanda::Archive::File> object with the given filename
+(writing only).  Equivalent to
+
+  Amanda::Archive::File->new($archive, $filename, $want_posn);
+
+if C<$want_posn> is false, then this method returns a new
+C<Amanda::Archive::File> object.  If C<$want_posn> is true, then it
+returns C<($file, $posn)> where C<$file> is the object and C<$posn> is
+the offset into the datastream at which this file begins.  This offset
+can be stored in an index and used later to seek into the file.
+
+=item C<read(..)>
+
+See I<READING>, below.
+
+=item C<close()>
+
+Flush all buffers and close this archive. This does not close the file
+descriptor.
+
+=back
+
+=head2 Amanda::Archive::File Objects
+
+=over
+
+=item C<new($archive, $filename, $want_posn)>
+
+Create a new file in the given archive.  See
+C<Amanda::Archive::Archive::new_file>, above.
+
+=item C<new_attr($attrid)>
+
+Create a new C<Amanda::Archive::Attribute> object.  Equivalent to
+
+  Amanda::Archive::Attr->new($file, $attrid);
+
+=item C<size()>
+
+Return the size on the archive of all attributes of the file.
+
+=item C<close()>
+
+Close this file, writing an EOF record.
+
+=back
+
+=head2 Amanda::Archive::Attribute Objects
+
+=over
+
+=item C<add_data($data, $eoa)>
+
+Add C<$data> to this attribute, adding an EOA (end-of-attribute) bit
+if C<$eoa> is true.
+
+=item C<add_data_fd($fh, $eoa)>
+
+Copy data from C<$fh> to this attribute, adding an EOA
+(end-of-attribute) bit if C<$eoa> is true.
+
+=item C<add_data_fd_in_thread($fh, $eoa)>
+
+Same as C<add_data_fd> but the copy is done in a newly created thread.
+This function return immediately.
+Nothing should be done on the archive while it is running.
+The next action on the archive must be $attr->close().
+
+=item C<size()>
+
+Return the size of the data of the attribute.
+
+=item C<close()>
+
+Close this attribute, adding an EOA bit if none has been written
+already.
+
+=back
+
+=head1 READING
+
+The C<Amanda::Archive::Archive> method C<read()> handles reading
+archives via a callback mechanism.  It takes its arguments in hash
+form, with the following keys:
+
+    file_start => sub {
+	my ($user_data, $filenum, $filename) = @_;
+	# ..
+    },
+
+C<file_start> gives a sub which is called for every file in the
+archive.  It can return an arbitrary value which will become the
+C<$file_data> for subsequent callbacks in this file, or the string
+"IGNORE" which will cause the reader to ignore all data for this file.
+In this case, no other callbacks will be made for the file (not even
+C<file_finish>).
+
+    file_finish => sub {
+	my ($user_data, $file_data, $filenum, $truncated) = @_;
+	# ..
+    },
+
+C<file_finish> gives a sub which is called when an EOF record appears.
+C<$file_data> comes from the return value of the C<file_start>
+callback.  C<$truncated> is true if the file may be missing data
+(e.g., when an early EOF is detected).
+
+    user_data => $my_object,
+
+C<user_data> gives an arbitrary value which is passed to each callback
+as C<$user_data>.
+
+    13 => sub {
+	my ($user_data, $filenum, $file_data, $attrid,
+	    $attr_data, $data, $eoa, $truncated) = @_;
+	# ...
+    },
+    19 => [ 10240, sub { ... } ],
+
+Any numeric key is treated as an attribute ID, and specifies the
+handling for that attribute.  Attribute ID zero is treated as a
+wildcard, and will match any attribute without an explicit handler.
+The handler can be specified as a sub (as for attribute ID 13 in the
+example above) or as an arrayref C<[$minsize, $sub]>.  In the latter
+case, the sub is only called when at least C<$minsize> bytes of data
+are available for the attribute, or at the end of the attribute data.
+
+The parameters to the callback include C<$file_data>, the value
+returned from C<file_start>, and C<$attr_data>, which is the return
+value of the last invocation of this sub for this attribute.  If this
+is the last fragment of data for this attribute, then C<$eoa> is true.
+The meaning of C<$truncated> is similar to that in C<file_finish>.
+
+=head2 EXAMPLE
+
+    sub read_to_files {
+	my ($arch_fh, $basedir) = @_;
+
+	my $arch = Amanda::Archive->new(fileno($arch_fh), "<");
+	$arch->read(
+	    file_start => sub {
+		my ($user_data, $filenum, $filename) = @_;
+		return "$basedir/$filenum"; # becomes $file_data
+	    },
+	    0 => [ 32768, sub {
+		my ($user_data, $filenum, $file_data, $attrid,
+		    $attr_data, $data, $eoa, $truncated) = @_;
+		warn("file $filename attribute $attrid is truncated")
+		    if ($truncated);
+		# store the open filehandle in $attr_data
+		if (!$attr_data) {
+		    open($attr_data, "$file_data.$attrid", ">")
+			or die("open: $!");
+		}
+		print $attr_data $data;
+		if ($eoa) {
+		    close($attr_data);
+		}
+		return $attr_data;
+	    },
+	);
+    }
+
+=cut
+
+
+%}

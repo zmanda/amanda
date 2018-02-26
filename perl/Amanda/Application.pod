@@ -1,0 +1,73 @@
+/*
+ * Copyright (c) 2009-2012 Zmanda, Inc.  All Rights Reserved.
+ * Copyright (c) 2013-2016 Carbonite, Inc.  All Rights Reserved.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, write to the Free Software Foundation, Inc.,
+ * 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
+ *
+ * Contact information: Carbonite Inc., 756 N Pastoria Ave
+ * Sunnyvale, CA 94085, or: http://www.zmanda.com
+ */
+
+%perlcode %{
+
+=head1 NAME
+
+Amanda::Application - perl utility functions for Applications.
+
+=head1 SYNOPSIS
+
+  package Amanda::Application::my_application;
+  use base qw(Amanda::Application);
+
+  sub new {
+    my ($class, $config, $foo) = @_;
+    my $self = $class->SUPER::new($config);
+
+    $self->{'foo'} = $foo;
+    $self->{'bar'} = $bar;
+
+    return $self;
+  }
+
+  # Define all command_* subs that you need, e.g.,
+  sub command_support {
+    my $self = shift;
+    # ...
+  }
+
+  package main;
+
+  # .. parse arguments ..
+
+  my $application = Amanda::Application::my_application->new($opt_foo, $opt_bar);
+  $application->do($cmd);
+
+=head1 INTERFACE
+
+=head2 write_magic_block
+
+  $self->write_magic_block($type)
+
+Write a 512 bytes magic block to STDOUT.
+
+=head2 read_magic_bloc
+
+  $type = $self->read_magic_block()
+
+Read the 512 bytes magic block from STDIN and return the type.
+
+=cut
+
+%}

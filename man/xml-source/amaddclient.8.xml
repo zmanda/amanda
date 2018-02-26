@@ -1,0 +1,284 @@
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"
+[
+  <!-- entities files to use -->
+  <!ENTITY % global_entities SYSTEM 'global.entities'>
+  %global_entities;
+]>
+
+<refentry id='amaddclient.8'>
+<refmeta>
+<refentrytitle>amaddclient</refentrytitle>
+<manvolnum>8</manvolnum>
+&rmi.source;
+&rmi.version;
+&rmi.manual.8;
+</refmeta>
+<refnamediv>
+<refname>amaddclient</refname>
+<refpurpose>program to add client to an existing Amanda configuration</refpurpose>
+</refnamediv>
+<refentryinfo>
+&author.ktill;
+</refentryinfo>
+<!-- body begins here -->
+<refsynopsisdiv>
+<cmdsynopsis>
+  <command>amaddclient</command>  
+<arg choice='plain'>--config </arg>
+<arg choice='plain'><replaceable>config</replaceable></arg> ||
+<arg choice='plain'>--client </arg><arg
+    choice='plain'><replaceable>client name</replaceable></arg> ||
+<arg choice='plain'>--diskdev </arg><arg
+    choice='plain'><replaceable>directory to backup</replaceable></arg>
+<arg choice='opt'>--m </arg>
+<arg choice='opt'>--dumptype <replaceable>string</replaceable></arg>
+<arg choice='opt'>--includefile <replaceable>string</replaceable></arg>
+<arg choice='opt'>--includelist <replaceable>string</replaceable></arg>
+<arg choice='opt'>--excludefile <replaceable>string</replaceable></arg>
+<arg choice='opt'>--excludelist <replaceable>string</replaceable></arg>
+<arg choice='opt'>--user <replaceable>string</replaceable></arg>
+<arg choice='opt'>--auth <replaceable>string</replaceable></arg>
+<arg choice='opt'>--gnutar_list_dir <replaceable>string</replaceable></arg>
+<arg choice='opt'>--amandates <replaceable>string</replaceable></arg>
+<arg choice='opt'>--no-client-update </arg>
+<arg choice='opt'>--batch </arg>
+<arg choice='opt'>--help </arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsect1><title>DESCRIPTION</title>
+<para>After Amanda rpms are successfully installed and
+&amserverconfig; is run,
+	  &amaddclient; will add client to the  Amanda configuration.
+&amaddclient; create or update Amanda  &disklist;
+file and create or update
+/var/lib/amanda/.amandahosts file on the server.</para>
+<para> If --no-client-update is not specified,
+&amaddclient; will attempt to update or create /var/lib/amanda/.amandahost,
+amanda-client.conf and gnutar-lists on
+the client.
+(See <refentrytitle>ssh-keygen</refentrytitle><manvolnum>1</manvolnum> and
+<refentrytitle>ssh-add</refentrytitle><manvolnum>1</manvolnum> for detail.)</para>
+<para>
+&amaddclient; must be run by user amandabackup.</para>
+<para> --config, --client and --diskdev must be specified.
+</para> 
+</refsect1>
+
+
+<refsect1><title>Options</title>
+<variablelist remap='TP'>
+ <varlistentry>
+Options may be abbreviated, as long as the abbreviation is not ambiguous. Option argument can either separated by '=' or a space.
+Example: --conf=v253, --client client8.zmanda.com
+</varlistentry>
+
+
+  <varlistentry>
+  <term><option>--config config</option></term>
+  <listitem>
+<para>Amanda configuration which this program will add the client to.  </para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><option>--client client</option></term>
+  <listitem>
+<para>The name of the client machine to add. FQDN name recommended. </para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><option>--diskdev diskdev</option></term>
+  <listitem>
+<para>Directory for this Amanda configuration to backup.</para>
+  </listitem>
+  </varlistentry>
+
+
+  <varlistentry>
+  <term><option>--m</option></term>
+  <listitem>
+<para>Modify existing entry in the &disklist; file.</para>
+<para>Note: if &disklist; file has been modified manually, this option might not work.</para>
+  </listitem>
+  </varlistentry>
+
+
+  <varlistentry>
+  <term><option>--dumptype dumptype</option></term>
+  <listitem>
+<para>dumptype to use. Dumptype must be defined in
+/etc/amanda/template.d/dumptypes or /etc/amanda/$config/amanda.conf file.  Default: [user-tar]</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><option>--user string</option></term>
+  <listitem>
+<para> name of user using &amrecover; on the client, default is root.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><option>--auth string</option></term>
+  <listitem>
+<para> authentication method to use when running &amrecover; from the client , default is bsdtcp.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><option>--gnutar_list_dir string</option></term>
+  <listitem>
+<para> directory where gnutar keep its state file on the client. Absolute path
+required. Default is /var/lib/amanda/gnutar-lists. If --no-client-update is not
+set, this program will attempt to create the directory on the client. </para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><option>--amandates string</option></term>
+  <listitem>
+<para> file where amanda keep the date of each dumplevel on the client, default is /etc/amandates.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><option>--batch</option></term>
+  <listitem>
+<para>Turn on batch mode when copying files to the client, default is off</para>
+  </listitem>
+  </varlistentry>
+
+<varlistentry>
+  <term><option>--no-client-update</option></term>
+  <listitem>
+<para>If this option is set,  &amaddclient; will not attempt to update/create
+.amandahosts, amanda-client.conf and gnutar-lists file on the client.</para>
+  </listitem>
+  </varlistentry>
+
+
+  <varlistentry>
+  <term><option>--help</option></term>
+  <listitem>
+<para>Display usage. </para>
+  </listitem>
+  </varlistentry>
+
+<varlistentry> 
+If any of the following four options are used, &amaddclient; will extend the dumptype definition to an in-line definition in the &disklist; file.
+</varlistentry>
+
+  <varlistentry>
+  <term><option>--includefile string</option></term>
+  <listitem>
+<para>string is a glob expression  </para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><option>--includelist string</option></term>
+  <listitem>
+<para> string is a file name on the client containing glob expressions.
+Specify either --includefile or --includelist. </para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><option>--excludefile string</option></term>
+  <listitem>
+<para>string is a glob expression  </para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><option>--excludelist string</option></term>
+  <listitem>
+<para> string is a file name on the client containing glob expressions.
+Specify either --excludefile or --excludelist. </para>
+  </listitem>
+  </varlistentry>
+
+
+
+</variablelist>
+</refsect1>
+
+<refsect1><title>Files</title>
+<variablelist remap='TP'>
+ <varlistentry>
+ <term><option>/var/lib/amanda/template.d</option></term>
+  <listitem>
+<para>Amanda configuration template files install location</para>
+  </listitem>
+  </varlistentry>
+
+ <varlistentry>
+ <term><option>/var/lib/amanda</option></term>
+  <listitem>
+<para>amandabackup home directory</para>
+  </listitem>
+  </varlistentry>
+
+ <varlistentry>
+ <term><option>/var/lib/amanda/.amandahosts</option></term>
+  <listitem>
+<para>Amanda authentication file.</para>
+  </listitem>
+  </varlistentry>
+
+ <varlistentry>
+ <term><option>/var/lib/amanda/gnutar-lists</option></term>
+  <listitem>
+<para>A directory which contains backup timestamp and list of files backed up.</para>
+  </listitem>
+  </varlistentry>
+
+ <varlistentry>
+ <term><option>/etc/amanda/$config</option></term>
+  <listitem>
+<para>Amanda configuration files location for $config(e.g: DailySet1).</para>
+  </listitem>
+  </varlistentry>
+
+ <varlistentry>
+ <term><option>/etc/amanda/template.d</option></term>
+  <listitem>
+<para>A directory contains dumptypes and tapetypes files used by all Amanda configurations.</para>
+  </listitem>
+  </varlistentry>
+
+
+ <varlistentry>
+ <term><option>/etc/amandates</option></term>
+  <listitem>
+<para>Amanda file on the client. It keeps track of structures of previous dumps.</para>
+  </listitem>
+  </varlistentry>
+
+ <varlistentry>
+ <term><option>/tmp/amanda</option></term>
+  <listitem>
+<para>directory contains Amanda debug log files.</para>
+  </listitem>
+  </varlistentry>
+
+</variablelist>
+</refsect1>	    
+
+<refsect1><title>RETURN VALUE</title>
+On success, zero is returned.  On error, 1 is returned.
+</refsect1>
+
+<seealso>
+<manref name="amanda.conf" vol="5"/>,
+<manref name="amserverconfig" vol="8"/>,
+<manref name="ssh-keygen" vol="1"/>,
+<manref name="ssh-add" vol="1"/>,
+<manref name="scp" vol="1"/>
+</seealso>
+
+</refentry>
+

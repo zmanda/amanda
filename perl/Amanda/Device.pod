@@ -1,0 +1,723 @@
+/*
+ * Copyright (c) 2009-2012 Zmanda, Inc.  All Rights Reserved.
+ * Copyright (c) 2013-2016 Carbonite, Inc.  All Rights Reserved.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, write to the Free Software Foundation, Inc.,
+ * 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
+ *
+ * Contact information: Carbonite Inc., 756 N Pastoria Ave
+ * Sunnyvale, CA 94085, or: http://www.zmanda.com
+ */
+
+%perlcode %{
+
+=head1 NAME
+
+Amanda::Device - interact with Amanda data-storage devices
+
+=head1 SYNOPSIS
+
+  use Amanda::Device qw( :constants );
+
+  my $dev = Amanda::Device->new($device_name);
+  if ($dev->read_label() == $DEVICE_STATUS_SUCCESS) {
+      print "Label on $device_name is '$dev->volume_label'\n";
+  }
+
+=head1 DATA MODEL
+
+A volume is a container for data which can be "loaded" into a particular
+device. For tape devices, a volume is a tape, but most other devices do not
+deal with such physical objects. Each volume has a volume header giving, among
+other things, the label of the volume and the timestamp on which it was
+written. The header may also indicate that the volume is not an Amanda volume.
+Aside from the header, a volume contains a sequence of files, numbered starting
+at 1. While writing, devices number files sequentially, but devices that
+support partial volume recycling may have "holes" in the sequence of file
+numbers where files have been deleted. The C<seek_file> method, below,
+describes how the API represents this situation. Each file has a header, too,
+which contains lots of information about the file. See L<Amanda::Header> for
+the full list. After the header, a file is just a sequence of bytes.
+
+Reads and writes to devices take place in blocks. Unlike a typical
+operating-system file, in which any block boundaries are lost after the file is
+written, devices must be read back with the block sizes that were used to read.
+See C<amanda-devices(7)> for more in block sizes, and the read_block and
+write_block sections, below, for more information.
+
+=head1 USING THE DEVICE API
+
+The Device API is object-oriented, so the first task in using the API is to
+make a Device object:
+
+    $dev = Amanda::Device->new("tape:/dev/nst0");
+
+This function takes a device name (possibly a device alias) and returns a
+device object. This function always returns a Device, although it may be a Null
+device with an error condition. Any C<new> call should be followed by a check
+of the device's status:
+
+    $dev = Amanda::Device->new($device_name);
+    if ($dev->status() != $Amanda::Device::DEVICE_STATUS_SUCCESS) {
+      die "Could not open '$device_name': " . $dev->error();
+    }
+
+This function does not access the underlying hardware or any other external
+systems in any way: that doesn't happen until C<read_label> or C<start>.  An
+Amanda configuration must be loaded when this function is called, as it
+searches the configuation for device definitions.  The member variable
+C<device_name> is set when this function has returned.
+
+It is unusual for higher-level code to call C<< Amanda::Device->new >>.
+Intead, use L<Amanda::Changer> to load a volume and reserve access to it; the
+resulting reservation will contain an already-created Device object.
+
+While Amanda proivdes multiple implementations of the Device class, they are
+not distinguishable via the usual Perl methods (C<ref> or C<< $dev->isa >>).
+
+Device users generally call device methods in the following order for reading:
+
+    read_label (optional)
+    start
+    init_seek_file (optional)
+    seek_file (optional)
+    read_block (repeated)
+
+or, when writing or appending:
+
+    read_label (optional)
+    start
+    start_file
+    write_block (repeated)
+    finish_file
+    finish
+
+=head2 Alternate Constructor
+
+To create a new RAIT device from a collection of device objects, call
+C<< Amanda::Device->new_rait_from_children($child1, $child2, ..) >>.
+If one of the child objects is C<undef>, the resulting RAIT device
+will operate in degraded mode.
+
+=head2 Error Handling
+
+Device methods return a particular value to signal the presence of an error
+condition. In many cases, this is simply false (exceptions are listed below).
+
+When a device signals an error, C<< $dev->status >> and C<< $dev->error >>
+contain details of what went wrong. Status is a bitfield where each bit that is
+set indicates a possible problem. Unfortunately, some devices are unable to
+distinguish states due to limitations of an external system. For example, the
+tape device often cannot distinguish an empty drive
+(C<$DEVICE_STATUS_VOLUME_MISSING>) from a hard device error
+(C<$DEVICE_STATUS_DEVICE_ERROR>), leading to the status
+C<$DEVICE_STATUS_VOLUME_MISSING>|C<$DEVICE_STATUS_DEVICE_ERROR>.  To be clear:
+as few as one of the status bits may represent a actual problem.  If
+C<$DEVICE_STATUS_VOLUME_UNLABELED> is set along with other bits, it is I<not>
+safe to assume that an unlabeled volume is available.  However, if the bit is
+not set, then it is safe to assume there is no unlabeled volume present.
+
+=over 2
+
+=item C<$DEVICE_STATUS_SUCCESS>
+
+All OK (no bits set)
+
+=item C<$DEVICE_STATUS_DEVICE_ERROR>
+
+The device is in an unresolvable error state, and further retries are unlikely
+to change the status
+
+=item C<$DEVICE_STATUS_DEVICE_BUSY>
+
+The device is in use, and should be retried later
+
+=item C<$DEVICE_STATUS_VOLUME_MISSING>
+
+The device itself is OK, but has no media loaded. This may change if media is
+loaded by the user or a changer
+
+=item C<$DEVICE_STATUS_VOLUME_UNLABELED>
+
+The device is OK and media is laoded, but there is no Amanda header or an
+invalid header on the media.
+
+=item C<$DEVICE_STATUS_VOLUME_ERROR>
+
+The device is OK, but there was an unresolvable error loading the header from
+the media, so subsequent reads or writes will probably fail.
+
+=back
+
+At the risk of being repetitive, never test a device's status with C<==>,
+unless it is to C<$DEVICE_STATUS_SUCCESS>. Furthermore, never try to parse the
+device error messages -- they are only for user consumption, and may differ
+from device to device.
+
+In addition to the status bitfield, a Device also provides a
+user-comprehensible error message, available from the methods C<error>
+(returning the error message), C<status_error> (returning the string form of
+the status), or C<error_or_status> (returning the error message if one is set,
+otherwise the string form of the status). None of these functions will ever
+return C<undef>.
+
+=head2 Properties
+
+Device properties provide a bidirectional means of communication between
+devices and their users. A device provides values for some properties, which
+other parts of Amanda can use to adjust their behavior to suit the device. For
+example, Amanda will only attempt to append to a volume if the device's
+properties indicate that it supports this activity. Some devices have
+additional properties that can be set to control its activity. For example, the
+S3 Device requires that the users' keys be given via properties.
+
+See C<amanda-devices(7)> for more information on device properties and their
+meanings.
+
+The methods C<property_get> and C<property_set> are used to get and set
+properties, respectively. If the indicated property simply does not exist,
+these functions return an error indication (FALSE), but the device's status
+remains C<$DEVICE_STATUS_SUCCESS>. If a more serious error occurs, then the
+device's status is set appropriately.
+
+Device properties are easy to handle, as the Perl-to-C glue takes care of all
+necessary type conversions:
+
+    $success = $device->property_set("BLOCK_SIZE", $blocksize);
+    $blocksize = $device->property_get("BLOCK_SIZE");
+
+If C<property_get> is called in an array context, it returns the property
+value, its surety, and its source, in that order.  If there is an error
+fetching the property, C<property_get> returns C<undef>.
+
+The C<property_list()> method returns a list of all properties:
+
+  my @props = $device->property_list();
+
+its return is an array of hashes:
+
+  ( { 'access' => $access_flags,
+      'name' => $property_name,
+      'description' => $property_description },
+    ...
+  )
+
+=head3 Surety and Source
+
+All properties have a source - where the value came from - and surety - a level
+of confidence in the value. This can be used to decide which of two potentially
+contradictory properties to believe. For example, the RAIT device examines the
+source and surety of child devices' block sizes, prefering properties set by
+the user (C<$PROPERTY_SOURCE_USER>) over others.
+
+Set a property's source and surety with C<property_set_ex>:
+    $dev->property_set_ex("my_prop", 13, $PROPERTY_SURETY_BAD, $PROPERTY_SOURCE_DEFAULT);
+The surety and source are returned after the property value in list context:
+    my ($val, $sur, $sou) = $dev->property_get("my_prop");
+
+The available sureties are:
+
+  $PROPERTY_SURETY_GOOD
+  $PROPERTY_SURETY_BAD
+
+and the sources are:
+
+  $PROPERTY_SOURCE_DEFAULT
+  $PROPERTY_SOURCE_DETECTED
+  $PROPERTY_SOURCE_USER
+
+=head2 Concurrency
+
+Some devices can perform more than one operation simultaneously, while others
+are more limited. For example, a tape device is exclusive to a single process
+while it is in use, while a VFS device can support concurrent reads and writes
+on the same volume.
+
+As of this writing, device locking is not correctly implemented in many
+devices; consult the source code and check with the Amanda developers before
+depending on concurrent operation of devices.
+
+=head2 EOM and EOF
+
+When writing to a volume, an EOM (end-of-media) condition occurs when no more
+space is available on the volume.  Some devices (currently only those
+supporting DirectTCP) distinguish a logical EOM (LEOM) from a physical EOM
+(PEOM).  The logical EOM comes some distance before the physical EOM, with
+enough space left to finish a data block and write any additional bookkeeping
+data before PEOM.
+
+In such devices, the C<is_eom> attribute is set once LEOM is detected.  Such
+detection can happen in any method that writes to the volume, including
+C<start>, C<start_file>, C<finish_file>, and C<finish>.  API users that
+understand LEOM should take this as a signal to complete writing to the device
+and move on before hitting PEOM.
+
+Devices which do not support LEOM simply return a VOLUME_ERROR when the volume
+is full.  If this occurs during a C<write_block> operation, then the volume may
+or may not contain the block - the situation is indeterminate.
+
+Devices indicate their support for LEOM with the LEOM property.
+
+=head2 Device Resources
+
+Some device types have a "locking" mechanism that prevents other parts of the
+system from accessing the underlying resource while an operation is in
+progress.  For example, a typical UNIX tape driver cannot be opened by two
+processes at once.
+
+Amanda Devices will lock the underlying resource when C<start> or C<read_label>
+is called, and unlock the resource either when the Device object is
+garbage-collected or in the C<finish> method.  Thus in a calling sequence such as
+
+    read_label
+    start
+    init_seek_file
+    seek_file
+    ...
+    finish
+
+the underlying resource remains locked for the entire sequence, even between
+read_label and finish.
+
+It is unwise to rely on Perl's garbage-collection to automatically release
+resources.  Instead, always explicitly release resources with a C<finish> call.
+The Changer API is careful to do this in its C<release> method.
+
+=head2 Member Variables
+
+All member variables are implemented using accessor methods, rather than the
+more common hashref technique.  Use
+
+  print $dev->device_name, "\n";
+
+instead of
+
+  print $dev->{'device_name'}, "\n";
+
+The member variables are:
+
+=over 4
+
+=item C<file>
+
+the current file number, if any
+
+=item C<block>
+
+the current block number, if any
+
+=item C<in_file>
+
+true if the device is in the middle of reading or writing a file
+
+=item C<device_name>
+
+the name with which the device was constructed; note that this is not set until after open_device is finished -- it is an error to access this variable in an open_device implementation
+
+=item C<access_mode>
+
+the current access mode (C<$ACCESS_NULL>, or that supplied to start)
+
+=item C<is_eof>
+
+true if an EOF occurred while reading; also used by C<write_from_connection>
+
+=item C<is_eom>
+
+true if a write operation reached the end of the volume (end-of-medium)
+
+=item C<volume_label>
+
+the label of the current volume, set by start and read_label
+
+=item C<volume_time>
+
+the timestamp of the current volume, set by start and read_label
+
+=item C<volume_header>
+
+the header of the current volume, set by read_label
+
+=item C<status>
+
+the device's error status (bit flags) as an integer
+
+=item C<status_error>
+
+the device's error status (bit flags) as a string
+
+=item C<error>
+
+the device's error message
+
+=item C<error_or_status>
+
+the device's error message, if set, otherwise the same as C<status_error> --
+use this to display error messages from devices
+
+=item C<block_size>
+
+the device's currently configured block size. This is also available via the
+BLOCK_SIZE property. Writers should use block_size-byte blocks, and readers
+should initially use block_size, and expand buffers as directed by
+C<read_block>.
+
+=item C<min_block_size>
+
+minimum allowed block size for this device
+
+=item C<max_block_size>
+
+maximum allowed block size for this device
+
+=back
+
+=head2 Object Methods
+
+=head3 configure($use_global_config)
+
+    $dev->configure(1);
+
+Once you have a new device, you should configure it. This sets properties on
+the device based on the user's configuation. If C<$use_global_config> is true,
+then any global C<device_property> parameters are processed, along with
+tapetype and other relevant parameters. Otherwise, only parameters from the
+device definition (if the device was opened via an alias) are processed.
+
+This method is I<deprecated>.  All access to Devices should be via the Changer
+API (see L<Amanda::Changer>), which implements its own, more advanced method of
+configuring devices.  The C<configure> method may be removed in a future
+release.
+
+=head3 read_label
+
+    $status = $dev->read_label();
+
+This function reads the tape header of the current volume, returning the
+Device's status (see "Error Handling", above). Since this is often the first
+function to accses the underlying hardware, its error status is the one most
+often reported to the user. In fact, C<amdevcheck(8)> is little more than a
+wrapper around read_label.
+
+The method sets the following member variables:
+
+=over 4
+
+=item C<volume_header>
+
+if any header data was read from the volume, it is represented here. The
+header's type may be F_WEIRD if the header was not recognized by Amanda.
+
+=item C<volume_label>
+
+if read_label read the header successfully, then volume_label contains the
+label
+
+=item C<volume_time>
+
+smililarly, if read_label read the header successfully, then volume_time
+contains the timestamp from the header
+
+=back
+
+=head3 start
+
+    $succss = $dev->start($ACCESS_WRITE, $label, $timestamp);
+
+Start starts the device and prepares it for the use described by its second
+parameter. This function can be called regardless of whether C<read_label> has
+already been called.
+
+If the access mode is C<$ACCESS_WRITE>, then the label and timestamp must be
+supplied (although leaving the timestamp undef will use the current time), and
+they will be used to write a new volume header. Otherwise, these parameters
+should be undef.
+
+On completion, start leaves the device's C<access_mode>, C<volume_label> and
+C<volume_time> member variables set, by reading the tape header if necessary.
+Note that in mode C<$ACCESS_APPEND>, the C<file> member variable is not set
+until after C<start_file> has been called.
+
+=head3 start_file
+
+ $success = $dev->start_file($header);
+
+This method prepares the device to write data into a file, beginning by writing
+the supplied header to the volume. On successful completion, the device's
+C<file> is set to the current file number, C<block> is zero, and C<in_file> is
+true.  If the volume is out of space, the C<is_eom> member is set to true and
+the method returns false with status C<DEVICE_STATUS_VOLUME_ERROR>.
+
+=head3 write_block
+
+ # (not available from Perl)
+ success = device_write_block(dev, blocksize, buf);
+
+This method writes a single block of data to the volume.  It is only available
+from C -- Perl code should not be handling raw data, as it is far too slow.
+Use the transfer architecture (L<Amanda::Xfer>) for that purpose.
+
+The C<blocksize> must be the device's block size, unless
+this is a short write.  A short write must be the last block
+of a file. Some devices will zero-pad a short write to a full
+blocksize. This method returns false on error.  If the volume is
+out of space, C<is_eom> is set and the method returns false with
+status C<DEVICE_STATUS_VOLUME_ERROR>.  Note that not all devices can
+differentiate an EOM condition from other errors; these devices will
+set C<is_eom> whenever the situation is ambiguous.
+
+This function ensures that C<block> is correct on exit. Even in an
+error condition, it does not finish the current file for the caller.
+
+=head3 finish_file
+
+ $success = $dev->finish_file();
+
+Once an entire file has been written, finish_file performs any
+cleanup required on the volume, such as writing filemarks. On exit,
+C<in_file> is false.  If the device runs out of space while finishing
+(e.g., the filemark does not fit), then this method returns false
+with status C<DEVICE_STATUS_VOLUME_ERROR> and C<is_eom> is set.
+
+This function should not be used while reading -- instead, just seek
+to the next file.
+
+=head3 init_seek_file
+
+ $dev->init_seek_file($fileno);
+
+Lauch file retrieval, so they are ready when C<seek_file> is called.
+Useful lonly with the glacier device.
+
+=head3 seek_file
+
+ $header = $dev->seek_file($fileno);
+
+In C<$ACCESS_READ>, C<seek_file> sets up the device to read from file
+C<$fileno>. This function is not available in C<$ACCESS_WRITE> and
+C<$ACCESS_APPEND>. It returns the header from the requested file on success, or
+undef on error.
+
+If the requested file doesn't exist, as might happen when a volume has had
+files recycled, then C<seek_file> will seek to the next file that does exist. The
+file this function selected is indicated by the C<file> member variable on exit.
+If the requested file number is exactly one more than the last valid file, this
+function returns a C<$F_TAPEEND> header.
+
+As an example, on a volume with only files 1 and 3:
+
+ $dev->seek_file(1) returns header for file 1, $dev->file == 1
+ $dev->seek_file(2) returns header for file 3, $dev->file == 3
+ $dev->seek_file(3) returns header for file 3, $dev->file == 3
+ $dev->seek_file(4) returns a tapend header, $dev->file == 4
+ $dev->seek_file(5) returns NULL/undef
+
+On exit, C<is_eof> is false, C<in_file> is true unless no file was found (tapeend or NULL), C<file> is the discovered file, and C<block> is zero.
+
+=head3 seek_block
+
+ $success = $dev->seek_block($block);
+
+After seeking to a file, the caller can optionally seek to a particular block
+in the file. This function will set C<block> appropriately. Note that it may
+not be possible to detect EOF, so this function may fail to set C<is_eof> even
+though a subsequent C<read_block> will return no data.
+
+=head3 read_block
+
+ # (not available from Perl)
+ bytes_read = device_read_block(dev, buffer, *blocksize);
+
+This method is the complement of C<write_block>, and reads the next block from
+the device, or returns -1 on error. Pass a buffer and its size. If the buffer
+is not big enough, no read is performed, the parameter C<blocksize> is set to
+the required blocksize, and the method returns 0. As a special case, passing a
+C<NULL> buffer and C<*blocksize == 0> is treated as a request for the required block
+size. It is not an error to pass a buffer that is too large (and, in fact, this
+is precisely the effect of setting the C<read_block_size> configuration
+parameter).
+
+On EOF, this method returns -1, but sets C<is_eof> and leaves the device's
+status set to C<$DEVICE_STATUS_SUCCESS>. Some devices may be able to detect EOF
+while reading the last block, and will set C<is_eof> at that time. Others must
+wait for the next read to fail. It is never an error to call C<read_block>
+after an EOF, so there is no need to check C<is_eof> except when C<read_block>
+returns -1.
+
+=head3 finish
+
+ $success = $dev->finish();
+
+This undoes the effects of start, returning the device to a neutral state
+(C<$ACCESS_NULL>).  It will also release any resources acquired by
+C<read_label>, even if C<start> was not called.  After C<finish>, it is not an
+error to call C<start> again, even with a different mode.
+
+=head3 recycle_file
+
+ $success = $dev->recycle_file(fileno);
+
+On devices that support it, this removes the indicated file from the volume,
+presumably freeing its space to be used for other files. File numbers of
+existing files will not change, so this operation may leave "holes" in the
+sequence of file numbers. See C<seek_file> to see how this is handled.
+
+This method cannot be called while in a file, nor while in C<$ACCESS_READ>
+mode.
+
+=head3 erase
+
+ $success = $dev->erase(fileno);
+
+On devices that support it, this erases all data from the volume, presumably
+freeing the space.  This method must be called before start and after finish --
+that is, while the device is in a neutral state (C<$ACCESS_NULL>). You can
+detect whether or not this operation is supported using the C<full_deletion>
+property.
+
+=head3 eject
+
+ $success = $dev->eject();
+
+On devices that support it, this eject the volume.  This method can be called
+before start and after finish.
+
+=head3 directtcp_supported
+
+  $supp = $dev->directtcp_supported();
+
+This method returns TRUE if the DirectTCP-related methods (C<listen>,
+C<accept>, C<write_from_connection>, and C<read_to_connection>) are implemented
+by this device.
+
+=head3 listen
+
+  $addrs = $dev->listen($for_writing);
+
+The C<listen> method starts the device listening for an incoming DirectTCP
+connection.  The method returns a set of IP:PORT pairs to which a TCP
+connection can be made.  The boolean C<for_writing> is TRUE if
+this connection will be used to write to the device.
+
+This method can be called at any time, but between the time C<listen> is called
+and when C<accept> returns, no other methods of the device should be called.
+
+The return value might look like:
+
+  $addrs = [ [ "127.0.0.1", 9382 ] ]
+
+In C, the memory for these addresses remains the responsibility of the device,
+and will remain unchanged until C<accept> returns.
+
+=head3 accept
+
+  $conn = $dev->accept();
+
+This method accepts a connection to one of the addresses returned by C<listen>,
+returning an established DirectTCPConnection object (see below).  It returns
+C<undef> on failure.  Note that this method may block indefinitely if no
+connection ever occurs.  The C implementation returns an already-referenced
+connection object, so the caller should call C<g_object_unref> when the
+connection is no longer needed.
+
+=head3 connect
+
+  $conn = $dev->connect($for_writing, $addrs);
+
+This method initiates a connection to one of the addresses in C<$addrs>,
+returning an established DirectTCPConnection object (see below).  The
+C<$for_writing> parameter is TRUE if the connection will be used to write to
+the device.  It returns C<undef> on failure.  Note that this method may block
+indefinitely if no connection ever occurs.  The C implementation returns an
+already-referenced connection object, so the caller should call
+C<g_object_unref> when the connection is no longer needed.
+
+=head3 use_connection
+
+  my $ok = $dev->use_connection($conn);
+
+Call this method to use a DirectTCPConnection object created with another
+device.  The method must be called before the device is started (so
+C<access_mode> is C<$ACCESS_NULL>), as some devices cannot support switching
+connections without rewinding.  Any subsequent C<read_to_connection> or
+C<write_from_connection> calls will use this connection.
+
+=head3 write_from_connection
+
+  ($ok, $actual_size) = $dev->write_from_connection($size);
+
+This method reads data from the DirectTCPConnection specified with
+C<use_connection> or returned from C<accept> or C<connect> and writes it to the
+volume.   It writes at most C<$size> bytes, and returns the number of bytes
+written in C<$actual_size>.  If C<$size> is zero, it will write until EOF, EOM,
+or a device error.  On error, C<$ok> is false.
+
+When an EOF is received over the connection, signalling the end of the data
+stream, then this method returns without error (C<$ok> is true), with
+C<$actual_size> indicating the number of bytes written to the device (which may
+be zero).  In this case, the C<is_eof> attribute is true on return.
+
+Similarly, when the device encounters logical EOM in this method, it returns
+the total bytes transferred in C<$actual_size>, with C<$ok> true, and the
+C<is_eom> attribute true.  No data is lost.  If writes continue until physical
+EOM, data may be lost.
+
+=head3 read_to_connection
+
+  ($ok, $actual_size) = $dev->read_to_connection($size);
+
+This method is similar to C<write_from_connection> but the data flows in the
+opposite direction.  It reads at most C<$size> bytes, and returns the total
+number of bytes read in C<$actual_size>.
+
+When the method encounters an EOF, it stops early and returns successfully with
+the number of bytes actually read (which may be zero).
+
+=head3 property_get
+
+Get a property value, where the property is specified by name.  See "Properties", above.
+
+=head3 property_set
+
+Set a simple property value.  See "Properties", above.
+
+=head3 property_set_ex
+
+Set a property value with surety and source.  See "Properties", above.
+
+=head2 CONSTANTS
+
+This module defines a large number of constant scalars.  These constants are
+available from the package namespace (e.g., C<$Amanda::Device::ACCESS_WRITE>),
+or imported with the C<:constant> import tag.
+
+=head2 DirectTCPConnection objects
+
+The C<accept> and C<connect> methods return an object to represent the ongoing
+DirectTCP connection.  This object is mostly useful as a "token" to be passed
+to C<write_from_connection> and C<read_to_connection>.  In particular, a
+connection created by one device can be used with another device; this is how
+DirectTCP dumps are spanned over multiple volumes.
+
+The class does have one critical method, though:
+
+  $conn->close();
+
+This method closes the connection, releasing all resources allocated to it.  It
+can be called at any time, whether the remote side has closed the connection
+already or not.
+
+=cut
+
+%}

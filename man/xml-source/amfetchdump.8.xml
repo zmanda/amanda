@@ -1,0 +1,428 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"
+[
+  <!-- entities files to use -->
+  <!ENTITY % global_entities SYSTEM 'global.entities'>
+  %global_entities;
+]>
+
+<refentry id='amfetchdump.8'>
+
+<refmeta>
+<refentrytitle>amfetchdump</refentrytitle>
+<manvolnum>8</manvolnum>
+&rmi.source;
+&rmi.version;
+&rmi.manual.8;
+</refmeta>
+<refnamediv>
+<refname>amfetchdump</refname>
+<refpurpose>extract backup images from multiple Amanda tapes.</refpurpose>
+</refnamediv>
+<refentryinfo>
+&author.jstange;
+&author.ian;
+</refentryinfo>
+<!-- body begins here -->
+<refsynopsisdiv>
+<cmdsynopsis>
+  <command>amfetchdump</command>
+    <group choice='opt'>
+      <arg choice='plain'>-c</arg>
+      <arg choice='plain'>-C</arg>
+      <arg choice='plain'>-l</arg>
+    </group>
+    <group choice='opt'>
+      <arg choice='plain'>-p</arg>
+      <arg choice='plain'>-n</arg>
+    </group>
+    <arg choice='opt'>-a</arg>
+    <arg choice='opt'>-O <replaceable>directory</replaceable></arg>
+    <arg choice='opt'>-d <replaceable>device</replaceable></arg>
+    <group choice='opt'>
+      <arg choice='plain'>-h</arg>
+      <arg choice='plain'>--header-file <replaceable>filename</replaceable></arg>
+      <arg choice='plain'>--header-fd <replaceable>fd</replaceable></arg>
+    </group>
+    <group choice='opt'>
+      <arg choice='plain'>--release-tapes</arg>
+      <arg choice='plain'>--reserve-tapes</arg>
+    </group>
+    <group choice='opt'>
+      <arg choice='plain'>--decompress</arg>
+      <arg choice='plain'>--no-decompress</arg>
+      <arg choice='plain'>--server-decompress</arg>
+      <arg choice='plain'>--client-decompress</arg>
+    </group>
+    <arg choice='opt'>
+	<group choice='req'>
+	  <arg choice='plain'>--extract</arg>
+	  <arg choice='plain'>--extract-client=<replaceable>HOSTNAME</replaceable></arg>
+	</group>
+	<arg choice='plain'>--target<replaceable> target</replaceable></arg>
+	<arg choice='opt'>--data-path<replaceable> amanda|directtcp</replaceable></arg>
+	<arg choice='opt'>--run-client-scripts</arg>
+	<arg choice='opt'>--prev-level <replaceable>level</replaceable></arg>
+	<arg choice='opt'>--next-level <replaceable>level</replaceable></arg>
+	<arg choice='opt'>--application-property <replaceable>NAME=VALUE</replaceable></arg>*
+	<arg choice='opt'>--include-file <replaceable>file</replaceable></arg>*
+	<arg choice='opt'>--include-list <replaceable>filename</replaceable></arg>*
+	<arg choice='opt'>--include-list-glob <replaceable>filename</replaceable></arg>*
+	<arg choice='opt'>--exclude-file <replaceable>file</replaceable></arg>*
+	<arg choice='opt'>--exclude-list <replaceable>filename</replaceable></arg>*
+	<arg choice='opt'>--exclude-list-glob <replaceable>filename</replaceable></arg>*
+    </arg>
+    <arg choice='opt'>--init</arg>
+    <arg choice='opt'>--restore</arg>
+    <group choice='opt'>
+      <arg choice='plain'>--decrypt</arg>
+      <arg choice='plain'>--no-decrypt</arg>
+      <arg choice='plain'>--server-decrypt</arg>
+      <arg choice='plain'>--client-decrypt</arg>
+    </group>
+    <arg choice='opt'>--exact_match</arg>
+    &configoverride.synopsis;
+    <arg choice='plain'><replaceable>config</replaceable></arg>
+    <arg choice='plain'><replaceable>hostname</replaceable></arg>
+    <arg choice='opt'>
+      <arg choice='plain'><replaceable>disk</replaceable></arg>
+      <arg choice='opt'>
+        <arg choice='plain'><replaceable>date</replaceable></arg>
+        <arg choice='opt'>
+          <arg choice='plain'><replaceable>level</replaceable></arg>
+          <arg choice='opt'>
+            <arg choice='plain'><replaceable>hostname</replaceable></arg>
+            <arg choice='opt'>...</arg>
+          </arg>
+        </arg>
+      </arg>
+    </arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1><title>DESCRIPTION</title>
+<para><emphasis remap='B'>Amfetchdump</emphasis>
+pulls one or more matching dumps from tape or from the holding disk,
+handling the reassembly of multi-tape split dump files as well as any
+tape autochanger operations. The dump are by default decompressed and decrypted.
+</para>
+
+<para>It will automatically use the Amanda catalog
+to locate available dumps on tape, in the same way that the <emphasis
+remap='B'>find</emphasis> feature of
+<manref name="amadmin" vol="8"/>
+lists available dumps.</para>
+
+<para>The 
+<emphasis remap='I'>hostname</emphasis>,
+<emphasis remap='I'>diskname</emphasis>,
+<emphasis remap='I'>datestamp</emphasis>,
+and
+<emphasis remap='I'>level</emphasis> dump specifications are further described in
+<manref name="amanda-match" vol="7"/>.
+Note that at minimum a <emphasis remap='I'>hostname</emphasis> must be specified.</para>
+
+<para>Unless <option>-p</option>
+is used, backup images are extracted to files in the current directory named:</para>
+
+<!-- .RS -->
+<para><emphasis remap='I'>hostname.diskname.datestamp.dumplevel</emphasis></para>
+<!-- .RE -->
+
+<para>If a changer error occurs, or the <option>-d</option> option is given,
+then amfetchdump prompts for each required volume.</para>
+</refsect1>
+
+<refsect1><title>OPTIONS</title>
+<variablelist remap='TP'>
+  <varlistentry>
+    <term><option>-p</option></term>
+<listitem><para>Pipe exactly one complete dump file to <emphasis
+remap='I'>stdout</emphasis>, instead of writing the file to disk. This
+will restore only the first matching dumpfile (where
+&quot;first&quot; is determined by the dump log search
+facility).</para></listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><option>-h</option></term>
+<listitem><para>Output the amanda header as a 32K block to same output as the image.</para></listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><option>--header-fd</option> <replaceable>fd</replaceable></term>
+<listitem><para>Output the amanda header to the numbered file
+ descriptor.</para></listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><option>--header-file</option> <replaceable>filename</replaceable></term>
+<listitem><para>Output the amanda header to the filename.</para></listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><option>-d</option> <replaceable>device_or_changer</replaceable></term>
+    <listitem><para> Restore from this device or changer instead of the default,
+prompting for each volume.</para></listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><option>-O</option>
+    <replaceable>directory</replaceable></term>
+<listitem><para>Output restored files to this directory, instead of to the
+    current working directory.</para></listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><option>-c</option></term>
+    <listitem><para>Compress output, fastest method
+    available.</para></listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><option>-C</option></term>
+    <listitem><para>Compress output, smallest file size method
+    available.</para></listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><option>--decompress</option></term>
+    <listitem><para>Always do the decompression, this is the default.</para></listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><option>--no-decompress</option></term>
+    <listitem><para>Never do the decompression.</para></listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><option>--server-decompress</option></term>
+    <listitem><para>Do the decompression only if the compression was done on
+the server.</para></listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><option>--client-decompress</option></term>
+    <listitem><para>Do the decompression only if the compression was done on
+the client.</para></listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><option>--decrypt</option></term>
+    <listitem><para>Always do the decryption, this is the default.</para></listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><option>--no-decrypt</option></term>
+    <listitem><para>Never do the decryption.</para></listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><option>--server-decrypt</option></term>
+    <listitem><para>Do the decryption only if the encryption was done on
+the server.</para></listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><option>--client-decrypt</option></term>
+    <listitem><para>Do the decryption only if the encryption was done on
+the client.</para></listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><option>--init</option></term>
+  <listitem>
+<para>Prepare for a restore, some device require it for faster restore.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><option>--no-restore</option></term>
+  <listitem>
+<para>Do not start the restore, useful with --init.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><option>--exact-match</option></term>
+  <listitem>
+<para>The host and disk are parsed as exact values</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><option>--extract</option></term>
+  <listitem>
+<para>Extract the backup on the server in the
+<replaceable>target</replaceable> path.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><option>--directory</option> <replaceable>directory</replaceable></term>
+  <listitem>
+<para>Deprecated, use --target</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><option>--target</option> <replaceable>target</replaceable></term>
+  <listitem>
+<para>Where to extract the backup with the <option>--extract</option> option.</para>
+<para>Warning: All files in that path can be removed.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><option>--data-path</option> amanda|directtcp</term>
+  <listitem>
+<para>The data path to use with <option>--extract</option>, the default is
+ to use the fatest data path.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><option>--run-client-scripts</option></term>
+  <listitem>
+<para>Run the client script if it is set.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><option>--prev-level</option> <replaceable>level</replaceable></term>
+  <listitem>
+<para>The previous level that was restored for this dle.
+If not set, run the pre-recover script.
+If set, run the inter-level-recover script.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><option>--next-level</option> <replaceable>level</replaceable></term>
+  <listitem>
+<para>The next level we will restore for this dle.
+If not set, run the post-recover script.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><option>--application-property</option> <replaceable>NAME=VALUE</replaceable></term>
+  <listitem>
+<para>Application property to send to the application with
+<option>--extract.</option></para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><option>--include-file</option> <replaceable>file</replaceable></term>
+  <listitem>
+<para>The name of a file to restore.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><option>--include-list</option> <replaceable>filename</replaceable></term>
+  <listitem>
+<para>The name of a file containing file to restore.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><option>--include-list-glob</option> <replaceable>filename</replaceable></term>
+  <listitem>
+<para>The name of a file containing file to restore using --include-list-glob of the application.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><option>--exclude-file</option> <replaceable>file</replaceable></term>
+  <listitem>
+<para>The name of a file to exclude from the restore list.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><option>--exclude-list</option> <replaceable>filename</replaceable></term>
+  <listitem>
+<para>The name of a file containing file to exclude from the restore list.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><option>--exclude-list-glob</option> <replaceable>filename</replaceable></term>
+  <listitem>
+<para>The name of a file containing file to exclude from the restore list using --exclude-list-glob of the application.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><option>--release-tapes</option></term>
+  <listitem>
+<para>Release the tapes already reserved for the restore.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><option>--reserve-tapes</option></term>
+  <listitem>
+<para>Reserve the tapes needed for the restore.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+    <term><option>-l</option></term>
+<listitem><para>Leave dumps in the compressed/uncompressed and
+encrypted/unencrypted state in which they were found on tape.
+It is a synonym for <option>--no-decompression</option> and <option>--no-decryption</option></para></listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><option>-a</option></term>
+<listitem><para>Assume that all tapes are already available, via tape changer or
+otherwise, instead of prompting the operator to ensure that all tapes
+are loaded.</para></listitem>
+  </varlistentry>
+
+  <varlistentry>
+    <term><option>-n</option></term>
+<listitem><para>Do not reassemble split dump files at all, just restore each
+piece as an individual file.</para></listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><option>-o</option> <replaceable>configoption</replaceable></term>
+  <listitem>
+<para>See the "<emphasis remap='B'>CONFIGURATION OVERRIDE</emphasis>"
+ section in <manref name="amanda" vol="8"/>.</para>
+  </listitem>
+  </varlistentry>
+
+</variablelist>
+</refsect1>
+
+<refsect1><title>EXAMPLES</title>
+<para>All the examples here assume your configuration is called
+<replaceable>SetA</replaceable>.</para>
+
+<para>Here's a simple case, restoring all known dumps of the host
+vanya to the current working directory.</para>
+<programlisting>
+$ amfetchdump SetA vanya
+</programlisting>
+
+<para>A more likely scenario involves restoring a particular dump from
+a particular date. We'll pipe this one to &gnutar; as well, to
+automatically extract the dump.</para>
+<programlisting>
+$ amfetchdump -p SetA vanya /home 20051020 | gtar -xvpf -
+</programlisting>
+
+</refsect1>
+
+<refsect1><title>CAVEATS</title>
+<para><command>Amfetchdump</command> is dependent on accessing your server's config,
+tape changer, and (normally) dump logs. As such, it's not necessarily
+the most useful tool when those have all been wiped out and you
+desperately need to pull things from your tape. Pains have been taken
+to make it as capable as possible, but for seriously minimialist
+restores, look to
+<manref name="amrestore" vol="8"/>
+or
+<manref name="dd" vol="8"/>
+instead.</para>
+</refsect1>
+
+<seealso>
+<manref name="amanda-match" vol="7"/>,
+<manref name="amadmin" vol="8"/>,
+<manref name="amrestore" vol="8"/>,
+</seealso>
+
+</refentry>
+

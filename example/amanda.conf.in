@@ -1,0 +1,773 @@
+# amanda.conf - sample Amanda configuration file. See amanda.conf(5) for 
+# details
+
+org 	 "@DEFAULT_CONFIG@"	# your organization name for reports
+mailto 	 "@CLIENT_LOGIN@"	# space separated list of operators at your site
+dumpuser "@CLIENT_LOGIN@"	# the user to run dumps under
+
+inparallel 4		# maximum dumpers that will run in parallel
+dumporder "sssS"	# specify the priority order of each dumper
+			#   s -> smallest size
+			#   S -> biggest size
+			#   t -> smallest time
+			#   T -> biggest time
+			#   b -> smallest bandwitdh
+			#   B -> biggest bandwitdh
+			# try "BTBTBTBTBTBT" if you are not holding
+			# disk constrained
+
+taperalgo first		# The algorithm used to choose which dump image to send
+			# to the taper.
+			# Possible values: 
+		        # [first|firstfit|largest|largestfit|smallest|last]
+			# Default: first. 
+			# first		First in - first out.
+			# firstfit 	The first dump image that will fit 
+                        #               on the current tape.
+			# largest 	The largest dump image.
+			# largestfit 	The largest dump image that will fit 
+                        #               on the current tape.
+			# smallest 	The smallest dump image.
+			# last 		Last in - first out.
+
+displayunit "k"		# Possible values: "k|m|g|t"
+			# Default: k. 
+			# The unit used to print many numbers.
+			# k=kilo, m=mega, g=giga, t=tera
+			
+netusage  8000 Kbps	# maximum net bandwidth for Amanda, in KB per sec
+
+dumpcycle 4 weeks	# the number of days in the normal dump cycle
+runspercycle 20         # the number of amdump runs in dumpcycle days
+			# (4 weeks * 5 amdump runs per week -- just weekdays)
+tapecycle 25 tapes	# the number of tapes in rotation
+			# 4 weeks (dumpcycle) times 5 tapes per week (just
+			# the weekdays) plus a few to handle errors that
+			# need amflush and so we do not overwrite the full
+			# backups performed at the beginning of the previous
+			# cycle
+
+bumpsize 20 Mb		# minimum savings (threshold) to bump level 1 -> 2
+bumppercent 20		# minimum savings (threshold) to bump level 1 -> 2
+bumpdays 1		# minimum days at each level
+bumpmult 4		# threshold = bumpsize * bumpmult^(level-1)
+
+etimeout 300		# number of seconds per filesystem for estimates.
+dtimeout 1800		# number of idle seconds before a dump is aborted.
+ctimeout 30		# maximum number of seconds that amcheck waits
+			# for each client host
+ 
+device_output_buffer_size 1280k
+                        # amount of buffer space to use when writing to devices
+
+# flush-threshold-dumped, flush-threshold-scheduled, taperflush, and autoflush
+# are used to control tape utilization. See the amanda.conf (5) manpage for
+# details on how they work. Taping will not start until all criteria are
+# satisfied. Here are some examples:
+#
+# You want to fill tapes completely even in the case of failed dumps, and
+# don't care if some dumps are left on the holding disk after a run:
+# flush-threshold-dumped	100 # (or more)
+# flush-threshold-scheduled	100 # (or more)
+# taperflush			100
+# autoflush			yes
+#
+# You want to improve tape performance by waiting for a complete tape of data
+# before writing anything. However, all dumps will be flushed; none will
+# be left on the holding disk.
+# flush-threshold-dumped	100 # (or more)
+# flush-threshold-scheduled	100 # (or more)
+# taperflush	0
+#
+# You don't want to use a new tape for every run, but want to start writing
+# to tape as soon as possible:
+# flush-threshold-dumped	0   # (or more)
+# flush-threshold-scheduled	100 # (or more)
+# taperflush	100
+# autoflush     yes
+# maxdumpsize   100k # amount of data to dump each run; see above.
+#
+# You want to keep the most recent dumps on holding disk, for faster recovery.
+# Older dumps will be rotated to tape during each run.
+# flush-threshold-dumped	300 # (or more)
+# flush-threshold-scheduled	300 # (or more)
+# taperflush	300
+# autoflush     yes
+#
+# Defaults:
+# (no restrictions; flush to tape immediately; don't flush old dumps.)
+flush-threshold-dumped 0
+flush-threshold-scheduled 0
+taperflush 0
+autoflush no
+
+# Specify tape device or tape changer.
+
+runtapes 1			# number of tapes to be used in a single run of amdump
+tapedev "@EXAMPLE_TAPEDEV@"	# tape changer or device to use
+
+# To use vtapes, create some slotN directories (slot0, slot1, etc.) under
+# /var/amanda/vtapes and use this tapedev:
+## tapedev "chg-disk:/var/amanda/vtapes"
+
+# To use a tape library, uncomment this definition.  See amanda-changers(7)
+# for more configuration options.
+#
+# define changer myrobot {
+#   tpchanger "chg-robot:/dev/sg0"  # your changer device file
+#   tapedev "tape:@EXAMPLE_TAPEDEV@"	# your tape drive device file
+# }
+# tapedev "myrobot"
+
+# If you want Amanda to automatically label any non-Amanda tapes it
+# encounters, uncomment the line below. Note that this will ERASE any
+# non-Amanda tapes you may have, and may also ERASE any near-failing tapes.
+# Use with caution.
+## autolabel "@DEFAULT_CONFIG@-%%%" empty
+
+maxdumpsize -1		# Maximum number of bytes the planner will schedule
+			# for a run (default: runtapes * tape_length).
+tapetype HP-DAT		# what kind of tape it is (see tapetypes below)
+labelstr "^@DEFAULT_CONFIG@-[0-9][0-9]*$"	# label constraint regex: all tapes must match
+
+amrecover_changer "changer"	# amrecover will use the changer if you restore
+    # from this device. It could be a string like 'changer' and amrecover will use your
+    # changer if you set your tape to 'changer' with 'setdevice changer' or via 
+    # 'tapedev "changer"' in amanda-client.conf
+
+# Specify holding disks.  These are used as a temporary staging area for
+# dumps before they are written to tape and are recommended for most sites.
+# The advantages include: tape drive is more likely to operate in streaming
+# mode (which reduces tape and drive wear, reduces total dump time); multiple
+# dumps can be done in parallel (which can dramatically reduce total dump time.
+# The main disadvantage is that dumps on the holding disk need to be flushed
+# (with amflush) to tape after an operating system crash or a tape failure.
+# If no holding disks are specified then all dumps will be written directly
+# to tape.  If a dump is too big to fit on the holding disk than it will be
+# written directly to tape.  If more than one holding disk is specified then
+# they will all be used based on activity and available space.
+
+holdingdisk hd1 {
+    comment "main holding disk"
+    directory "/dumps/amanda"	# where the holding disk is
+    use -100 Mb			# how much space can we use on it
+				# a non-positive value means:
+				# use all space but that value
+    chunksize 1Gb 	# size of chunk if you want big dump to be
+			# dumped on multiple files on holding disks
+			#  N Kb/Mb/Gb split images in chunks of size N
+			#	      The maximum value should be
+			#	      (MAX_FILE_SIZE - 1Mb)
+			#  0          same as INT_MAX bytes
+    }
+#holdingdisk hd2 {
+#    directory "/dumps2/amanda"
+#    use 1000 Mb
+#    }
+#holdingdisk hd3 {
+#    directory "/mnt/disk4"
+#    use 1000 Mb
+#    }
+
+
+# If amanda cannot find a tape on which to store backups, it will run
+# as many backups as it can to the holding disks.  In order to save
+# space for unattended backups, by default, amanda will only perform
+# incremental backups in this case, i.e., it will reserve 100% of the
+# holding disk space for the so-called degraded mode backups.
+# However, if you specify a different value for the `reserve'
+# parameter, amanda will not degrade backups if they will fit in the
+# non-reserved portion of the holding disk.
+
+# reserve 30 # percent
+# This means save at least 30% of the holding disk space for degraded
+# mode backups.  
+
+# The format for a ColumnSpec is a ',' seperated list of triples.
+# Each triple consists of
+#   + the name of the column (as in ColumnNameStrings)
+#   + prefix before the column
+#   + the width of the column, if set to -1 it will be recalculated
+#     to the maximum length of a line to print.
+# Example:
+# 	"Disk=1:17,HostName=1:10,OutKB=1:7"
+# or
+# 	"Disk=1:-1,HostName=1:10,OutKB=1:7"
+#        
+# You need only specify those colums that should be changed from
+# the default. If nothing is specified in the configfile, the
+# above compiled in values will be in effect, resulting in an
+# output as it was all the time.
+# The names of the colums are:
+# HostName, Disk, Level, OrigKB, OutKB, Compress, DumpTime, DumpRate,
+# TapeTime and TapeRate.
+#							ElB, 1999-02-24.
+# columnspec "Disk=1:18,HostName=0:10,OutKB=1:7"
+
+
+# Amanda needs a few Mb of diskspace for the log and debug files,
+# as well as a database.  This stuff can grow large, so the conf directory
+# isn't usually appropriate.  Some sites use /usr/local/var and some /usr/adm.
+# Create an amanda directory under there.  You need a separate infofile and
+# logdir for each configuration, so create subdirectories for each conf and
+# put the files there.  Specify the locations below.
+
+# Note that, although the keyword below is infofile, it is only so for
+# historic reasons, since now it is supposed to be a directory (unless
+# you have selected some database format other than the `text' default)
+infofile "@CONFIG_DIR@/@DEFAULT_CONFIG@/curinfo"	# database DIRECTORY
+logdir   "@CONFIG_DIR@/@DEFAULT_CONFIG@"		# log directory
+indexdir "@CONFIG_DIR@/@DEFAULT_CONFIG@/index"		# index directory
+#tapelist "@CONFIG_DIR@/@DEFAULT_CONFIG@/tapelist"	# list of used tapes
+# tapelist is stored, by default, in the directory that contains amanda.conf
+
+# tapetypes
+
+# Define the type of tape you use here, and use it in "tapetype"
+# above.  Some typical types of tapes are included here.  The tapetype
+# tells amanda how many MB will fit on the tape, how big the filemarks
+# are, and how fast the tape device is.
+
+# A filemark is the amount of wasted space every time a tape section
+# ends.
+
+# For completeness Amanda should calculate the inter-record gaps too,
+# but it doesn't.  For EXABYTE and DAT tapes this is ok.  Anyone using
+# 9 tracks for amanda and need IRG calculations?  Drop me a note if
+# so.
+
+# If you want amanda to print postscript paper tape labels
+# add a line after the comment in the tapetype of the form
+#    lbl-templ "/path/to/postscript/template/label.ps"
+
+# if you want the label to go to a printer other than the default
+# for your system, you can also add a line above for a different
+# printer. (i usually add that line after the dumpuser specification)
+
+# dumpuser "operator"     # the user to run dumps under
+# printer "mypostscript"  # printer to print paper label on
+
+# here is an example of my definition for an EXB-8500
+
+# define tapetype EXB-8500 {
+# ...
+#     lbl-templ "@CONFIG_DIR@/config/lbl.exabyte.ps"
+# }
+
+define tapetype global {
+    part_size 3G
+    part_cache_type none
+}
+
+define tapetype QIC-60 {
+    global
+    comment "Archive Viper"
+    length 60 mbytes
+    filemark 100 kbytes		# don't know a better value
+    speed 100 kbytes		# dito
+}
+
+define tapetype DEC-DLT2000 {
+    global
+    comment "DEC Differential Digital Linear Tape 2000"
+    length 15000 mbytes
+    filemark 8 kbytes
+    speed 1250 kbytes
+}
+
+# goluboff@butch.Colorado.EDU
+# in amanda-users (Thu Dec 26 01:55:38 MEZ 1996)
+define tapetype DLT {
+    global
+    comment "DLT tape drives"
+    length 20000 mbytes		# 20 Gig tapes
+    filemark 2000 kbytes	# I don't know what this means
+    speed 1536 kbytes		# 1.5 Mb/s
+}
+
+define tapetype SURESTORE-1200E {
+    global
+    comment "HP AutoLoader"
+    length 3900 mbytes
+    filemark 100 kbytes
+    speed 500 kbytes
+}
+
+define tapetype EXB-8500 {
+    global
+    comment "Exabyte EXB-8500 drive on decent machine"
+    length 4200 mbytes
+    filemark 48 kbytes
+    speed 474 kbytes			
+}
+
+define tapetype EXB-8200 {
+    global
+    comment "Exabyte EXB-8200 drive on decent machine"
+    length 2200 mbytes
+    filemark 2130 kbytes
+    speed 240 kbytes			
+}
+
+define tapetype HP-DAT {
+    global
+    comment "DAT tape drives"
+    # data provided by Rob Browning <rlb@cs.utexas.edu>
+    length 1930 mbytes
+    filemark 111 kbytes
+    speed 468 kbytes
+}
+
+define tapetype DAT {
+    global
+    comment "DAT tape drives"
+    length 1000 mbytes		# these numbers are not accurate
+    filemark 100 kbytes		# but you get the idea
+    speed 100 kbytes
+}
+
+define tapetype MIMSY-MEGATAPE {
+    global
+    comment "Megatape (Exabyte based) drive through Emulex on Vax 8600"
+    length 2200 mbytes
+    filemark 2130 kbytes
+    speed 170 kbytes		# limited by the Emulex bus interface, ugh
+}
+
+define tapetype SEAGATE-ULTRIUM-LTO {
+    global
+    comment "SEAGATE ULTRIUM 06242 LTO, compression off"
+    length 99584 mbytes
+    filemark 0 kbytes
+    speed 11288 kps
+}
+
+# dumptypes
+#
+# These are referred to by the disklist file.  The dumptype specifies
+# certain parameters for dumping including:
+#   auth	- authentication scheme to use between server and client.
+#		  Valid values are "bsd", "bsdudp", "bsdtcp", "krb5", "local",
+#		  "rsh" and "ssh".  
+#		  Default: [auth "bsdtcp"]
+#   comment	- just a comment string
+#   comprate	- set default compression rate.  Should be followed by one or
+#		  two numbers, optionally separated by a comma.  The 1st is
+#		  the full compression rate; the 2nd is the incremental rate.
+#		  If the second is omitted, it is assumed equal to the first.
+#		  The numbers represent the amount of the original file the
+#		  compressed file is expected to take up.
+#		  Default: [comprate 0.50, 0.50]
+#   compress	- specify compression of the backed up data.  Valid values are:
+#		  "none"        - don't compress the dump output.
+#		  "client best" - compress on the client using the best (and
+#				  probably slowest) algorithm.
+#		  "client fast" - compress on the client using fast algorithm.
+#	          "client custom" - compress using your custom client compression program.
+#				    use client_custom_compress "PROG" to specify
+#				    the custom compression program.
+#				    PROG must not contain white space.
+#		  "server best" - compress on the tape host using the best (and
+#				  probably slowest) algorithm.
+#		  "server fast" - compress on the tape host using a fast
+#				  algorithm.  This may be useful when a fast
+#				  tape host is backing up slow clients.
+#	          "server custom" - compress using your server custom compression program.
+#				    use server_custom_compress "PROG" to specify
+#				    the custom compression program.
+#				    PROG must not contain white space.
+#		  Default: [compress client fast]
+#   dumpcycle	- set the number of days in the dump cycle, ie, set how often a
+#		  full dump should be performed.  Default: from DUMPCYCLE above
+#   estimate      Determine the way AMANDA does it's estimate. 
+#		  "client"	- Use the same program as the dumping program,
+#				this is the most accurate way to do estimates, 
+#				but it can take a long time.
+#		  "calcsize"	- Use a faster program to do estimates, but the
+#		  		result is less accurate.
+#		  "server"	- Use only statistics from the previous run to 
+#				give an estimate, 
+#				it takes only a few seconds but the result is not 
+#				accurate if your disk usage changes from day to day.
+#		  Default: [client]
+#   encrypt  - specify encryption of the backed up data. Valid values are:
+#		  "none"   - don't encrypt the dump output.
+#		  "client" - encrypt on the client using the program specified by 
+#                            client_encrypt "PROG".
+#			     Use client_decrypt_option to specify the decrypt- 
+#                            parameter, default is "-d".
+#                            PROG and decrypt-parameter must not contain white space.     
+#		  "server" - encrypt on the server using the program specified by 
+#                            server_encrypt "PROG".
+#                            Use server_decrypt_option to specify the decrypt- 
+#                            parameter, default is "-d".
+#                            PROG and decrypt-parameter must not contain white space.
+#                 Default: [none]
+#   exclude	- specify files and directories to be excluded from the dump.
+#		  Useful with gnutar only; silently ignored by dump and samba.
+#		  Valid values are:
+#		  "pattern"       - a shell glob pattern defining which files
+#				    to exclude.
+#				    gnutar gets --exclude="pattern"
+#		  list "filename" - a file (on the client!) containing patterns
+#				    re's (1 per line) defining which files to
+#				    exclude.
+#				    gnutar gets --exclude-from="filename"
+#		  Note that the `full pathname' of a file within its
+#		  filesystem starts with `./', because of the way amanda runs
+#		  gnutar: `tar -C $mountpoint -cf - --lots-of-options .' (note
+#		  the final dot!)  Thus, if you're backing up `/usr' with a
+#		  diskfile entry like ``host /usr gnutar-root', but you don't
+#		  want to backup /usr/tmp, your exclude list should contain
+#		  the pattern `./tmp', as this is relative to the `/usr' above.
+#		  Please refer to the man-page of gnutar for more information.
+#		  If a relative pathname is specified as the exclude list,
+#		  it is searched from within the directory that is
+#		  going to be backed up.
+#		  Default: include all files
+#   holdingdisk	- should the holding disk be used for this dump.  Useful for
+#		  dumping the holding disk itself.  Default: [holdingdisk auto]
+#		  "never"    - Never use the holding disk.
+#		  "auto"     - Use the holding disk if possible.
+#		  "required" - Always use the holding disk.
+#   ignore	- do not back this filesystem up.  Useful for sharing a single
+#		  disklist in several configurations.
+#   index	- keep an index of the files backed up.  Default: [index no]
+#   kencrypt	- encrypt the data stream between the client and server.
+#		  Default: [kencrypt no]
+#   maxdumps	- max number of concurrent dumps to run on the client.
+#		  Default: [maxdumps 1]
+#   maxpromoteday - max number of day for a promotion, set it 0 if you don't
+#		  want promotion, set it to 1 or 2 if your disk get
+#		  overpromoted.
+#		  Default: [10000]
+#   priority	- priority level of the dump.  Valid levels are "low", "medium"
+#		  or "high".  These are really only used when Amanda has no
+#		  tape to write to because of some error.  In that "degraded
+#		  mode", as many incrementals as will fit on the holding disk
+#		  are done, higher priority first, to insure the important
+#		  disks are at least dumped.  Default: [priority medium]
+#   program	- specify the dump system to use.  Valid values are "DUMP",
+#                 or "GNUTAR".  Default: [program "DUMP"].
+#   record	- record the backup in the time-stamp-database of the backup
+#		  program (e.g. /etc/dumpdates for DUMP or
+#		  @GNUTAR_LISTED_INCREMENTAL_DIR@ for GNUTAR.).
+#		  Default: [record yes]
+#   skip-full	- skip the disk when a level 0 is due, to allow full backups
+#		  outside Amanda, eg when the machine is in single-user mode.
+#   skip-incr	- skip the disk when the level 0 is NOT due.  This is used in
+#		  archive configurations, where only full dumps are done and
+#		  the tapes saved.
+#   starttime	- delay the start of the dump?  Default: no delay
+#   strategy	- set the dump strategy.  Valid strategies are currently:
+#		  "standard" - the standard one.
+#		  "nofull"   - do level 1 dumps every time.  This can be used,
+#			       for example, for small root filesystems that
+#			       only change slightly relative to a site-wide
+#			       prototype.  Amanda then backs up just the
+#			       changes.
+#		  "noinc"    - do level 0 dumps every time.
+#		  "skip"     - skip all dumps.  Useful for sharing a single
+#			       disklist in several configurations.
+#		  "incronly" - do only incremental dumps. This is similar
+#                              to strategy 'nofull', but will increase
+#                              the dump level as usual. Full dumps will
+#                              only be performed when an 'amadmin force' 
+#                              has been issued 
+#		  Default: [strategy standard]
+#
+# Note that you may specify previously defined dumptypes as a shorthand way of
+# defining parameters.
+
+define dumptype global {
+    comment "Global definitions"
+    # This is quite useful for setting global parameters, so you don't have
+    # to type them everywhere.  All dumptype definitions in this sample file
+    # do include these definitions, either directly or indirectly.
+    # There's nothing special about the name `global'; if you create any
+    # dumptype that does not contain the word `global' or the name of any
+    # other dumptype that contains it, these definitions won't apply.
+    # Note that these definitions may be overridden in other
+    # dumptypes, if the redefinitions appear *after* the `global'
+    # dumptype name.
+    # You may want to use this for globally enabling or disabling
+    # indexing, recording, etc.  Some examples:
+    # index yes
+    # record no
+    # auth "bsdtcp"
+}
+
+define dumptype always-full {
+    global
+    comment "Full dump of this filesystem always"
+    compress none
+    priority high
+    dumpcycle 0
+}
+
+# Dumptypes for gnutar
+define dumptype root-tar {
+    global
+    program "GNUTAR"
+    comment "root partitions dumped with tar"
+    compress none
+    index
+#   exclude list "@CONFIG_DIR@/exclude.gtar"
+    priority low
+}
+
+define dumptype user-tar {
+    root-tar
+    comment "user partitions dumped with tar"
+    priority medium
+}
+
+define dumptype user-tar-span {
+    root-tar
+    comment "tape-spanning user partitions dumped with tar"
+    priority medium
+}
+
+define dumptype high-tar {
+    root-tar
+    comment "partitions dumped with tar"
+    priority high
+}
+
+define dumptype comp-root-tar {
+    root-tar
+    comment "Root partitions with compression"
+    compress client fast
+}
+
+define dumptype comp-user-tar {
+    user-tar
+    compress client fast
+}
+
+define dumptype comp-user-tar-span {
+    user-tar-span
+    compress client fast
+}
+
+define dumptype holding-disk {
+    global
+    comment "The master-host holding disk itself"
+    holdingdisk never # do not use the holding disk
+    priority medium
+}
+
+define dumptype comp-user {
+    global
+    comment "Non-root partitions on reasonably fast machines"
+    compress client fast
+    priority medium
+}
+
+define dumptype comp-user-span {
+    global
+    comment "Tape-spanning non-root partitions on reasonably fast machines"
+    compress client fast
+    priority medium
+}
+
+define dumptype nocomp-user {
+    comp-user
+    comment "Non-root partitions on slow machines"
+    compress none
+}
+
+define dumptype nocomp-user-span {
+    comp-user-span
+    comment "Tape-spanning non-root partitions on slow machines"
+    compress none
+}
+
+define dumptype comp-root {
+    global
+    comment "Root partitions with compression"
+    compress client fast
+    priority low
+}
+
+define dumptype nocomp-root {
+    comp-root
+    comment "Root partitions without compression"
+    compress none
+}
+
+define dumptype comp-high {
+    global
+    comment "very important partitions on fast machines"
+    compress client best
+    priority high
+}
+
+define dumptype nocomp-high {
+    comp-high
+    comment "very important partitions on slow machines"
+    compress none
+}
+
+define dumptype nocomp-test {
+    global
+    comment "test dump without compression, no /etc/dumpdates recording"
+    compress none
+    record no
+    priority medium
+}
+
+define dumptype comp-test {
+    nocomp-test
+    comment "test dump with compression, no /etc/dumpdates recording"
+    compress client fast
+}
+
+define dumptype custom-compress {
+   global
+   program "GNUTAR"
+   comment "custom client compression dumped with tar"
+   compress client custom
+   client_custom_compress "/usr/bin/bzip2"
+}
+
+define dumptype server-encrypt-fast {
+   global
+   program "GNUTAR"
+   comment "fast client compression and server symmetric encryption"
+   compress client fast
+   encrypt server
+   server_encrypt "/usr/sbin/amcrypt"
+   server_decrypt_option "-d"
+}
+
+define dumptype client-encrypt-nocomp {
+   global
+   program "GNUTAR"
+   comment "no compression and client symmetric encryption"
+   compress none
+   encrypt client
+   client_encrypt "/usr/sbin/amcrypt"
+   client_decrypt_option "-d"
+}
+
+
+# To use gpg public-key encryption, gpg does compress with zlib by default.
+# Thus, no need to specify compress
+
+#define dumptype gpg-encrypt {
+#    global
+#    program "GNUTAR"
+#    comment "server public-key encryption, dumped with tar"
+#    compress none
+#    encrypt server
+#    server_encrypt "/usr/sbin/amgpgcrypt"
+#    server_decrypt_option "-d"
+#}
+
+
+# network interfaces
+#
+# These are referred to by the disklist file.  They define the attributes
+# of the network interface that the remote machine is accessed through.
+# Notes: - netusage above defines the attributes that are used when the
+#          disklist entry doesn't specify otherwise.
+#        - the values below are only samples.
+#        - specifying an interface does not force the traffic to pass
+#          through that interface.  Your OS routing tables do that.  This
+#          is just a mechanism to stop Amanda trashing your network.
+# Attributes are:
+#	use		- bandwidth above which amanda won't start
+#			  backups using this interface.  Note that if
+#			  a single backup will take more than that,
+#			  amanda won't try to make it run slower!
+
+define interface local {
+    comment "a local disk"
+    use 8000 kbps
+}
+
+#define interface le0 {
+#    comment "10 Mbps ethernet"
+#    use 400 kbps
+#}
+
+#define application-tool and dumptype for the amgtar application
+define application-tool app_amgtar {
+    comment "amgtar"
+    plugin  "amgtar"
+    #property "GNUTAR-PATH" "/path/to/gtar"
+    #property "GNUTAR-LISTDIR" "/path/to/gnutar_list_dir"
+                    #default from gnutar_list_dir setting in amanda-client.conf
+}
+
+define dumptype dt_amgtar {
+    program "APPLICATION"
+    application "app_amgtar"
+}
+
+#define application-tool and dumptype for the amstar application
+define application-tool app_amstar {
+    comment "amstar"
+    plugin  "amstar"
+    #property "STAR-PATH" "/path/to/star"
+    #property "STAR-TARDUMP" "/path/to/tardumps"  # default /etc/tardumps
+    #property "STAR-DLE-TARDUMP" "no"
+	# if 'yes' then create a different tardump file for each DLE,
+        # it is required if you do many dump in parallel (maxdump>1)
+}
+
+define dumptype dt_amstar {
+    program "APPLICATION"
+    application "app_amstar"
+}
+
+#define a script-tool to send an email
+define script-tool sc-email {
+  comment "script-email"
+  plugin  "script-email"
+  execute_on pre-dle-amcheck, pre-host-amcheck, post-dle-amcheck, post-host-amcheck, pre-dle-estimate, pre-host-estimate, post-dle-estimate, post-host-estimate, pre-dle-backup, pre-host-backup, post-dle-backup, post-host-backup
+  execute_where server			# or client
+  property "mailto" "martinea"
+}
+#your dumptype must include: script "sc-email"
+#to use the script
+
+define interactivity inter_tty {
+    plugin "tty"
+}
+define interactivity inter_email {
+    plugin "email"
+    property "mailto" "admin1" "admin2"
+    property "resend-delay" "10"
+    property "check-file" "/tmp/email_input"
+    property "check-file-delay" "10"
+}
+define interactivity inter_tty_email {
+    plugin "tty_email"
+    property "mailto" "admin1" "admin2"
+    property "resend-delay" "10"
+    property "check-file" "/tmp/email_input"
+    property "check-file-delay" "10"
+}
+interactivity "inter_tty_email"
+
+define taperscan taper_traditional {
+    comment "traditional"
+    plugin "traditional"
+}
+define taperscan taper_oldest {
+    comment "oldest"
+    plugin "oldest"
+}
+define taperscan taper_lexical {
+    comment "lexical"
+    plugin "lexical"
+}
+taperscan "taper_lexical"
+
+# You may include other amanda configuration files, so you can share
+# dumptypes, tapetypes and interface definitions among several
+# configurations.
+
+#includefile "@CONFIG_DIR@/amanda.conf.main"

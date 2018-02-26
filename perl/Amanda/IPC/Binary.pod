@@ -1,0 +1,132 @@
+/*
+ * Copyright (c) 2009-2012 Zmanda, Inc.  All Rights Reserved.
+ * Copyright (c) 2013-2016 Carbonite, Inc.  All Rights Reserved.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, write to the Free Software Foundation, Inc.,
+ * 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
+ *
+ * Contact information: Carbonite Inc., 756 N Pastoria Ave
+ * Sunnyvale, CA 94085, or: http://www.zmanda.com
+ */
+
+%perlcode %{
+
+=head1 NAME
+
+Amanda::IPC::Binary - binary-framed message-based communication
+
+=head1 SYNOPSIS
+
+See below.
+
+=head1 DESCRIPTION
+
+This package is an interface to the C-level protocol library declared in
+C<common-src/ipc-binary.h>.  It enables two-way message-based communication,
+using a binary framing that permits direct inclusion of non-string data.
+
+Unlike the line protocol (see L<Amanda::IPC::LineProtocol>), this package does
+not yet support asynchronous operation.
+
+=head2 DEFINING A PROTOCOL
+
+There are two parts to any use of this package.  First, define the protocol by
+creating a subclass and populating it.  This subclass represents the protocol,
+composed of a set of commands or messages and arguments that are attached to
+those commands.
+
+Begin with the subclass:
+
+    package TestProtocol;
+    use base "Amanda::IPC::Binary";
+    use Amanda::IPC::Binary;
+
+Then define the constants for each command.  Note that the C<constant> pragma did
+not support the hash syntax in Perl-5.6, so this must be written as individual
+invocations of the constant:
+
+    use constant CMD1 => 1;
+    use constant CMD2 => 2;
+
+Then the constants for each argument:
+
+    use constant USERNAME => 1;
+    use constant PASSWORD => 2;
+    use constant RESOURCE => 3;
+    use constant USE_OVERDRIVE => 4;
+
+Next, give the magic value for the protocol:
+
+    magic(0x9812);
+
+Then begin defining each command, along with its arguments:
+
+    command(CMD1,
+	RESOURCE, 0,
+	USERNAME, $IPC_BINARY_STRING,
+	PASSWORD, $IPC_BINARY_STRING|$IPC_BINARY_OPTIONAL);
+
+The first argument to C<command> specifies the command ID.  The remaining
+arguments are taken in pairs, and specify the argument and a bitfield of
+flags.  The available flags are:
+
+    $IPC_BINARY_STRING	    argument is a printable string
+    $IPC_BINARY_OPTIONAL    argument is not required
+
+If $IPC_BINARY_STRING is not specified, the argument can contain any sequence of
+bytes (including nuls). In either case, a perl string is used to represent it.
+
+=head2 USING A PROTOCOL
+
+Once a protocol is defined, it forms a class which can be used to run the
+protocol.  Multiple instances of this class can be created to handle
+simultaneous uses of the protocol over different channels.
+
+The constructor takes no parameters, but establishs a new channel, complete with
+buffers for partially-read commands:
+
+    my $chan = TestProtocol->new();
+
+To write a message, call the C<write_message> method, passing a filehandle, a
+command id, and argument/value pairs:
+
+    if (!$chan->write_message($fh, TestProtocol::CMD1,
+	    TestProtocol::RESOURCE => $res,
+	    TestProtocol::USERNAME => "dustin")) {
+	# ...
+    }
+
+It is not valid to omit an argument value, and all values must be perl strings
+-- C<undef> is not alloewd, even for optional arguments.  If C<write_message>
+fails, it returns false and C<$!> is set appropriately.  The function does not
+return until the message has been written to the file.
+
+To read a message, call C<read_message>, again passing a filehandle:
+
+    my $msg = $chan->read_message($fh);
+
+Note that this will block until a full message has been read.  The resulting
+message object has a C<cmd_id> key that identifies the command and an C<args>
+key that references a list of argument values, keyed by their argument ID:
+
+    if ($msg->{'cmd_id'} == TestProtocol::CMD2) { ... }
+    print $msg->{'args'}[TestProtocol::USERNAME], "\n";
+
+The C<close> method will flush any open buffers and close a channel.  In the
+synchronous case, this is essentially a no-op since all output buffers are
+flushed at each call to C<write_message>.
+
+=cut
+
+%}

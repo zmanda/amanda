@@ -1,0 +1,717 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"
+[
+  <!-- entities files to use -->
+  <!ENTITY % global_entities SYSTEM 'global.entities'>
+  %global_entities;
+]>
+
+<refentry id='amanda-changers.7'>
+
+<refmeta>
+<refentrytitle>amanda-changers</refentrytitle>
+<manvolnum>7</manvolnum>
+&rmi.source;
+&rmi.version;
+&rmi.manual.7;
+</refmeta>
+<refnamediv>
+<refname>amanda-changers</refname>
+<refpurpose>Configuring and Using Amanda Changers</refpurpose>
+</refnamediv>
+<refentryinfo>
+&author.dustin;
+</refentryinfo>
+<!-- body begins here -->
+
+<refsect1><title>DESCRIPTION</title>
+
+<para>Amanda uses changers to arbitrate access to devices
+(<manref name="amanda-devices" vol="7"/>)
+and data volumes.  Changers provide an abstraction of tape robots, but are used
+to manage non-tape media, too.  Amanda communicates with changers through the
+Changer API.  This manpage contains a <emphasis>user-level</emphasis> overview
+of the API, and does not address details that are only of concern to
+developers.  For that purpose, consult the Amanda source code and
+http://wiki.zmanda.com.</para>
+
+</refsect1>
+
+<refsect1><title>TRANSITION</title>
+
+<para>The Amanda Changer API version 1.0 is no longer supported.</para>
+
+<para>The Amanda Changer API version 2.0, composed of
+perl objects that can manage parallel access to multiple devices and other
+complexity.  At this point, all Amanda programs use the new Changer API directly.
+</para>
+
+<para>The Changer API strives to treat all changers identically, so that
+Amanda's behavior is independent of the changer in use.  However, some parts of
+Amanda operate differently depending on whether a changer can efficiently
+search for a volume with a given label.  This distinction is really only
+apparent with tape libraries: those with barcode readers can quickly find a
+desired tape, while those without may fall back to an inefficient scan of each
+volume.  The capability to perform quick searches is called "fast-search", and
+each changer is annotated below to indicate its support.</para>
+
+</refsect1>
+
+<refsect1><title>SPECIFYING CHANGERS</title>
+
+<para>Changer specifications are strings like
+<computeroutput>chg-disk:/my/vtapes</computeroutput>.  The
+<computeroutput>chg-</computeroutput> prefix serves to differentiate changers
+from devices (see <manref name="amanda-devices" vol="7"/>).  The next portion
+(<computeroutput>disk</computeroutput>, in this case) identifies the particular
+changer driver to use, and everything that follows the
+<computeroutput>:</computeroutput> is interpreted by the driver.  Note that the
+<computeroutput>:</computeroutput> character is required, even when nothing
+follows it.</para>
+
+<para>A name which does not match this pattern, is treated as an Amanda device,
+and is wrapped by the single-device changer, e.g.,
+<computeroutput>chg-single:tape:/dev/rmt/0</computeroutput>.</para>
+
+<para>Changers which require additional parameters can also be described in
+&amconf; with "changer" sections.  Such a changer defininition creates a
+changer "alias", in this case named <emphasis>hp-robot</emphasis>, which can
+then be named where an application expects a changer - for example, the target
+of the <command>amvault</command> command or in a global
+<command>tpchanger</command> parameter.</para>
+
+<refsect2><title>CONFIGURATION</title>
+
+<para>The preferred method of specifying configuration for a changer is as a
+"changer" section in &amconf;.  The <emphasis>tapedev</emphasis> parameter
+then indicates, by name, the changer that will be used by default by most
+Amanda programs.  For example:
+<programlisting>
+define changer hp-robot {
+    tapedev "chg-robot:/dev/sg1"
+    property "tape-device" "0=tape:/dev/nst0"
+    property append "tape-device" "1=tape:/dev/nst1"
+    device-property "BLOCK_SIZE" "512k"
+}
+# ...
+tapedev "hp-robot"
+</programlisting>
+</para>
+
+<para>Several changer drivers accept <emphasis>changer properties</emphasis> which
+control the behavior of the changer.  These properties must be specified in a
+changer definition, as in the <emphasis>hp-robot</emphasis> example, above.</para>
+
+<para>Devices, too, can take properties to control their behavior (see <manref
+name="amanda-devices" vol="7" />).  Device properties can come from four
+places: implicit device properties (from tapetype parameters), global device
+properties (from global <emphasis>device-property</emphasis> parameters),
+properties in device definitions, and properties in changer definitions.
+Properties are applied in this order, with later properties taking
+priority.</para>
+
+<para>There are only three implicit properties:
+<emphasis>MAX_VOLUME_USAGE</emphasis> is set based on the tapetype
+<emphasis>length</emphasis> parameter, <emphasis>READ_BLOCK_SIZE</emphasis> is
+set if <emphasis>readblocksize</emphasis> is set, and
+<emphasis>BLOCK_SIZE</emphasis> is set based on the
+<emphasis>blocksize</emphasis> parameter.</para>
+
+<para>Global device properties always apply.  If the changer specifies a device
+by alias, then device properties from the definition apply.  If the changer is
+specified by an alias, then properties from that definition applied.</para>
+
+</refsect2>
+</refsect1>
+
+<refsect1><title>CHANGER DRIVERS</title>
+
+<para>This section lists the changer drivers included with Amanda, and basic instructions for using them.  For complete How-To information, consult the Amanda wiki at http://wiki.zmanda.com.</para>
+
+<refsect2><title>chg-aggregate:changer</title>
+<programlisting>
+define changer robot0 {
+  tpchanger "chg-robot:/dev/sg0"
+  property "tape-device" "0=tape:/dev/rmt/0" "1=tape:/dev/rmt/1"
+}
+define changer robot1 {
+  tpchanger "chg-robot:/dev/sg1"
+  property "tape-device" "0=tape:/dev/rmt/2" "1=tape:/dev/rmt/3"
+}
+define changer single {
+  tpchanger "chg-single:/dev/rmt/4"
+}
+define changer aggregate {
+  tpchanger "chg-aggregate:{robot0,robot1,single}"
+  property "state-filename" "/etc/amanda/CONF/aggregate.state"
+
+}
+tpchanger "aggregate"
+</programlisting>
+
+<para>This changer driver allow the use of two or more changers or standalone
+drives in sequence.</para>
+
+<refsect3><title>Properties</title>
+<!-- PLEASE KEEP THIS LIST IN ALPHABETICAL ORDER -->
+
+<variablelist>
+<!-- ==== -->
+<varlistentry><term>LOCK-TIMEOUT</term><listitem>
+The time in seconds amanda wait to lock the statefile (default:1000)
+</listitem></varlistentry>
+<!-- ==== -->
+<varlistentry><term>STATE_FILENAME</term><listitem>
+The name of the state file (default: "$CONFIG_DIR/$changer_name.state".
+</listitem></varlistentry>
+</variablelist>
+</refsect3>
+</refsect2>
+
+<refsect2><title>chg-disk:VTAPEROOT</title>
+<programlisting>
+tpchanger "chg-disk:/var/mnt/vtapes"
+property "num-slot" "10"
+property "auto-create-slot" "yes"
+property "removable" "yes"
+property "mount" "yes"
+property "umount" "yes"
+property "umount-lockfile" "/etc/amanda/conf/vtapes-lock"
+property "umount-idle" "1"
+</programlisting>
+
+<para>This changer driver replaces the old <command>chg-disk</command>,
+supporting parallel access to vtapes stored in directories named
+<computeroutput>slotN</computeroutput> in the directory specified after
+<computeroutput>chg-disk:</computeroutput>.  It does so by creating numbered
+"drives" so that simultaneous processes can access distinct slots.  This changer is fast-search capable.</para>
+
+<para>The current slot can be accessed using the device name
+<computeroutput>file:VTAPEROOT</computeroutput>. This is useful for the <manref
+name="amrestore" vol="8" /> command line.</para>
+
+<refsect3><title>Properties</title>
+<!-- PLEASE KEEP THIS LIST IN ALPHABETICAL ORDER -->
+
+<variablelist>
+<!-- ==== -->
+<varlistentry><term>AUTO-CREATE-SLOT</term><listitem>
+If a <computeroutput>slotN</computeroutput> directory in the range 1 to NUM-SLOT does not already exist, and this property is true, then the changer will create the directory.
+</listitem></varlistentry>
+<!-- ==== -->
+<varlistentry><term>LOCK-TIMEOUT</term><listitem>
+The time in seconds amanda wait to lock the statefile (default:1000)
+</listitem></varlistentry>
+<!-- ==== -->
+<varlistentry><term>MOUNT</term><listitem>
+If this property is true, the changer try to mount the removable disk if nothing is mounted. The system must be configured to allow the amanda user to mount it.
+</listitem></varlistentry>
+<!-- ==== -->
+<varlistentry><term>NUM-SLOT</term><listitem>
+The minimum number of slots in the changer, where the first slot is <computeroutput>slot1</computeroutput>.  If additional slot directories exist, they will also be used.
+</listitem></varlistentry>
+<!-- ==== -->
+<varlistentry><term>REMOVABLE</term><listitem>
+If this property is true, then the changer will verify that the changer
+directory (e.g., <filename>/var/mnt/vtapes</filename>) is on a different
+filesystem from its parent directory (e.g., <filename>/var/mnt</filename>).
+This is useful for removable disks, as it will prevent Amanda from creating
+slot directories when the removable disk is not mounted.
+</listitem></varlistentry>
+<!-- ==== -->
+<varlistentry><term>UMOUNT</term><listitem>
+If this property is true, the changer try to umount the removable disk when it exit. The system must be configured to allow the amanda user to umount it.
+</listitem></varlistentry>
+<!-- ==== -->
+<varlistentry><term>UMOUNT-LOCKFILE</term><listitem>
+If UMOUNT is set, it require a lockfile outside of the mount point to prevent race.
+</listitem></varlistentry>
+<!-- ==== -->
+<varlistentry><term>UMOUNT-IDLE</term><listitem>
+If set, the changer try to umount the removable disk when it is not in use. The umount-idle value is a delay in second to wait before doing the umount. A value &gt;= 1 is required to prevent useless mount/umount.
+</listitem></varlistentry>
+
+</variablelist>
+</refsect3>
+</refsect2>
+
+<refsect2><title>chg-diskflat:VTAPEROOT</title>
+<programlisting>
+tpchanger "chg-diskflat:/var/mnt/vtapes-flat"
+property "num-slot" "10"
+property "auto-create-slot" "yes"
+property "removable" "yes"
+property "mount" "yes"
+property "umount" "yes"
+property "umount-lockfile" "/etc/amanda/conf/vtapes-flat-lock"
+property "umount-idle" "1"
+</programlisting>
+
+<para>This changer driver can be used only with the diskflat device,
+supporting parallel access to vtapes stored in files named with the <computeroutput>label</computeroutput> in the directory specified after
+<computeroutput>chg-diskflat:</computeroutput>.  It does so by creating
+numbered "drives" so that simultaneous processes can access distinct slots.
+This changer is fast-search capable.</para>
+
+<refsect3><title>Properties</title>
+<!-- PLEASE KEEP THIS LIST IN ALPHABETICAL ORDER -->
+<para>Have the same properties as the chg-disk changers</para>
+</refsect3>
+
+</refsect2>
+
+<refsect2><title>chg-multi:DEVICE-LIST</title>
+<programlisting>
+tpchanger "chg-multi:{/dev/nst0,/dev/nst1,/dev/nst2}"
+changerfile "chg-multi-state"
+</programlisting>
+
+<para>This script simply round-robins a number of distinct device names, as
+specified in the <emphasis>tpchanger</emphasis> setting.  It is useful when
+all volumes for a configuration have different device names -- for example,
+if you have many standalone drive.  The <emphasis>changerfile</emphasis> must exist; it is used to save the state file.
+</para>
+
+<para>The child devices are specified using the same syntax as for the RAIT
+device (see <manref name="amanda-changers" vol="7"/>).  The range
+specification can be especially useful here:
+<programlisting>
+tpchanger "chg-multi:s3:mycompany-backups/tape-{001..100}"
+</programlisting>
+</para>
+
+<para>This changer is not fast-search capable.</para>
+
+<refsect3><title>Properties</title>
+<!-- PLEASE KEEP THIS LIST IN ALPHABETICAL ORDER -->
+
+<variablelist>
+<!-- ==== -->
+<varlistentry><term>FIRST-SLOT</term><listitem>
+This property gives the number of the first slot. The default value is "1".
+</listitem></varlistentry>
+<!-- ==== -->
+<varlistentry><term>LOCK-TIMEOUT</term><listitem>
+The time in seconds amanda wait to lock the statefile (default:1000)
+</listitem></varlistentry>
+<!-- ==== -->
+</variablelist>
+
+</refsect3>
+
+<refsect3><title>Special Operations</title>
+
+<para>A number of special operations are available for <command>chg-multi</command> via
+<manref name="amtape" vol="8" /> subcommands.</para>
+
+<para>The <command>reset</command> subcommand will change the current slot to
+the first available slot, but does not erase any stored state maintained by the
+changer.</para>
+
+<para>The <command>eject</command> subcommand will eject the volume in the
+given drive</para>
+
+<para>The <command>clean</command> subcommand is not yet implemented.</para>
+
+<para>The <command>update</command> subcommand instructs the changer to update
+its state database.  Given no arguments, the changer will scan all available
+slots, loading each tape and reading its label.  Especially for large libraries,
+this can take a long time.  If only a few slots have changed, they can be listed
+on the command line:
+<programlisting>
+amtape CONFIG update 1-3,9
+</programlisting>
+In this case, the changer will only scan the stated slots.  Finally, the changer
+will not scan at all if it is given the tape label for the slot:
+<programlisting>
+amtape CONFIG update 2=DailySet-028
+</programlisting>
+In this case, the changer updates its state to indicate that
+<computeroutput>DailySet-028</computeroutput> is in slot 2, without trying to
+load the tape.
+<programlisting>
+amtape CONFIG update 1-3,9=
+</programlisting>
+In this case, the changer marks the stated slots as an unknown state.
+<programlisting>
+amtape CONFIG update error=
+</programlisting>
+In this case, the changer marks all slot in error as an unknown state.
+</para>
+
+</refsect3>
+
+</refsect2>
+
+<refsect2><title>chg-rait:{CHILD1,CHILD2,..}</title>
+<programlisting>
+define changer vtape {
+    tpchanger "chg-disk:/path/to/vtape"
+}
+define changer robot {
+    tpchanger "chg-robot:/dev/sg0"
+    tapedev "tape:/dev/nst0"
+}
+tpchanger "chg-rait:{vtape,robot}"
+</programlisting>
+
+<para>This changer script constructs RAIT devices out of the devices provided
+by several "sub-changers".  The sub-changers are specified using the same
+shell-like syntax as the RAIT device (see <manref name="amanda-devices"
+    vol="7"/>).</para>
+
+<para>Chg-rait does not require that all of the child changers have the same slot names: compound slot names are created by combining the slot names supplied by the child changers using the same shell-like syntax.  For example, if the child changers return slots "<computeroutput>top</computeroutput>", "<computeroutput>strange</computeroutput>", and "<computeroutput>3</computeroutput>", then the RAIT changer will return "<computeroutput>{top,strange,3}</computeroutput>".  This makes it possible to, for example, mirror data on tapes in slots 1-10 to tapes in slots 11-20 of the same robot, using two <command>chg-zd-mtx</command> child changers (and, naturally, two tape drives).  In this arrangement, the first slot would be named <computeroutput>{1,11}</computeroutput>.</para>
+
+<para>As a convenience to the user, the RAIT changer will also accept un-braced slot names, and supply the same name to each child changer. Thus with a 4-device RAIT changer, "<computeroutput>17</computeroutput>" is equivalent to "<computeroutput>{17,17,17,17}</computeroutput>".</para>
+
+<para>Drive names are parsed in a similar fashion, for operations that take drive names (clean and eject).</para>
+
+<para>This changer is fast-search capable only if all of its child changers are fast-search capable.</para>
+
+</refsect2>
+
+<refsect2><title>chg-null:</title>
+<programlisting>
+tpchanger "chg-null:"
+</programlisting>
+
+<para>This changer always provides the device "null:".  It is sometimes useful in conjunction with <command>chg-rait:</command>.</para>
+
+</refsect2>
+
+<refsect2><title>chg-robot:DEVICE</title>
+<programlisting>
+define changer robot {
+    tpchanger "chg-robot:/dev/sg0"
+    property "tape-device" "0=tape:/dev/rmt/0" "1=tape:/dev/rmt/1"
+    property "eject-before-unload" "yes"
+    property "use-slots" "1-5,11-20"
+}
+tpchanger "robot"
+</programlisting>
+
+<para>This changer drives a robotic tape library using the operating system's
+<command>mtx</command> command.  It replaces the ancient
+<command>chg-zd-mtx</command> script.  The changer uses all of the information
+available to operate as efficiently as possible.  Even without a barcode
+reader, the changer can usually load a tape immediately, without resorting to a
+sequential scan of many tapes.  It is capable of sharing state across multiple
+Amanda configurations, avoiding conflicts and optimally tracking the contents
+of the library.</para>
+
+<para>This changer does not accept a <command>changerdev</command> parameter,
+but the <command>changerfile</command> parameter can be used to specify a
+filename at which it should store its state.  Ordinarily, this state is stored
+in a file named after the changer device under
+<emphasis>$localstatedir/amanda</emphasis>, e.g.,
+<command>/var/amanda/chg-robot-dev-sg0</command>.  There should be a single
+such statefile for each distinct tape library attached to the Amanda server, even
+if multiple Amanda configurations reference that library.</para>
+
+<para>With a barcode reader present, it is possible for
+<command>chg-robot</command> to track the state of the library reliably, even
+recognizing tapes that are removed and later re-inserted (by remembering their
+barcodes).  Without barcodes, the changer can still remember the slot in which
+it last saw the tape with a particular label, although this information can
+become stale if the tapes are rearranged by an operator.  In any case, the
+changer will never "hunt" for a tape by repeatedly loading slots and checking
+labels.  If the changer's state is inaccurate, use the
+<manref name="amtape" vol="8" /> subcommand <command>update</command>.</para>
+
+<para>This changer is fast-search capable even without a barcode reader.  For
+such libraries, it is the responsibility of the operator to
+<command>update</command> the changer when tapes are added to or removed from
+the library.</para>
+
+<para>There is a shell script in the <filename>contrib/</filename> directory of
+Amanda's source distribution which can help you convert a
+<command>chg-zd-mtx</command> configuration into a <command>chg-robot</command>
+configuration.  Just give it your Amanda configuration name:
+<programlisting>
+  sh contrib/convert-zd-mtx-to-robot.sh $config
+</programlisting>
+The script can be downloaded at <uri
+type="webpage">http://github.com/zmanda/amanda/raw/master/contrib/convert-zd-mtx-to-robot.sh</uri></para>
+
+<refsect3><title>Special Operations</title>
+
+<para>A number of special operations are available for <command>chg-robot</command> via
+<manref name="amtape" vol="8" /> subcommands.</para>
+
+<para>The <command>reset</command> subcommand will change the current slot to
+the first available slot, but does not erase any stored state maintained by the
+changer.</para>
+
+<para>The <command>eject</command> subcommand will unload the volume in the
+given drive, ejecting first if the changer properties dictate.  Note that,
+despite the subcommand name, the changer attempts to avoid the state where a
+volume has been ejected from the drive but not unloaded back to a storage
+slot.</para>
+
+<para>The <command>clean</command> subcommand is not yet implemented.</para>
+
+<para>The <command>update</command> subcommand instructs the changer to update
+its state database.  Given no arguments, the changer will scan all available
+slots, loading each tape and reading its label.  Especially for large libraries,
+this can take a long time.  If only a few slots have changed, they can be listed
+on the command line:
+<programlisting>
+amtape CONFIG update 1-3,9
+</programlisting>
+In this case, the changer will only scan the stated slots.  Finally, the changer
+will not scan at all if it is given the tape label for the slot:
+<programlisting>
+amtape CONFIG update 2=DailySet-028
+</programlisting>
+In this case, the changer updates its state to indicate that
+<computeroutput>DailySet-028</computeroutput> is in slot 2, without trying to
+load the tape.
+<programlisting>
+amtape CONFIG update 1-3,9=
+</programlisting>
+In this case, the changer marks the stated slots as an unknown state.
+<programlisting>
+amtape CONFIG update error=
+</programlisting>
+In this case, the changer marks all slot in error as an unknown state.
+</para>
+
+</refsect3>
+
+<refsect3><title>Properties</title>
+<!-- PLEASE KEEP THIS LIST IN ALPHABETICAL ORDER -->
+
+<variablelist>
+<!-- ==== -->
+<varlistentry><term>BROKEN-DRIVE-LOADED-SLOT</term><listitem>
+Set this boolean property to true if mtx doesn't return correctly which slot
+is loaded in a drive.
+</listitem></varlistentry>
+<!-- ==== -->
+<varlistentry><term>DRIVE-CHOICE</term><listitem>
+This property controls the algorithm used to select a drive in which to load a
+tape.  If set to the default ("lru"), the changer attempts to use the least
+recently used drive, resulting in a round-robin behavior.  The "firstavail"
+algorithm selects the first available drive, thus preferring the first drive
+specified via the TAPE-DEVICE property.
+</listitem></varlistentry>
+<!-- ==== -->
+<varlistentry><term>EJECT-BEFORE-UNLOAD</term><listitem>
+Set this boolean property to true if the library requires an
+<command>offline</command> operation be performed on the tape drive before it
+can be unloaded.  If set, then <command>mt</command> will be invoked to
+perform this operation.  Most libraries do not require this workaround.
+</listitem></varlistentry>
+<!-- ==== -->
+<varlistentry><term>EJECT-DELAY</term><listitem>
+This is the time between ejecting a tape and unloading the volume to a storage slot, and
+defaults to 0 seconds.  It is only used if EJECT-BEFORE-UNLOAD is true.  See "Timing", below.
+</listitem></varlistentry>
+<!-- ==== -->
+<varlistentry><term>FAST-SEARCH</term><listitem>
+This boolean property indicates whether the changer advertises the ability to find
+volumes without sequential scanning.  The traditional taperscan algorithm alters its
+behavior based on this flag, so it is sometimes necessary to adjust it, although the
+changer will always search for a desired tape using the most efficient means
+available.  The default value is true.
+</listitem></varlistentry>
+<!-- ==== -->
+<varlistentry><term>IGNORE-BARCODES</term><listitem>
+If this boolean property is true, then chg-robot will ignore any barcode information
+that the library provides.  This property is probably only useful when the library
+returns incorrect barcodes, for example due to a malfunction in the barcode reader.
+</listitem></varlistentry>
+<!-- ==== -->
+<varlistentry><term>LOAD-POLL</term><listitem>
+<para>This property specifies the timing of Amanda's polling for the tape drive to
+be ready after loading a new tape.  See "Timing", below.</para>
+
+<para>The script "polls" by trying to open the tape device repeatedly until no
+error is encountered.  The property specifies the time to wait before the first
+poll (D), the frequency at which to poll and retry on errors (P); and the time
+after which it should give up (U).  The format is
+<programlisting>
+"D [poll P [until U]]"
+</programlisting>
+For a simple delay with no polling, use e.g.,
+<programlisting>
+property "load-poll" "13s"
+</programlisting>
+To delay and then poll, use e.g.,
+<programlisting>
+property "load-poll" "13s poll 5s"
+</programlisting>
+and to add a maximum total time, use e.g.,
+<programlisting>
+property "load-poll" "0s poll 5s until 2m"
+</programlisting>
+The default value is <command>"0s poll 3s until 2m"</command>.
+</para>
+</listitem></varlistentry>
+<!-- ==== -->
+<varlistentry><term>LOCK-TIMEOUT</term><listitem>
+The time in seconds amanda wait to lock the statefile (default:1000)
+</listitem></varlistentry>
+<!-- ==== -->
+<varlistentry><term>MTX</term><listitem>
+The path to the 'mtx' binary.  The default value is defined at compile time.
+</listitem></varlistentry>
+<!-- ==== -->
+<varlistentry><term>STATUS-INTERVAL</term><listitem>
+This is the minimum time between invocations of <command>mtx status</command>
+to determine the state of the changer library.  The default value, 2 seconds,
+avoids back-to-back status invocations but ensures that the metadata is up to
+date.  For operating systems or libraries where the <command>mtx
+status</command> takes a considerable time to complete, this value should be
+increased.  See "Timing", below.
+</listitem></varlistentry>
+<!-- ==== -->
+<varlistentry><term>TAPE-DEVICE</term><listitem>
+This property describes the correspondence of drive numbers in the library to
+Amanda devices, in the format <emphasis>DRIVE=DEVICE</emphasis>.  The property
+can be specified multiple times to describe multiple devices.  The device will
+usually be a tape device name starting with <command>tape:</command>, but may
+also refer to a device alias (see <manref name="amanda-devices" vol="7"/>). As
+a shortcut, if the <command>tapedev</command> parameter is specified in the
+changer definition, then it is assumed to be the device name for drive 0.
+</listitem></varlistentry>
+<!-- ==== -->
+<varlistentry><term>UNLOAD-DELAY</term><listitem>
+This specifies the minimum time between an unload operation any any subsequent
+operation.  The default value is 0 seconds.  See "Timing", below.
+</listitem></varlistentry>
+<!-- ==== -->
+<varlistentry><term>USE-SLOTS</term><listitem>
+This property, if specifies, enumerates the slots to which this changer should
+limit itself.  The slots are specified as a comma-separated list of ranges,
+e.g., "1-5,11-15,19,22".  The property can be specified more than once, and
+the resulting sets will be combined.  The changer will refuse to load tapes
+not found in these slots, except for import/export purposes.
+</listitem></varlistentry>
+</variablelist>
+</refsect3>
+
+<refsect3><title>Timing</title>
+
+<para>Tape libraries are fickle, and in many cases will report that an
+operation is complete when it is still in progress.  Chg-robot takes several
+timing-related properties to accommodate such behavior.</para>
+
+<para>A typical sequence of operations performed during a load are: get library
+status, eject a tape, unload the tape back to a storage slot, load a new tape,
+and read the label on that tape to ensure the drive is ready.</para>
+
+<para>On most systems, the library status check is nearly instantaneous -- the
+changer library provides its cached state to the host without initiating any
+robot motion.  In order to keep its metadata up-to-date, chg-robot runs this
+command very frequently, but this frequency can be reduced (at the cost of
+potentially stale metadata) by setting the STATUS-INTERVAL property to a larger
+value.</para>
+
+<para>Some tape libraries do not integrate the eject operation (performed by
+the embedded tape drive) with the unload operation (performed by the library
+robot), and can actually cause physical damage by attempting to remove the tape
+before the ejection is complete.  For such changers, set the EJECT-DELAY
+property to allow enough time for the eject to complete.</para>
+
+<para>Once a tape is unloaded, if the library needs time to "quiesce" before
+processing another command, add that time to the UNLOAD-DELAY parameter.  No
+other operations will be performed on the library until this delay has
+elapsed.</para>
+
+<para>Once a tape has been loaded, chg-robot waits until the drive is ready before
+allowing Amanda to use the volume, as described for LOAD-POLL, above.</para>
+
+<para>Each of the times specified in these properties may be given as integers
+with the optional suffix <command>s</command> for seconds (the default) or
+<command>m</command> for minutes.</para>
+
+</refsect3>
+
+</refsect2>
+
+<refsect2><title>chg-ndmp:HOST[:PORT]@SCSIDEV</title>
+<programlisting>
+    tpchanger "chg-ndmp:filer.company.com@/dev/sg0"
+    property        "tape-device" "0=ndmp:filer.company.com@/dev/rtape0"
+    property append "tape-device" "1=ndmp:filer.company.com@/dev/rtape1"
+    property "use-slots" "1-12"
+    property "ndmp-auth" "text"
+    property "ndmp-username" "luke"
+    property "ndmp-password" "leia"
+</programlisting>
+
+<para>This changer is very similar to <command>chg-robot</command>, but
+controls a tape changer on an NDMP server instead of a local device.  The
+<command>HOST</command> in the <command>tpchanger</command> should be the
+hostname of the NDMP server.  The <command>PORT</command> is optional.  The
+<command>SCSIDEV</command> should specify the SCSI device on the NDMP server
+which controls the changer.  The format of this parameter is
+implementation-specific.</para>
+
+<para>The appropriate authentication properties will be automatically set on
+any devices created by this changer.</para>
+
+<refsect3><title>Properties</title>
+
+<para>This changer supports all of the properties supported by
+<command>chg-robot</command>, although the value of <command>MTX</command> is
+ignored.  The following properties are also recognized:</para>
+
+<!-- PLEASE KEEP THIS LIST IN ALPHABETICAL ORDER -->
+<variablelist>
+<!-- ==== -->
+<varlistentry><term>NDMP_AUTH</term><listitem>
+Authentication method to use to connect to the NDMP server.  One of
+"md5" (default), "text", "none" (for an empty authentication attempt) or "void" (for
+no authentication attempt at all).
+</listitem></varlistentry>
+<!-- ==== -->
+<varlistentry><term>NDMP-PASSWORD</term><listitem>
+The password for the NDMP server.
+</listitem></varlistentry>
+<!-- ==== -->
+<varlistentry><term>NDMP-USERNAME</term><listitem>
+The username for the NDMP server.
+</listitem></varlistentry>
+<!-- ==== -->
+<varlistentry><term>VERBOSE</term><listitem>
+If true, enables the NDMJOB library's verbose (packet-level) debugging.
+</listitem></varlistentry>
+<!-- ==== -->
+</variablelist>
+
+</refsect3>
+
+</refsect2>
+
+<refsect2><title>chg-single:DEVICE</title>
+<programlisting>
+tpchanger "chg-single:tape:/dev/nst0"
+</programlisting>
+
+<para>This changer is for use with standalone drive, it can work with any
+device. The device (<command>tape:/dev/nst0</command>) must be set in the tpchanger definition.</para>
+<para>The <command>chg-single</command> changer has no property.</para>
+
+</refsect2>
+
+<refsect2><title>Unmaintained Changers</title>
+
+<para>Amanda has many other changer scripts and programs beyond those described
+here (see the <computeroutput>changer-src/</computeroutput> in the source
+directory), but most of these scripts are unmaintained and undocumented, and
+will be removed when the new changer API is fully implemented.</para>
+
+</refsect2>
+
+</refsect1>
+
+<seealso>
+<manref name="amanda.conf" vol="5"/>,
+<manref name="amanda-devices" vol="7"/>,
+</seealso>
+
+
+</refentry>

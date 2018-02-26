@@ -1,0 +1,380 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"
+[
+  <!-- entities files to use -->
+  <!ENTITY % global_entities SYSTEM 'global.entities'>
+  %global_entities;
+]>
+
+<refentry id='amanda-match.7'>
+
+<refmeta>
+<refentrytitle>amanda-match</refentrytitle>
+<manvolnum>7</manvolnum>
+&rmi.source;
+&rmi.version;
+&rmi.manual.7;
+</refmeta>
+<refnamediv>
+<refname>amanda-match</refname>
+<refpurpose>Common Amanda Match Expression</refpurpose>
+</refnamediv>
+<refentryinfo>
+&author.dustin;
+</refentryinfo>
+<!-- body begins here -->
+
+<refsect1><title>DESCRIPTION</title>
+
+<para>Several Amanda commands allow the user to specify dumps using "match
+expressions".  This manual page describes the syntax of these
+expressions.</para>
+
+<para>In some places, only certain match expressions are allowed.  However,
+several commands take a dump specification ("dumpspec") consisting of a
+sequence of several expressions intended to match particular dumps in the
+catalog.  Other applications take a DLE specification which indicates a set
+of DLEs to be operated on.  These formats are described below.</para>
+
+<para>An expression can be disabled be preceding it with the '=' character,
+in that case, an exact match is used.</para>
+<para>Many program have an '--exact-match' argument that disable expression and exact match are used.</para>
+</refsect1>
+
+<refsect1><title>HOST &amp; DISK EXPRESSIONS</title>
+
+<para>The hosts and disks match by word. Each word is a glob expression, and words
+are separated by the character '.' for host expressions and '/' for disk expressions. You
+can anchor the expression on the left with a '^' or on the right with a '$'. The matcher
+is case insensitive for hosts but case sensitive for disks. A match
+succeeds if all words in the expression match contiguous words in
+the host or disk.</para>
+
+<para>If the disk is a UNC ("\\windows\share") then all '\' are converted to
+'/' before the match.  Using '\' is complicated because of the extra
+quoting required by the shell and amanda. It's easier to use '/' because it
+requires less quoting ("//windows/share")</para>
+
+<para>The special characters follow.  Note that the shell interprets some of
+these characters, so when used on the command line, they must be escaped
+appropriately for the shell.</para>
+
+<variablelist remap='TP'>
+
+    <varlistentry>
+    <term>dot (.)</term> <!-- troff gets confused by a plain dot -->
+    <listitem><para>word separator for a host</para></listitem>
+    </varlistentry>
+
+    <varlistentry>
+    <term>/</term>
+    <listitem><para>word separator for a disk</para></listitem>
+    </varlistentry>
+
+    <varlistentry>
+    <term>\</term>
+    <listitem><para>word separator for a UNC disk</para></listitem>
+    </varlistentry>
+
+    <varlistentry>
+    <term>^</term>
+    <listitem><para>anchor at left of word</para></listitem>
+    </varlistentry>
+
+    <varlistentry>
+    <term>$</term>
+    <listitem><para>anchor at right of word</para></listitem>
+    </varlistentry>
+
+    <varlistentry>
+    <term>?</term>
+    <listitem><para>match exactly one character except the separator</para></listitem>
+    </varlistentry>
+
+    <varlistentry>
+    <term>*</term>
+    <listitem><para>match zero or more characters except the separator</para></listitem>
+    </varlistentry>
+
+    <varlistentry>
+    <term>**</term>
+    <listitem><para>match zero or more characters including the separator</para></listitem>
+    </varlistentry>
+
+    <varlistentry>
+    <term>[...]</term>
+    <listitem><para>match exactly one of the characters enclosed by the brackets.</para></listitem>
+    </varlistentry>
+
+    <varlistentry>
+    <term>[!...]</term>
+    <listitem><para>match exactly one character that is not enclosed by the brackets.</para></listitem>
+    </varlistentry>
+
+</variablelist>
+
+<refsect2><title>Examples</title>
+
+<variablelist remap='TP'>
+    <varlistentry>
+    <term>hosta</term>
+    <listitem><para>
+    Will match <filename>hosta</filename>, <filename>foo.hosta.org</filename>, and
+    <filename>hoSTA.dOMAIna.ORG</filename> but not <filename>hostb</filename>.
+    </para></listitem>
+    </varlistentry>
+
+    <varlistentry>
+    <term>host</term>
+    <listitem><para>
+    Will match <filename>host</filename> but not <filename>hosta</filename>.
+    </para></listitem>
+    </varlistentry>
+
+    <varlistentry>
+    <term>host?</term>
+    <listitem><para>
+    Will match <filename>hosta</filename> and <filename>hostb</filename>, but
+    not <filename>host</filename> or <filename>hostabc</filename>.
+    </para></listitem>
+    </varlistentry>
+
+    <varlistentry>
+    <term>ho*na</term>
+    <listitem><para>
+    Will match <filename>hoina</filename>
+    but not <filename>ho.aina.org</filename>.
+    </para></listitem>
+    </varlistentry>
+
+    <varlistentry>
+    <term>ho**na</term>
+    <listitem><para>
+    Will match <filename>hoina</filename>
+    and <filename>ho.aina.org</filename>.
+    </para></listitem>
+    </varlistentry>
+
+    <varlistentry>
+    <term>^hosta</term>
+    <listitem><para>
+    Will match <filename>hosta</filename>
+    but not <filename>foo.hosta.org</filename>.
+    </para></listitem>
+    </varlistentry>
+
+    <varlistentry>
+    <term>sda*</term>
+    <listitem><para>
+    Will match <filename>/dev/sda1</filename>
+    and <filename>/dev/sda12</filename>.
+    </para></listitem>
+    </varlistentry>
+
+    <varlistentry>
+    <term>/opt</term>
+    <listitem><para>
+    Will match the disk <filename>opt</filename>
+    but not the host <filename>opt</filename>.
+    </para></listitem>
+    </varlistentry>
+
+    <varlistentry>
+    <term>(note dots:) .opt.</term> <!-- nroff gets confused by dots -->
+    <listitem><para>
+    Will match the host <filename>opt</filename>
+    but not the disk <filename>opt</filename>.
+    </para></listitem>
+    </varlistentry>
+
+    <varlistentry>
+    <term>/</term>
+    <listitem><para>
+    Will match the disk <filename>/</filename>
+    but no other disk.
+    </para></listitem>
+    </varlistentry>
+
+    <varlistentry>
+    <term>/usr</term>
+    <listitem><para>
+    Will match the disks <filename>/usr</filename>
+    and <filename>/usr/local</filename>.
+    </para></listitem>
+    </varlistentry>
+
+    <varlistentry>
+    <term>/usr$</term>
+    <listitem><para>
+    Will match the disks <filename>/usr</filename>
+    but not <filename>/usr/local</filename>.
+    </para></listitem>
+    </varlistentry>
+
+    <varlistentry>
+    <term>share</term>
+    <listitem><para>
+    Will match the disks <filename>\\windows1\share</filename> and <filename>\\windows2\share</filename>.
+    </para></listitem>
+    </varlistentry>
+
+    <varlistentry>
+    <term>share*</term>
+    <listitem><para>
+    Will match the disks <filename>\\windows\share1</filename> and <filename>\\windows\share2</filename>.
+    </para></listitem>
+    </varlistentry>
+
+    <varlistentry>
+    <term>//windows/share</term>
+    <listitem><para>
+    Will match the disk <filename>\\windows\share</filename>.
+    </para></listitem>
+    </varlistentry>
+
+</variablelist>
+
+</refsect2>
+
+</refsect1>
+
+<refsect1><title>DATESTAMP EXPRESSIONS</title>
+
+<para>A datestamp expression is either a prefix of the datestamp, or a range
+expression (separated by '-') matching several prefixes.  A leading ^ is
+removed, while arailing $ will force an exact match.</para>
+
+<refsect2><title>Examples</title>
+
+<variablelist remap="TP">
+
+    <varlistentry>
+    <term>20001212-14</term>
+    <listitem><para>match all dates beginning with 20001212, 20001213 or 20001214</para></listitem>
+    </varlistentry>
+
+    <varlistentry>
+    <term>20001212-4</term>
+    <listitem><para>same as previous</para></listitem>
+    </varlistentry>
+
+    <varlistentry>
+    <term>20001212-24</term>
+    <listitem><para>match all dates between 20001212 and 20001224</para></listitem>
+    </varlistentry>
+
+    <varlistentry>
+    <term>2000121</term>
+    <listitem><para>match all dates that start with 2000121 (20001210-20001219)</para></listitem>
+    </varlistentry>
+
+    <varlistentry>
+    <term>2</term>
+    <listitem><para>match all dates that start with 2 (20000101-29991231)</para></listitem>
+    </varlistentry>
+
+    <varlistentry>
+    <term>2000-10</term>
+    <listitem><para>match all dates between 20000101-20101231</para></listitem>
+    </varlistentry>
+
+    <varlistentry>
+    <term>200010$</term>
+    <listitem><para>match only 200010</para></listitem>
+    </varlistentry>
+
+</variablelist>
+
+</refsect2>
+
+</refsect1>
+
+<refsect1><title>LEVEL EXPRESSIONS</title>
+
+<para>Level expressions are either prefix matches e.g., "1", which matches "1",
+"10", and "123", absolute matches e.g., "3$" which only matches "3", or a
+range e.g., "3-5" which only matches levels 3, 4, and 5.</para>
+
+</refsect1>
+
+<refsect1><title>DUMP SPECIFICATIONS</title>
+
+<para>A dump specification is used to select one or more dumps from the
+catalog.  It consists of a sequence of match expressions in the order host,
+disk, datestamp, and level.  Note that some commands do not take a level
+argument, out of historical accident.  Note, too, that the datestamp
+expression matches the time that the dump was made on the Amanda client,
+rather than the date it was moved to tape.</para>
+
+<refsect2><title>Examples</title>
+
+<variablelist remap='TP'>
+    <varlistentry>
+    <term>amtool MyConfig ^vpdesktop$</term>
+    <listitem><para>all dumps of host "vpdesktop"</para></listitem>
+    </varlistentry>
+
+    <varlistentry>
+    <term>amtool MyConfig '*' /var/stage</term>
+    <listitem><para>All dumps of <filename>/var/stage</filename> on any host</para></listitem>
+    </varlistentry>
+
+    <varlistentry>
+    <term>amtool MyConfig www1 /var/www '*' www2 /var/www '*'</term>
+    <listitem><para>All dumps of /var/www on www1 and www2 (assuming amtool does not
+	    require a level argument)</para></listitem>
+    </varlistentry>
+</variablelist>
+
+</refsect2>
+
+</refsect1>
+
+<refsect1><title>DLE SPECIFICATIONS</title>
+
+<para>A DLE specification is used to select one or more DLEs.  It consists of a
+    sequence of match expressions.  The first must be a host, and subsequent
+    expressions will be experimentally matched against both hosts and disks in
+    the &disklist;, preferring hosts.  This dynamic matching process can lead
+    to odd behavior in extreme cases (e.g., where a disk and a host have the
+    same name), but for most uses does exactly what is expected.</para>
+
+<refsect2><title>Examples</title>
+
+<variablelist remap='TP'>
+    <varlistentry>
+    <term>amtool MyConfig vpdesktop /home/anderson</term>
+    <listitem><para><filename>/home/anderson</filename> on host vpdesktop</para></listitem>
+    </varlistentry>
+
+    <varlistentry>
+	<term>amtool MyConfig '*' ^/etc '*' ^/var</term>
+	<listitem><para>All DLEs matching <filename>^/var</filename> or
+		<filename>^/etc</filename> on any host</para></listitem>
+    </varlistentry>
+
+    <varlistentry>
+	<term>amtool MyConfig web1 www web2 www</term>
+	<listitem><para>If no host matches "www", all DLEs matching
+	<filename>www</filename> on hosts web1 and web2.  If a host
+	matches "www", then all DLEs on hosts www, web1, and web2.
+	</para></listitem>
+    </varlistentry>
+</variablelist>
+
+</refsect2>
+
+</refsect1>
+
+<seealso>
+<manref name="amanda" vol="8"/>,
+<manref name="amfetchdump" vol="8"/>,
+<manref name="amrestore" vol="8"/>,
+<manref name="amadmin" vol="8"/>,
+<manref name="amvault" vol="8"/>
+<manref name="amflush" vol="8"/>
+<manref name="amdump" vol="8"/>
+</seealso>
+
+</refentry>

@@ -1,0 +1,343 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"
+[
+  <!-- entities files to use -->
+  <!ENTITY % global_entities SYSTEM 'global.entities'>
+  %global_entities;
+]>
+
+<refentry id='ampgsql.8'>
+
+<refmeta>
+<refentrytitle>ampgsql</refentrytitle>
+<manvolnum>8</manvolnum>
+&rmi.source;
+&rmi.version;
+&rmi.manual.8;
+</refmeta>
+<refnamediv>
+<refname>ampgsql</refname>
+<refpurpose>Amanda Application to interface with PostgreSQL</refpurpose>
+</refnamediv>
+<refentryinfo>
+&author.ncoukouma;
+</refentryinfo>
+<!-- body begins here -->
+
+<refsect1><title>DESCRIPTION</title>
+
+<para>Ampgsql is an Amanda Application API script.  It should not be run
+by users directly.  It implements on-line backups of PostgreSQL databases
+in conjunction with WAL archiving.</para>
+
+<note><para>Tablespaces are not currently supported.</para></note>
+
+<note><para>On versions of PostgreSQL earlier than 8.2, if the database is
+quiet during a full backup, then the backup may not complete until
+enough database activity takes place to trigger the archiving of the
+current WAL file.  Consider adjusting the PG-MAX-WAL-WAIT property from
+its default (60s) to compensate.  Note that you will need to increase
+<option>dtimeout</option> on the server accordingly.</para></note>
+
+</refsect1>
+
+<refsect1><title>DISKLIST</title>
+
+<para>The <emphasis remap='B'>diskdevice</emphasis> must be the cluster data
+directory, if it is "/var/lib/pgsql/data":</para>
+
+<programlisting>
+  HOST DISKNAME /var/lib/pgsql/data DUMPTYPE
+or
+  HOST /var/lib/pgsql/data DUMTYPE
+</programlisting>
+
+</refsect1>
+
+<refsect1><title>OPERATION</title>
+
+<para>This application implements the backup strategy described in <ulink
+url="http://www.postgresql.org/docs/current/static/continuous-archiving.html"
+>http://www.postgresql.org/docs/current/static/continuous-archiving.html</ulink>.
+For a level zero (full) backup, ampgsql:
+<itemizedlist>
+    <listitem><para>execute PG_START_BACKUP()</para></listitem>
+    <listitem><para>dump the data directory</para></listitem>
+    <listitem><para>execute PG_STOP_BACKUP()</para></listitem>
+    <listitem><para>wait for the final WAL file to be archived</para></listitem>
+    <listitem><para>back up the required WAL files</para></listitem>
+    <listitem><para>optionally delete WAL files that are no longer necessary</para></listitem>
+</itemizedlist>
+The two dumps are made with GNU Tar, to <filename>data_dir.tar</filename> and
+<filename>archive_dir</filename>, respectively.  They are then combined into a
+single tar file.</para>
+
+<para>A level N backup creates a single tar file containing all WAL files since the
+previous level N-1 backup.</para>
+
+</refsect1>
+
+<refsect1><title>PROPERTIES</title>
+
+<para>This section lists the <manref name="amanda.conf" vol="5"/> properties that control ampsql's functionality.
+See <manref name="amanda-applications" vol="7"/>
+for information on application properties and how they are configured.</para>
+
+<!-- PLEASE KEEP THIS LIST IN ALPHABETICAL ORDER -->
+<variablelist>
+ <!-- ==== -->
+ <varlistentry><term>ARCHIVEDIR</term><listitem>
+<para>Directory that WAL segment files are archived to, as specified by the
+archive_command in PosgreSQL's postgresql.conf.  The amanda user on the
+client must have at least read and execute permission on this directory,
+and preferably write.  Without write permission, Amanda cannot clean up
+expired WAL and backup files.</para>
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>CLEANUPWAL</term><listitem>
+<para>Whether or not to remove old WAL segment files during base backups.
+Defaults to yes.</para>
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>DB</term><listitem>
+<para>Database to connect to. Defaults to "template1" (which exists by
+default).</para>
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>DIRECTORY</term><listitem>
+<para>For restore command only, the data is recoved in that directory.
+Must be a unix path.</para>
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>FULL-WAL</term><listitem>
+<para>Which WAL files to archive when doing a full backup.</para>
+<variablelist>
+  <varlistentry><term>FULL</term>
+<listitem><para>Backup all WAL files since the previous full backup.</para>
+</listitem> </varlistentry>
+  <varlistentry><term>INCR</term>
+<listitem><para>Backup all WAL files since the previous backup (incr or full).</para>
+</listitem> </varlistentry>
+  <varlistentry><term>NO</term>
+<listitem><para>Backup all WAL files required for that full backup</para>
+</listitem> </varlistentry>
+</variablelist>
+<para>The default is "INCR".</para>
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>GNUTAR-PATH</term><listitem>
+<para>Path to the GNU tar executable. This option only has an effect
+during restore.  The default is set when Amanda is built by the
+--with-gnutar configure option.</para>
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>HOST</term><listitem>
+<para>Host to connect to. If it starts with "/" it will be interepreted as a
+directory that holds the socket file. PostgreSQL defaults to /tmp.</para>
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>INCREMENTAL</term><listitem>
+<para>Default: NO. If set to "YES", then backup only the WAL files since the previous backup.</para>
+<para>It reduce the size of the backup, but amanda will not be able to restore all incrementals, the restore must be done manually.It is easier to set the dumptype bump* parameter to force a bump at every backup.</para>
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>MAX-WAL-WAIT</term><listitem>
+<para>The maximum amount of time to wait for PG_STOP_BACKUP to archive a WAL
+file.  In versions of PostgreSQL before 8.2, PG_STOP_BACKUP does not
+automatically archive the latest WAL file, so a quiet database may
+wait a very long time before archiving the WAL file.  Default: 60
+seconds.  Set to 0 to wait forever.</para>
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>PASSFILE</term><listitem>
+<para>Connect using the creditials in this file. Each line should have the
+format "hostname:port:database:username:password". The permissions must
+permit it to be read only by the user, or the file will not be used.
+Only usable with Postgres 8.1 and up.</para>
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>PORT</term><listitem>
+<para>The TCP port to connect to, or the suffix of the socket file. PostgreSQL
+defaults to 5432.</para>
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>PSQL-PATH</term><listitem>
+<para>Path to the psql binary. If not specified, the PATH environment variable
+will be searched.</para>
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>REMOVE-FULL-WAL</term><listitem>
+<para>Default: YES. Remove all WAL files included in the full backup.</para>
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>REMOVE-INCREMENTAL-WAL</term><listitem>
+<para>Default: NO. If set to "YES" then remove all WAL files included in the incremental backup.</para>
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>STATEDIR</term><listitem>
+<para>Directory for saving state about backups already made. The default is set
+when Amanda is built by the --with-gnutar-listdir configure option.</para>
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>TMPDIR</term><listitem>
+<para>Directory to use for temporary files during the backup process. It should
+have enough space to store a complete copy of the database. The default is set
+when Amanda is built by the --with-tmpdir configure option.</para>
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>USER</term><listitem>
+<para>User to connect as. It must be a superuser.</para>
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>VERBOSE</term><listitem>
+<para>Do not use the --quiet output of psql.</para>
+</listitem></varlistentry>
+
+</variablelist>
+
+</refsect1>
+
+<refsect1><title>CLIENT PROPERTIES</title>
+
+<para>Client properties are deprecated. All properties should be set in
+the dumptype.</para>
+
+<para>This section lists the <manref name="amanda-client.conf" vol="5"/> properties that control ampsql's functionality.
+If a property is prefixed with the diskname and an underscore,
+then it will be used when that diskname is being backed up.
+For example, if the properties PG-DATADIR and foo-PG-DATADIR are set,
+the value of PG-DATADIR will be used when bar and baz are being backed up,
+but foo-PG-DATADIR will be used when foo is being backed up.
+Disknames are specified in the <manref name="disklist" vol="5"/>.
+</para>
+
+<!-- PLEASE KEEP THIS LIST IN ALPHABETICAL ORDER -->
+<variablelist>
+ <!-- ==== -->
+ <varlistentry><term>PG-ARCHIVEDIR</term><listitem>
+Directory that WAL segment files are archived to, as specified by the archive_command
+in PosgreSQL's postgresql.conf.  The amanda user on the client must have at least read
+and execute permission on this directory, and preferably write.  Without write permission,
+Amanda cannot clean up expired WAL and backup files.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>PG-CLEANUPWAL</term><listitem>
+Whether or not to remove old WAL segment files during base backups.
+Defaults to yes.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>PG-DATADIR</term><listitem>
+Cluster data directory
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>PG-DB</term><listitem>
+Database to connect to. Defaults to "template1" (which exists by default).
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>PG-HOST</term><listitem>
+Host to connect to. If it starts with "/" it will be interepreted as a directory
+that holds the socket file. PostgreSQL defaults to /tmp.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>PG-MAX-WAL-WAIT</term><listitem>
+<para>The maximum amount of time to wait for PG_STOP_BACKUP to archive a WAL
+file.  In versions of PostgreSQL before 8.2, PG_STOP_BACKUP does not
+automatically archive the latest WAL file, so a quiet database may
+wait a very long time before archiving the WAL file.  Default: 60
+seconds.  Set to 0 to wait forever.</para>
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>PG-PASSFILE</term><listitem>
+Connect using the creditials in this file. Each line should have the format
+"hostname:port:database:username:password". The permissions must
+permit it to be read only by the user, or the file will not be used.
+Only usable with Postgres 8.1 and up.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>PG-PASSWORD</term><listitem>
+Password to use when connecting. Deprecated in favor of passfiles.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>PG-PORT</term><listitem>
+The TCP port to connect to, or the suffix of the socket file. PostgreSQL
+defaults to 5432.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>PG-USER</term><listitem>
+User to connect as. It must be a superuser.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>PSQL-PATH</term><listitem>
+Path to the psql binary. If not specified, the PATH environment variable
+will be searched.
+</listitem></varlistentry>
+</variablelist>
+
+</refsect1>
+
+<refsect1><title>RECOVERY</title>
+
+<para>Read the postgres documentation carefully before attempting a recovery.
+This section is only a rough guide to the process.</para>
+
+<para>The data recovered from a postgres backup consists of a data tarball and
+one or more archive tarballs.  The data contains the state of the database
+at the time the full backup was performed, and the archive tarballs contain
+postgres WAL files that must be re-run to generate a consistent
+state.</para>
+
+<para>Ensure that the database server is shut down, and move the existing data
+directory aside.  Untar the data tarball over this directory, and verify
+that ownership and permissions are correct.  Untar all of the archive
+tarballs into a single directory - the archive directory.  Create a
+<filename>recovery.conf</filename> in the data directory, owned by the
+proper user and with proper permissions.  Add a
+<command>restore_command</command> to it, e.g.,</para>
+
+<programlisting>
+restore_command = 'cp /path/to/archive_dir/%f "%p"'
+</programlisting>
+
+<para>Start the database server, and examine the logs to track the process of
+the recovery.  When the recovery is complete, the server will transition
+into a running state, and will move the <filename>recovery.conf</filename>
+file aside so that it will not attempt a recovery on the next
+invocation.</para>
+
+</refsect1>
+
+<refsect1><title>EXAMPLE</title>
+
+In amanda.conf:
+<programlisting>
+define application app_ampgsql {
+  plugin "ampgsql"
+  property "HOST" "localhost"
+  property "ARCHIVEDIR" "/tmp/archivedir"
+  property "PASSFILE" "/etc/amanda/ampgsql.passwd"
+}
+define dumptype dump_ampgsql {
+  global
+  program "APPLICATION"
+  application app_ampgsql
+}
+</programlisting>
+
+The disklist file:
+<programlisting>
+  localhost /var/lib/pgsql/data dump_ampgsql
+or
+  localhost postgres /var/lib/pgsql/data dump_ampgsql
+</programlisting>
+
+</refsect1>
+
+<seealso>
+<manref name="amanda.conf" vol="5"/>,
+<manref name="amanda-client.conf" vol="5"/>,
+<manref name="amanda-applications" vol="7"/>
+</seealso>
+
+
+</refentry>

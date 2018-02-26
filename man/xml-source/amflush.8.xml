@@ -1,0 +1,213 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"
+[
+  <!-- entities files to use -->
+  <!ENTITY % global_entities SYSTEM 'global.entities'>
+  %global_entities;
+]>
+
+<!-- lifted from troff+man by doclifter -->
+<refentry id='amflush.8'>
+
+<refmeta>
+<refentrytitle>amflush</refentrytitle>
+<manvolnum>8</manvolnum>
+&rmi.source;
+&rmi.version;
+&rmi.manual.8;
+</refmeta>
+<refnamediv>
+<refname>amflush</refname>
+<refpurpose>flush Amanda backup files from holding disk to tape</refpurpose>
+</refnamediv>
+<refentryinfo>
+&author.jds;
+&author.sgw.xml;
+</refentryinfo>
+<!-- body begins here -->
+<refsynopsisdiv>
+<cmdsynopsis>
+  <command>amflush</command>    
+    <arg choice='opt'>-b</arg>
+    <arg choice='opt'>-f</arg>
+    <arg choice='opt'>--exact-match</arg>
+    <arg choice='opt'>-s</arg>
+    <arg choice='opt'>-D <replaceable>datestamp</replaceable></arg>
+    &configoverride.synopsis;
+    <arg choice='plain'><replaceable>config</replaceable></arg>
+    <arg choice='opt' rep='repeat'>
+       <arg choice='plain'><replaceable>host</replaceable></arg>
+       <arg choice='opt' rep='repeat'><replaceable>disk</replaceable></arg>
+    </arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1><title>DESCRIPTION</title>
+<para><emphasis remap='B'>Amflush</emphasis>
+writes Amanda backups from the holding disks to tape,
+and updates the Amanda info database and &tapelist; accordingly.
+It is similar to amdump, but does not perform any backup operations on
+Amanda clients.
+Backups may stay in a holding disk when something is wrong with the tape
+at the time <command>amdump</command> is run.
+When this happens, the problem must be corrected and
+<command>amflush</command> run by hand.</para>
+
+<para>The command optionally takes a set of DLE specifications
+    (see <manref
+    name="amanda-match" vol="7"/>) to narrow the DLEs for which dumps will be flushed.
+All dumps in holding are flushed if no expressions are given.</para>
+
+</refsect1>
+
+<refsect1><title>OPTIONS</title>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><option>-b</option></term>
+  <listitem>
+<para>Run
+<command>amflush</command>
+in batch mode. All datestamps are selected unless specified.
+The flush is started without confirmation.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-f</option></term>
+  <listitem>
+<para>Run
+<command>amflush</command>
+in foreground.
+<emphasis remap='B'>Amflush</emphasis>
+normally detaches itself from the tty and runs as a background process.
+With the
+<option>-f</option>
+option,
+<command>amflush</command>
+stays in the foreground.
+This is useful if
+<command>amflush</command>
+is run as part of another script that, for example, advances the tape
+after the flush is completed.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-s</option></term>
+  <listitem>
+<para>Write log to stdout/stderr instead of the amflush log file. Requires the
+<option>-f</option>
+option.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-D datestamp</option></term>
+  <listitem>
+<para>specify a datestamp expression you want to flush; see
+<manref name="amanda-match" vol="7"/>
+for details on the format of this expression.
+<option>-D 20001225-7</option>
+will flush all dumps from 25 december 2000 to 27 december 2000.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><option>--exact-match</option></term>
+  <listitem>
+<para>The host and disk are parsed as exact values</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><replaceable>host</replaceable> [<replaceable>disk</replaceable>]*</term>
+  <listitem>
+<para>Specify the host and disk on which the command will work -- see
+    the description of DLE specifications in <manref name="amanda-match" vol="7"/>. </para>
+  </listitem>
+  </varlistentry>
+
+
+  &configoverride.varlistentry;
+
+</variablelist>
+
+<para>You can specify many host/disk expressions, only disks that
+match an expression will be flushed. All disks are flushed if no
+expressions are given. see the &quot;HOST &amp; DISK EXPRESSION&quot; section of
+<manref name="amanda" vol="8"/>
+for a description.</para>
+
+<para><emphasis remap='B'>Amflush</emphasis>
+will look in the holding disks specified by the
+<emphasis remap='I'>amanda.conf</emphasis>
+file in /usr/local/etc/amanda/<emphasis remap='I'>config</emphasis>
+for any non-empty Amanda work directories.
+It then prompts you to select a directory
+or to process all of the directories.
+The work directories in the holding disks are named by the date at the time
+<emphasis remap='B'>amdump</emphasis>
+was run, e.g.
+<literal>19910215</literal>.</para>
+
+<para>See the
+<manref name="amanda" vol="8"/>
+man page for more details about Amanda.</para>
+</refsect1>
+
+<refsect1><title>EXAMPLE</title>
+<para><emphasis remap='B'>Amflush</emphasis>
+will search for holding areas associated with the
+<emphasis remap='I'>daily</emphasis>
+configuration.
+After you select which holding area to flush,
+<command>amflush</command>
+writes the data to tape, updates the databases and sends
+a mail report similar to
+<manref name="amdump" vol="8"/>.</para>
+
+<programlisting>
+% amflush MyConfig
+Scanning /amanda-hold...
+  20001113: found Amanda directory.
+  20001114: found Amanda directory.
+
+Multiple Amanda directories, please pick one by letter:
+  A. 20001113
+  B. 20001114
+Select directories to flush [A..B]: [ALL] all
+
+Flushing dumps in 20001113, 20001114,
+today: 20001117
+to tape drive /dev/rmt/0mn.
+Expecting tape DMP014 or a new tape.  (The last dumps were to tape DMP013)
+Are you sure you want to do this? yes
+Running in background, you can log off now.
+You'll get mail when amflush is finished.
+</programlisting>
+
+<para>The following example causes amflush to flush everything to tape, then
+ejects tape, using 'at' to run the task in the background.</para>
+
+<programlisting>
+% echo 'amflush -b -f MyConfig &amp;&amp; mt offline' | at now
+</programlisting>
+</refsect1>
+
+<refsect1><title>EXIT CODE</title>
+The exit code of <command>amflush</command> is the ORed value of:
+<programlisting>
+ 0  = success
+ 1  = error
+ 4  = a dle failed
+ 8  = Don't know the status of a dle (RESULT_MISSING in the report)
+ 16 = tape error or no more tape
+</programlisting>
+</refsect1>
+
+<seealso>
+<manref name="amdump" vol="8"/>
+<manref name="amanda-match" vol="7"/>
+</seealso>
+
+</refentry>
+

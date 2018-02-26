@@ -1,0 +1,6 @@
+BEGIN{o=substr(f,length(f)-1,2);
+if(substr(o,1,1)==".") o=substr(o,2,1);
+@AMPLOT_CAT_GZIP@
+@AMPLOT_CAT_COMPRESS@
+@AMPLOT_CAT_PACK@
+print "cat"; exit; }

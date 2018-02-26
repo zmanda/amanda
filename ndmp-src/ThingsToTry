@@ -1,0 +1,203 @@
+THINGS TO TRY
+=============
+
+Check the build:
+
+	% ndmjob -help
+	% ndmjob -v
+
+The Query tests are about like the Connectathon
+NDMPvX-COMMON tests.
+
+Query your DATA agent:
+
+	% ndmjob -q -Dmyhost,logon,passwd
+
+Query your DATA agent, force NDMPv2
+
+	% ndmjob -q -Dmyhost/2,logon,passwd
+
+Query your DATA agent, force NDMPv3
+
+	% ndmjob -q -Dmyhost/3,logon,passwd
+
+Query resident DATA agent. Force NDMPv2 and NDMPv3.
+
+	% ndmjob -q -D./2
+	% ndmjob -q -D./3
+
+Query your TAPE agent:
+
+	% ndmjob -q -Tmyhost,logon,passwd
+
+Query your ROBOT (see -help for DEV,CTRL,SID,LUN)
+
+	% ndmjob -q -Rmyhost,logon,passwd -r DEV,CTRL,SID,LUN
+
+Query your DATA agent, produce a log file
+
+	% ndmjob -q -Dmyhost,logon,passwd -L log-file
+
+Query your DATA agent, produce a detailed log file
+
+	% ndmjob -q -Dmyhost,logon,passwd -L log-file -d5
+
+Query your DATA agent, produce a very detailed log file,
+verbose to stdout
+
+	% ndmjob -q -Dmyhost,logon,passwd -L log-file -d6 -v
+
+
+From here down, combinations of forcing NDMPv2/v3 on
+each the DATA and TAPE agent are possible. These
+tests correspond to the Connectathon NDMPvX-TAPE
+and NDMPvX-DATA tests.
+
+
+Run a test series on your TAPE agent. If things get
+dicey, produce a log and check it
+
+	% ndmjob -o test-tape -T myhost,logon,passwd -f /dev/whatever
+	% ndmjob -o test-mover -T myhost,logon,passwd -f /dev/whatever
+
+Resident TAPE agent test
+
+	% rm -f FakeTape
+	% touch FakeTape
+
+	% ndmjob -o test-tape -T./2 -f FakeTape
+	% ndmjob -o test-mover -T./2 -f FakeTape
+
+	% ndmjob -o test-tape -T./3 -f FakeTape
+	% ndmjob -o test-mover -T./3 -f FakeTape
+
+
+
+Create a small directory system, like /tmp/test-data.
+About 100 files amounting to about 5mb should be good.
+A couple of big files in there would be good.
+
+	cd /tmp
+	tar xzvf tough.tgz.bin
+
+Create a backup to your TAPE agent. Create an index
+in file c-index.
+
+	% ndmjob -c \
+		-D. -C /tmp -F tough -I c-index \
+		-Tmyhost,logon,passwd -f /dev/whatever
+
+Recover the file index. Your DATA agent might not implement
+NDMPx_DATA_START_RECOVER_FILEHIST, but that doesn't matter.
+This is using the NDMJOB resident DATA agent, and it does.
+This first test will read the entire tape.
+
+	% ndmjob -t \
+		-D. -I t-seq-index \
+		-Tmyhost,logon,passwd -f /dev/whatever
+
+	% diff c-index t-seq-index
+
+Now, do the same thing, but enable direct access. The
+NDMJOB DATA agent will issue DATA_READ requests and
+pick through the image stream to get to just the tar
+headers.
+
+	% ndmjob -t \
+		-D. -I t-dir-index -E RECOVER_DIRECT=yes \
+		-Tmyhost,logon,passwd -f /dev/whatever
+
+	% diff c-index t-dir-index
+
+
+Same series using only resident agents
+
+	% ndmjob -cvv \
+		-D. -C /tmp -F tough -I c-index \
+		-f FakeTape
+
+	% ndmjob -tvv \
+		-D. -I t-seq-index -E RECOVER_DIRECT=no \
+		-f FakeTape
+
+	% diff c-index t-seq-index
+
+	% ndmjob -tvv \
+		-D. -I t-dir-index -E RECOVER_DIRECT=yes \
+		-f FakeTape
+
+	% diff c-index t-dir-index
+
+
+Same series using only resident DATA and TAPE on local host
+
+	% ndmjob -o daemon &
+
+	% ndmjob -cvv \
+		-D. -C /tmp -F tough -I c-index \
+		-Tlocalhost,ndmp,ndmp -f FakeTape
+
+	% ndmjob -tvv \
+		-D. -I t-seq-index -E RECOVER_DIRECT=no \
+		-Tlocalhost,ndmp,ndmp -f FakeTape
+
+	% diff c-index t-seq-index
+
+	% ndmjob -tvv \
+		-D. -I t-dir-index -E RECOVER_DIRECT=yes \
+		-Tlocalhost,ndmp,ndmp -f FakeTape
+
+	% diff c-index t-dir-index
+
+
+Same series using DATA and TAPE on local host. This is
+like the Connectathon NDMPvX-LOCAL tests:
+
+	% ndmjob -o daemon &
+
+	% ndmjob -cvv \
+		-Dlocalhost,, -C /tmp -F tough -I c-index \
+		-f FakeTape
+
+	% ndmjob -tvv \
+		-Dlocalhost,, -I t-seq-index -E RECOVER_DIRECT=no \
+		-f FakeTape
+
+	% diff c-index t-seq-index
+
+	% ndmjob -tvv \
+		-Dlocalhost,, -I t-dir-index -E RECOVER_DIRECT=yes \
+		-Tlocalhost,, -f FakeTape
+
+	% diff c-index t-dir-index
+
+
+
+If you have a tape robot, you MUST specify -m MEDIA options.
+The next set of tests verifies NDMP_MOVER window handling
+and discovery.
+
+Create a backup that crosses two tapes. This assumes
+a tape in each address 100 and 101. Your addresses
+will probably be different. The -m@100/2m says to put
+at most 2mb on the first tape. This is a NDMP_MOVER_SET_WINDOW
+during create, which is convention but not part of the spec.
+
+	% ndmjob -c \
+		-D. -C /tmp -F test-data -I c-index \
+		-Tmyhost,logon,passwd -f /dev/whatever \
+		-r DEV,CTRL,SID,LUN \
+		-m@100/2m -m@101
+
+Now, read it back. If your NDMP_MOVER is returning the
+proper error codes, this will automatically discover
+the window sizes as it proceeds. Notice that the -m
+options do not give window size.
+
+	% ndmjob -t \
+		-D. -I t-index \
+		-Tmyhost,logon,passwd -f /dev/whatever \
+		-r DEV,CTRL,SID,LUN \
+		-m@100 -m@101
+
+That'll get you started.

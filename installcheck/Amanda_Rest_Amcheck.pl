@@ -1,0 +1,332 @@
+# Copyright (c) 2014-2016 Carbonite, Inc.  All Rights Reserved.
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+# or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+# for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
+#
+# Contact information: Carbonite Inc., 756 N Pastoria Ave
+# Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
+
+use Test::More;
+use File::Path;
+use strict;
+use warnings;
+
+use lib '@amperldir@';
+use Installcheck;
+use Installcheck::Dumpcache;
+use Installcheck::Config;
+use Amanda::Paths;
+use Amanda::Device qw( :constants );
+use Amanda::Debug;
+use Amanda::MainLoop;
+use Amanda::Config qw( :init :getconf config_dir_relative );
+use Amanda::Changer;
+use Amanda::DB::Catalog2;
+
+eval 'use Installcheck::Rest;';
+if ($@) {
+    plan skip_all => "Can't load Installcheck::Rest: $@";
+    exit 1;
+}
+
+# set up debugging so debug output doesn't interfere with test results
+Amanda::Debug::dbopen("installcheck");
+Installcheck::log_test_output();
+
+# and disable Debug's die() and warn() overrides
+Amanda::Debug::disable_die_override();
+
+my $rest = Installcheck::Rest->new();
+if ($rest->{'error'}) {
+   plan skip_all => "Can't start JSON Rest server: $rest->{'error'}: see " . Amanda::Debug::dbfn();
+   exit 1;
+}
+plan tests => 1;
+
+my $reply;
+
+my $amperldir = $Amanda::Paths::amperldir;
+my $testconf;
+
+$testconf = Installcheck::Run::setup();
+$testconf->add_dle("localhost /home installcheck-test");
+$testconf->add_dle(<<EOF);
+localhost /home-incronly {
+    installcheck-test
+}
+localhost /etc {
+    installcheck-test
+}
+EOF
+
+$testconf->write( do_catalog => 0 );
+
+config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
+my $diskfile = Amanda::Config::config_dir_relative(getconf($CNF_DISKFILE));
+my $infodir = getconf($CNF_INFOFILE);
+my $catalog = Amanda::DB::Catalog2->new(undef, create => 1, drop_tables =>1, load => 1);
+$catalog->quit();
+
+#CODE 28* 123
+$reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/amcheck","");
+foreach my $message (@{$reply->{'body'}}) {
+    if (defined $message and defined $message->{'message'}) {
+	$message->{'message'} =~ s/^NOTE: host info dir .*$/NOTE: host info dir/;
+	$message->{'message'} =~ s/^NOTE: index dir .*$/NOTE: index dir/;
+	$message->{'message'} =~ s/^Holding disk .*$/Holding disk : disk space available, using as requested/;
+	$message->{'message'} =~ s/^Server check took .*$/Server check took 1.00 seconds/;
+	$message->{'message'} =~ s/^Client check: 1 host checked in \d+.\d+ seconds.  1 problem found.$/Client check: 1 host checked in 1.00 seconds.  1 problem found./;
+	$message->{'message'} =~ s/^\(brought to you by Amanda .*$/(brought to you by Amanda x.y.z)/;
+    }
+    if ($message->{'code'} == 2800073) {
+	$message->{'avail'} = '9999';
+	$message->{'requested'} = '9999';
+    } elsif ($message->{'code'} == 2800160) {
+	$message->{'seconds'} = '1.00';
+    } elsif ($message->{'code'} == 2800204) {
+	$message->{'seconds'} = '1.00';
+    }
+}
+is_deeply (Installcheck::Config::remove_source_line($reply),
+    { body =>
+#0
+        [ {	'source_filename' => "$amperldir/Amanda/Rest/Amcheck.pm",
+		'severity' => $Amanda::Message::ERROR,
+		'exit_code' => '1',
+		'process' => 'Amanda::Rest::Amcheck',
+		'running_on' => 'amanda-server',
+		'message' => 'Amcheck exit code is \'1\'',
+		'component' => 'rest-server',
+		'module' => 'amanda',
+		'code' => '2850000'
+	  },
+#1
+          {	'source_filename' => "amcheck.c",
+		'severity' => $Amanda::Message::MESSAGE,
+		'process' => 'amcheck-server',
+		'running_on' => 'amanda-server',
+		'message' => "Amanda Tape Server Host Check",
+		'component' => 'amanda',
+		'module' => 'amanda',
+		'code' => '2800027'
+	  },
+#2
+          {	'source_filename' => "amcheck.c",
+		'severity' => $Amanda::Message::INFO,
+		'message' => "Holding disk : disk space available, using as requested",
+		'avail' => '9999',
+		'requested' => '9999',
+		'holding_dir' => "$Installcheck::TMP/holding",
+		'process' => 'amcheck-server',
+		'running_on' => 'amanda-server',
+		'component' => 'amanda',
+		'module' => 'amanda',
+		'code' => '2800073'
+	  },
+#3
+	  {	'source_filename' => "$amperldir/Amanda/Taper/Scan/traditional.pm",
+		'severity' => $Amanda::Message::MESSAGE,
+		'message' => "Storage 'TESTCONF': slot 1: the volume is empty, autolabel disabled",
+		'changer_message' => "slot 1: the volume is empty, autolabel disabled",
+		'storage_name' => 'TESTCONF',
+		'slot_result' => '1',
+		'slot' => '1',
+		'empty' => '1',
+		'not_autolabel' => '1',
+		'process' => 'amcheck-device',
+		'running_on' => 'amanda-server',
+		'component' => 'changer',
+		'module' => 'Amanda::Taper::Scan::traditional',
+		'code' => '5101009'
+	  },
+#4
+	  {	'source_filename' => "$amperldir/Amanda/Taper/Scan/traditional.pm",
+		'severity' => $Amanda::Message::MESSAGE,
+		'message' => "Storage 'TESTCONF': slot 2: the volume is empty, autolabel disabled",
+		'changer_message' => "slot 2: the volume is empty, autolabel disabled",
+		'storage_name' => 'TESTCONF',
+		'slot_result' => '1',
+		'slot' => '2',
+		'empty' => '1',
+		'not_autolabel' => '1',
+		'process' => 'amcheck-device',
+		'running_on' => 'amanda-server',
+		'component' => 'changer',
+		'module' => 'Amanda::Taper::Scan::traditional',
+		'code' => '5101009'
+	  },
+#5
+	  {	'source_filename' => "$amperldir/Amanda/Taper/Scan/traditional.pm",
+		'severity' => $Amanda::Message::MESSAGE,
+		'message' => "Storage 'TESTCONF': slot 3: the volume is empty, autolabel disabled",
+		'changer_message' => "slot 3: the volume is empty, autolabel disabled",
+		'storage_name' => 'TESTCONF',
+		'slot_result' => '1',
+		'slot' => '3',
+		'empty' => '1',
+		'not_autolabel' => '1',
+		'process' => 'amcheck-device',
+		'running_on' => 'amanda-server',
+		'component' => 'changer',
+		'module' => 'Amanda::Taper::Scan::traditional',
+		'code' => '5101009'
+	  },
+#6
+	  {	'source_filename' => "$amperldir/Amanda/Changer/disk.pm",
+		'severity' => $Amanda::Message::MESSAGE,
+		'message' => 'Storage \'TESTCONF\': all slots have been loaded',
+		'changer_message' => 'all slots have been loaded',
+		'storage_name' => 'TESTCONF',
+		'reason' => 'notfound',
+		'type' => 'failed',
+		'process' => 'amcheck-device',
+		'running_on' => 'amanda-server',
+		'component' => 'changer',
+		'module' => 'Amanda::Changer::disk',
+		'code' => '1100032'
+	  },
+#7
+	  {	'source_filename' => "$amperldir/Amanda/Taper/Scan/traditional.pm",
+		'severity' => $Amanda::Message::ERROR,
+		'message' => 'Storage \'TESTCONF\': Taper scan algorithm did not find an acceptable volume, (expecting a new volume)',
+		'changer_message' => 'Taper scan algorithm did not find an acceptable volume, (expecting a new volume)',
+		'storage_name' => 'TESTCONF',
+		'scan_failed' => '1',
+		'expected_new' => '1',
+		'expected_label'=> undef,
+		'process' => 'amcheck-device',
+		'running_on' => 'amanda-server',
+		'component' => 'changer',
+		'module' => 'Amanda::Taper::Scan::traditional',
+		'code' => '5100002'
+	  },
+#8
+          {	'source_filename' => "$amperldir/Amanda/Taper/Scan/traditional.pm",
+		'severity' => $Amanda::Message::ERROR,
+		'message' => 'Storage \'TESTCONF\': No acceptable volumes found',
+		'changer_message' => 'No acceptable volumes found',
+		'storage_name' => 'TESTCONF',
+		'type' => 'failed',
+		'reason' => 'notfound',
+		'process' => 'amcheck-device',
+		'running_on' => 'amanda-server',
+		'component' => 'changer',
+		'module' => 'Amanda::Taper::Scan::traditional',
+		'code' => '1120000'
+	  },
+#9
+          {	'source_filename' => "amcheck.c",
+		'severity' => $Amanda::Message::INFO,
+		'message' => "host info dir '$Amanda::Paths::CONFIG_DIR/TESTCONF/curinfo/localhost' does not exist",
+		'hint'    => 'It will be created on the next run',
+		'hostinfodir' => "$Amanda::Paths::CONFIG_DIR/TESTCONF/curinfo/localhost",
+		'process' => 'amcheck-server',
+		'running_on' => 'amanda-server',
+		'component' => 'amanda',
+		'module' => 'amanda',
+		'code' => '2800100'
+	  },
+#10
+          {	'source_filename' => "amcheck.c",
+		'severity' => $Amanda::Message::INFO,
+		'message' => "index dir '$Amanda::Paths::CONFIG_DIR/TESTCONF/index/localhost' does not exist",
+		'hint'    => 'it will be created on the next run',
+		'hostindexdir' => "$Amanda::Paths::CONFIG_DIR/TESTCONF/index/localhost",
+		'process' => 'amcheck-server',
+		'running_on' => 'amanda-server',
+		'component' => 'amanda',
+		'module' => 'amanda',
+		'code' => '2800126'
+	  },
+#11
+          {	'source_filename' => "amcheck.c",
+		'severity' => $Amanda::Message::MESSAGE,
+		'message' => 'Server check took 1.00 seconds',
+		'seconds' => '1.00',
+		'process' => 'amcheck-server',
+		'running_on' => 'amanda-server',
+		'component' => 'amanda',
+		'module' => 'amanda',
+		'code' => '2800160'
+	  },
+#12
+          {	'source_filename' => "amcheck.c",
+		'severity' => $Amanda::Message::MESSAGE,
+		'message' => 'Amanda Backup Client Hosts Check',
+		'process' => 'amcheck-clients',
+		'running_on' => 'amanda-server',
+		'component' => 'amanda',
+		'module' => 'amanda',
+		'code' => '2800202'
+	  },
+#13
+          {	'source_filename' => "amcheck.c",
+		'severity' => $Amanda::Message::MESSAGE,
+		'message' => '--------------------------------',
+		'process' => 'amcheck-clients',
+		'running_on' => 'amanda-server',
+		'component' => 'amanda',
+		'module' => 'amanda',
+		'code' => '2800203'
+	  },
+#14
+          {	'source_filename' => "selfcheck.c",
+		'severity' => $Amanda::Message::ERROR,
+		'message' => Amanda::Util::built_with_component("client")
+                            ? 'localhost: Could not access /home-incronly (/home-incronly): No such file or directory'
+                            : "ERROR: NAK localhost: execute access to '$Amanda::Paths::amlibexecdir/amanda/noop' denied",
+		'dle_hostname' => 'localhost',
+		'hostname' => 'localhost',
+		'merrno' => '2',
+		'errnocode' => 'ENOENT',
+		'errnostr' => 'No such file or directory',
+		'disk' => '/home-incronly',
+		'device' => '/home-incronly',
+		'type' => 'access',
+		'process' => 'selfcheck',
+		'running_on' => 'amanda-client',
+		'component' => 'amanda',
+		'module' => 'amanda',
+		'code' => '3600051'
+	  },
+#15
+          {	'source_filename' => "amcheck.c",
+		'severity' => $Amanda::Message::MESSAGE,
+		'message' => 'Client check: 1 host checked in 1.00 seconds.  1 problem found.',
+		'hostcount' => 1,
+		'remote_errors' => 1,
+		'seconds' => '1.00',
+		'process' => 'amcheck-clients',
+		'running_on' => 'amanda-server',
+		'component' => 'amanda',
+		'module' => 'amanda',
+		'code' => '2800204'
+	  },
+#16
+          {	'source_filename' => "amcheck.c",
+		'severity' => $Amanda::Message::MESSAGE,
+		'message' => '(brought to you by Amanda x.y.z)',
+		'version' => $Amanda::Constants::VERSION,
+		'process' => 'amcheck',
+		'running_on' => 'amanda-server',
+		'component' => 'amanda',
+		'module' => 'amanda',
+		'code' => '2800016'
+	  },
+        ],
+      http_code => 200,
+    },
+    "No config") || diag("reply: " . Data::Dumper::Dumper($reply));
+
+$rest->stop();

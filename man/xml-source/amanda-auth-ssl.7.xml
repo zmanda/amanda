@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"
+[
+  <!-- entities files to use -->
+  <!ENTITY % global_entities SYSTEM 'global.entities'>
+  %global_entities;
+]>
+
+<refentry id='amanda-auth-ssl.7'>
+
+<refmeta>
+  <refentrytitle>amanda-auth-ssl</refentrytitle>
+  <manvolnum>7</manvolnum>
+&rmi.source;
+&rmi.version;
+&rmi.manual.7;
+</refmeta>
+<refnamediv>
+  <refname>amanda-auth-ssl</refname>
+  <refpurpose>SSL Communication/Authentication methods between Amanda server and client</refpurpose>
+</refnamediv>
+<refentryinfo>
+  &author.jlm;
+  &author.dustin;
+  &author.pby;
+</refentryinfo>
+
+<!-- body begins here -->
+
+<refsect1><title>DESCRIPTION</title>
+<para>This authenticate method use ssl certificate to authenticate host,
+all transfer over the network is encrypted.</para>
+<para>Each amanda client/server must have its own certificate signed by
+the amanda CA certificate.</para>
+
+</refsect1>
+
+<refsect1><title>COMPILATION AND GENERAL INFORMATION</title>
+  <para>Amanda must be configure with --with-ssl-security</para>
+
+</refsect1>
+
+<refsect1><title>SERVER/CLIENT CONFIGURATION</title>
+
+<para> In <emphasis remap='B'>amanda.conf</emphasis> and
+<emphasis remap='B'>amanda-client.conf</emphasis>.</para>
+<variablelist remap='TP'>
+  <varlistentry>
+    <term><option>ssl-dir</option></term>
+<listitem><para>The directoty where amanda store all the certificates.
+A good value is <emphasis remap='B'>~/amanda-ssl</emphasis>.</para></listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><option>ssl-check-certificate-host</option></term>
+<listitem><para>Check the peer hostname match the certificate host name.</para></listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><option>ssl-check-fingerprint</option></term>
+<listitem><para>Check the fingerprint of the certificate is the same as the fingerprint we already have for that host.</para></listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><option>ssl-check-host</option></term>
+<listitem><para>Do the bsd check, dns name of peer IP is the hostname we connect to.</para></listitem>
+  </varlistentry>
+</variablelist>
+
+</refsect1>
+
+<refsect1><title>FILESYSTEM LAYOUT FOR CERTIFICATES</title>
+<programlisting>
+$SSL_DIR/CA/crt.pem                   # CA certificate that signed
+                                        all certificates.
+$SSL_DIR/CA/private/key.pem           # CA private key
+                                        (on server only)
+$SSL_DIR/me/crt.pem                   # public certificate of the host
+$SSL_DIR/me/private/key.pem           # private key of the host
+$SSL_DIR/me/fingerprint               # fingerprint of my certificate
+$SSL_DIR/remote/HOSTNAME/fingerprint  # fingerprint of the HOSTNAME
+                                        certificate
+</programlisting>
+
+<para>On the <emphasis remap='B'>HOSTNAME</emphasis> host,
+<emphasis remap='B'>$SSL_DIR/remote/HOSTNAME</emphasis>
+is a symbolic link to <emphasis remap='B'>../me</emphasis>.</para>
+
+</refsect1>
+
+<refsect1><title>PROGRAM TO HELP CONFIGURATION</title>
+<para>The <emphasis remap='B'>amssl</emphasis> program is a tool to manage the certificate.</para>
+
+</refsect1>
+
+<seealso>
+<manref name="amanda.conf" vol="5" />
+<manref name="amanda-client.conf" vol="5" />
+<manref name="disklist" vol="5" />
+<manref name="amdump" vol="8" />
+<manref name="amrecover" vol="8" />
+<manref name="amssl" vol="8" />
+<manref name="amanda-auth" vol="7" />
+</seealso>
+
+
+</refentry>

@@ -1,0 +1,167 @@
+/*
+ * Amanda, The Advanced Maryland Automatic Network Disk Archiver
+ * Copyright (c) 1991-1998 University of Maryland at College Park
+ * Copyright (c) 2007-2012 Zmanda, Inc.  All Rights Reserved.
+ * Copyright (c) 2013-2016 Carbonite, Inc.  All Rights Reserved.
+ * All Rights Reserved.
+ *
+ * Permission to use, copy, modify, distribute, and sell this software and its
+ * documentation for any purpose is hereby granted without fee, provided that
+ * the above copyright notice appear in all copies and that both that
+ * copyright notice and this permission notice appear in supporting
+ * documentation, and that the name of U.M. not be used in advertising or
+ * publicity pertaining to distribution of the software without specific,
+ * written prior permission.  U.M. makes no representations about the
+ * suitability of this software for any purpose.  It is provided "as is"
+ * without express or implied warranty.
+ *
+ * U.M. DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING ALL
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT SHALL U.M.
+ * BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION
+ * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
+ * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ *
+ * Authors: the Amanda Development Team.  Its members are listed in a
+ * file named AUTHORS, in the root directory of this distribution.
+ */
+/* 
+ * $Id: client_util.h,v 1.14 2006/05/25 01:47:11 johnfranks Exp $
+ *
+ */
+
+#ifndef CLIENT_UTIL_H
+#define CLIENT_UTIL_H
+
+#include "amanda.h"
+#include "conffile.h"
+#include "amfeatures.h"
+#include "am_sl.h"
+#include "amutil.h"		/* for bstrncmp() */
+#include "amandad.h"		/* for g_option_t */
+#include "amxml.h"		/* for dle_t	  */
+#include "ammessage.h"		/* message_t      */
+#include "backup_support_option.h"
+
+typedef enum {
+    R_BOGUS,
+    R_SUCCESS,
+    R_FAILED
+} backup_result_t;
+
+typedef struct client_script_result_s {
+    int exit_code;
+    proplist_t proplist;
+    GPtrArray *output;
+    GPtrArray *err;
+    int        exit_status;
+} client_script_result_t;
+
+typedef enum {
+    DMP_NORMAL, DMP_IGNORE, DMP_STRANGE, DMP_SIZE, DMP_ERROR
+} dmpline_t;
+
+typedef struct regex_s {
+    char *regex;
+    int srcline;
+    int scale;			/* only used for size lines */
+    int field;
+    dmpline_t typ;
+} amregex_t;
+
+#define AM_NORMAL_RE(re)	{(re), __LINE__, 0, 0, DMP_NORMAL}
+#define AM_IGNORE_RE(re)	{(re), __LINE__, 0, 0, DMP_IGNORE}
+#define AM_STRANGE_RE(re)	{(re), __LINE__, 0, 0, DMP_STRANGE}
+#define AM_SIZE_RE(re,s,f)	{(re), __LINE__, (s), (f), DMP_SIZE}
+#define AM_ERROR_RE(re)		{(re), __LINE__, 0, 0, DMP_ERROR}
+
+char *build_exclude(dle_t *dle, messagelist_t *mlist);
+char *build_include(dle_t *dle, char const *dirname, messagelist_t *mlist);
+void parse_options(char *str,
+		   dle_t *dle,
+		   am_feature_t *features,
+		   int verbose);
+
+/* Add all properties of an application for a dle to an ARGV.
+ * include/exclude options are converted to properties.
+ *
+ * @param argv_ptr: the ARGV where to store properties.
+ * @param dle: the dle.
+ * @returns: Number of argument added to ARGV.
+ */
+void application_property_add_to_argv(GPtrArray *argv_ptr,
+				      dle_t *dle,
+				      backup_support_option_t *bsu,
+				      am_feature_t *amfeatures);
+
+/* Merge properties from amanda-client.conf files to dles (application and scripts)
+ *
+ * @param dle: the dle list.
+ * @returns: Return 1 on success
+ *           Return 0 on failure
+ */
+int merge_dles_properties(dle_t *dles, int verbose);
+
+char *fixup_relative(char *name, char *device);
+
+void run_client_script(script_t        *script,
+		       execute_on_t     execute_on,
+		       g_option_t      *g_options,
+		       dle_t           *dle,
+		       backup_result_t  result);
+
+int run_client_scripts(execute_on_t     execute_on,
+		       g_option_t      *g_options,
+		       dle_t           *dle,
+		       FILE            *streamout,
+		       backup_result_t  result,
+		       message_t       *(*fprint_message)(FILE *out, message_t *message));
+
+void run_calcsize(char *config, char *program, char *disk,
+                  char *dirname, GSList *levels,
+                  char *file_exclude, char *file_include);
+
+message_t *check_access_message(char *filename, int mode);
+message_t *check_file_message(char *filename, int mode);
+message_t *check_dir_message(char *dirname, int mode);
+message_t *check_suid_message(char *filename);
+message_t *check_exec_for_suid_message(char *type, char *filename, char **my_realpath);
+gboolean check_access(char *filename, int mode);
+gboolean check_file(char *filename, int mode);
+gboolean check_dir(char *dirname, int mode);
+gboolean check_suid(char *filename);
+gboolean check_exec_for_suid(char *type, char *filename, FILE *verbose, char **my_realpath);
+double the_num(char * str, int pos);
+
+/* Convert a GSList returned from config_errors into an "ERROR "
+ * line suitable for inclusion in a NAK or REP packet.  Because we only
+ * get one ERROR line per packet, this includes only the first 
+ * error, with an indication that there are more to follow.
+ *
+ * @param errlist: the list of errors from config_errors
+ * @returns: newly allocated string containing the error messages
+ */
+char *config_errors_to_error_string(GSList *errlist);
+
+amregex_t *build_re_table(amregex_t *orig_re_table,
+                          GSList *normal_message,
+                          GSList *ignore_message,
+                          GSList *strange_message);
+void add_type_table(dmpline_t typ,
+                    amregex_t **re_table, amregex_t *orig_re_table,
+                    GSList *normal_message, GSList *ignore_message,
+                    GSList *strange_message);
+void add_list_table(dmpline_t typ, amregex_t **re_table,
+                    GSList *message);
+
+/* Merge properties from conf_proplist to dle_proplist
+   If verbose is 1, then dle->disk and name are used in output.
+ * @returns: Return 1 on success
+ *           Return 0 on failure
+ */
+int
+merge_properties(dle_t *dle, char *name, proplist_t dle_proplist,
+		 proplist_t conf_proplist, int verbose);
+
+#endif
+

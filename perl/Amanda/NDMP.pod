@@ -1,0 +1,158 @@
+/*
+ * Copyright (c) 2009-2012 Zmanda, Inc.  All Rights Reserved.
+ * Copyright (c) 2013-2016 Carbonite, Inc.  All Rights Reserved.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, write to the Free Software Foundation, Inc.,
+ * 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
+ *
+ * Contact information: Carbonite Inc., 756 N Pastoria Ave
+ * Sunnyvale, CA 94085, or: http://www.zmanda.com
+ */
+
+%perlcode %{
+
+=head1 NAME
+
+Amanda::NDMP - communicate via NDMP
+
+=head1 SYNOPSIS
+
+  use Amanda::NDMP qw( :constants );
+
+  my $conn = Amanda::NDMP::NDMPConnection->new($host, $port, $ident, $username,
+					       $password, $auth);
+  my ($ok, $blocksize, $file_num, $blockno) = $conn->tape_get_state();
+
+=head1 DESCRIPTION
+
+This package interfaces with the C class C<NDMPConnection> class declared in
+C<ndmp-src/ndmpconnobj.h>.  It is only available in builds that did not specify
+C<--without-ndmp>.  The C class, in turn, interfaces to the XDR code provided
+by NDMJOB, which sends and receives NDMP messages on a TCP socket.
+
+=head2 Constructor
+
+  my $conn = Amanda::NDMP::NDMPConnection->new($host, $port, $ident, $username,
+					       $password, $auth);
+  if ($conn->err_code()) {
+    # handle error..
+  }
+
+This gets a new connection object.  This will always return an object, but the
+result should be checked for errors as described in the "Error Handling"
+section, below.
+
+The C<$host> and C<$port> give the NDMP server's host and port, respectively.
+The C<$auth> parameter defines the authentication mechanism to use: "md5" or
+"text"; "none" for no authentication; or "void" to not send any authentication
+packets at all.  For md5 or text modes, C<$username> and C<$password> specify
+the username and password for the NDMP server; these parameters must always be
+included, but can be blank for none or void.
+
+The C<$ident> parameter deserves some explanation.  NDMP scopes many
+server-side variables to the NDMP connection - for example, the "current" tape
+and taper state are associated with the NDMP connection.  To facilitate this,
+the constructor returns the I<same connection> for any constructor invocation
+with the same host, port, and identifier.  In cases where multiple connections
+are required (e.g., when two tapes are in use simultaneously), callers should
+provide different identifiers for each connection.
+
+=head2 Methods
+
+Note that not all NDMPConnection methods are available.  All of these methods
+block until the appropriate reply is received.  The underlying C class provides
+appropriate locking fundamentals to prevent corrupted on-the-wire messages.
+
+All methods return a boolean "ok" status, with false indicating an error.
+
+=head3 Error Handling
+
+  my $code = $conn->err_code();
+  my $msg = $conn->err_msg();
+
+Get the error code and message from the last method that returned false, or
+after the constructor is invoked.
+
+  $conn->set_verbose(1);
+
+This method will enable verbose logging of the NDMP transactions to the Amanda
+debug logs.
+
+=head3 SCSI Interface
+
+  my $ok = $conn->scsi_open($device);	    # NDMP_SCSI_OPEN
+  my $ok = $conn->scsi_close();		    # NDMP_SCSI_CLOSE
+  # NDMP_SCSI_EXECUTE_CDB
+  my $res = $conn->scsi_execute_cdb(
+    flags => $flags,
+    timeout => $timeout,
+    cdb => $cdb,
+    datain_len => $datain_len,	    # only if $flags == $NDMP9_SCSI_DATA_DIR_IN
+    dataout => $dataout 	    # only if $flags == $NDMP9_SCSI_DATA_DIR_OUT
+  )
+
+The first two methods are clear; the third uses keyword parameters to simplify
+a complex set of parameters.  The C<flags> argument can be
+C<$NDMP9_SCSI_DATA_DIR_IN>, to take data I<into> the server from the SCSI
+device, or C<$NDMP9_SCSI_DATA_DIR_OUT> to send data I<out> to the SCSI device.
+The C<timeout> is in milliseconds.  The C<cdb> should be a SCSI control block
+(the C<pack> function is useful here).  If the data direction is in, then
+C<datain_len> indicates the maximum amount of data to expect; otherwise,
+C<dataout> is the data to send to the device.
+
+The result is C<undef> for an error, or a hashref with the following keys:
+
+  status	    SCSI status byte
+  ext_sense	    SCSI extended sense data
+  datain	    data from the device
+  dataout_len	    number of bytes actually transmitted to the device
+
+=head3 Tape Interface
+
+  my $ok = $conn->tape_open($device, $mode);
+  my $ok = $conn->tape_close();
+
+The first method opens a tape device, using the give mode -
+C<$NDMP9_TAPE_READ_MODE> or C<$NDMP9_TAPE_RDRW_MODE>.  The second method closes
+the tape device associated with this connection.
+
+  my ($ok, $resid) = $conn->tape_mtio($op, $count);
+
+This method sends C<NDMP_TAPE_MTIO> with the given operation and count.
+Operations have the prefix C<$NDMP9_MTIO_>.  The number of incomplete
+operations is returned in C<$resid>.
+
+To read and write blocks, use these methods:
+
+  my ($ok, $actual) = $conn->tape_write($data);
+  my ($ok, $data) = $conn->tape_read($bufsize);
+
+where C<$actual> and C<$bufsize> are byte counts, and C<$data> is a string of
+data.  Finally, to get the state of the tape agent, use
+
+  my ($ok, $blocksize, $file_num, $blockno) = $conn->tape_get_state();
+
+=head2 Constants
+
+The constants required for the interface exposed here are included in this
+package.  They all begin with the prefix C<$NDMP9_>, which is an implementation
+detail of the NDMJOB library.  The constants are available from the export tag
+C<constants>:
+
+  use Amanda::NDMP qw( :constants );
+
+=cut
+
+
+%}

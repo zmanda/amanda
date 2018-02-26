@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"
+[
+  <!-- entities files to use -->
+  <!ENTITY % global_entities SYSTEM 'global.entities'>
+  %global_entities;
+]>
+
+<!-- lifted from troff+man by doclifter -->
+<refentry id='amplot.8'>
+<refmeta>
+<refentrytitle>amplot</refentrytitle>
+<manvolnum>8</manvolnum>
+&rmi.source;
+&rmi.version;
+&rmi.manual.8;
+</refmeta>
+<refnamediv>
+<refname>amplot</refname>
+<refpurpose>visualize the behavior of Amanda</refpurpose>
+</refnamediv>
+<refentryinfo>
+&author.ogud;
+&author.sgw.xml;
+</refentryinfo>
+<!-- body begins here -->
+<refsynopsisdiv>
+<cmdsynopsis>
+  <command>amplot</command>    
+    <arg choice='opt'>-b </arg>
+    <arg choice='opt'>-c </arg>
+    <arg choice='opt'>-e </arg>
+    <arg choice='opt'>-g </arg>
+    <arg choice='opt'>-l </arg>
+    <arg choice='opt'>-p </arg>
+    <arg choice='opt'><arg choice='plain'>-t </arg><arg choice='plain'><replaceable>T</replaceable></arg></arg>
+    <arg choice='plain'><replaceable>amdump_files</replaceable></arg>
+    <sbr/>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1><title>DESCRIPTION</title>
+<para><emphasis remap='B'>Amplot</emphasis>
+reads an
+<emphasis remap='B'>amdump</emphasis>
+output file that Amanda generates each run (e.g.
+<emphasis remap='I'>amdump.1</emphasis>)
+and translates the information into a
+picture format that may be used to determine how your installation
+is doing and if any parameters need to be changed.
+<emphasis remap='B'>Amplot</emphasis>
+also prints out
+<emphasis remap='B'>amdump</emphasis>
+lines that it either does not
+understand or knows to be warning or error lines
+and a summary of the start, end and total time for each backup image.</para>
+
+<para><emphasis remap='B'>Amplot</emphasis>
+is a shell script that executes an
+<emphasis remap='B'>awk</emphasis>
+program
+<emphasis remap='I'></emphasis>(<emphasis remap='P->I'>amplot.awk</emphasis>)
+to scan the
+<emphasis remap='B'>amdump</emphasis>
+output file.
+It then executes a
+<emphasis remap='B'>gnuplot</emphasis>
+program
+<emphasis remap='I'></emphasis>(<emphasis remap='P->I'>amplot.g</emphasis>)
+to generate the graph.
+The <emphasis remap='B'>awk</emphasis>
+program is written in an enhanced version of awk,
+such as GNU awk (<manref name="gawk" vol="1" />
+version 2.15 or later) or <manref name="nawk" vol="1" />.</para>
+
+<para>During execution,
+<command>amplot</command>
+generates a few temporary files that
+<emphasis remap='B'>gnuplot</emphasis>
+uses.
+These files are deleted at the end of execution.</para>
+
+<para>See the
+<manref name="amanda" vol="8"/>
+man page for more details about Amanda.</para>
+</refsect1>
+
+<refsect1><title>OPTIONS</title>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><option>-b</option></term>
+  <listitem>
+<para>Generate b/w postscript file (need
+<option>-p</option>).</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-c</option></term>
+  <listitem>
+<para>Compress
+<emphasis remap='I'>amdump_files</emphasis>
+after plotting.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-e</option></term>
+  <listitem>
+<para>Extend the X (time) axis if needed.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-g</option></term>
+  <listitem>
+<para>Direct
+<emphasis remap='I'>gnuplot</emphasis>
+output directly to the X11 display (default).</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-p</option></term>
+  <listitem>
+<para>Direct postscript output to file
+<emphasis remap='B'></emphasis><emphasis remap='I'>YYYYMMDD</emphasis><emphasis remap='P->B'>.ps</emphasis>
+(opposite of
+<option>-g</option>).</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-l</option></term>
+  <listitem>
+<para>Generate landscape oriented output (needs
+<option>-p</option>).</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-t </option><emphasis remap='I'>T</emphasis></term>
+  <listitem>
+<para>Set the right edge of the plot to be
+<emphasis remap='I'>T</emphasis>
+hours.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+
+<para>The
+<emphasis remap='I'>amdump_files</emphasis>
+may be in various compressed formats
+(<emphasis remap='P->B'>compress</emphasis>,
+<emphasis remap='B'>gzip</emphasis>,
+<emphasis remap='B'>pact</emphasis>,
+<emphasis remap='B'>compact</emphasis>).</para>
+</refsect1>
+
+<refsect1><title>INTERPRETATION</title>
+<para>The figure is divided into a number of regions.
+There are titles on the top that show important statistical information
+about the configuration and from this execution of
+<emphasis remap='B'>amdump</emphasis>.
+In the figure, the X axis is time, with 0 being the moment
+<emphasis remap='B'>amdump</emphasis>
+was started.
+The Y axis is divided into 5 regions:</para>
+
+<para><emphasis remap='I'>QUEUES:</emphasis>
+How many backups have not been started,
+how many are waiting on space in the holding disk
+and how many have been transferred successfully to tape.</para>
+
+<para><emphasis remap='I'>%BANDWIDTH:</emphasis>
+Percentage of allowed network bandwidth in use.</para>
+
+<para><emphasis remap='I'>HOLDING DISK:</emphasis>
+The higher line depicts space allocated on the holding disk to
+backups in progress and completed backups waiting to be written to tape.
+The lower line depicts the fraction of the holding disk containing completed
+backups waiting to be written to tape including the file currently being
+written to tape.
+The scale is percentage of the holding disk.</para>
+
+<para><emphasis remap='I'>TAPE:</emphasis>
+Tape drive usage.</para>
+
+<para><emphasis remap='I'>%DUMPERS:</emphasis>
+Percentage of active dumpers.</para>
+
+<para>The idle period at the left of the graph is time
+<emphasis remap='B'>amdump</emphasis>
+is asking the machines how much data they are going to dump.
+This process can take a while if hosts are down
+or it takes them a long time to generate estimates.</para>
+</refsect1>
+
+<refsect1><title>BUGS</title>
+<para>Reports lines it does not recognize, mainly error cases but some are
+legitimate lines the program needs to be taught about.</para>
+</refsect1>
+
+<seealso>
+<manref name="amdump" vol="8"/>,
+<manref name="gnuplot" vol="1"/>,
+<manref name="compress" vol="1"/>,
+<manref name="gzip" vol="1"/>
+</seealso>
+
+</refentry>
+

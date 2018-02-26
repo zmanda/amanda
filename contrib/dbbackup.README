@@ -1,0 +1,65 @@
+
+				dbbackup
+
+
+dbbackup is a set of scripts to automate Oracle hot backups using tcl
+via oratcl.  It is currently used on 24x7 systems on several platforms,
+including Solaris2.5/2.6 and AIX.  It has been tested and used with both
+Oracle 7 and Oracle 8.
+
+I recommend the most stable release of Tcl (currently 8.0p2) and
+Oratcl 2.5
+
+In our oracle implementation, we have a single disk '/opt/oracle/backup'
+who's sole purpose is to hold the database backups.  We point our archive
+log destination there, so all archived redo logs are in one spot and
+we run a hot backup nightly to copy all the datafiles and the control
+file there as well.  Necessarily, the /opt/oracle/backup disk must be
+big enough to hold all of this.
+
+We use the Amanda backup system (www.amanda.org) to handle backing up
+the disk to tape.
+
+
+Simply put, the ksh script sets up environment for the tcl script, which
+does the following:
+	- for each tablespace in the database
+		- identify all datafiles belonging to that tablespace 
+		- set the tablespace to backup mode
+		- copy the datafiles to the backup location
+		- set the tablespace to regular mode
+	- switch the log file so any changes made during backup get archived
+	- back up the control file
+
+There are no fancy installation scripts as of yet.  Here is a short
+summary of what is needed.
+
+1.  Root user creates a system backup account.
+2.  Oracle DBA runs dbbackup.sql as oracle user "sys" to:
+		- create a role "backup_role"
+		- grant minimal system privileges to backup_role (i.e.
+		  manage tablespace)
+			*NOTE* these are powerful privileges. but necessary
+		- grant minimal necessary table privileges to backup_role
+		  (i.e. dba_tablespace)
+		- create the backup user from step 1
+		- grant backup_role to the backup user
+3.  configure	- change dbbackup.ksh to find the oracle script "dbhome",
+		  set ORACLE_SID and optionally set the dbbackup
+		  administration area (location of logs and dbbackup.ksh)
+		  and user who will get the E-mail reports.
+		- change dbbackup.tcl to find the backup destination
+		  (variables df_dest and cf_dest)
+4.  Root user needs to install dbbackup.ksh.  The dbbackup.tcl script must
+    be installed in $adm/dbbackup.tcl (adm is defined in dbbackup.ksh).
+5.  Root user needs to add a cron job to trim old archive logs (6 days worth).
+		'dbbackup.cron' is a sample cron entry
+		*NOTE* failure to add crontab fills the disk real fast.
+		*NOTE* our archive logs are [sid]####.dbf  
+6. Root user needs to configure the backup system to call 'dbbackup.ksh'
+   as the backup user.
+
+
+Todd M. Helfter
+Purdue University Computing Center
+tmh@purdue.edu

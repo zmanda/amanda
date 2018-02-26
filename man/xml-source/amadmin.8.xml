@@ -1,0 +1,528 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"
+[
+  <!-- entities files to use -->
+  <!ENTITY % global_entities SYSTEM 'global.entities'>
+  %global_entities;
+]>
+
+<!-- lifted from troff+man by doclifter -->
+<refentry id='amadmin.8'>
+
+
+<refmeta>
+<refentrytitle>amadmin</refentrytitle>
+<manvolnum>8</manvolnum>
+&rmi.source;
+&rmi.version;
+&rmi.manual.8;
+</refmeta>
+<refnamediv>
+<refname>amadmin</refname>
+<refpurpose>administrative interface to control Amanda backups</refpurpose>
+</refnamediv>
+<refentryinfo>
+&author.jds;
+&author.sgw.xml;
+</refentryinfo>
+<!-- body begins here -->
+<refsynopsisdiv>
+<cmdsynopsis>
+  <command>amadmin</command>    
+    <arg choice='opt'>--version</arg>
+    <arg choice='opt'>--no-default</arg>
+    <arg choice='opt'>--print-source</arg>
+    <arg choice='opt'>--exact-match</arg>
+    &configoverride.synopsis;
+    <arg choice='plain'><replaceable>config</replaceable></arg>
+    <arg choice='plain'><replaceable>command</replaceable></arg>
+    <arg choice='opt' rep='repeat'><replaceable>command_options</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1><title>DESCRIPTION</title>
+<para><emphasis remap='B'>Amadmin</emphasis>
+performs various administrative tasks on the
+<emphasis remap='I'>config</emphasis>
+Amanda configuration.</para>
+
+<para>See the
+<manref name="amanda" vol="8"/>
+man page for more details about Amanda.</para>
+</refsect1>
+
+<refsect1><title>OPTIONS</title>
+<variablelist remap='TP'>
+ <varlistentry>
+    <term><option>--version</option></term>
+<listitem><para>Print the version and exit.</para></listitem>
+  </varlistentry>
+ <varlistentry>
+    <term><option>--no-default</option></term>
+<listitem><para>Do not print default values for <emphasis remap='B'>config</emphasis>
+and <emphasis remap='B'>disklist</emphasis> commands.</para></listitem>
+  </varlistentry>
+ <varlistentry>
+    <term><option>--print-source</option></term>
+<listitem><para>Print where a value is defined for <emphasis remap='B'>config</emphasis>
+and <emphasis remap='B'>disklist</emphasis> commands.</para></listitem>
+  </varlistentry>
+ <varlistentry>
+    <term><option>--exact-match</option></term>
+<listitem><para>The host and disk are parsed as exact values</para></listitem>
+  </varlistentry>
+
+</variablelist>
+</refsect1>
+
+<refsect1><title>COMMANDS</title>
+<para>Commands that take a <emphasis remap='I'>hostname</emphasis> [ <emphasis remap='I'>disks</emphasis> ]
+parameter pair operate on all disks in the &disklist; for that
+<emphasis remap='I'>hostname</emphasis> if no disks are specified.  Where
+<emphasis remap='I'>hostname</emphasis> is also marked as being optional,
+the command operates on all hosts and disks in the &disklist; when no hostname is given.
+Both <emphasis remap='I'>hostname</emphasis> and <emphasis remap='I'>disks</emphasis>
+are match expressions; see <manref name="amanda-match" vol="7"/> for a description.</para>
+
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><emphasis remap='B'>version</emphasis></term>
+  <listitem>
+<para>Show the current version and some compile time and runtime parameters.
+The
+<emphasis remap='I'>config</emphasis>
+parameter must be present but is ignored.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>estimate</emphasis> [ <emphasis remap='I'>hostname</emphasis> [ <emphasis remap='I'>disks</emphasis> ]* ]*</term>
+  <listitem>
+<para>Print the server estimate for the dles, each output lines have the following format:</para>
+<programlisting>
+  hostname diskname level size
+</programlisting>
+<variablelist remap='TP'>
+<varlistentry>
+<term>hostname</term>
+<listitem>The quoted hostname
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>diskname</term>
+<listitem>The quoted diskname
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>level</term>
+<listitem>The level of the estimate
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>size</term>
+<listitem>The estimate size in kbytes
+</listitem>
+</varlistentry>
+</variablelist>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>force-bump</emphasis> [ <emphasis remap='I'>hostname</emphasis> [ <emphasis remap='I'>disks</emphasis> ]* ]+</term>
+  <listitem>
+<para>Force the
+<emphasis remap='I'>disks</emphasis>
+on
+<emphasis remap='I'>hostname</emphasis>
+to bump to a new incremental level during the next Amanda run.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>force-no-bump</emphasis> [ <emphasis remap='I'>hostname</emphasis> [ <emphasis remap='I'>disks</emphasis> ]* ]+</term>
+  <listitem>
+<para>Force the
+<emphasis remap='I'>disks</emphasis>
+on
+<emphasis remap='I'>hostname</emphasis>
+to not bump to a new incremental level during the next Amanda run.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>unforce-bump</emphasis> [ <emphasis remap='I'>hostname</emphasis> [ <emphasis remap='I'>disks</emphasis> ]* ]+</term>
+  <listitem>
+<para>Undo a previous
+<emphasis remap='B'>force-bump</emphasis>
+or
+<emphasis remap='B'>force-no-bump</emphasis>
+command.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>force</emphasis> [ <emphasis remap='I'>hostname</emphasis> [ <emphasis remap='I'>disks</emphasis> ]* ]+</term>
+  <listitem>
+<para>Force the
+<emphasis remap='I'>disks</emphasis>
+on
+<emphasis remap='I'>hostname</emphasis>
+to do a full (level 0) backup during the next Amanda run.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>force-level-1</emphasis> [ <emphasis remap='I'>hostname</emphasis> [ <emphasis remap='I'>disks</emphasis> ]* ]+</term>
+  <listitem>
+<para>Force the
+<emphasis remap='I'>disks</emphasis>
+on
+<emphasis remap='I'>hostname</emphasis>
+to do a level 1 backup during the next Amanda run.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>unforce</emphasis> [ <emphasis remap='I'>hostname</emphasis> [ <emphasis remap='I'>disks</emphasis> ]* ]+</term>
+  <listitem>
+<para>Undo a previous
+<emphasis remap='B'>force</emphasis> or
+<emphasis remap='B'>force-level-1</emphasis>
+command.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>retention</emphasis> <emphasis remap='I'>[ tapelabel</emphasis> ... ]</term>
+  <listitem>
+<para>Print the retention for each tapes.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>reuse</emphasis> <emphasis remap='I'>tapelabel</emphasis> [ ... ]</term>
+  <listitem>
+<para>The tapes listed
+will be available for reuse at their point in the tape cycle.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>no-reuse</emphasis> <emphasis remap='I'>tapelabel</emphasis> [ ... ]</term>
+  <listitem>
+<para>The tapes listed
+will not be reused when their turn comes up again in the tape cycle.
+Note that if this causes the number of reusable tapes to drop below the
+<emphasis remap='B'>amanda.conf</emphasis>
+<emphasis remap='I'>tapecycle</emphasis>
+value, Amanda will request new tapes until the count is satisfied again.</para>
+<para>Tape marked <emphasis remap='I'>no-reuse</emphasis> are available
+for recovery, marking them <emphasis remap='I'>no-reuse</emphasis> is a
+security to be sure amanda will not overwrite them.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>due</emphasis> [ <emphasis remap='I'>hostname</emphasis> [ <emphasis remap='I'>disks</emphasis> ]* ]*</term>
+  <listitem>
+<para>Show when the next full dump is due.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>find</emphasis> [ <option>--sort</option> <replaceable>hkdlspbfw</replaceable> ]<emphasis remap='B'></emphasis> [ <emphasis remap='I'>hostname</emphasis> [ <emphasis remap='I'>disks</emphasis> ]* ]*</term>
+  <listitem>
+<para>Display all backups currently on tape or in the holding disk.
+The storage name, tape label or holding disk filename,
+file number,
+and status are displayed.</para>
+<para>The <option>--sort</option> option changes the sort order using the following flags:
+<programlisting>
+<emphasis>h</emphasis>: host name
+<emphasis>k</emphasis>: disk name
+<emphasis>d</emphasis>: dump timestamp
+<emphasis>l</emphasis>: backup level
+<emphasis>p</emphasis>: dump part
+<emphasis>b</emphasis>: tape label
+<emphasis>s</emphasis>: storage name
+<emphasis>f</emphasis>: filenum on tape
+<emphasis>w</emphasis>: write timestamp
+</programlisting></para>
+
+<para>An uppercase letter reverses the sort order for that key.
+The default sort order is <emphasis remap='B'>hkdlspbfw</emphasis>.</para>
+</listitem>
+</varlistentry>
+
+  <varlistentry>
+  <term><emphasis remap='B'>holding delete</emphasis> <emphasis remap="I">hostname</emphasis> [ <emphasis remap="I">disk</emphasis> [ <emphasis remap="I">datestamp</emphasis> [ .. ] ] ]</term>
+  <listitem>
+
+    <para>Delete holding files matching the given specification.  At least
+    a hostname must be provided.</para>
+
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><emphasis remap='B'>holding list</emphasis> [-l] [-d] [ <emphasis remap="I">hostname</emphasis> [ <emphasis remap="I">disk</emphasis> [ <emphasis remap="I">datestamp</emphasis> [ .. ] ] ] ]</term>
+  <listitem>
+
+    <para>List holding files matching the given dump specification, or all
+	holding files if no specification is provided.  See <manref
+	    name="amanda-match" vol="7"/> for more information on dump
+	specifications.  With '-l', additional information (size, level, and
+	whether the dump is outdated) is provided.  With '-d', only outdated
+	dumps are shown.</para>
+
+    <para>An outdated holding file is one which is not required for a
+    restore of the <emphasis>most recent</emphasis> dump.  Note that
+    outdated dumps may still be required for restores at earlier dates.
+    For example, assume that a DLE had a level 0 on Monday, level
+    1's Tuesday through Thursday, and a level 2 on Friday.  Then the
+    files required for a restore of Fridays (the most recent) dump
+    are those from Monday (level 0), Thursday (level 1), and Friday
+    (level 2).  Tuesday and Wednesday's files are outdated. </para>
+
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><emphasis remap='B'>delete</emphasis> [ <emphasis remap='I'>hostname</emphasis> [ <emphasis remap='I'>disks</emphasis> ]* ]+</term>
+  <listitem>
+<para>Delete the specified
+<emphasis remap='I'>disks</emphasis>
+on
+<emphasis remap='I'>hostname</emphasis>
+from the Amanda database.</para>
+<note><para>If you do not also remove the disk from the &disklist;
+file, Amanda will treat it as a new disk during the next run.</para>
+</note>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><emphasis remap='B'>tape</emphasis> [ <option>--days</option> <replaceable>&lt;num&gt;</replaceable> ]</term>
+  <listitem>
+<para>Display the tape(s) Amanda expects to write to during the next run.
+See also
+<manref name="amcheck" vol="8"/>.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>bumpsize</emphasis></term>
+  <listitem>
+<para>Display the current bump threshold parameters, calculated for all backup
+levels.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>balance</emphasis> [ <option>--days</option> <replaceable>&lt;num&gt;</replaceable> ]</term>
+  <listitem>
+<para>Display the distribution of full backups throughout the dump schedule.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>export</emphasis> [ <emphasis remap='I'>hostname</emphasis> [ <emphasis remap='I'>disks</emphasis> ]* ]*</term>
+  <listitem>
+<para>Convert records from the Amanda database
+to a text format that may be transmitted to another Amanda machine and
+<emphasis remap='B'>import</emphasis>ed.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>import</emphasis></term>
+  <listitem>
+<para>Convert
+<emphasis remap='B'>export</emphasis>ed
+records read from standard input to a form Amanda uses
+and insert them into the database on this machine.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>config</emphasis></term>
+  <listitem>
+<para>Dump the full internal representation of this config, in text format.
+</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>disklist</emphasis> [ <emphasis remap='I'>hostname</emphasis> [ <emphasis remap='I'>disks</emphasis> ]* ]*</term>
+  <listitem>
+<para>Display the &disklist;
+information for each of the
+<emphasis remap='I'>disks</emphasis>
+on
+<emphasis remap='I'>hostname</emphasis>
+(or all hosts).
+Mostly used for debugging.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>hosts</emphasis></term>
+  <listitem>
+<para>Output a list of distinct hosts in the &disklist;, one per line, for easy use in shell scripts.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>dles</emphasis></term>
+  <listitem>
+<para>Output a list of distinct DLEs in the &disklist;, one per line with host and diskname separated by a space, for easy use in shell scripts.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>info</emphasis> [ <emphasis remap='I'>hostname</emphasis> [ <emphasis remap='I'>disks</emphasis> ]* ]*</term>
+  <listitem>
+<para>Display the
+database record for each of the
+<emphasis remap='I'>disks</emphasis>
+on
+<emphasis remap='I'>hostname</emphasis>
+(or all hosts).
+Mostly used for debugging.</para>
+  </listitem>
+  </varlistentry>
+
+  &configoverride.varlistentry;
+
+</variablelist>
+</refsect1>
+
+<refsect1><title>EXAMPLES</title>
+<para>Request three specific file systems on
+<emphasis remap='I'>machine-a</emphasis>
+get a full level 0 backup during the next Amanda run.</para>
+
+<programlisting>
+$ amadmin daily force machine-a / /var /usr
+amadmin: machine-a:/ is set to a forced level 0 tonight.
+amadmin: machine-a:/var is set to a forced level 0 tonight.
+amadmin: machine-a:/usr is set to a forced level 0 tonight.
+</programlisting>
+
+<para>Request all file systems on
+<emphasis remap='I'>machine-b</emphasis>
+get a full level 0 backup during the next Amanda run.</para>
+
+<programlisting>
+$ amadmin daily force machine-b
+amadmin: machine-b:/ is set to a forced level 0 tonight.
+amadmin: machine-b:/var is set to a forced level 0 tonight.
+amadmin: machine-b:/usr is set to a forced level 0 tonight.
+amadmin: machine-b:/home is set to a forced level 0 tonight.
+</programlisting>
+
+<para>Undo the previous
+<emphasis remap='B'>force</emphasis>
+request for
+<filename>/home</filename>
+on
+<emphasis remap='I'>machine-b</emphasis>.
+The other file systems will still get a full level 0 backup.</para>
+
+<programlisting>
+$ amadmin daily unforce machine-b /home
+amadmin: force command for machine-b:/home cleared.
+</programlisting>
+
+<para>Locate backup images of
+<filename>/var</filename>
+from
+<emphasis remap='I'>machine-c</emphasis>.
+The
+<emphasis remap='I'>tape or file</emphasis>
+column displays either a tape label or a filename depending on whether
+the image is on tape or is still in the holding disk.
+If the image is on tape, the
+<emphasis remap='I'>file</emphasis>
+column tells you which file on the tape has the image
+(file number zero is a tape label).
+This column shows zero and is not meaningful if the image
+is still in the holding disk.
+The
+<emphasis remap='I'>status</emphasis>
+column tells you whether the backup was successful or had
+some type of error.</para>
+
+<programlisting>
+$ amadmin daily find machine-c /var
+date        host      disk lv tape or file                 file part  status
+2000-11-09  machine-c /var  0 000110                       9   --  OK
+2000-11-08  machine-c /var  2 000109                       2   --  OK
+2000-11-07  machine-c /var  2 /amanda/20001107/machine-c._var.2  0 OK
+2000-11-06  machine-c /var  2 000107                       2   --  OK
+2000-11-05  machine-c /var  2 000106                       3   --  OK
+2000-11-04  machine-c /var  2 000105                       2   --  OK
+2000-11-03  machine-c /var  2 000104                       2   --  OK
+2000-11-02  machine-c /var  2 000103                       2   --  OK
+2000-11-01  machine-c /var  1 000102                       5   --  OK
+2000-10-31  machine-c /var  1 000101                       3   --  OK
+</programlisting>
+
+<para>Forget about the
+<filename>/workspace</filename>
+disk on
+<emphasis remap='I'>machine-d</emphasis>.
+If you do not also remove the disk from the &disklist;
+file, Amanda will treat it as a new disk during the next run.</para>
+
+<programlisting remap='.nf'>
+$ amadmin daily delete machine-d /workspace
+amadmin: machine-d:/workspace deleted from database.
+amadmin: NOTE: you'll have to remove these from the &disklist; yourself.
+</programlisting>
+
+<para>Find the next tape Amanda will use (in this case, <literal>123456</literal>).</para>
+
+<programlisting>
+$ amadmin daily tape
+The next Amanda run should go onto tape 123456 or a new tape.
+</programlisting>
+
+<para>Show how well full backups are balanced across the dump cycle.
+The
+<emphasis remap='I'>due-date</emphasis>
+column is the day the backups are due for a full backup.
+<emphasis remap='I'>#fs</emphasis>
+shows the number of filesystems doing full backups that night, and
+<emphasis remap='I'>orig KB</emphasis>
+and
+<emphasis remap='I'>out KB</emphasis>
+show the estimated total size of the backups
+before and after any compression, respectively.</para>
+
+<para>The
+<emphasis remap='I'>balance</emphasis>
+column shows how far off that night's backups are from the average size
+(shown at the bottom of the balance column).
+Amanda tries to keep the backups within +/- 5%,
+but since the amount of data on each filesystem is always changing,
+and Amanda will never delay backups just to rebalance the schedule,
+it is common for the schedule to fluctuate by larger percentages.
+In particular, in the case of a tape or backup failure, a bump will occur the following night,
+which will not be smoothed out until the next pass through the schedule.</para>
+
+<para>The last line also shows an estimate of how many Amanda runs will be
+made between full backups for a file system.
+In the example, a file system will probably have a full backup done
+every eight times Amanda is run (e.g. every eight days).</para>
+
+<programlisting>
+$ amadmin daily balance
+ due-date  #fs   orig KB    out KB  balance
+-------------------------------------------
+11/10 Mon   21    930389    768753    +5.1%
+11/11 Tue   29   1236272    733211    +0.2%
+11/12 Wed   31   1552381    735796    +0.6%
+11/13 Thu   23   1368447    684552    -6.4%
+11/14 Fri   32   1065603    758155    +3.6%
+11/15 Sat   14   1300535    738430    +0.9%
+11/16 Sun   31   1362696    740365    +1.2%
+11/17 Mon   30   1427936    773397    +5.7%
+11/18 Tue   11   1059191    721786    -1.3%
+11/19 Wed   19   1108737    661867    -9.5%
+-------------------------------------------
+TOTAL      241  12412187   7316312   731631  (estimated 8 runs per dumpcycle)
+</programlisting>
+</refsect1>
+
+<seealso>
+<manref name="amanda" vol="8"/>,
+<manref name="amcheck" vol="8"/>,
+<manref name="amdump" vol="8"/>,
+<manref name="amrestore" vol="8"/>,
+<manref name="amfetchdump" vol="8"/>
+<manref name="amanda-match" vol="7"/>,
+</seealso>
+
+</refentry>

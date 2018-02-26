@@ -1,0 +1,42 @@
+Using the database:
+
+  - See the amanda-catalog man page
+    (http://wiki.zmanda.com/man/beta/amanda-catalog.7.html)
+  - Modify the configuration file of ALL backup set:
+    Add the following to amanda.conf of ALL backup set (for a sqlite catalog):
+
+	# define a catalog
+	define catalog "SQLite" {
+	  comment "sqlite catalog for amanda"
+	  plugin "SQLite"
+	  property "dbname" "/var/lib/amanda/database"
+	}
+	# tell which catalog to use
+	catalog "SQLite"
+
+
+  - Build the catalog
+    For each backup set:
+
+	amcatalog CONF create
+
+This operation read the tapelist and the log.TIMESTAMP files and add the
+information in the catalog.
+
+
+All amanda commands now use the catalog instead of the text files.
+The log.TIMESTAMP are still created, they are used by amreport and can
+be used to recreate the database if needed.
+The tapelist file is still maintained, but amanda never read it, you must
+never write to it.
+
+You must use the amadmin/amlabel commands or the REST API to do modification
+to the catalog/tapelist.
+
+
+Getting the list of dump available for recovery
+
+  - The 'amadmin find' command do not use the catalog, it still use the tapelist and log.TIMESTAMP files, so you should not use it.
+  - Use the 'amcatalog CONF dump' or 'amcatalog CONF part' to list all dumps available for recovery. They are faster especially if you do a query for a single DLE.
+  - Using the REST API (http://wiki.zmanda.com/pod/beta/Amanda/Rest/Dumps.html) is the better choice
+

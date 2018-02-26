@@ -1,0 +1,11 @@
+# vim:ft=automake
+
+# A rule to make precompiler output from C files.  This is not used during
+# ordinary builds, but but can very useful in debugging problems on strange
+# architectures.  With this rule, we can ask users to 'make foo.i' and send
+# the result to us.
+#
+# It touches some automake internals ($COMPILE), but since it's not
+# build-critical, that's OK.
+%.i : %.c
+	$(COMPILE) -E -o $@ $<

@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"
+[
+  <!-- entities files to use -->
+  <!ENTITY % global_entities SYSTEM 'global.entities'>
+  %global_entities;
+]>
+
+<!-- lifted from troff+man by doclifter -->
+<refentry id='amcleanup.8'>
+
+<refmeta>
+<refentrytitle>amcleanup</refentrytitle>
+<manvolnum>8</manvolnum>
+&rmi.source;
+&rmi.version;
+&rmi.manual.8;
+</refmeta>
+<refnamediv>
+<refname>amcleanup</refname>
+<refpurpose>run the Amanda cleanup process after a failure</refpurpose>
+</refnamediv>
+<refentryinfo>
+&author.jds;
+&author.sgw.xml;
+</refentryinfo>
+<!-- body begins here -->
+<refsynopsisdiv>
+<cmdsynopsis>
+  <command>amcleanup</command>
+    <arg choice='opt'><option>-k</option></arg>
+    <arg choice='opt'><option>-p</option></arg>
+    <arg choice='opt'><option>-r</option></arg>
+    <arg choice='opt'><option>-v</option></arg>
+    <arg choice='opt'><option>--note <replaceable>string</replaceable></option></arg>
+    <arg choice='plain'><replaceable>config</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1><title>DESCRIPTION</title>
+<para><emphasis remap='B'>Amcleanup</emphasis>
+generates the
+<emphasis remap='I'>Amanda Mail Report</emphasis>
+and updates the Amanda databases after a system failure on a tape server host.
+This cleanup process is normally done automatically as part of the
+<emphasis remap='B'>amdump</emphasis>
+program, but if
+<emphasis remap='B'>amdump</emphasis>
+cannot complete for some reason (usually because of a tape server host crash),
+<command>amcleanup</command>
+must be run some time later (usually during system boot).</para>
+
+<para>The <emphasis remap='B'>amcleanupdisk</emphasis> program is run with
+the same <arg choice='opt'><option>-r</option></arg> and
+<arg choice='opt'><option>-v</option></arg> options.</para>
+
+<para>See the
+<manref name="amanda" vol="8"/>
+man page for more details about Amanda.</para>
+</refsect1>
+
+<refsect1><title>OPTIONS</title>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><option>-k</option></term>
+  <listitem>
+   <para>Kill all process listed in the log file are their child. if there
+is no log file, then kill all amdump, amflush and amvault process and their
+child.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-p</option></term>
+  <listitem>
+   <para>Do the cleanup only if all process listed in the log file are already terminated.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-r</option></term>
+  <listitem>
+   <para>Remove bad file in holding disk.  This options is passed to amcleanupdisk.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-v</option></term>
+  <listitem>
+   <para>Generate verbose output.  This options is passed to amcleanupdisk.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>--note</option> <replaceable>string</replaceable></term>
+  <listitem>
+   <para>Add the <replaceable>string</replaceable> to the log files, it
+will show up in the NOTES section of the report.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+</refsect1>
+
+<refsect1><title>EXAMPLES</title>
+<para>This example runs the Amanda cleanup process by hand after
+a failure.</para>
+
+<programlisting>
+% amcleanup daily
+</programlisting>
+
+<para>Putting the following line in a system boot script (e.g.
+<filename>/etc/rc.local</filename>)
+runs the Amanda cleanup process as part of the reboot,
+eliminating the need to run it by hand.</para>
+
+<programlisting>
+/usr/local/sbin/amcleanup daily
+</programlisting>
+
+<para>If nothing needs to be done,
+<command>amcleanup</command>
+exits normally with the message:</para>
+
+<programlisting>
+amcleanup: no unprocessed logfile to clean up.
+</programlisting>
+</refsect1>
+
+<seealso>
+<manref name="amdump" vol="8"/>
+</seealso>
+
+</refentry>
+

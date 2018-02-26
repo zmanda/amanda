@@ -1,0 +1,83 @@
+#!/bin/bash
+#
+# This script is run by autogen to create the FULL_VERSION file.
+#
+# If run from a git branch, it append '.git.' + git sha1 to the VERSION file.
+# If run from a svn branch, it append '.svn.' + svn number to the VERSION file.
+# If run from a svn tag that match /rc/ it use only the tag name to set the
+#  VERSION, this is done specifically for zmanda rc build.
+# If run from a svn tag that doesn't match /rc/ it use only the VERSION file.
+#
+# It is important to update the VERSION file before creating a tag.
+#
+# ./autogen run config/set_full_version, it create the FULL_VERSION file.
+# ./configure use the FULL_VERSION file.
+#
+srcdir=$1
+
+if test -d .svn; then
+    svn info . > conftemp.svn
+else
+    echo "" > conftemp.svn
+fi
+
+if test -d .svn && ( grep Revision: conftemp.svn > /dev/null; ); then
+#if grep Revision: conftemp.svn > /dev/null ; then
+    SVN_REV=`grep Revision: conftemp.svn|cut -d: -f 2|cut -c2-`
+    SVN_URL=`grep URL: conftemp.svn|cut -d: -f 2-|cut -c2-`
+    SVN_PATH=`grep URL: conftemp.svn|cut -d "/" -f 8-`
+    SVN_TYPE=`echo ${SVN_PATH} |cut -d "/" -f 1`
+    SVN_BRANCH=`echo "${SVN_PATH}"| cut -d "/" -f 2`
+    url=`grep URL: conftemp.svn|cut -d: -f 2-|cut -c2-`
+fi
+
+if test -d .git; then
+    GIT_SHA1=`git rev-parse HEAD | cut -c -8 `
+fi
+
+if test -f FULL_VERSION; then
+    FULL_VERSION_FILE="FULL_VERSION"
+    OLD_VERSION=`cat $FULL_VERSION_FILE`
+else if test -n "$srcdir" -a -f $srcdir/FULL_VERSION; then
+    FULL_VERSION_FILE="$srcdir/FULL_VERSION"
+    OLD_VERSION=`cat $FULL_VERSION_FILE`
+else
+    FULL_VERSION_FILE="FULL_VERSION"
+    OLD_VERSION=
+fi
+fi
+
+if test -n "$srcdir"; then
+    VERSION_FILE="$srcdir/VERSION"
+else
+    VERSION_FILE="VERSION"
+fi
+VERSION=`cat $VERSION_FILE`
+
+if test -n "$SVN_REV"; then
+    if test "${SVN_TYPE}" = "branches"; then
+        VERSION=${VERSION}.svn.${SVN_REV}
+    else if test "${SVN_TYPE}" = "trunk"; then
+        VERSION=${VERSION}.svn.${SVN_REV}
+    else
+        RC=`echo "${SVN_BRANCH}"| grep "rc"`
+        if test -n "$RC"; then
+	    VERSION=`echo "${SVN_BRANCH}"| sed 's/[^0-9]*// ; s/[_.]//g'`
+	    VERSION=`echo ${VERSION}| sed 's/^\([0-9]\)\([0-9]\)\([0-9]\)/\1.\2.\3/'`
+        fi
+    fi
+    fi
+
+else if test -n "$GIT_SHA1"; then
+    VERSION=${VERSION}".git."${GIT_SHA1}
+
+else if test -n "$OLD_VERSION"; then
+    VERSION=$OLD_VERSION
+fi
+fi
+fi
+
+if test "$VERSION" != "$OLD_VERSION" -o $VERSION_FILE -nt FULL_VERSION; then
+    echo "$VERSION" > FULL_VERSION
+fi
+

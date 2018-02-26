@@ -1,0 +1,105 @@
+# vim:ft=perl
+# Copyright (c) 2007-2012 Zmanda, Inc.  All Rights Reserved.
+# Copyright (c) 2013-2016 Carbonite, Inc.  All Rights Reserved.
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+# or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+# for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
+#
+# Contact information: Carbonite Inc., 756 N Pastoria Ave
+# Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
+
+package Amanda::Paths;
+
+=head1 NAME
+
+Amanda::Paths - perl access to build-time configuration paths
+
+=head1 SYNOPSIS
+
+  use Amanda::Paths;
+
+  my $filename = "$amlibexecdir/foo/bar";
+
+This package is a means of getting all of the necessary variables provided
+by configure into Perl scripts, without a bunch of boilerplate, and without
+requiring config.status substitution for every .pm file.
+
+All of the variables in @EXPORT will be automatically imported into
+your module's namespace.  See the source, rather than the perldoc,
+to find out what variables are available.
+
+=cut
+
+use Exporter;
+@ISA = qw( Exporter );
+
+@EXPORT = qw(
+    $prefix
+    $exec_prefix
+    $bindir
+    $sbindir
+    $libdir
+    $amlibdir
+    $libexecdir
+    $amlibexecdir
+    $mandir
+    $datarootdir
+    $sysconfdir
+    $amdatadir
+    $localstatedir
+    $amperldir
+
+    $AMANDA_TMPDIR
+    $CONFIG_DIR
+    $AMANDA_DBGDIR
+    $APPLICATION_DIR
+    $GNUTAR_LISTED_INCREMENTAL_DIR
+    $SECURITY_FILE
+    $AMANDATES_FILE
+);
+
+# the 'warnings' pragma doesn't recognized exported variables as "used", and generates warnings
+# for variables only used once.  We turn it off for this module.
+no warnings;
+
+## basic filesystem layout
+
+# these need to go in order, due to the way autoconf sets these dirs up
+$prefix = "@prefix@";
+$exec_prefix = "@exec_prefix@";
+$bindir = "@bindir@";
+$sbindir = "@sbindir@";
+$libdir = "@libdir@";
+$amlibdir = "@amlibdir@";
+$libexecdir = "@libexecdir@";
+$amlibexecdir = "@amlibexecdir@";
+$mandir = "@mandir@";
+# (config.status worries if it doesn't see this:)
+$datarootdir = "@datarootdir@";
+$sysconfdir = "@sysconfdir@";
+$amdatadir = "@amdatadir@";
+$localstatedir = "@localstatedir@";
+$amperldir = "@amperldir@";
+
+## amanda configuration directories
+
+$AMANDA_TMPDIR = "@AMANDA_TMPDIR@";
+$CONFIG_DIR = "@CONFIG_DIR@";
+$AMANDA_DBGDIR = "@AMANDA_DBGDIR@";
+$APPLICATION_DIR = "@APPLICATION_DIR@";
+$GNUTAR_LISTED_INCREMENTAL_DIR = "@GNUTAR_LISTED_INCREMENTAL_DIR@";
+$SECURITY_FILE = "@DEFAULT_SECURITY_FILE@";
+$AMANDATES_FILE = "@DEFAULT_AMANDATES_FILE@";
+
+1;

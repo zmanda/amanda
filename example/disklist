@@ -1,0 +1,110 @@
+# sample Amanda2 disklist file, derived from CS.UMD.EDU's disklist
+#
+# If your configuration is called, say, "csd2", then this file normally goes
+# in /etc/amanda/csd2/disklist.
+#
+# File format is:
+#
+#	hostname diskdev dumptype [spindle [interface]]
+#
+# where the dumptypes are defined by you in amanda.conf or in-line.
+
+# At our site, root partitions have a different dumptype because they
+# are of lower priority; they don't contain user data, and don't change
+# much from the department prototype.  In a crunch, they can be left for
+# last or skipped.
+
+# A SPARCstation 1+
+salty sd0a comp-root
+salty sd0g comp-user
+salty sd1g comp-user
+salty sd2a comp-root
+salty sd2g comp-user
+salty sd3c comp-user
+
+# A DECstation 3100
+slithy rz1a comp-root
+slithy rz1g comp-user
+slithy rz3a comp-root
+slithy rz3g comp-user
+
+# We don't run compression on the master host since it is going to be
+# busy enough running amanda.
+master sd0a nocomp-root -1 local
+master sd0g nocomp-user -1 local
+# note: -1 is a placeholder for the spindle number
+# the holding disk can't be dumped to itself, it uses a disktype that
+# specifies the "no-hold" option (see amanda.conf).
+master sd1c holding-disk -1 local
+
+# Compress data from a slow server on the tape server.
+# Example of inline dumptype specialization
+slowsrv / { # the line break here is mandatory
+  root-tar # copy properties of root-tar
+  compress server fast # but change the compression mode
+} # spindle and interface omitted here
+slowsrv /usr {
+  user-tar
+  exclude list ".exclude"
+  compress server fast
+} 2 le0 # no line break before spindle and interface
+
+# The chairman's disk is high priority to make sure it gets done.
+bigwig	sd0a comp-root
+bigwig	sd0g comp-high
+# Likewise the named databases in the root partition on our primary
+# nameserver.  Also, compression is turned off because we don't want
+# to create any unnecessary load on this baby (it's only a Sun3).
+bozo        sd0a nocomp-high
+bozo        sd0g nocomp-user
+bozo        sd4c nocomp-user
+
+# Dump Joe's NetBSD machine, with the mounted MS-DOS partition dumped
+# using tar.
+joespc  wd0a comp-root
+joespc  wd0e comp-user
+joespc	/msdos comp-user-tar
+
+# Some really slow machines, like Sun2's and some Vaxstations, take
+# forever to compress their dumps: it's just not worth it.
+
+# A Sun2
+cleo     sd0a nocomp-root
+cleo     sd0g nocomp-user
+# A VaxStation
+susie         rz8a nocomp-root
+susie         rz8g nocomp-user
+
+# An example of how to separate a big disk (/diskA) in multiple smaller entry
+# using GNUTAR.
+# I suggest to always use the diskdevice in the diskname.
+# Don't forget to use the same spindle for all entry.
+hosta /diskA/all /diskA {
+	# all directories except the one that start with [a-u]
+	high-tar
+	exclude "./[a-u]*"
+	} 1
+hosta /diskA/ag /diskA {
+	# all directories that start with [a-g] except big1 and big2
+	high-tar
+	include "./[a-g]*"
+	exclude "./big1" "./big2"
+	} 1
+hosta /diskA/big /diskA {
+	# directories big1 and big2
+	high-tar
+	include "./big1" "./big2"
+	} 1
+hosta /diskA/gm /diskA {
+	# all directories that start with [h-m]
+	high-tar
+	include "./[h-m]*"
+	} 1
+hosta /diskA/nu /diskA {
+	# all directories that start with [n-u]
+	high-tar
+	include "./[n-u]*"
+	} 1
+
+
+# and so on ... well, you get the idea

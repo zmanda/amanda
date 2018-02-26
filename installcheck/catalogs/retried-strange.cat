@@ -1,0 +1,143 @@
+# a dump was retreid in this logfile
+
+%F log/log
+INFO amdump amdump pid 28953
+START planner date 20100824181503
+START driver date 20100824181503
+STATS driver hostname molybdenum.zmanda.com
+DISK planner lead.zmanda.com /tensile-measurements
+INFO dumper dumper pid 4942
+INFO dumper dumper pid 4945
+INFO dumper dumper pid 4943
+INFO dumper dumper pid 4944
+STATS driver startup time 1.328
+INFO taper taper pid 4941
+FINISH planner date 20100824181503 time 1053.509
+INFO planner pid-done 4939
+INFO chunker chunker pid 20113
+INFO dumper gzip pid 20114
+INFO dumper gzip pid 20115
+INFO dumper pid-done 20115
+PARTIAL chunker lead.zmanda.com /tensile-measurements 20100824181503 0 [sec 43165.756 kb 207921840 kps 4817.0]
+INFO chunker pid-done 20113
+INFO dumper pid-done 20114
+FAIL dumper lead.zmanda.com /tensile-measurements 20100824181503 0 [data read: recv error: Connection timed out]
+  sendbackup: info BACKUP=APPLICATION
+  sendbackup: info APPLICATION=amgtar
+  sendbackup: info RECOVER_CMD=/usr/lib64/amanda/application/amgtar restore [./file-to-restore]+
+  sendbackup: info COMPRESS_SUFFIX=.gz
+  sendbackup: info end
+INFO chunker chunker pid 15112
+INFO dumper gzip pid 15113
+INFO dumper gzip pid 15114
+STRANGE dumper lead.zmanda.com /tensile-measurements 0 [sec 49067.760 kb 539140000 kps 10987.7 orig-kb 539140000]
+  sendbackup: info BACKUP=APPLICATION
+  sendbackup: info APPLICATION=amgtar
+  sendbackup: info RECOVER_CMD=/usr/lib64/amanda/application/amgtar restore [./file-to-restore]+
+  sendbackup: info COMPRESS_SUFFIX=.gz
+  sendbackup: info end
+  ? /bin/tar: ./foundry.mpg: file changed as we read it
+SUCCESS chunker lead.zmanda.com /tensile-measurements 20100824181503 0 [sec 49068.101 kb 258237054 kps 5263.0]
+INFO chunker pid-done 15112
+INFO dumper pid-done 15113
+INFO dumper pid-done 15114
+STATS driver estimate lead.zmanda.com /tensile-measurements 20100824181503 0 [sec 51455 nkb 537755342 ckb 262506912 kps 5102]
+START taper datestamp 20100824181503 label metals-003-000105 tape 1
+PART taper metals-003-000105 1 lead.zmanda.com /tensile-measurements 20100824181503 1/-1 0 [sec 272.900788 kb 20971520 kps 76846.681733 orig-kb 539140000]
+PART taper metals-003-000105 2 lead.zmanda.com /tensile-measurements 20100824181503 2/-1 0 [sec 277.041222 kb 20971520 kps 75698.193390 orig-kb 539140000]
+PART taper metals-003-000105 3 lead.zmanda.com /tensile-measurements 20100824181503 3/-1 0 [sec 273.880014 kb 20971520 kps 76571.925398 orig-kb 539140000]
+PART taper metals-003-000105 4 lead.zmanda.com /tensile-measurements 20100824181503 4/-1 0 [sec 276.668545 kb 20971520 kps 75800.160080 orig-kb 539140000]
+PART taper metals-003-000105 5 lead.zmanda.com /tensile-measurements 20100824181503 5/-1 0 [sec 275.720200 kb 20971520 kps 76060.876207 orig-kb 539140000]
+PART taper metals-003-000105 6 lead.zmanda.com /tensile-measurements 20100824181503 6/-1 0 [sec 295.455832 kb 20971520 kps 70980.220150 orig-kb 539140000]
+PART taper metals-003-000105 7 lead.zmanda.com /tensile-measurements 20100824181503 7/-1 0 [sec 274.582232 kb 20971520 kps 76376.099966 orig-kb 539140000]
+PART taper metals-003-000105 8 lead.zmanda.com /tensile-measurements 20100824181503 8/-1 0 [sec 271.353809 kb 20971520 kps 77284.782098 orig-kb 539140000]
+PART taper metals-003-000105 9 lead.zmanda.com /tensile-measurements 20100824181503 9/-1 0 [sec 271.368039 kb 20971520 kps 77280.729438 orig-kb 539140000]
+PART taper metals-003-000105 10 lead.zmanda.com /tensile-measurements 20100824181503 10/-1 0 [sec 281.441637 kb 20971520 kps 74514.631963 orig-kb 539140000]
+PART taper metals-003-000105 11 lead.zmanda.com /tensile-measurements 20100824181503 11/-1 0 [sec 271.238315 kb 20971520 kps 77317.690165 orig-kb 539140000]
+PART taper metals-003-000105 12 lead.zmanda.com /tensile-measurements 20100824181503 12/-1 0 [sec 271.243204 kb 20971520 kps 77316.296559 orig-kb 539140000]
+PART taper metals-003-000105 13 lead.zmanda.com /tensile-measurements 20100824181503 13/-1 0 [sec 88.135554 kb 6578813 kps 74644.257640 orig-kb 539140000]
+DONE taper lead.zmanda.com /tensile-measurements 20100824181503 13 0 [sec 3436.000000 kb 258237053 kps 75156.301804 orig-kb 539140000]
+INFO taper tape metals-003-000105 kb 258237053 fm 13 [OK]
+INFO dumper pid-done 4943
+INFO dumper pid-done 4945
+INFO dumper pid-done 4944
+INFO dumper pid-done 4942
+INFO taper pid-done 4941
+FINISH driver date 20100824181503 time 97784.977
+INFO driver pid-done 4940
+INFO amdump pid-done 28953
+
+%T report
+Hostname: molybdenum.zmanda.com
+Org     : DailySet1
+Config  : TESTCONF
+Date    : August 24, 2010
+
+These dumps were to tape metals-003-000105.
+The next tape Amanda expects to use is: 1 new tape.
+
+FAILURE DUMP SUMMARY:
+   lead.zmanda.com /tensile-measurements lev 0  FAILED [data read: recv error: Connection timed out]
+   lead.zmanda.com /tensile-measurements lev 0  was successfully retried
+
+STRANGE DUMP SUMMARY:
+   lead.zmanda.com /tensile-measurements lev 0  STRANGE (see below)
+
+
+STATISTICS:
+                          Total       Full      Incr.   Level:#
+                        --------   --------   --------  --------
+Estimate Time (hrs:min)    0:18
+Run Time (hrs:min)        27:10
+Dump Time (hrs:min)       13:38      13:38       0:00
+Output Size (meg)      455233.3   455233.3        0.0
+Original Size (meg)    526503.9   526503.9        0.0
+Avg Compressed Size (%)    86.5       86.5        --
+DLEs Dumped            1          1          0
+Avg Dump Rate (k/s)      9500.3     9500.3        --
+
+Tape Time (hrs:min)        0:57       0:57       0:00
+Tape Size (meg)        252184.6   252184.6        0.0
+Tape Used (%)             #####      #####        0.0
+DLEs Taped             1          1          0
+
+Parts Taped                  13         13          0
+Avg Tp Write Rate (k/s) 75156.3    75156.3        --
+
+USAGE BY TAPE:
+  Label                      Time      Size      %    DLEs    Parts
+  metals-003-000105       0:57      258237053K  #####     1    13
+
+
+FAILED DUMP DETAILS:
+
+/--  lead.zmanda.com /tensile-measurements lev 0 FAILED [data read: recv error: Connection timed out]
+sendbackup: info BACKUP=APPLICATION
+sendbackup: info APPLICATION=amgtar
+sendbackup: info RECOVER_CMD=/usr/lib64/amanda/application/amgtar restore [./file-to-restore]+
+sendbackup: info COMPRESS_SUFFIX=.gz
+sendbackup: info end
+\\--------
+
+
+STRANGE DUMP DETAILS:
+
+/--  lead.zmanda.com /tensile-measurements lev 0 STRANGE
+sendbackup: info BACKUP=APPLICATION
+sendbackup: info APPLICATION=amgtar
+sendbackup: info RECOVER_CMD=/usr/lib64/amanda/application/amgtar restore [./file-to-restore]+
+sendbackup: info COMPRESS_SUFFIX=.gz
+sendbackup: info end
+? /bin/tar: ./foundry.mpg: file changed as we read it
+\\--------
+
+NOTES:
+  taper: tape metals-003-000105 kb 258237053 fm 13 [OK]
+
+DUMP SUMMARY:
+                                       DUMPER STATS                TAPER STATS
+HOSTNAME                  DISK        L ORIG-KB  OUT-KB  COMP%  MMM:SS    KB/s MMM:SS    KB/s
+--------------------------------------- -------------------------- --------------- --------------
+lead.zmanda.com /tensile-measurements 0 539140000 258237053 47.9 817:48 10987.7 57:16 75156.3
+
+(brought to you by Amanda version x.y.z)

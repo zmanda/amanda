@@ -1,0 +1,48 @@
+# Shell library containing functions and definitions common to amanda's
+# shell scripts and wrappers.
+
+# Include this file as follows:
+#   prefix="@prefix@"
+#   exec_prefix="@exec_prefix@"
+#   amlibexecdir="@amlibexecdir@"
+#   . "${amlibexecdir}/amanda-sh-lib.sh"
+
+####
+# Configure variables
+
+GREP="@GREP@"
+EGREP="@EGREP@"
+GETTEXT="@GETTEXT@"
+GNUPLOT="@GNUPLOT@"
+GNUTAR="@GNUTAR@"
+STAR="@STAR@"
+SAMBA_CLIENT="@SAMBA_CLIENT@"
+GZIP="@GZIP@"
+SORT="@SORT@"
+PERL="@PERL@"
+AWK="@AWK@"
+
+####
+# Set up PATH for finding amanda executables
+
+PATH="@sbindir@:@amlibexecdir@:$PATH"
+
+####
+# Gettext
+
+# use as follows:
+#   echo `_ "%s: '%s' is not executable" "$myname" "$binpath"`
+# NOTE: use a text editor with shell syntax hilighting to avoid
+# quoting errors!
+
+if test -n "$GETTEXT"; then
+    _() {
+	    fmt=`$GETTEXT -d amanda "$1"`
+	    shift
+	    printf "$fmt" "$@"
+    }
+else
+    _() {
+	printf "$@"
+    }
+fi

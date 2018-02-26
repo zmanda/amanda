@@ -1,0 +1,52 @@
+*
+* $Id: gsc.add,v 1.1 2001/04/15 11:12:37 ant Exp $
+* Copyright (c) 1997 by Matthew Jacob
+*
+*	This software is free software; you can redistribute it and/or
+*	modify it under the terms of the GNU Library General Public
+*	License as published by the Free Software Foundation; version 2.
+*
+*	This software is distributed in the hope that it will be useful,
+*	but WITHOUT ANY WARRANTY; without even the implied warranty of
+*	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+*	Library General Public License for more details.
+*
+*	You should have received a copy of the GNU Library General Public
+*	License along with this software; if not, write to the Free
+*	Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+*
+*	The author may be reached via electronic communications at
+*
+*		mjacob@feral.com
+*
+*	or, via United States Postal Address
+*
+*		Matthew Jacob
+*		1831 Castro Street
+*		San Francisco, CA, 94131
+
+PdDv:
+	class = "generic"
+	subclass = "scsi"
+	type = "gsc"
+	prefix = "gsc"
+	devid = ""
+	base = 1
+	has_vpd = 0
+	detectable = 1
+	chgstatus = 0
+	bus_ext = 0
+	fru = 1
+	led = 1234
+	catalog = "gsc.cat"
+	setno = 1
+	msgno = 1
+	DvDr        = "gscdd"
+	Define      = "/usr/lib/methods/defgsc"
+	Configure   = "/usr/lib/methods/cfggsc"
+	Change      = ""
+	Unconfigure = "/usr/lib/methods/ucfggsc"
+	Undefine    = "/usr/lib/methods/undefine"
+	Start       = ""
+	Stop        = ""
+	uniquetype = "generic/scsi/gsc"

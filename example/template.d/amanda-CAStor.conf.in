@@ -1,0 +1,117 @@
+org "@DEFAULT_CONFIG@"	# your organization name for reports
+mailto "@CLIENT_LOGIN@"	# space separated list of operators at your site
+dumpcycle 1 week	# the number of days in the normal dump cycle
+runspercycle 5          # the number of amdump runs in dumpcycle days
+			# (1 week * 5 amdump runs per week -- just weekdays)
+tapecycle 10 tapes	# the number of tapes in rotation
+			# 1 week (dumpcycle) times 5 tapes per week (just
+			# the weekdays) plus a few to handle errors that
+			# need amflush and so we do not overwrite the full
+			# backups performed at the beginning of the previous
+			# cycle
+runtapes 1		# number of tapes to be used in a single run of amdump
+
+# CAStor changer definition; based on S3 changer.
+#
+# Parameter "tpchanger":
+#   Replace <BUCKET> and <PREFIX> with your own values.
+#   Configure as many slots as tape cycles ("tapecycle").
+#
+# Device properties:
+#   STORAGE_API -- Set to "CASTOR" to use the CAStor storage back-end.
+#
+#   S3_HOST -- The DNS round-robin name or name/IP or a cluster node that will
+#   be used as the primary access node (PAN). An optional ":{port}" suffix can
+#   be included if necessary.
+#
+#   S3_SSL -- Set to "YES" or "NO" to control the use of SSL when communicating
+#   with the cluster. Your storage cluster must have an SSL front-end
+#   configured in order to use SSL from the client. SSL implies port 443.
+#
+#   TENANT_NAME -- The name of the storage tenant domain within the CAStor
+#   cluster. This parameter is optional and S3_HOST will be used as the tenant
+#   domain if this paramter is not set.
+#
+#   USERNAME and PASSWORD -- These are the login credentials for the storage
+#   operations. These must be defined even if their values are not used.
+#
+#   REPS -- This controls the number of replicas for data objects when using
+#   the CAStor storage back-end. This value is substituted directly into the
+#   content header: "lifepoint: [] reps=%s". The default is "2".
+#
+#   REPS_BUCKET -- This controls the number of replicas for an automatically
+#   created bucket when using the CAStor storage back-end. The default is "4".
+#
+#   CREATE_BUCKET -- Set to "YES" to automatically create the bucket if it
+#   does not exist. Set to "NO" to prevent this.
+#
+define changer my_castor {
+    tpchanger "chg-multi:s3:<BUCKET>/<PREFIX>/slot{01,02,03,04,05,06,07,08,09,10}/"
+
+    device-property "STORAGE_API" "CASTOR"
+    device-property "S3_HOST" "<CLUSTER>"
+    device-property "S3_SSL" "NO"
+    device-property "TENANT_NAME" "<DOMAIN>"
+    device-property "USERNAME" "<USER>"
+    device-property "PASSWORD" "<PASSWORD>"
+    device-property "REPS" "<REPS>"
+    device-property "REPS_BUCKET" "<REPS>"
+    device-property "CREATE_BUCKET" "YES"
+    device-property "NB_THREADS_BACKUP" "3"
+    device-property "NB_THREADS_RECOVERY" "3"
+}
+
+# CAStor tape type definition
+#
+# Parameters:
+
+#   "length" -- Set to the maximum size of the backup run. This can be
+#   arbitarily large if you wish for the backup to run until complete.
+#
+#   "blocksize" -- Set to the size of the objects stored in the cluster.
+#
+define tapetype CASTOR {
+    comment "CAStor pseudo-tape"
+    length 10240 gigabytes
+    part_size 100 gigabytes
+    part_cache_type none
+    blocksize 512 megabytes
+}
+
+tpchanger "my_castor"
+tapetype CASTOR
+
+autolabel "@DEFAULT_CONFIG@-%%%%" empty
+labelstr "^@DEFAULT_CONFIG@-[0-9][0-9]*$"	# label constraint regex: all tapes must match
+
+dtimeout 1800		# number of idle seconds before a dump is aborted.
+ctimeout 30		# maximum number of seconds that amcheck waits
+			# for each client host
+etimeout 300		# number of seconds per filesystem for estimates.
+
+define dumptype global {
+        comment "Global definitions"
+        auth "bsdtcp"
+}
+
+#define application-tool and dumptype for the amgtar application
+define application-tool app_amgtar {
+    comment "amgtar"
+    plugin  "amgtar"
+    #property "GNUTAR-PATH" "/path/to/gtar"
+    #property "GNUTAR-LISTDIR" "/path/to/gnutar_list_dir"
+}
+
+define dumptype gui-base {
+        global
+        program "APPLICATION"
+        application "app_amgtar"
+        comment "gui base dumptype dumped with tar"
+        compress none
+        index yes
+}
+
+includefile "./advanced.conf"
+includefile "@CONFIG_DIR@/template.d/dumptypes"
+includefile "@CONFIG_DIR@/template.d/tapetypes"
+

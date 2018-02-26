@@ -1,0 +1,47 @@
+#!/bin/sh
+
+LOGFILE=`mktemp /tmp/amanda-client-rm-log.XXXXXXXXXXX`
+if [ $? -ne 0 ]; then
+	echo "Unable to create log file!"
+	exit 1
+fi
+amanda_user=amandabackup
+amanda_group=disk
+# BASEDIR is set by either in pkginfo, or if not set, by pkgadd at installtime.
+# Unfortunately, it messes things up to have basedir="/".
+[ "x${BASEDIR}" = "x/" ] && basedir="" || basedir=${BASEDIR}
+AMANDAHOMEDIR=${basedir}%%AMANDAHOMEDIR%%
+os=SunOS
+dist=%%DISTRO%%
+
+LOGDIR=${basedir}%%LOGDIR%%
+SYSCONFDIR=${basedir}/etc
+
+# ---------- Common functions ------------
+# see packaging/common/ in the source tree
+%%COMMON_FUNCTIONS%%
+%%POST_RM_FUNCTIONS%%
+
+# -------- End Common functions ----------
+
+rel=`uname -r`
+
+case $rel in
+    5.8|5.9)
+	if check_inetd "amanda"; then
+	    rm_inetd "amanda" || { \
+            logger "Warning: Did not successfully remove amanda from SMF.";
+                exit 1; }
+	    reload_inetd
+        fi
+    ;;
+    5.10)
+        if check_smf "amanda"; then
+            rm_smf "amanda" || { \
+                logger "Warning: Did not successfully remove amanda from SMF.";
+                exit 1; }
+        fi
+    ;;
+esac
+
+logger "Amanda Client removed."

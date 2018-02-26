@@ -1,0 +1,60 @@
+# $Id: README,v 1.1 2001/04/15 11:12:37 ant Exp $
+# Copyright (c) 1997 by Matthew Jacob
+#
+#	This software is free software; you can redistribute it and/or
+#	modify it under the terms of the GNU Library General Public
+#	License as published by the Free Software Foundation; version 2.
+#
+#	This software is distributed in the hope that it will be useful,
+#	but WITHOUT ANY WARRANTY; without even the implied warranty of
+#	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+#	Library General Public License for more details.
+#
+#	You should have received a copy of the GNU Library General Public
+#	License along with this software; if not, write to the Free
+#	Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+#
+#	The author may be reached via electronic communications at
+#
+#		mjacob@feral.com
+#
+#	or, via United States Postal Address
+#
+#		Matthew Jacob
+#		1831 Castro Street
+#		San Francisco, CA, 94131
+
+I. Installation Steps
+
+
+1. cfggsc, defgsc, ucfggsc, gsc.cat go into /usr/lib/methods
+2. gscdd goes into /usr/lib/drivers
+3. As root, do:
+
+	odmadd gsc.add
+
+II. Configuration Steps
+
+	mkdev -c generic -s scsi -t gsc -pscsiN -wT,L
+
+where N is the Nth scsi bus, T is target, L is lun.
+
+This should create a /dev/gscM for this device.
+
+You can use tstinq to run a test inquiry command.
+Use lsdev -C to see what gets configured.
+
+III. Removal steps
+
+1. Do
+	rmdev -d -l gscM
+
+for M = 0..M-1 to remove and undefine all gsc devices.
+
+2. Do, as root,
+
+	odmdelete -o PdDv -q uniquetype=generic/scsi/gsc
+
+3. Remove files installed in I. above.
+
+

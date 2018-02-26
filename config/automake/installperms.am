@@ -1,0 +1,107 @@
+# vim:ft=automake
+#
+# Adjust post-install permissions settings.  This rule works off two
+# specially-formatted variables, INSTALLPERMS_exec and INSTALLPERMS_data. 
+# Each is a whitespace-separated list of commands, all of which are either
+# a variable assignment or a filename.  Three variables are available:
+#
+#  - dest= sets the destination directory to e.g., $(sbindir)
+#  - chown= controls changes in ownership; value is first argument to chown
+#  - chmod= controls changes in permissions; value is first argument to chmod
+#
+# The following special cases are available:
+# 	amanda:setuid = $(BINARY_OWNER):$(SETUID_GROUP)
+# 	root:setuid = root:$(SETUID_GROUP)
+# These variables might otherwise have problems with whitespace in the user/group
+# names.
+#
+# when a filename is seen, the currently active variables are applied.
+#
+# Note that scripts are data, not executables!
+#
+# EXAMPLE
+#
+# sbin_PROGRAMS = foo bar bing
+# libexec_PROGRAMS = pro gram
+# sbin_SCRIPTS = sk ript
+# INSTALLPERMS_exec = \
+# 	dest=$(sbindir) chown=amanda chmod= \
+# 		foo bar \
+# 	chmod=07450 \
+# 		bing
+# 	dest=$(libexecdir) chmod= \
+# 		$(libexec_PROGRAMS)
+# INSTALLPERMS_data = \
+# 	dest=$(sbindir) chown=amanda chmod= \
+# 		$(sbin_SCRIPTS)
+#
+# This whole operation is not required when making builds for packaging,
+# and can be disabled with --disable-installperms, via the WANT_INSTALLPERMS
+# AM_CONDITIONAL.  When disabled, the file 'installperms.sh' in the top-level
+# build directory is populated with a format suitable for shell interpretation,
+# with lines like this:
+#   installperm "amanda:disk" "04750" "/usr/local/sbin/bing"
+# the arguments being, respectively, owner:group, mode, and filename.  There will
+# be exactly one line for each file which has specific permissions.  The intention
+# is that this file be used by packaging scripts to set correct permissions at install
+# time.  Note that files which have no special permissions requirements do not appear 
+# in this file at all, due to limitations of Automake.
+
+# sed expression to strip leading directories from a filename; this converts e.g.,
+# src/foo/bar.so to bar.so.
+strip_leading_dirs=s|^.*/||
+
+# define a snippet of the scripts below to either perform a chown/chmod operation,
+# or record that operation in the logfile.  On entry to the snippet, $$dest is the
+# destination directory, $$cmd is the srcdir-relative pathname of the target file,
+# $$chown is the ownership, and $$chmod is the permission pattern.
+if WANT_INSTALLPERMS
+do_file=pa="$(DESTDIR)$$dest"/`echo "$$cmd"|sed '$(strip_leading_dirs)'|sed '$(transform)'`; \
+    if test -n "$$chown"; then \
+	echo chown "$$chown" "$$pa"; \
+	chown "$$chown" "$$pa" || exit 1; \
+    fi; \
+    if test -n "$$chmod"; then \
+	echo chmod "$$chmod" "$$pa"; \
+	chmod "$$chmod" "$$pa" || exit 1; \
+    fi 
+else
+installperms_sh="$(top_builddir)/installperms.sh"
+do_file=pa="$$dest"/`echo "$$cmd"|sed '$(strip_leading_dirs)'|sed '$(transform)'`; \
+    echo "installperm \"$$chown\" \"$$chmod\" \"$$pa\"" >> "$(installperms_sh)"
+DISTCLEANFILES += $(installperms_sh)
+endif
+
+do_installperms=dest=; chown=; chmod=; \
+	for cmd in $$installperms; do \
+	    case "$$cmd" in \
+		chown=amanda:setuid) \
+		    echo "  ($$cmd)"; chown="$(BINARY_OWNER):$(SETUID_GROUP)";; \
+		chown=root:setuid) \
+		    echo "  ($$cmd)"; chown="root:$(SETUID_GROUP)";; \
+		dest=*|chown=*|chmod=*) \
+			echo "  ($$cmd)"; eval $$cmd;; \
+	    	*) $(do_file) ;; \
+	    esac; \
+	done
+
+installperms-exec:
+	@installperms="$(INSTALLPERMS_exec)"; \
+	test -n "$$installperms" && echo "Setting installation permissions on executables"; \
+	$(do_installperms)
+
+installperms-data:
+	@installperms="$(INSTALLPERMS_data)"; \
+	test -n "$$installperms" && echo "Setting installation permissions on data"; \
+	$(do_installperms)
+
+install-exec-hook: installperms-exec
+install-data-hook: installperms-data
+
+# define a rule to initialize the installperms manifest file
+if WANT_INSTALLPERMS
+installperms-init:
+else
+installperms-init:
+	rm -f "$(installperms_sh)"
+endif

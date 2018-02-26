@@ -1,0 +1,312 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"
+[
+  <!-- entities files to use -->
+  <!ENTITY % global_entities SYSTEM 'global.entities'>
+  %global_entities;
+]>
+
+<!-- lifted from troff+man by doclifter -->
+<refentry id='amssl.8'>
+
+<refmeta>
+<refentrytitle>amssl</refentrytitle>
+<manvolnum>8</manvolnum>
+&rmi.source;
+&rmi.version;
+&rmi.manual.8;
+</refmeta>
+<refnamediv>
+<refname>amssl</refname>
+<refpurpose>Program to manage amanda ssl certificates</refpurpose>
+</refnamediv>
+<refentryinfo>
+&author.jds;
+&author.sgw.xml;
+</refentryinfo>
+<!-- body begins here -->
+<refsynopsisdiv>
+<cmdsynopsis>
+  <command>amssl</command>
+    <arg choice='opt'>--client</arg>
+    <group choice='opt'>
+      <arg choice='plain'>--init</arg>
+      <arg choice='plain'>--create-ca</arg>
+      <arg choice='plain'>--create-server-cert <replaceable>server-host</replaceable></arg>
+      <arg choice='plain'>--create-client-cert <replaceable>client-host</replaceable> <arg choice='opt'>--server <replaceable>server-host</replaceable></arg></arg>
+    </group>
+    <arg choice='opt'>--country <replaceable>country-code</replaceable></arg>
+    <arg choice='opt'>--state <replaceable>state</replaceable></arg>
+    <arg choice='opt'>--locality <replaceable>locality</replaceable></arg>
+    <arg choice='opt'>--organisation <replaceable>organisation</replaceable></arg>
+    <arg choice='opt'>--organisation-unit <replaceable>organisation-unit</replaceable></arg>
+    <arg choice='opt'>--common <replaceable>common-name</replaceable></arg>
+    <arg choice='opt'>--email <replaceable>email</replaceable></arg>
+    &configoverride.synopsis;
+    <arg choice='opt'>--config <replaceable>config</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1><title>DESCRIPTION</title>
+<para><emphasis remap='B'>amssl</emphasis> is a program to manage amanda
+ssl certificates for the <emphasis remap='B'>ssl</emphasis> auth.
+It can create self-signed CA, server certificate and client certificates.</para>
+
+</refsect1>
+
+<refsect1><title>OPTIONS</title>
+
+<variablelist remap='TP'>
+  <varlistentry>
+    <term><option>--create-ca</option></term>
+<listitem><para>Create a self-signed CA.</para></listitem>
+  </varlistentry>
+
+  <varlistentry>
+    <term><option>--create-server-cert</option></term>
+<listitem><para>Create a server certificate.</para></listitem>
+  </varlistentry>
+
+  <varlistentry>
+    <term><option>--create-client-cert</option> <replaceable>CLIENT-HOSTNAME</replaceable></term>
+<listitem><para>Create a client certificate.</para></listitem>
+  </varlistentry>
+
+  <varlistentry>
+    <term><option>--server</option> <replaceable>SERVER-HOSTNAME</replaceable></term>
+<listitem><para>The amanda server to connect to.</para></listitem>
+  </varlistentry>
+
+  <varlistentry>
+    <term><option>--batch</option></term>
+<listitem><para>use the certificate fields set in the initialization, there is confirmation.</para>
+<para>This option is useless if one the fields was not set in the initiatization.</para></listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><option>--client</option></term>
+<listitem><para>When running <command>amssl</command> on a client.</para></listitem>
+  </varlistentry>
+
+  <varlistentry>
+    <term><option>--init</option></term>
+<listitem><para>Initialize the host.</para></listitem>
+  </varlistentry>
+</variablelist>
+<para>The following options are the one needed by a certificate</para>
+<variablelist>
+  <varlistentry>
+    <term><option>--country</option></term>
+<listitem><para>The two letter country code.</para></listitem>
+  </varlistentry>
+
+  <varlistentry>
+    <term><option>--state</option></term>
+<listitem><para>The State.</para></listitem>
+  </varlistentry>
+
+  <varlistentry>
+    <term><option>--locality</option></term>
+<listitem><para>The locality.</para></listitem>
+  </varlistentry>
+
+  <varlistentry>
+    <term><option>--organisation</option></term>
+<listitem><para>The organisation</para></listitem>
+  </varlistentry>
+
+  <varlistentry>
+    <term><option>--organisation-unit</option></term>
+<listitem><para>The organisation unit.</para></listitem>
+  </varlistentry>
+
+  <varlistentry>
+    <term><option>--common</option></term>
+<listitem><para>The common name.</para></listitem>
+  </varlistentry>
+
+  <varlistentry>
+    <term><option>--email</option></term>
+<listitem><para>The email.</para></listitem>
+  </varlistentry>
+
+</variablelist>
+
+</refsect1>
+
+<refsect1><title>INITIALISATION</title>
+
+<para>Must be run once before any other command</para>
+
+<para>Create a template openssl.cnf file and a configuration file with
+the value provided, they are used in future command so you do not need
+to enter them at every invocation.</para>
+<para>The value provided must be the one you want in the certificate.</para>
+<cmdsynopsis>
+  <command>amssl</command>
+    <arg choice='opt'>--client</arg>
+    <arg choice='plain'>--init</arg>
+    <arg choice='opt'>--country <replaceable>country-code</replaceable></arg>
+    <arg choice='opt'>--state <replaceable>state</replaceable></arg>
+    <arg choice='opt'>--locality <replaceable>locality</replaceable></arg>
+    <arg choice='opt'>--organisation <replaceable>organisation</replaceable></arg>
+    <arg choice='opt'>--organisation-unit <replaceable>organisation-unit</replaceable></arg>
+    <arg choice='opt'>--common <replaceable>common-name</replaceable></arg>
+    <arg choice='opt'>--email <replaceable>email</replaceable></arg>
+    &configoverride.synopsis;
+    <arg choice='opt'>--config <replaceable>config</replaceable></arg>
+</cmdsynopsis>
+
+<para>A client is initialized with the <arg choice='plain'>--client</arg> options.</para>
+<para>Create
+<programlisting>
+     <emphasis remap='B'>$SSL_DIR/openssl.cnf.template</emphasis>
+     <emphasis remap='B'>$SSL_DIR/openssl.data</emphasis>
+</programlisting>
+</para>
+
+</refsect1>
+
+<refsect1><title>CREATE A SELF-SIGNED CA</title>
+
+<para>Create a self-signed CA.</para>
+<cmdsynopsis>
+  <command>amssl</command>
+    <arg choice='plain'>--create-ca</arg>
+    <arg choice='opt'>--batch</arg>
+    <arg choice='opt'>--config <replaceable>CONFIG</replaceable></arg>
+</cmdsynopsis>
+
+<para>You can also provide all options of the initialization step</para>
+
+<para>You must enter a new CA passphrase, you must keep it secret and remember it. It will be required every time you need to create a new cetificate.</para>
+<para>After you enter the passphrase, it will be asked 3 other times.</para>
+
+<para>Create
+<programlisting>
+     $SSL_DIR/CA/crt.pem
+     $SSL_DIR/CA/private/key.pem
+</programlisting>
+</para>
+
+</refsect1>
+
+<refsect1><title>CREATE THE SERVER CERTIFICATE</title>
+
+<para>Create the amanda server certificate.</para>
+<cmdsynopsis>
+  <command>amssl</command>
+    <arg choice='plain'>--create-server-cert <replaceable>HOSTNAME</replaceable></arg>
+    <arg choice='opt'>--batch</arg>
+    <arg choice='opt'>--config <replaceable>CONFIG</replaceable></arg>
+</cmdsynopsis>
+
+<para>You can also provide all options of the initialization step</para>
+
+<para>The CA passphrase is asked.</para>
+
+<para>Create
+<programlisting>
+     $SSL_DIR/me/crt.pem
+     $SSL_DIR/me/fingerprint
+     $SSL_DIR/me/private/key.pem
+     $SSL_DIR/remote/<replaceable>HOSTNAME</replaceable> -> ../me
+</programlisting>
+</para>
+
+</refsect1>
+
+<refsect1><title>CREATE A CLIENT CERTIFICATE</title>
+
+<para>Create a client certificate, sign it by the CA certicate on the server and both server and client learn the remore fingerprint.</para>
+
+<para>DO NOT RUN IT ON SERVER.  This will detroy the server certificate</para>
+<para>It require to run amssl on the server and client at the same time</para>
+
+<para><amkeyword>ssl-dir</amkeyword> must be set in amanda-client.conf on the client.</para>
+
+<para>Both server and client must already be initialized.</para>
+<para>Run on the server:</para>
+<cmdsynopsis>
+  <command>amssl</command>
+    <arg choice='plain'>--create-client-cert <replaceable>client-host</replaceable></arg>
+    <arg choice='opt'>--config <replaceable>CONFIG</replaceable></arg>
+</cmdsynopsis>
+<para>It wait for the client to connect and then sign the client certificate,
+The CA passphrase is asked.</para>
+<para>Run on the client:</para>
+<cmdsynopsis>
+  <command>amssl</command>
+    <arg choice='plain'>--client</arg>
+    <arg choice='plain'>--create-client-cert <replaceable>CLIENT-HOST</replaceable></arg>
+    <arg choice='plain'>--server <replaceable>SERVER-HOST</replaceable></arg>
+    <arg choice='opt'>--batch</arg>
+    <arg choice='opt'>--config <replaceable>CONFIG</replaceable></arg>
+</cmdsynopsis>
+
+<para>Create on server
+<programlisting>
+     $SSL_DIR/remote/<replaceable>CLIENT-HOST</replaceable>/fingerprint
+</programlisting>
+</para>
+
+<para>Create on client
+<programlisting>
+     $SSL_DIR/me/crt.pem
+     $SSL_DIR/me/fingerprint
+     $SSL_DIR/me/private/key.pem
+     $SSL_DIR/remote/<replaceable>SERVER-HOST</replaceable>/fingerprint
+</programlisting>
+</para>
+
+</refsect1>
+
+<refsect1><title>EXAMPLE</title>
+
+<variablelist remap='TP'>
+  <varlistentry>
+    <term><option>Initialize the server</option></term>
+<listitem><para>amssl --init --country US --state California --locality Sunnyvale --organisation zmanda --organistion-unit engineering --common boss --email 'email@email.com'</para></listitem>
+  </varlistentry>
+
+  <varlistentry>
+    <term><option>Create the CA on the server</option></term>
+<listitem><para>amssl --create-ca</para></listitem>
+  </varlistentry>
+
+  <varlistentry>
+    <term><option>Create the server certificate</option></term>
+<listitem><para>amssl --create-server-cert server.zmanda.com</para></listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><option>Create a client certificate</option></term>
+<listitem><variablelist remap='TP'>
+      <varlistentry>
+        <term><option>On server:</option></term>
+<listitem><para>amssl --create-client-cert client.zmanda.com</para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><option>On client:</option></term>
+<listitem><para>amssl  --client --init --country US --state California --locality Sunnyvale --organisation zmanda --organistion-unit engineering --common boss --email 'email@email.com'</para>
+           <para>amssl --client --create-client-cert client.zmanda.com --server server.zmanda.com</para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </listitem>
+  </varlistentry>
+</variablelist>
+
+</refsect1>
+
+<seealso>
+<manref name="amanda.conf" vol="5"/>,
+<manref name="amanda-client.conf" vol="5"/>,
+<manref name="amanda" vol="8"/>,
+<manref name="amanda-auth" vol="7"/>
+<manref name="amanda-auth-ssl" vol="7"/>
+</seealso>
+
+</refentry>
+

@@ -1,0 +1,113 @@
+# A logfile from a vault dump run
+
+%F log/log
+INFO amdump amdump pid 3001
+INFO driver driver pid 3004
+INFO planner planner pid 3003
+START planner date 20171109090623
+START driver date 20171109090623
+STATS driver hostname localhost.localdomain
+DISK planner localhost.localdomain /bootAMGTAR
+WARNING planner tapecycle (1) <= runspercycle (8)
+DISK planner localhost.localdomain /bootAMGTAR
+STATS driver startup time 0.258
+INFO dumper dumper pid 3006
+INFO dumper dumper pid 3007
+WARNING planner Last full dump of localhost.localdomain:/bootAMGTAR on tape test-ORG-AA-vtapes-001570 overwritten on this run.
+FINISH planner date 20171109090623 time 0.200
+INFO planner pid-done 3003
+INFO taper taper pid 3005
+INFO chunker chunker pid 3110
+INFO dumper gzip pid 3160
+INFO dumper gzip pid 3168
+INFO dumper pid-done 3160
+INFO dumper pid-done 3168
+SUCCESS chunker localhost.localdomain /bootAMGTAR 20171109090623 1 48ced934:65536 [sec 0.097495 kb 64 kps 656.443920]
+STATS driver estimate localhost.localdomain /bootAMGTAR 20171109090623 1 [sec 1 nkb 96 ckb 96 kps 64]
+INFO chunker pid-done 3110
+SUCCESS dumper localhost.localdomain /bootAMGTAR 20171109090623 1 48ced934:65536 48ced934:65536 [sec 0.025 kb 64 kps 2557.0 orig-kb 64]
+INFO taper Slot 1616 with label test-ORG-AA-vtapes-001616 is usable
+START taper datestamp 20171109090623 "ST:vtapes" "POOL:vtapes" label test-ORG-AA-vtapes-001616 tape 1
+INFO taper Slot 1617 with label test-ORG-AA-vtapes-001617 is usable
+PART taper "ST:vtapes" "POOL:vtapes" test-ORG-AA-vtapes-001616 1 localhost.localdomain /bootAMGTAR 20171109090611 1/-1 1 [sec 0.018869 bytes 65536 kps 3391.806667 orig-kb 64]
+DONE taper "ST:vtapes" "POOL:vtapes" localhost.localdomain /bootAMGTAR 20171109090611 1 1 48ced934:65536 48ced934:65536 48ced934:65536 [sec 0.100000 bytes 65536 kps 640.000000 orig-kb 64]
+INFO taper tape test-ORG-AA-vtapes-001616 kb 64 fm 1 [OK]
+START taper datestamp 20171109090623 "ST:vtapes" "POOL:vtapes" label test-ORG-AA-vtapes-001617 tape 2
+PART taper "ST:vtapes" "POOL:vtapes" test-ORG-AA-vtapes-001617 1 localhost.localdomain /bootAMGTAR 20171109090623 1/-1 1 [sec 0.026764 bytes 65536 kps 2391.271858 orig-kb 64]
+DONE taper "ST:vtapes" "POOL:vtapes" localhost.localdomain /bootAMGTAR 20171109090623 1 1 48ced934:65536 48ced934:65536 48ced934:65536 [sec 0.100000 bytes 65536 kps 640.000000 orig-kb 64]
+INFO taper tape test-ORG-AA-vtapes-001617 kb 64 fm 1 [OK]
+INFO taper pid-done 3005
+INFO taper taper pid 3189
+INFO taper Slot 12 without label can be labeled
+START taper datestamp 20171109090623 "ST:vault" "POOL:vault" label test-ORG-2-AA-vtapes2-012 tape 1
+PART taper "ST:vault" "POOL:vault" test-ORG-2-AA-vtapes2-012 1 localhost.localdomain /bootAMGTAR 20171109090611 1/-1 1 [sec 0.001695 bytes 65536 kps 37758.112094 orig-kb 0]
+DONE taper "ST:vault" "POOL:vault" localhost.localdomain /bootAMGTAR 20171109090611 1 1 48ced934:65536 48ced934:65536 48ced934:65536 [sec 0.100000 bytes 65536 kps 640.000000 orig-kb 0]
+PART taper "ST:vault" "POOL:vault" test-ORG-2-AA-vtapes2-012 2 localhost.localdomain /bootAMGTAR 20171109090623 1/-1 1 [sec 0.001591 bytes 65536 kps 40226.272784 orig-kb 0]
+DONE taper "ST:vault" "POOL:vault" localhost.localdomain /bootAMGTAR 20171109090623 1 1 48ced934:65536 48ced934:65536 48ced934:65536 [sec 0.100000 bytes 65536 kps 640.000000 orig-kb 0]
+INFO dumper pid-done 3006
+INFO dumper pid-done 3007
+INFO taper tape test-ORG-2-AA-vtapes2-012 kb 128 fm 2 [OK]
+INFO taper pid-done 3189
+FINISH driver date 20171109090623 time 9.592
+INFO driver pid-done 3004
+INFO amdump pid-done 3001
+%T report
+Hostname: localhost.localdomain
+Org     : DailySet1
+Config  : TESTCONF
+Date    : November 9, 2017
+
+These dumps to storage 'vtapes' were to tapes test-ORG-AA-vtapes-001616, test-ORG-AA-vtapes-001617.
+These dumps to storage 'vault' were to tape test-ORG-2-AA-vtapes2-012.
+The next tape Amanda expects to use for storage 'vtapes' is: 1 new tape.
+The next tape Amanda expects to use for storage 'vault' is: 1 new tape.
+
+
+STATISTICS:
+                          Total       Full      Incr.   Level:#
+                        --------   --------   --------  --------
+Estimate Time (hrs:min)     0:00
+Run Time (hrs:min)          0:00
+Dump Time (hrs:min)         0:00       0:00       0:00
+Output Size (meg)            0.1        0.0        0.1
+Original Size (meg)          0.1        0.0        0.1
+Avg Compressed Size (%)    100.0        --       100.0
+DLEs Dumped                    1          0          1  1:1
+Avg Dump Rate (k/s)       2560.0        --      2560.0
+
+Tape Time (hrs:min)         0:00       0:00       0:00
+Tape Size (meg)              0.2        0.0        0.2
+Tape Used (%)                0.9        0.0        0.9
+DLEs Taped                     4          0          4  1:4
+Parts Taped                    4          0          4  1:4
+Avg Tp Write Rate (k/s)    640.0        --       640.0
+
+
+USAGE BY TAPE:
+  Label                       Time         Size      %  DLEs Parts
+  test-ORG-AA-vtapes-001616   0:00          64K    0.2     1     1
+  test-ORG-AA-vtapes-001617   0:00          64K    0.2     1     1
+  test-ORG-2-AA-vtapes2-012   0:00         128K    0.5     2     2
+
+
+NOTES:
+  planner: tapecycle (1) <= runspercycle (8)
+  planner: Last full dump of localhost.localdomain:/bootAMGTAR on tape test-ORG-AA-vtapes-001570 overwritten on this run.
+  taper: Slot 1616 with label test-ORG-AA-vtapes-001616 is usable
+  taper: Slot 1617 with label test-ORG-AA-vtapes-001617 is usable
+  taper: tape test-ORG-AA-vtapes-001616 kb 64 fm 1 [OK]
+  taper: tape test-ORG-AA-vtapes-001617 kb 64 fm 1 [OK]
+  taper: Slot 12 without label can be labeled
+  taper: tape test-ORG-2-AA-vtapes2-012 kb 128 fm 2 [OK]
+
+
+DUMP SUMMARY:
+                                                            DUMPER STATS   TAPER STATS
+HOSTNAME              DISK        L ORIG-KB  OUT-KB  COMP%  MMM:SS   KB/s MMM:SS   KB/s
+----------------------------------- ---------------------- -------------- -------------
+localhost.localdomain /bootAMGTAR 1      64      64    --      FLUSH        0:00  640.0
+                                                               VAULT        0:00  640.0 
+localhost.localdomain /bootAMGTAR 1      64      64    --     0:00 2557.0   0:00  640.0
+                                                               VAULT        0:00  640.0
+
+(brought to you by Amanda version x.y.z)

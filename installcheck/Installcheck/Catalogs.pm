@@ -1,0 +1,440 @@
+# Copyright (c) 2010-2012 Zmanda, Inc.  All Rights Reserved.
+# Copyright (c) 2013-2016 Carbonite, Inc.  All Rights Reserved.
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+# or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+# for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
+#
+# Contact information: Carbonite Inc., 756 N Pastoria Ave
+# Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
+
+package Installcheck::Catalogs;
+
+=head1 NAME
+
+Installcheck::Catalogs - manage catalog info that can be used to test
+tools that do not need access to actual vtapes
+
+=head1 SYNOPSIS
+
+  use Installcheck::Catalogs;
+  my $cat = Installcheck::Catalogs::load("skipped");
+  $cat->install();
+  my @tags = $cat->get_tags();
+
+=head1 DESCRIPTION
+
+The C<load> method loads a named set of catalog information from catalog files.
+
+The resulting object just decodes the catalog information into a perl
+structure.  To actually write the catalog to disk, use the C<install> method of
+the resulting object.
+
+Note that many test catalogs require a configuration to be loaded; this package
+does not handle loading configurations.  However, the C<install> method does
+take care of erasing the C<logs> subdirectory of the configuration directory as
+well as any stray holding-disk files.
+
+A catalog can have multiple, named snippets of text attached, as well.  These
+are accessed via the C<get_text($name)> method.
+
+=head2 Database Results
+
+The C<%H>, C<%P>, and C<%D> directives set up a "shadow database" of dumps and
+parts that are represented by the catalog.  These are available in two hashes,
+one for dumps and one for parts, available from methods C<get_dumps> and
+C<get_parts>.  The hashes are keyed by "tags", which are arbitrary strings.
+The dumps and parts are built to look like those produced by
+L<Amanda::DB::Catalog>; in particular, a dump has keys
+
+  parts (list of parts indexed by partnum)
+  dump_timestamp
+  hostname
+  diskname
+  level
+  status
+  kb
+  orig_kb
+  write_timestamp
+  message
+  nparts
+  sec
+
+while a part has keys
+
+  dump (points to the parent dump)
+  status
+  sec
+  kb
+  orig_kb
+  partnum
+
+a part will also have a C<holding_file> key if it is, indeed, a holding
+file.  The C<holding_filename($tag)> method will return the filename of a
+holding file.
+
+=head2 Catalog Files
+
+Each file in C<installcheck/catalogs> with the suffix C<.cat> represents a
+cached catalog.  Since the Amanda catalog consists of many files (curinfo,
+trace logs, index, disklist, tapelist, etc.), each catalog acts as a
+container for several other named files.  The file is parsed in a line-based
+fashion, with the following conventions:
+
+=over 4
+
+=item A line beginning with C<#> is a comment, and is ignored
+
+=item A line beginning with C<%F> begins a new output file, with the rest of
+the line (after whitespace) interpreted as a filename relative to the TESTCONF
+configuration directory.  Any intervening directories required will be created.
+
+=item A line beginning with C<%T> begins a new text section.  This is simliar
+to C<%F>, but instead of a filename, the rest of the line specifies a text
+handle.  The text will not be written to the filesystem on C<install>.
+
+=item A line beginning with C<%H> specifies a holding-disk file.  The rest of
+the line is a space-separated list:
+
+  %H tag datestamp hostname pathname level status ksize native_crc client_crc server_crc
+
+A single-chunk holding-disk file of the appropriate size will be created,
+filled with garbage, and the corresponding entries will be made in the dump and
+part hashes.
+
+=item A line beginning with C<%D> specifies a dump.  The format, all on one line, is:
+
+  %D tag dump_timestamp write_timestamp hostname diskname level status
+    message nparts sec kb orig_kb native_crc client_crc server_crc
+
+=item A line beginning with C<%P> specifies a part.  The format, again all on
+one line, is:
+
+  %P tag dumptag label filenum partnum status sec kb orig_kb
+
+where C<dumptag> is the tag of the dump of which this is a part.
+
+=item A line beginning with C<%%> is a custom tag, intended for use by scripts
+to define their expectations of the logfile.  The results are available from
+the C<get_tags> method.
+
+=item A line beginning with C<\> is copied literally into the current output
+file, without the leading C<\>.
+
+=item Blank lines are ignored.
+
+=back
+
+=cut
+
+sub load {
+    my ($name) = @_;
+
+    return Installcheck::Catalogs::Catalog->new($name);
+}
+
+package Installcheck::Catalogs::Catalog;
+
+use warnings;
+use strict;
+
+use Installcheck;
+use Amanda::Util;
+use Amanda::Paths;
+use Amanda::Xfer qw( :constants );
+use File::Path qw( mkpath rmtree );
+
+my $holdingdir = "$Installcheck::TMP/holding";
+
+sub new {
+    my $class = shift;
+    my ($name) = @_;
+
+    my $filename = "$srcdir/catalogs/$name.cat";
+    die "no catalog file '$filename'" unless -f $filename;
+
+    my $self = bless {
+	files => {},
+	texts => {},
+	tags => [],
+	holding_files => {},
+	dumps => {},
+	parts => {},
+    }, $class;
+
+    $self->_parse($filename);
+
+    return $self;
+}
+
+sub _parse {
+    my $self = shift;
+    my ($filename) = @_;
+    my $write_timestamp;
+    my $fileref;
+
+    open(my $fh, "<", $filename) or die "could not open '$filename'";
+    while (<$fh>) {
+	## comment or blank
+	if (/^#/ or /^$/) {
+	    next;
+
+	## new output file
+	} elsif (/^(%[TF])\s*(.*)$/) {
+	    my $cur_filename = $2;
+	    my $kind = ($1 eq '%F')? 'files' : 'texts';
+	    die "duplicate file '$cur_filename'"
+		if exists $self->{$kind}{$cur_filename};
+	    $self->{$kind}{$cur_filename} = '';
+	    $fileref = \$self->{$kind}{$cur_filename};
+
+	# symlink
+	} elsif (/%S ([^ ]*) ([^ ]*) (.*)$/) {
+	    $self->{'symlink'}->{$1} = { link => $2, file => $3 };
+	} elsif (/%S (.*)$/) {
+	# holding file
+	} elsif (/^%H (\S+) (\S+) (\S+) (\S+) (\S+) (\S+) (\d+) (\S+) (\d+) (\S+) (\S+) (\S+)$/) {
+
+	    die "dump tag $1 already exists" if exists $self->{'dumps'}{$1};
+	    die "part tag $1 already exists" if exists $self->{'parts'}{$1};
+
+	    my $safe_disk = $6;
+	    $safe_disk =~ tr{/}{_};
+	    my $hfile = "$holdingdir/$4/$5.$safe_disk";
+
+	    $self->{'holding_files'}->{$1} = [ $hfile, $4, $5, $6, $7, $8, $9 ];
+
+	    my $dump = $self->{'dumps'}{$1} = {
+		storage => $2,
+		pool => $3,
+		dump_timestamp => $4,
+		hostname => $5,
+		diskname => $6,
+		level => $7+0,
+		status => $8,
+		kb => $9,
+		bytes => $9 * 1024,
+		orig_kb => 0,
+		write_timestamp => '00000000000000',
+		message => '',
+		nparts => 1,
+		sec => 0.0,
+		native_crc => $10,
+		client_crc => $11,
+		server_crc => $12,
+	    };
+	    my $part = $self->{'parts'}{$1} = {
+		pool => $3,
+		holding_file => $hfile,
+		dump => $dump,
+		status => $dump->{'status'},
+		sec => 0.0,
+		kb => $dump->{'kb'},
+		part_size => $dump->{'kb'} * 1024,
+		part_offset => 0,
+		#orig_kb => 0,
+		partnum => 1,
+		#native_crc => $10,
+		#client_crc => $11,
+		#server_crc => $12,
+	    };
+	    $dump->{'parts'} = [ undef, $part ];
+
+	# dump
+	} elsif (/^%D (\S+) (\S+) (\d+) (\d+) (\S+) (\S+) (\d+) (\S+) (\S+) (\d+) (\S+) (\d+) (\d+) (\S+) (\S+) (\S+)/) {
+	    die "dump tag $1 already exists" if exists $self->{'dumps'}{$1};
+	    my $dump = $self->{'dumps'}{$1} = {
+		storage => $2,
+		pool => $2,
+		dump_timestamp => $3,
+		write_timestamp => $4,
+		hostname => $5,
+		diskname => $6,
+		level => $7+0,
+		status => $8,
+		message => $9,
+		nparts => $10,
+		sec => $11+0.0,
+		kb => $12,
+		orig_kb => $13,
+		native_crc => $14,
+		client_crc => $15,
+		server_crc => $16,
+		part_offset => 0,
+		parts => [ undef ],
+	    };
+	    # translate "" to an empty string
+	    $dump->{'message'} = '' if $dump->{'message'} eq '""';
+
+	# part
+	} elsif (/^%P (\S+) (\S+) (\S+) (\S+) (\d+) (\d+) (\S+) (\S+) (\d+) (\d+) (\S+) (\S+) (\S+)/) {
+	    die "part tag $1 already exists" if exists $self->{'parts'}{$1};
+	    die "dump tag $2 does not exist" unless exists $self->{'dumps'}{$2};
+
+	    $self->{dumps}->{$2}->{'part_offset'} = 0 if $6 == 1;
+	    my $part = $self->{'parts'}{$1} = {
+		dump => $self->{dumps}{$2},
+		pool => $3,
+		label => $4,
+		filenum => $5,
+		partnum => $6,
+		status => $7,
+		sec => $8+0.0,
+		kb => $9,
+		part_size => $9 * 1024,
+		part_offset => $self->{'dumps'}->{$2}->{'part_offset'},
+		#orig_kb => $10,
+		#native_crc => $11,
+		#client_crc => $12,
+		#server_crc => $13,
+	    };
+	    $self->{'dumps'}->{$2}->{'part_offset'} += $9 * 1024;
+	    $self->{'dumps'}->{$2}->{'parts'}->[$6] = $part;
+
+	# processing tag
+	} elsif (/^%%\s*(.*)$/) {
+	    push @{$self->{'tags'}}, $1;
+
+	# bogus directive
+	} elsif (/^%/) {
+	    chomp;
+	    die "invalid processing instruction '$_'";
+
+	# contents of the file (\-escaped)
+	} elsif (/^\\/) {
+	    s/^\\//;
+	    $$fileref .= $_;
+
+	# contents of the file (copy)
+	} else {
+	    if (/^(.*): pid (\d*) executable (.*) version (.*)$/) {
+		$_ = "$1 pid $2 executable $3 version $Amanda::Constants::VERSION\n"
+	    }
+	    $$fileref .= $_;
+	}
+    }
+    foreach my $dump (values %{$self->{'dumps'}}) {
+	delete $dump->{'part_offset'};
+    }
+}
+
+sub _make_holding_file {
+    my ($filename, $datestamp, $hostname, $diskname, $level, $status, $size) = @_;
+
+    # make the parent dir
+    my $dir = $filename;
+    $dir =~ s{/[^/]*$}{};
+    mkpath($dir);
+
+    # (note that multi-chunk holding files are not used at this point)
+    my $hdr = Amanda::Header->new();
+    $hdr->{'type'} = $Amanda::Header::F_DUMPFILE;
+    $hdr->{'datestamp'} = $datestamp;
+    $hdr->{'dumplevel'} = $level+0;
+    $hdr->{'name'} = $hostname;
+    $hdr->{'disk'} = $diskname;
+    $hdr->{'program'} = "INSTALLCHECK";
+    $hdr->{'is_partial'} = ($status ne 'OK');
+
+    open(my $fh, ">", $filename) or die("opening '$filename': $!");
+    $fh->syswrite($hdr->to_string(32768,32768));
+
+    # transfer some data to that file
+    my $xfer = Amanda::Xfer->new([
+	Amanda::Xfer::Source::Pattern->new(1024*$size, "+-+-+-+-"),
+	Amanda::Xfer::Dest::Fd->new($fh),
+    ]);
+
+    $xfer->start(sub {
+	my ($src, $msg, $xfer) = @_;
+	if ($msg->{type} == $XMSG_ERROR) {
+	    die $msg->{elt} . " failed: " . $msg->{message};
+	} elsif ($msg->{'type'} == $XMSG_DONE) {
+	    $src->remove();
+	    Amanda::MainLoop::quit();
+	}
+    });
+    Amanda::MainLoop::run();
+    close($fh);
+}
+
+sub install {
+    my $self = shift;
+
+    # first, remove the logdir
+    my $logdir = "$Amanda::Paths::CONFIG_DIR/TESTCONF/log";
+    rmtree($logdir) if -e $logdir;
+
+    # write the new config files
+    for my $filename (keys %{$self->{'files'}}) {
+	my $pathname = "$Amanda::Paths::CONFIG_DIR/TESTCONF/$filename";
+	my $dirname = $pathname;
+	$dirname =~ s{/[^/]+$}{};
+
+	mkpath($dirname) unless -d $dirname;
+	Amanda::Util::burp($pathname, $self->{'files'}{$filename});
+    }
+
+    # write the new symlink files
+    for my $symname (keys %{$self->{'symlink'}}) {
+	my $pathname = "$Amanda::Paths::CONFIG_DIR/TESTCONF/$symname";
+	my $filename = $self->{'symlink'}->{$symname}->{'link'};
+	symlink $filename, $pathname;
+    }
+
+    # erase holding and create some new holding files
+    rmtree($holdingdir);
+    for my $hldinfo (values %{$self->{'holding_files'}}) {
+	_make_holding_file(@$hldinfo);
+    }
+}
+
+sub get_tags {
+    my $self = shift;
+    return @{$self->{'tags'}};
+}
+
+sub get_dumps {
+    my $self = shift;
+    return %{$self->{'dumps'}};
+}
+
+sub get_parts {
+    my $self = shift;
+    return %{$self->{'parts'}};
+}
+
+sub get_text {
+    my $self = shift;
+    my ($name) = @_;
+
+    return $self->{'texts'}->{$name};
+}
+
+sub get_file {
+    my $self = shift;
+    my ($name) = @_;
+
+    return $self->{'files'}->{$name} if defined $self->{'files'}->{$name};
+    return $self->{'files'}->{$self->{'symlink'}->{$name}->{'file'}};
+}
+
+sub holding_filename {
+    my $self = shift;
+    my ($tag) = @_;
+
+    my $fn = $self->{'holding_files'}{$tag}[0];
+    return $fn;
+}
+
+1;

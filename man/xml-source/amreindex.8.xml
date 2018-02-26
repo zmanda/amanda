@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"
+[
+  <!-- entities files to use -->
+  <!ENTITY % global_entities SYSTEM 'global.entities'>
+  %global_entities;
+]>
+
+<refentry id='amreindex.8'>
+<refmeta>
+<refentrytitle>amreindex</refentrytitle>
+<manvolnum>8</manvolnum>
+&rmi.source;
+&rmi.version;
+&rmi.manual.8;
+</refmeta>
+<refnamediv>
+<refname>amreindex</refname>
+<refpurpose>re-index tapes or specific dump</refpurpose>
+</refnamediv>
+<refentryinfo>
+&author.ian;
+</refentryinfo>
+<!-- body begins here -->
+<refsynopsisdiv>
+<cmdsynopsis>
+  <command>amreindex</command>
+    <arg choice='opt'>--timestamp|-t <replaceable>timestamp</replaceable></arg>
+    <arg choice='opt'>--verbose</arg>
+    &configoverride.synopsis;
+    <arg choice='plain'><replaceable>config</replaceable></arg>
+</cmdsynopsis>
+<cmdsynopsis>
+  <command>amreindex</command>
+    <arg choice='opt'>--verbose</arg>
+    <arg choice='opt'>--exact-match</arg>
+    &configoverride.synopsis;
+    <arg choice='plain'><replaceable>config</replaceable></arg>
+    <arg choice='opt'>
+      <arg choice='plain'><replaceable>hostname</replaceable></arg>
+      <arg choice='opt'>
+        <arg choice='plain'><replaceable>disk</replaceable></arg>
+        <arg choice='opt'>
+          <arg choice='plain'><replaceable>date</replaceable></arg>
+          <arg choice='opt'>
+            <arg choice='plain'><replaceable>hostname</replaceable></arg>
+            <arg choice='opt'>...</arg>
+          </arg>
+        </arg>
+      </arg>
+    </arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsect1><title>DESCRIPTION</title>
+
+<para><emphasis remap='B'>Amreindex</emphasis> reindex Amanda dump images by
+reading them from storage volume(s) and passing it to the application for
+reindexing.</para>
+
+<para><emphasis remap='B'>Amreindex</emphasis> works in two different ways,
+it can works on all dumps of a single run or for a list of specified
+dumps.</para>
+<para>It reindex the dumps speficied on the command line or it reindex
+all dumps from the run specified by the timestamp (or latest run if no
+timestamp specified).</para>
+
+<para>If a changer is available, it is used to load the required
+tapes.  Otherwise, the application interactively requests the tapes.</para>
+
+<para>Not all applications support reindexing.</para>
+
+<para>See the "<emphasis
+remap='B'>CONFIGURATION OVERRIDE</emphasis>" section in
+<manref name="amanda" vol="8"/>
+for information on the <literal>-o</literal> option.</para>
+</refsect1>
+
+<refsect1><title>EXAMPLE</title>
+<para><programlisting>
+# reindex the most recent dump
+amreindex MYCONFIG
+
+# reindex all dumps of a specific run
+amreindex MYCONFIG --timestamp 20121108013001
+
+# reindex a specific dump
+amreindex MYCONFIG localhost /boot 20131108013001
+</programlisting></para>
+</refsect1>
+
+<seealso>
+<manref name="amreindex" vol="8" />
+</seealso>
+
+</refentry>

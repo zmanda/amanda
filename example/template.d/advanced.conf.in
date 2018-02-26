@@ -1,0 +1,147 @@
+inparallel 4		# maximum dumpers that will run in parallel (max 63)
+			# this maximum can be increased at compile-time,
+			# modifying MAX_DUMPERS in server-src/driverio.h
+
+dumporder "sssS"	# specify the priority order of each dumper
+			#   s -> smallest size
+			#   S -> biggest size
+			#   t -> smallest time
+			#   T -> biggest time
+			#   b -> smallest bandwidth
+			#   B -> biggest bandwitdh
+			# try "BTBTBTBTBTBT" if you are not holding
+			# disk constrained
+
+taperalgo first		# The algorithm used to choose which dump image to send
+			# to the taper.
+
+			# Possible values: [first|firstfit|largest|largestfit|smallest|last]
+			# Default: first. 
+
+			# first		First in - first out.
+			# firstfit 	The first dump image that will fit on the current tape.
+			# largest 	The largest dump image.
+			# largestfit 	The largest dump image that will fit on the current tape.
+			# smallest 	The smallest dump image.
+			# last 		Last in - first out.
+displayunit "g"		# Possible values: "k|m|g|t"
+			# Default: k. 
+			# The unit used to print many numbers.
+			# k=kilo, m=mega, g=giga, t=tera
+netusage  8000 Kbps	# maximum net bandwidth for Amanda, in KB per sec
+
+bumpsize 20 Mb		# minimum savings (threshold) to bump level 1 -> 2
+bumppercent 20		# minimum savings (threshold) to bump level 1 -> 2
+bumpdays 1		# minimum days at each level
+
+device_output_buffer_size 1280k
+                        # amount of buffer space to use when writing to devices
+
+# If you want Amanda to automatically label any non-Amanda tapes it
+# encounters, uncomment the line below. Note that this will ERASE any
+# non-Amanda tapes you may have, and may also ERASE any near-failing tapes.
+# Use with caution.
+## autolabel "DailySet1-%%%" empty
+			
+maxdumpsize -1		# Maximum total size the planner will schedule
+			# for a run (default: runtapes * tape_length) (kbytes).
+bumpmult 4		# threshold = bumpsize * bumpmult^(level-1)
+
+
+
+amrecover_changer "changer"	# amrecover will use the changer if you restore
+    # from this device. It could be a string like 'changer' and amrecover will use your
+    # changer if you set your tape to 'changer' with 'setdevice changer' or via 
+    # 'tapedev "changer"' in amanda-client.conf
+
+
+
+
+# If amanda cannot find a tape on which to store backups, it will run
+# as many backups as it can to the holding disks.  In order to save
+# space for unattended backups, by default, amanda will only perform
+# incremental backups in this case, i.e., it will reserve 100% of the
+# holding disk space for the so-called degraded mode backups.
+# However, if you specify a different value for the `reserve'
+# parameter, amanda will not degrade backups if they will fit in the
+# non-reserved portion of the holding disk.
+
+# reserve 30 # percent
+# This means save at least 30% of the holding disk space for degraded
+# mode backups.  
+
+autoflush no 
+# if autoflush is set to yes, then amdump will schedule all dump on
+# holding disks to be flush to tape during the run.
+
+# Amanda needs a few Mb of diskspace for the log and debug files,
+# as well as a database.  This stuff can grow large, so the conf directory
+# isn't usually appropriate.  Some sites use /usr/local/var and some /usr/adm.
+# Create an amanda directory under there.  You need a separate infofile and
+# logdir for each configuration, so create subdirectories for each conf and
+# put the files there.  Specify the locations below.
+
+# Note that, although the keyword below is infofile, it is only so for
+# historic reasons, since now it is supposed to be a directory (unless
+# you have selected some database format other than the `text' default)
+infofile "@CONFIG_DIR@/@DEFAULT_CONFIG@/curinfo"      # database DIRECTORY
+logdir   "@CONFIG_DIR@/@DEFAULT_CONFIG@"              # log directory
+indexdir "@CONFIG_DIR@/@DEFAULT_CONFIG@/index"        # index directory
+#tapelist "@CONFIG_DIR/DailySet1/tapelist"	# list of used tapes
+# tapelist is stored, by default, in the directory that contains amanda.conf
+
+# Specify holding disks.  These are used as a temporary staging area for
+# dumps before they are written to tape and are recommended for most sites.
+# The advantages include: tape drive is more likely to operate in streaming
+# mode (which reduces tape and drive wear, reduces total dump time); multiple
+# dumps can be done in parallel (which can dramatically reduce total dump time.
+# The main disadvantage is that dumps on the holding disk need to be flushed
+# (with amflush) to tape after an operating system crash or a tape failure.
+# If no holding disks are specified then all dumps will be written directly
+# to tape.  If a dump is too big to fit on the holding disk than it will be
+# written directly to tape.  If more than one holding disk is specified then
+# they will all be used based on activity and available space.
+
+#holdingdisk hd1 {
+#    comment "main holding disk"
+#    directory "/dumps/amanda"	# where the holding disk is
+#    use -100 Mb		# how much space can we use on it
+#			# a non-positive value means:
+#			#        use all space but that value
+#    chunksize 1Gb 	# size of chunk if you want big dump to be
+#			# dumped on multiple files on holding disks
+#			#  N Kb/Mb/Gb split images in chunks of size N
+#			#	      The maximum value should be
+#			#	      (MAX_FILE_SIZE - 1Mb)
+#			#  0          same as INT_MAX bytes
+#    }
+#holdingdisk hd2 {
+#    directory "/dumps2/amanda"
+#    use 1000 Mb
+#    }
+
+# network interfaces
+#
+# These are referred to by the disklist file.  They define the attributes
+# of the network interface that the remote machine is accessed through.
+# Notes: - netusage above defines the attributes t
+#          disklist entry doesn't specify otherwise.
+#        - the values below are only samples.
+#        - specifying an interface does not force the traffic to pass
+#          through that interface.  Your OS routing tables do that.  This
+#          is just a mechanism to stop Amanda trashing your network.
+# Attributes are:
+#	use		- bandwidth above which amanda won't start
+#			  backups using this interface.  Note that if
+#			  a single backup will take more than that,
+#			  amanda won't try to make it run slower!
+
+define interface local {
+    comment "a local disk"
+    use 8000 kbps
+}
+
+#define interface le0 {
+#    comment "10 Mbps ethernet"
+#    use 400 kbps
+#}

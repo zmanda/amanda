@@ -1,0 +1,24 @@
+<section class="sixteen columns">
+
+[% IF params.failed %]
+ <div class="error">Login failed</div>
+[% END %]
+
+<form action="/login" method="POST">
+<div class="field">
+<label>Username:</label>
+<input type="text" name="user">
+</div>
+
+<div class="field">
+<label>Password:</label>
+<input type="password" name="password">
+</div>
+
+<div class="field">
+<input type="submit" value="Log In">
+</div>
+
+</form>
+
+</section>

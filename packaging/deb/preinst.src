@@ -1,0 +1,40 @@
+#!/bin/sh
+# This is appended to packaging/deb/amanda-backup-*.preinst
+# vim: ft=sh
+
+LOGFILE=`mktemp /tmp/amanda-preinst.log.XXXXXXXXXXX`
+if [ $? -ne 0 ]; then
+    echo "Unable to mktemp!" 1>&2
+    exit 1
+fi
+amanda_user=amandabackup
+amanda_group=disk
+AMANDAHOMEDIR=%%AMANDAHOMEDIR%%
+os=`uname`
+wanted_shell=/bin/bash
+dist=%%DISTRO%%
+LOGDIR=%%LOGDIR%%
+INSTALL_LOG=${LOGDIR}/install.log
+SYSCONFDIR=/etc
+# We require amandabackup to have a specific uid because buildtime uid is
+# recorded in deb packages.  This number should avoid conflict
+deb_uid=63998
+
+# See packaging/common/ for shell function libraries.
+# ---------- Common functions ------------
+%%COMMON_FUNCTIONS%%
+%%PRE_INST_FUNCTIONS%%
+
+# -------- End Common functions ----------
+logger "Preparing to install: Amanda Server %%VERSION%%"
+create_user
+check_user_group "${amanda_group}" || add_group "${amanda_group}"
+check_user_supplemental_group "tape" || add_group "tape"
+check_user_shell "${wanted_shell}"
+check_user_homedir "${AMANDAHOMEDIR}"
+check_homedir || create_homedir
+create_logdir
+
+logger "Preinstall done."
+cat $LOGFILE >> $INSTALL_LOG && rm $LOGFILE || \
+    echo "Amanda preinstall logs can be found in '$LOGFILE'."

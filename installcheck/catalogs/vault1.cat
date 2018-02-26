@@ -1,0 +1,97 @@
+# A logfile from an amflush run
+
+%F log/log
+INFO amdump amdump pid 11169
+INFO driver driver pid 11171
+INFO planner planner pid 11170
+START planner date 20171108153316
+START driver date 20171108153316
+STATS driver hostname localhost.localdomain
+DISK planner localhost.localdomain /bootAMGTAR
+WARNING planner tapecycle (1) <= runspercycle (8)
+INFO dumper dumper pid 11173
+INFO dumper dumper pid 11174
+WARNING planner Last full dump of localhost.localdomain:/bootAMGTAR on tape test-ORG-AA-vtapes-001570 overwritten on this run.
+FINISH planner date 20171108153316 time 0.231
+INFO planner pid-done 11170
+INFO taper taper pid 11172
+STATS driver startup time 1.292
+INFO chunker chunker pid 11274
+INFO dumper gzip pid 11324
+INFO dumper gzip pid 11332
+INFO dumper pid-done 11324
+INFO dumper pid-done 11332
+SUCCESS chunker localhost.localdomain /bootAMGTAR 20171108153316 1 48ced934:65536 [sec 0.100523 kb 64 kps 636.670215]
+INFO chunker pid-done 11274
+STATS driver estimate localhost.localdomain /bootAMGTAR 20171108153316 1 [sec 1 nkb 96 ckb 96 kps 64]
+SUCCESS dumper localhost.localdomain /bootAMGTAR 20171108153316 1 48ced934:65536 48ced934:65536 [sec 0.748 kb 64 kps 85.5 orig-kb 64]
+INFO taper Slot 1608 with label test-ORG-AA-vtapes-001608 is usable
+START taper datestamp 20171108153316 "ST:vtapes" "POOL:vtapes" label test-ORG-AA-vtapes-001608 tape 1
+PART taper "ST:vtapes" "POOL:vtapes" test-ORG-AA-vtapes-001608 1 localhost.localdomain /bootAMGTAR 20171108153316 1/-1 1 [sec 0.032676 bytes 65536 kps 1958.624067 orig-kb 64]
+DONE taper "ST:vtapes" "POOL:vtapes" localhost.localdomain /bootAMGTAR 20171108153316 1 1 48ced934:65536 48ced934:65536 48ced934:65536 [sec 0.100000 bytes 65536 kps 640.000000 orig-kb 64]
+INFO taper tape test-ORG-AA-vtapes-001608 kb 64 fm 1 [OK]
+INFO taper pid-done 11172
+INFO taper taper pid 11364
+INFO taper Slot 9 with label test-ORG-2-AA-vtapes2-009 is usable
+FAIL taper "ST:vault" "POOL:vault" localhost.localdomain /bootAMGTAR 20171108153316 1 error "Source Volume '' not found"
+INFO dumper pid-done 11173
+INFO dumper pid-done 11174
+INFO taper pid-done 11364
+FINISH driver date 20171108153316 time 11.155
+INFO driver pid-done 11171
+INFO amdump pid-done 11169
+%T report
+Hostname: localhost.localdomain
+Org     : DailySet1
+Config  : TESTCONF
+Date    : November 8, 2017
+
+These dumps to storage 'vtapes' were to tape test-ORG-AA-vtapes-001608.
+The next tape Amanda expects to use for storage 'vtapes' is: 1 new tape.
+The next tape Amanda expects to use for storage 'vault' is: 1 new tape.
+
+FAILURE DUMP SUMMARY:
+  localhost.localdomain /bootAMGTAR lev 1  VAULT(vault) [Source Volume '' not found]
+
+
+STATISTICS:
+                          Total       Full      Incr.   Level:#
+                        --------   --------   --------  --------
+Estimate Time (hrs:min)     0:00
+Run Time (hrs:min)          0:00
+Dump Time (hrs:min)         0:00       0:00       0:00
+Output Size (meg)            0.1        0.0        0.1
+Original Size (meg)          0.1        0.0        0.1
+Avg Compressed Size (%)    100.0        --       100.0
+DLEs Dumped                    1          0          1  1:1
+Avg Dump Rate (k/s)         85.6        --        85.6
+
+Tape Time (hrs:min)         0:00       0:00       0:00
+Tape Size (meg)              0.1        0.0        0.1
+Tape Used (%)                0.2        0.0        0.2
+DLEs Taped                     1          0          1  1:1
+Parts Taped                    1          0          1  1:1
+Avg Tp Write Rate (k/s)    640.0        --       640.0
+
+
+USAGE BY TAPE:
+  Label                       Time         Size      %  DLEs Parts
+  test-ORG-AA-vtapes-001608   0:00          64K    0.2     1     1
+
+
+NOTES:
+  planner: tapecycle (1) <= runspercycle (8)
+  planner: Last full dump of localhost.localdomain:/bootAMGTAR on tape test-ORG-AA-vtapes-001570 overwritten on this run.
+  taper: Slot 1608 with label test-ORG-AA-vtapes-001608 is usable
+  taper: tape test-ORG-AA-vtapes-001608 kb 64 fm 1 [OK]
+  taper: Slot 9 with label test-ORG-2-AA-vtapes2-009 is usable
+
+
+DUMP SUMMARY:
+                                                            DUMPER STATS   TAPER STATS
+HOSTNAME              DISK        L ORIG-KB  OUT-KB  COMP%  MMM:SS   KB/s MMM:SS   KB/s
+----------------------------------- ---------------------- -------------- -------------
+localhost.localdomain /bootAMGTAR 1      64      64    --     0:01   85.5   0:00  640.0
+                                                               VAULT      FAILED FAILED
+
+(brought to you by Amanda version x.y.z)

@@ -1,0 +1,238 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"
+[
+  <!-- entities files to use -->
+  <!ENTITY % global_entities SYSTEM 'global.entities'>
+  %global_entities;
+]>
+
+<refentry id='amgtar.8'>
+
+<refmeta>
+<refentrytitle>amgtar</refentrytitle>
+<manvolnum>8</manvolnum>
+&rmi.source;
+&rmi.version;
+&rmi.manual.8;
+</refmeta>
+<refnamediv>
+<refname>amgtar</refname>
+<refpurpose>Amanda Application to interface with GNU Tar</refpurpose>
+</refnamediv>
+<refentryinfo>
+&author.jlm;
+&author.dustin;
+</refentryinfo>
+<!-- body begins here -->
+
+<refsect1><title>DESCRIPTION</title>
+
+<para>Amgtar is an Amanda Application API script.  It should not be run
+by users directly.  It uses GNU Tar to backup and restore data.</para>
+
+<para>The <emphasis remap='B'>diskdevice</emphasis> in the disklist (DLE)
+must be the directory to backup.</para>
+
+</refsect1>
+
+<refsect1><title>PROPERTIES</title>
+
+<para>This section lists the properties that control amgtar's functionality.
+See <manref name="amanda-applications" vol="7"/>
+for information on application properties and how they are configured.</para>
+
+<!-- PLEASE KEEP THIS LIST IN ALPHABETICAL ORDER -->
+<variablelist>
+ <!-- ==== -->
+ <varlistentry><term>ATIME-PRESERVE</term><listitem>
+If "YES" (the default), amgtar use the <emphasis>--atime-preserve=system</emphasis> option of gnutar to not update the atime of all files accessed; if "NO", gnutar will updates the atime for all files accessed. This property works only if you have gnutar 1.15.90 or newer, if not, you must set ATIME_PRESERVE to "NO".
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>CHECK-DEVICE</term><listitem>
+If "YES" (the default), amgtar checks that the device number doesn't change for each file. If "NO", changes in device number are ignored.  To ignore device numbers, tar must support the <emphasis>--no-check-device</emphasis> option (gnutar 1.19.90 and newer). This option is needed for some filesystems and devices on which device numbers change frequently, such as LVM or FiberChannel.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>COMMAND-OPTIONS</term><listitem>
+<para>If set, theses options are passed asis to gtar. Each option must be a different value of the property. Some option can break how amanda do backup, use it with care.</para>
+Use:
+<programlisting>
+  property "COMMAND-OPTIONS" "--foo" "bar"
+</programlisting>
+Do not use:
+<programlisting>
+  property "COMMAND-OPTIONS" "--foo bar"
+</programlisting>
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>DIRECTORY</term><listitem>
+If set, gnutar will backup from that directory instead of the <emphasis>diskdevice</emphasis> set by the DLE. On restore, the data is restore in that directory instead of the current working directory.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>GNUTAR-LISTDIR</term><listitem>
+The directory where gnutar stores the database it uses to generate incremental dumps.  The default is set when Amanda is built.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>GNUTAR-PATH</term><listitem>
+The path to the gnutar binary.  The default is set when Amanda is built.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>IGNORE-ZEROS</term><listitem>
+If "YES" (the default), use the <emphasis>--ignore-zeros</emphasis> argument of gtar on recovery,
+set it to "NO" if you do not want that argument.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>INCLUDE-LIST-GLOB</term><listitem>
+A filename containing include glob expression for the restore command.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>EXCLUDE-LIST-GLOB</term><listitem>
+A filename containing exclude glob expression for the restore command.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>ONE-FILE-SYSTEM</term><listitem>
+If "YES" (the default), do not allow gnutar to cross filesystem boundaries. If "NO", gnutar will cross filesystem boundaries.  This corresponds to the <emphasis>--one-filesystem</emphasis> option of gnutar.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>TAR-BLOCKSIZE</term><listitem>
+Block size of Nx512 bytes (default N=20).  This corresponds to the <emphasis>--blocking-factor</emphasis> option of gnutar.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>SPARSE</term><listitem>
+If "YES" (the default), gnutar will store sparse files efficiently. If "NO", then the <emphasis>--sparse</emphasis> option is not given to gnutar, and it will not try to detect sparse files.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>NO-UNQUOTE</term><listitem>
+If "NO" (the default), gnutar doesn't get the <emphasis>--no-unquote</emphasis> option and the diskname can't have some characters, eg. '\'. If "YES", then the <emphasis>--no-unquote</emphasis> option is given to gnutar and the diskname can have any characters.  This option is available only if you are using tar-1.16 or newer.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>ACLS</term><listitem>
+Default "NO". If "YES", gnutar will preserve ACL extended attributes. This corresponds to the <emphasis>--acls</emphasis> gnutar option. Requires a GNU Tar with nonstandard extended attribute patches from the Fedora Project.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>SELINUX</term><listitem>
+Default "NO". If "YES", gnutar will preserve SELinux extended attributes on Linux. This corresponds to the <emphasis>--selinux</emphasis> gnutar option. Requires a GNU Tar with nonstandard extended attribute patches from the Fedora Project. 
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>XATTRS</term><listitem>
+Default "NO". If "YES", gnutar will preserve all extended attributes. This corresponds to the <emphasis>--xattrs</emphasis> gnutar option. If enabled, this option also implies the ACLS and SELINUX properties, regardless of their settings, as they are implemented as extended attributes. Requires a GNU Tar with nonstandard extended attribute patches from the Fedora Project.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>EXIT-HANDLING</term><listitem>
+List which exit status of gtar are good or bad. eg. "1=GOOD 2=BAD", exit status of 1 will produce a good backup, exit status of 2 will give an error.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>NORMAL</term><listitem>
+List all regex (POSIX Extended Regular Expression syntax) that are normal output from gtar. These output are in the "FAILED DUMP DETAILS" section of the email report if the dump result is STRANGE or FAILED. Default values:
+<programlisting>
+  "^could not open conf file"
+  "^Elapsed time:"
+  "^Throughput"
+  ": socket ignored$"
+  ": File .* shrunk by [0-9][0-9]* bytes, padding with zeros"
+  ": Cannot add file .*: No such file or directory$"
+  ": Error exit delayed from previous errors"
+  ": directory is on a different filesystem; not dumped"
+</programlisting>
+<para>To treat one of these default patterns differently, specify it explicitly in a different property.</para>
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>IGNORE</term><listitem>
+List all regex (POSIX Extended Regular Expression syntax) that amanda ignore. These output are never in the email report. Default values:
+<programlisting>
+  ": Directory is new$"
+  ": Directory has been renamed"
+</programlisting>
+<para>To treat one of these default patterns differently, specify it explicitly in a different property.</para>
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>STRANGE</term><listitem>
+List all regex (POSIX Extended Regular Expression syntax) that are strange output from gtar. All gtar output that doesn't match a normal or ignore regex are strange by default. The result of the dump is STRANGE if gtar produce a strange output. These output are in the "FAILED DUMP DETAILS" section of the email report.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>VERBOSE</term><listitem>
+Default: "NO". If "YES", amgtar print more verbose debugging message and can leave temporary files in AMANDA_TMPDIR.
+</listitem></varlistentry>
+</variablelist>
+
+</refsect1>
+
+<refsect1><title>INCLUDE AND EXCLUDE LISTS</title>
+
+<para>This application supplies exclude lists via the &gnutar;
+<option>--exclude-from</option> option.  This option accepts normal
+shell-style wildcard expressions, using <option>*</option> to match any
+number of characters and <option>?</option> to match a single character.
+Character classes are represented with <option>[..]</option>, which will
+match any of the characters in the brackets.  Expressions can be "anchored"
+to the base directory of the DLE by prefixing them with "./".  Without this
+prefix, they will match at any directory level.  Expressions that begin or
+end with a "/" will not match anything: to completely exclude a directory,
+do not include the trailing slash.  Example expressions:
+<programlisting>
+  ./temp-files           # exclude top-level directory entirely
+  ./temp-files/          # BAD: does nothing
+  /temp-files            # BAD: does nothing
+  ./temp-files/*         # exclude directory contents; include directory
+  temp-files             # exclude anything named "temp-files"
+  generated-*            # exclude anything beginning with "generated-"
+  *.iso                  # exclude ISO files
+  proxy/local/cache      # exclude "cache" in dir "local" in "proxy"
+</programlisting>
+</para>
+
+<para>Similarly, include expressions are supplied to &gnutar;'s
+<option>--files-from</option> option.  This option ordinarily does not
+accept any sort of wildcards, but amgtar "manually" applies glob pattern
+matching to include expressions with only one slash.  The expressions must
+still begin with "./", so this effectively only allows expressions like
+"./[abc]*" or "./*.txt".</para>
+
+</refsect1>
+
+<refsect1><title>EXAMPLE</title>
+<para>
+<programlisting>
+  define application-tool app_amgtar {
+    plugin "amgtar"
+
+    property "ATIME-PRESERVE" "NO"
+    property "CHECK-DEVICE" "YES"
+    property "GNUTAR-LISTDIR" "/path/to/listdir"
+    property "GNUTAR-PATH" "/bin/tar"
+    property "ONE-FILE-SYSTEM" "YES"
+    property "TAR-BLOCKSIZE" "20"
+    property "SPARSE" "YES"
+    property "ACLS" "NO"
+    property "SELINUX" "NO"
+    property "XATTRS" "NO"
+    property "EXIT-HANDLING" "1=GOOD 2=BAD"
+    # change a default NORMAL regex to a STRANGE regex.
+    property "STRANGE" ": socket ignored$"
+    # add three new IGNORE regex
+    property "IGNORE" ": Directory is new$"
+    property append "IGNORE" ": Directory has been renamed"
+    property append "IGNORE" "file changed as we read it$"
+  }
+</programlisting>
+A dumptype using this application might look like:
+<programlisting>
+  define dumptype amgtar_app_dtyp {
+    global
+    program "APPLICATION"
+    application "app_amgtar"
+  }
+</programlisting>
+Note that the <emphasis>program</emphasis> parameter must be set to
+<emphasis>"APPLICATION"</emphasis> to use the <emphasis>application</emphasis>
+parameter.
+</para>
+</refsect1>
+
+<seealso>
+<manref name="tar" vol="1"/>,
+<manref name="amanda.conf" vol="5"/>,
+<manref name="amanda-applications" vol="7"/>
+</seealso>
+
+</refentry>

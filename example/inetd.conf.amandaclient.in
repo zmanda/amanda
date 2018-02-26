@@ -1,0 +1,1 @@
+amanda stream tcp nowait @CLIENT_LOGIN@ @amlibexecdir@/amandad amandad -auth=bsdtcp amdump senddiscover

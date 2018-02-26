@@ -1,0 +1,884 @@
+#
+#                  Copyright (C) 2005-2012 Zmanda Incorporated.
+#                            All Rights Reserved.
+#
+#  This program is free software; you can redistribute it and/or
+#  modify it under the terms of the GNU General Public License
+#  as published by the Free Software Foundation; either version 2
+#  of the License, or (at your option) any later version.
+# 
+#  This program is distributed in the hope that it will be useful, but
+#  WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+#  or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+#  for more details.
+# 
+#  You should have received a copy of the GNU General Public License along
+#  with this program; if not, write to the Free Software Foundation, Inc.,
+#  59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
+# 
+#  Contact information: Carbonite Inc., 756 N Pastoria Ave
+#  Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
+#
+
+
+%define build_srpm 0
+%{?srpm_only: %define build_srpm 1}
+
+# Pkg-config sometimes needs its own path set, and we need to allow users to
+# override our guess during detection.  This macro takes care of that.
+# If no --define PKG_CONFIG_PATH was passed and env var $PKG_CONFIG_PATH is 
+# set then use the env var.
+%{!?PKG_CONFIG_PATH: %{expand:%(echo ${PKG_CONFIG_PATH:+"%%define PKG_CONFIG_PATH $PKG_CONFIG_PATH"})}}
+
+# LDFLAGS: newer gnu linkers can use "-Wl,--as-needed", while older ones,
+# like rhel3 and sles9 can't.
+%define enable_as_needed --enable-as-needed
+
+# Define which Distribution we are building:
+# Try to detect the distribution we are building:
+%if %{_vendor} == amazon
+    %define dist amazon
+    %define disttag amzn
+    %define distver 1
+    %define curl libcurl
+%endif
+%if %{_vendor} == redhat
+    # Fedora symlinks /etc/fedora-release to /etc/redhat-release for at least
+    # fc3-8.  So RHEL and Fedora look at the same file.  Different versions have
+    # different numbers of spaces; hence the use of $3 vs. $4..
+    %if %(awk '$1 == "Fedora" { exit 1; }' /etc/redhat-release; echo $?)
+        %define dist fedora
+        %define disttag fc
+        %define distver %(awk '{print $4}' /etc/redhat-release)
+    %endif
+    # if macro cannot have an empty test and we're just testing the existance
+    %if %{?fedora:yes}%{!?fedora:no} == yes
+        # In theory this should be more reliable than awking for distver.
+        %define distver %{fedora}
+    %endif
+    %if "%{dist}" == "fedora"
+	%if %{distver} <= 8
+	    %define requires_libtermcap Requires: libtermcap.so.2
+	    %define curl curl
+	%endif
+	%if %{distver} >= 9
+	    %define curl libcurl
+	%endif
+        %if %{_host_cpu} == x86_64 && %{_target_cpu} == i686
+                # Do nothing if PKG_CONFIG_PATH was set by the user above.
+                %{!?PKG_CONFIG_PATH: %define PKG_CONFIG_PATH /usr/lib/pkgconfig}
+        %endif
+    %endif
+    %if %(awk '$1 == "Red" && $7 ~ /3.*/ { exit 1; }' /etc/redhat-release; echo $?)
+        %define dist redhat
+        %define disttag rhel
+        %define distver 3
+        %define tarver 1.14
+	%define requires_libtermcap Requires: libtermcap.so.2
+	%define curl curl
+	%define without_ipv6 --without-ipv6
+	%undefine enable_as_needed
+        %define prereq_sharutils PreReq: sharutils
+    %endif
+    %if %(awk '$1 == "Red" && $7 ~ /4.*/ { exit 1; }' /etc/redhat-release; echo $?)
+        %define dist redhat
+        %define disttag rhel
+        %define distver 4
+        %define tarver 1.14
+	%define requires_libtermcap Requires: libtermcap.so.2
+	%define curl curl
+        %define prereq_sharutils PreReq: sharutils
+    %endif
+    %if %(awk '$1 == "CentOS" && $3 ~ /4.*/ { exit 1; }' /etc/redhat-release; echo $?)
+	%define dist redhat
+	%define disttag rhel
+	%define distver 4
+	%define tarver 1.14
+	%define requires_libtermcap Requires: libtermcap.so.2
+	%define curl curl
+        %define prereq_sharutils PreReq: sharutils
+    %endif
+    %if %(awk '$1 == "Red" && $7 ~ /5.*/ { exit 1; }' /etc/redhat-release; echo $?)
+        %define dist redhat
+        %define disttag rhel
+        %define distver 5
+	%define curl curl
+    %endif
+    %if %(awk '$1 == "CentOS" && $3 ~ /5.*/ { exit 1; }' /etc/redhat-release; echo $?)
+        %define dist redhat
+        %define disttag rhel
+        %define distver 5
+	%define curl curl
+    %endif
+    %if %(awk '$1 == "Red" && $7 ~ /6.*/ { exit 1; }' /etc/redhat-release; echo $?)
+        %define dist redhat
+        %define disttag rhel
+        %define distver 6
+	%define curl libcurl
+    %endif
+    %if %(awk '$1 == "CentOS" && $4 ~ /6.*/ { exit 1; }' /etc/redhat-release; echo $?)
+        %define dist redhat
+        %define disttag rhel
+        %define distver 6
+	%define curl curl
+    %endif
+    %if %(awk '$1 == "CentOS" && $4 ~ /7.*/ { exit 1; }' /etc/redhat-release; echo $?)
+        %define dist redhat
+        %define disttag rhel
+        %define distver 7
+	%define curl libcurl
+    %endif
+    %if %(awk '$1 == "Red" && $7 ~ /7.*/ { exit 1; }' /etc/redhat-release; echo $?)
+        %define dist redhat
+        %define disttag rhel
+        %define distver 7
+	%define curl libcurl
+    %endif
+   
+    # If dist is undefined, we didn't detect.
+    %{!?dist:%define dist unknown}
+%endif
+# Detect Suse variants.
+%if %{_vendor} == "suse"
+    %define dist SuSE
+    %define disttag %(awk '$1=="openSUSE" { print "suse"; } $1=="SUSE" {$3=="Enterprise" ? TAG="sles" : TAG="suse" ; print TAG}' /etc/SuSE-release)
+    # use printf to be sure rpm gets a number type
+    %define distver %(awk '$1=="openSUSE" { printf("%d", $2); } $1=="SUSE" {$3=="Enterprise" ? VER=$5 : VER=$3 ; printf("%d", VER)}' /etc/SuSE-release)
+    %define curl curl
+    %if %{distver} == 9
+        %undefine enable_as_needed
+    %endif
+    %if %{distver} < 11
+        %define prereq_sharutils PreReq: sharutils
+    %endif
+%endif
+
+# Set options per distribution
+%if %{dist} == redhat || %{dist} == fedora
+    %define rpm_group Applications/Archiving
+    %define requires_initscripts Requires: initscripts
+%endif
+%if %{dist} == SuSE
+    %define rpm_group Productivity/Archiving/Backup
+%endif
+
+# Let's die if we haven't detected the distro. This might save some frustration.
+# RPM does not provide a way to  exit gracefully, hence the tag_to_cause_exit. 
+%{!?distver: %{error:"Your distribution and its version were not detected."}; %tag_to_cause_exit }
+# Set minimum tar version if it wasn't set in the per-distro section
+%{!?tarver: %define tarver 1.15}
+
+# Define the native binary data encoder (for create_amkey)
+%define encoder %({ command -v base64 2>/dev/null; } || { command -v uuencode 2>/dev/null; })
+
+%define packer %(%{__id_u} -n)
+
+# --- Definitions ---
+
+# Define amanda_version using the value determined by
+# packaging/common/substitute.pl.
+%{!?amanda_version: %define amanda_version %%VERSION%% }
+%{!?amanda_release: %define amanda_release 1}
+%define amanda_version_info "Amanda Community Edition - version %{amanda_version}"
+%define amanda_user amandabackup
+%define amanda_group disk
+
+Summary: The Amanda Backup and Archiving System
+Name: amanda
+Version: %{amanda_version}
+%define rpm_release %{amanda_release}.%{disttag}%{distver}
+%if %{build_srpm}
+%define rpm_release %{amanda_release}
+%endif
+Release: %{rpm_release}
+Source: %{name}-%{version}.tar.gz
+License: http://wiki.zmanda.com/index.php/Amanda_Copyright
+Vendor: Zmanda, Inc.
+Packager: www.zmanda.com
+BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-%{packer}-buildroot
+Group: %{rpm_group}
+# TODO - Need required versions for these:
+BuildRequires: autoconf
+BuildRequires: automake
+BuildRequires: binutils
+BuildRequires: bison
+BuildRequires: flex
+BuildRequires: gcc
+BuildRequires: glib2 >= 2.2.0
+BuildRequires: glib2-devel
+BuildRequires: gettext
+BuildRequires: readline
+# Note: newer distros have changed most *-devel to lib*-devel, and added a
+# provides tag for backwards compat.
+BuildRequires: readline-devel
+BuildRequires: %{curl} >= 7.10.0
+BuildRequires: %{curl}-devel >= 7.10.0
+BuildRequires: openssl
+BuildRequires: openssl-devel
+BuildRequires: perl(ExtUtils::Embed)
+%{?prereq_sharutils}
+Requires: /bin/awk
+Requires: /bin/date
+Requires: /usr/bin/id
+Requires: /sbin/ldconfig
+Requires: /bin/sh
+Requires: /usr/sbin/useradd
+Requires: /usr/sbin/usermod
+Requires: fileutils
+Requires: gettext
+Requires: grep
+Requires: gnuplot
+Requires: %{curl} >= 7.10.0
+Requires: openssl
+Requires: xinetd
+Requires: perl >= 5.6.0
+Requires: tar >= %{tarver}
+Requires: readline
+%{?requires_libtermcap}
+%{?requires_initscripts}
+
+%package backup_client
+Summary: The Amanda Backup and Archiving Client
+Group: %{rpm_group}
+Requires: /bin/awk
+Requires: fileutils
+Requires: grep
+%{?requires_libtermcap}
+%{?requires_initscripts}
+Requires: xinetd
+Requires: perl >= 5.6.0
+Requires: tar >= %{tarver}
+Requires: readline
+Provides: amanda-backup_client = %{amanda_version}
+Provides: libamclient-%{version}.so = %{amanda_version}
+Provides: libamanda-%{version}.so = %{amanda_version}
+Conflicts: amanda-backup_server
+# Native package names
+Obsoletes: amanda, amanda-client, amanda-server
+
+%package backup_server
+Summary: The Amanda Backup and Archiving Server
+Group: %{rpm_group}
+Requires: /bin/awk
+Requires: fileutils
+Requires: grep
+%{?requires_libtermcap}
+%{?requires_initscripts}
+Requires: xinetd
+Requires: perl >= 5.6.0
+Requires: tar >= %{tarver}
+Provides: amanda-backup_server = %{amanda_version}
+Provides: libamclient-%{version}.so = %{amanda_version}
+Provides: libamanda-%{version}.so = %{amanda_version}
+Provides: libamserver-%{version}.so = %{amanda_version}
+Provides: libamtape-%{version}.so = %{amanda_version}
+Provides: libamdevice-%{version}.so = %{amanda_version}
+Conflicts: amanda-backup_client
+# Native package names
+Obsoletes: amanda, amanda-client, amanda-server
+# --- Package descriptions ---
+
+%description
+Amanda is the leading Open-Source Backup and Archiving software.
+
+The amanda-backup_server package should be installed on the Amanda server, i.e. 
+the machine attached to backup media (such as a tape drive or disk 
+drives) where backups will be written. The amanda-backup_server package
+includes Amanda client.  The amanda-backup_client package needs 
+to be installed on every system that is being backed up.
+
+Amanda Forums is located at: http://forums.zmanda.com/
+Amanda Documentation is available at: http://wiki.zmanda.com/
+
+
+
+%description backup_server
+Amanda is the leading Open-Source Backup and Archiving software.
+
+This package contains the Amanda server.  The amanda-backup_server package 
+should be installed on the Amanda server, i.e. the machine attached 
+to backup media (such as a tape drive or disk drives) where backups 
+will be written.  The amanda-backup_server package includes Amanda client.
+
+Amanda Forums is located at: http://forums.zmanda.com/
+Amanda Documentation is available at: http://wiki.zmanda.com/
+
+
+
+%description backup_client
+Amanda is the leading Open-Source Backup and Archiving software.
+
+This package contains the Amanda client.  The amanda-backup_client package  
+needs to be installed on every system that is being backed up.
+
+Amanda Forums is located at: http://forums.zmanda.com/
+Amanda Documentation is available at: http://wiki.zmanda.com/
+
+# --- Directory setup ---
+
+# Configure directories:
+%define PREFIX          /usr
+%define EPREFIX         %{PREFIX}
+%define BINDIR          %{EPREFIX}/bin
+%define SBINDIR         %{EPREFIX}/sbin
+%define LIBEXECDIR      %{EPREFIX}/libexec
+%define AMLIBEXECDIR    %{LIBEXECDIR}/amanda
+%define DATADIR         %{PREFIX}/share
+%define SYSCONFDIR      /etc
+%define LOCALSTATEDIR   /var
+%define AMANDATES       %{AMANDAHOMEDIR}/amandates
+%define AMANDAHOMEDIR   %{LOCALSTATEDIR}/lib/amanda
+%ifarch x86_64
+%define LIBDIR          %{EPREFIX}/lib64
+%else
+%define LIBDIR          %{EPREFIX}/lib
+%endif
+%define AMLIBDIR        %{LIBDIR}/amanda
+%define INCLUDEDIR      %{PREFIX}/include
+%define MANDIR          %{DATADIR}/man
+%define LOGDIR          /var/log/amanda
+%define PERLSITELIB     %(eval "`perl -V:installsitelib`"; echo $installsitelib)
+%define AMDATADIR	/var/lib/amanda
+
+# Installation directories:
+%define ROOT_SBINDIR            %{buildroot}/%{SBINDIR}
+%define ROOT_LIBEXECDIR         %{buildroot}/%{LIBEXECDIR}
+%define ROOT_DATADIR            %{buildroot}/%{DATADIR}
+%define ROOT_LOCALSTATEDIR      %{buildroot}/%{LOCALSTATEDIR}
+%define ROOT_SYSCONFDIR         %{buildroot}/%{SYSCONFDIR}
+%define ROOT_AMANDAHOMEDIR      %{buildroot}/%{AMANDAHOMEDIR}
+%define ROOT_LIBDIR             %{buildroot}/%{LIBDIR}
+%define ROOT_MANDIR             %{buildroot}/%{MANDIR}
+%define ROOT_LOGDIR             %{buildroot}/%{LOGDIR}
+%define ROOT_AMDATADIR          %{buildroot}/%{AMDATADIR}
+
+# --- Unpack ---
+
+%prep
+%setup -q
+# --- Configure and compile ---
+
+%define _use_internal_dependency_generator 0
+# Redefine find_requires to add an explicit filter for perl executables too.
+%define __find_requires %{_topdir}/find-requires
+orig_find_requires=`rpm --eval %%{__find_requires}`
+# Put this bit of nastiness in a file named __find_requires
+cat > %{__find_requires} <<-find-req-script
+	#!/bin/bash
+	# First get our list of requirements. find-requires reads from stdin.
+	file_list=\`${orig_find_requires}\`
+	# Remove the Dancer2 perl module as it is optional
+	filtered_reqs=\`grep -v -e Dancer2 <<< "\${file_list// /'\n'}"\`
+	# Output must be on a single line
+	echo \${filtered_reqs//'\n'/ }
+find-req-script
+%{__chmod} u+x %{__find_requires}
+
+%build
+%define config_user %{amanda_user}
+%define config_group %{amanda_group}
+
+# Set PKG_CONFIG_PATH=some/path if some/path was set on the command line, or by 
+# the platform detection bits.
+# without_ipv6 should only be defined on rhel3.
+# LDFLAGS macro is defined except on rhel3.
+# --enable-as-needed must be conditional until configure tests whether
+# ld can accept --as-needed.
+./configure \
+        %{?PKG_CONFIG_PATH: PKG_CONFIG_PATH=%PKG_CONFIG_PATH} \
+        CFLAGS="%{optflags} -g -pipe" CXXFLAGS="%{optflags}" \
+        %{?LDFLAGS:LDFLAGS="${LDFLAGS} %{?LDFLAGS:%LDFLAGS}"} \
+	%{?enable_as_needed:%{enable_as_needed}} \
+        --quiet \
+        --prefix=%{PREFIX} \
+        --sysconfdir=%{SYSCONFDIR} \
+        --sharedstatedir=%{LOCALSTATEDIR} \
+        --localstatedir=%{LOCALSTATEDIR} \
+        --libdir=%{LIBDIR} \
+        --includedir=%{INCLUDEDIR} \
+	--mandir=%{MANDIR} \
+	--with-amdatadir=%{AMDATADIR} \
+        --with-gnuplot=/usr/bin/gnuplot \
+        --with-gnutar-listdir=%{AMANDAHOMEDIR}/gnutar-lists \
+        --with-index-server=localhost \
+        --with-tape-server=localhost \
+        --with-user=%{config_user} \
+        --with-group=%{config_group} \
+        --with-owner=%{packer} \
+        --with-fqdn \
+        --with-bsd-security \
+        --with-bsdtcp-security \
+        --with-bsdudp-security \
+        --with-ssh-security \
+        --with-ssl-security \
+        --with-debugging=%{LOGDIR} \
+        --with-assertions \
+        --disable-installperms \
+        %{?without_ipv6}
+
+make -s LIBTOOLFLAGS=--silent
+
+# --- Install to buildroot ---
+
+%install
+if [ "%{buildroot}" != "/" ]; then
+        if [ -d "%{buildroot}" ] ; then
+                rm -rf %{buildroot}
+        fi
+else
+        echo "BuildRoot was somehow set to / !"
+        exit -1
+fi
+
+make -s -j1 LIBTOOLFLAGS=--silent DESTDIR=%{buildroot} install
+
+rm -f %{ROOT_AMANDAHOMEDIR}/example/inetd.conf.amandaclient
+mkdir -p %{buildroot}/{etc,var/log}
+mkdir -p %{ROOT_LOCALSTATEDIR}/amanda
+mkdir -p %{ROOT_SYSCONFDIR}/amanda
+mkdir -p %{ROOT_AMANDAHOMEDIR}/gnutar-lists
+mkdir -p %{ROOT_LOGDIR}
+
+echo "%{amanda_version_info}" >%{ROOT_AMANDAHOMEDIR}/amanda-release
+
+# --- Clean up buildroot ---
+
+%clean
+if [ "%{buildroot}" != "/" ]; then
+        if [ -d "%{buildroot}" ] ; then
+                rm -rf %{buildroot}
+        fi
+else
+        echo "BuildRoot was somehow set to / !"
+        exit -1
+fi
+
+# --- Pre/post (un)installation scripts ---
+
+# Define script variables
+# Some versions of rpmbuild do not like multi-line macros in spec files. ugly.
+%define script_vars amanda_user=%{amanda_user}; amanda_group=%{amanda_group}; AMANDAHOMEDIR=%{AMANDAHOMEDIR}; os=Linux; wanted_shell=/bin/bash; dist=%{dist}; LOGDIR=%{LOGDIR}; INSTALL_LOG=$LOGDIR/install.log; SYSCONFDIR=%{SYSCONFDIR}; SBINDIR=%{SBINDIR}; encoder=%{encoder};
+# --- Pre/post (un)installation scripts ---
+
+%pre backup_server
+##########################################
+LOGFILE=`mktemp /tmp/amanda_server-preinst.log.XXXXXXXXXXX`
+if [ $? -ne 0 ]; then
+        echo "Unable to create log file!"
+        exit 1
+fi
+%{script_vars}
+
+
+# See packaging/common/ for shell function libraries.
+# ---------- Common functions ------------
+%%COMMON_FUNCTIONS%%
+%%PRE_INST_FUNCTIONS%%
+
+# -------- End Common functions ----------
+logger "Preparing to install: Amanda Server %%VERSION%%"
+create_user
+check_user_group "${amanda_group}" || add_group "${amanda_group}"
+check_user_supplemental_group "tape" || add_group "tape"
+check_user_shell "${wanted_shell}"
+check_user_homedir "${AMANDAHOMEDIR}"
+check_homedir || create_homedir
+create_logdir
+
+logger "Preinstall done."
+cat $LOGFILE > $INSTALL_LOG && rm $LOGFILE || \
+    echo "Amanda preinstall logs can be found in '$LOGFILE'."
+
+%post backup_server
+##########################################
+LOGFILE=`mktemp /tmp/amanda_server-postinst.log.XXXXXXXXXXX`
+if [ $? -ne 0 ]; then
+        echo "Unable to create log file!"
+        exit 1
+fi
+%{script_vars}
+AMANDATES=%{AMANDATES}
+
+# ---------- Common functions ------------
+%%COMMON_FUNCTIONS%%
+%%POST_INST_FUNCTIONS%%
+
+# -------- End Common functions ----------
+/sbin/ldconfig
+
+check_xinetd "amandaserver"
+case $? in
+	0) backup_xinetd "amandaserver"
+	   install_xinetd "amandaserver"
+	;;
+	1) install_xinetd "amandaserver" ;;
+	2) logger "Xinetd config not installed: either xinetd config is not present or xinetd.d is a file." ;;
+	*) logger "bad return from check_xinetd"; exit 1 ;;
+esac
+
+# Amanda servers should not have the client xinetd installed.
+check_xinetd "amandaclient"
+case $? in
+	0) backup_xinetd "amandaclient" ;;
+esac
+
+check_superserver_running "xinetd"
+[ "$?" = "0" ] && action=restart || action=start
+reload_xinetd $action
+create_amandates
+check_amandates
+create_ampassphrase || \
+    logger "Info: amcryptsimple and amcrpyt will not work until .am_passphrase is created"
+create_gnupg
+create_amkey || \
+    logger "Info: amcrypt will not work until keys are created."
+# Checks permissions, but only tries decrypting if both .am_passphrase
+# and .gnupg/am_key.gpg exist.
+check_gnupg
+create_amandahosts
+check_amandahosts_entry root amindexd amidxtaped
+check_amandahosts_entry ${amanda_user} amdump
+check_amandahosts_perms
+create_ssh_key server
+create_ssh_key client
+create_profile
+check_profile
+install_client_conf
+
+logger "Amanda installation complete."
+cat $LOGFILE >> $INSTALL_LOG && {
+    rm $LOGFILE;
+    echo "Amanda installation log can be found in '${INSTALL_LOG}'.";
+} || \
+    echo "Amanda postinstall logs can be found in '$LOGFILE'."
+
+%postun backup_server
+##########################################
+LOGFILE=`mktemp /tmp/amanda_server-remove.log.XXXXXXXXXXX`
+if [ $? -ne 0 ]; then
+        echo "Unable to create log file!"
+        exit 1
+fi
+%{script_vars}
+
+# ---------- Common functions ------------
+%%COMMON_FUNCTIONS%%
+%%POST_RM_FUNCTIONS%%
+
+# -------- End Common functions ----------
+/sbin/ldconfig
+# Check for parameter to script (are we upgrading?)
+if [ $1 -gt 0 ]; then
+    # We're upgrading
+    action="upgrade"
+else
+    # We're uninstalling
+    action="uninstall"
+fi
+
+# See http://fedoraproject.org/wiki/Packaging/ScriptletSnippets for the reason
+# we only remove xinetd on uninstall.
+if [ "$action" = "uninstall" ]; then
+    # Check for and remove existing xinetd configs
+    check_xinetd "amandaserver"
+    if [ $? -eq 0 ] ; then
+	rm_xinetd "amandaserver"
+	check_superserver_running "xinetd" && reload_xinetd
+    fi
+    check_inetd "amandaserver"
+    if [ $? -eq 0 ] ; then
+	rm_inetd "amandaserver"
+	check_superserver_running "inetd" && reload_inetd
+    fi
+    if [ -f ${SYSCONFDIR}/amandates ]; then
+        logger "Removing ${SYSCONFDIR}/amandates..."
+        rm -rf ${SYSCONFDIR}/amandates
+    fi
+    if [ -d ${SYSCONFDIR}/amanda ]; then
+        logger "Removing ${SYSCONFDIR}/amanda if empty..."
+        rmdir ${SYSCONFDIR}/amanda 2> /dev/null || true
+    fi
+    if [ -d /var/lib/amanda/gnutar-lists ]; then
+        rm -rf /var/lib/amanda/gnutar-lists
+    fi
+    # Remove ${amanda_user} from sensitive groups.
+    if which deluser >/dev/null 2>&1 ; then
+        for group in tape; do
+            # only call deluser when amandabackup is in $group
+            if getent group "$group" |
+                awk -F: '{ print $4 }' |
+                awk -F, '{ for (i=1; i <= NF; i++ ) print $i }' |
+                grep "^${amanda_user}$" > /dev/null; then
+                    deluser ${amanda_user} $group || true
+            fi
+        done
+    fi
+    echo "Amanda removal log can be found in '$LOGFILE'."
+fi
+
+
+%pre backup_client
+##########################################
+LOGFILE=`mktemp /tmp/amanda_client-preinst.log.XXXXXXXXXXX`
+if [ $? -ne 0 ]; then
+        echo "Unable to create log file!"
+        exit 1
+fi
+%{script_vars}
+
+# ---------- Common functions ------------
+%%COMMON_FUNCTIONS%%
+%%PRE_INST_FUNCTIONS%%
+
+# -------- End Common functions ----------
+logger "Preparing to install: %{amanda_version_info}" 
+create_user
+check_user_group "${amanda_group}" || add_group "${amanda_group}"
+check_user_shell "${wanted_shell}"
+check_user_homedir "${AMANDAHOMEDIR}"
+check_homedir || create_homedir
+create_logdir
+
+logger "Preinstall done."
+cat $LOGFILE >> $INSTALL_LOG && rm $LOGFILE || \
+    echo "Amanda preinstall logs can be found in '$LOGFILE'."
+
+%post backup_client
+##########################################
+LOGFILE=`mktemp /tmp/amanda_client-postinst.log.XXXXXXXXXXX`
+if [ $? -ne 0 ]; then
+        echo "Unable to create log file!"
+        exit 1
+fi
+%{script_vars}
+AMANDATES=%{AMANDATES}
+
+# ---------- Common functions ------------
+%%COMMON_FUNCTIONS%%
+%%POST_INST_FUNCTIONS%%
+
+# -------- End Common functions ----------
+/sbin/ldconfig
+
+check_xinetd "amandaclient"
+case $? in
+	0) backup_xinetd "amandaclient"
+	   install_xinetd "amandaclient"
+	;;
+	1) install_xinetd "amandaclient" ;;
+	2) logger "Xinetd config not installed: either xinetd config is not present or xinetd.d is a file." ;;
+	*) logger "bad return from check_xinetd"; exit 1 ;;
+esac
+
+# Amanda clients should not have the server xinetd installed.
+check_xinetd "amandaserver"
+case $? in
+	0) backup_xinetd "amandaserver" ;;
+esac
+
+reload_xinetd
+create_amandates
+check_amandates
+create_ampassphrase || \
+    logger "Info: amcryptsimple and amcrpyt will not work until .am_passphrase is created"
+create_gnupg
+create_amkey || \
+    logger "Info: amcrypt will not work until keys are created."
+# Checks permissions, but only tries decrypting if both .am_passphrase
+# and .gnupg/am_key.gpg exist.
+check_gnupg
+create_amandahosts
+check_amandahosts_entry ${amanda_user} amdump
+check_amandahosts_perms
+create_ssh_key server
+create_ssh_key client
+create_profile
+check_profile
+install_client_conf
+
+logger "Amanda installation complete."
+cat $LOGFILE >> $INSTALL_LOG && {
+    rm $LOGFILE;
+    echo "Amanda installation log can be found in '${INSTALL_LOG}'.";
+} || \
+    echo "Amanda postinstall logs can be found in '$LOGFILE'."
+
+echo "`date +'%b %e %Y %T'`: Sending anonymous distribution and version information to Zmanda" >> ${INSTALL_LOG}
+if [ -x /usr/bin/wget ]; then 
+        /usr/bin/wget -q -o /dev/null -O - --timeout=5 http://www.zmanda.com/amanda-tips.php\?version=%{amanda_version}\&os=%{disttag}%{distver}\&type=client 
+fi
+
+%postun backup_client
+##########################################
+LOGFILE=`mktemp /tmp/amanda_client-remove.log.XXXXXXXXXXX`
+if [ $? -ne 0 ]; then
+        echo "Unable to create log file!"
+        exit 1
+fi
+%{script_vars}
+
+# ---------- Common functions ------------
+%%COMMON_FUNCTIONS%%
+%%POST_RM_FUNCTIONS%%
+
+# -------- End Common functions ----------
+/sbin/ldconfig
+
+# Check for parameter to script (are we upgrading?)
+if [ $1 -gt 0 ]; then
+    # We're upgrading
+    action="upgrade"
+else
+    # We're uninstalling
+    action="uninstall"
+fi
+
+# See http://fedoraproject.org/wiki/Packaging/ScriptletSnippets for the reason
+# we only remove xinetd on uninstall.
+if [ "$action" = "uninstall" ]; then
+    # Check for and remove existing xinetd configs
+    check_xinetd "amandaclient"
+    if [ $? -eq 0 ] ; then
+	rm_xinetd "amandaclient"
+	reload_xinetd
+    fi
+    check_inetd "amandaclient"
+    if [ $? -eq 0 ] ; then
+	rm_inetd "amandaclient"
+	reload_inetd
+    fi
+    if [ -f ${SYSCONFDIR}/amandates ]; then
+        logger "Removing ${SYSCONFDIR}/amandates..."
+        rm -rf ${SYSCONFDIR}/amandates
+    fi
+    if [ -d ${SYSCONFDIR}/amanda ]; then
+        logger "Removing ${SYSCONFDIR}/amanda if empty..."
+        rmdir ${SYSCONFDIR}/amanda 2> /dev/null || true
+    fi
+    if [ -d ${AMANDAHOMEDIR} ]; then
+        logger "Removing ${AMANDAHOMEDIR}..."
+        rm -rf ${AMANDAHOMEDIR}
+    fi
+    # Remove ${amanda_user} from sensitive groups.
+    if which deluser >/dev/null 2>&1 ; then
+        for group in tape; do
+            # only call deluser when amandabackup is in $group
+            if getent group "$group" |
+                awk -F: '{ print $4 }' |
+                awk -F, '{ for (i=1; i <= NF; i++ ) print $i }' |
+                grep "^${amanda_user}$" > /dev/null; then
+                    deluser ${amanda_user} $group || true
+            fi
+        done
+    fi
+    echo "Amanda removal log can be found in '$LOGFILE'."
+fi
+
+
+%files backup_client
+# --- Files to install ---
+# Notes:  Do not use wildcards on directories not wholly owned by amanda.  An
+# uninstall of the software will attempt to delete whatever matches here.
+%defattr(0755,%{amanda_user},%{amanda_group},0755)
+%{AMLIBEXECDIR}
+%{AMLIBDIR}
+%{PERLSITELIB}/auto/Amanda
+%defattr(4750,root,disk)
+%{AMLIBEXECDIR}/application/amgtar
+%{AMLIBEXECDIR}/application/amstar
+%{AMLIBEXECDIR}/calcsize
+%{AMLIBEXECDIR}/killpgrp
+%{AMLIBEXECDIR}/rundump
+%{AMLIBEXECDIR}/runtar
+%{AMLIBEXECDIR}/ambind
+%defattr(0750,%{amanda_user},%{amanda_group},0750)
+%{LOGDIR}
+%{SBINDIR}/amaespipe
+%{SBINDIR}/amcryp*
+%{SBINDIR}/amgpgcrypt
+%{SBINDIR}/amoldrecover
+%{SBINDIR}/amrecover
+%{SYSCONFDIR}/amanda
+%defattr(0644,%{amanda_user},%{amanda_group},0755)
+%{LOCALSTATEDIR}/amanda
+%{PERLSITELIB}/Amanda
+%{AMLIBEXECDIR}/amcat.awk
+%{AMANDAHOMEDIR}/gnutar-lists
+%doc %{AMANDAHOMEDIR}/amanda-release
+%doc %{AMANDAHOMEDIR}/example/xinetd.amandaclient
+%doc %{AMANDAHOMEDIR}/example/xinetd.amandaserver
+%doc %{AMANDAHOMEDIR}/example/amanda-client.conf
+%doc %{AMANDAHOMEDIR}/template.d/README
+%doc %{AMANDAHOMEDIR}/template.d/dumptypes
+%defattr(0644,root,root,0755)
+%docdir %{MANDIR}
+%{MANDIR}/man5/amanda.conf.5.gz
+%{MANDIR}/man5/amanda-client.conf.5.gz
+%{MANDIR}/man7/amanda-devices.7.gz
+%{MANDIR}/man7/amanda-applications.7.gz
+%{MANDIR}/man7/amanda-scripts.7.gz
+%{MANDIR}/man8/amaespipe.8.gz
+%{MANDIR}/man8/amanda.8.gz
+%{MANDIR}/man8/amcheckdump.8.gz
+%{MANDIR}/man8/amcrypt*
+%{MANDIR}/man8/amgpgcrypt.8.gz
+%{MANDIR}/man8/amrecover.8.gz
+%doc %{DATADIR}/amanda
+
+%files backup_server
+%defattr(0755,%{amanda_user},%{amanda_group})
+%{AMLIBEXECDIR}
+%{AMLIBDIR}
+%{PERLSITELIB}/Amanda
+%{PERLSITELIB}/auto/Amanda
+%{AMANDAHOMEDIR}
+%{LOCALSTATEDIR}/amanda
+%{SBINDIR}/am*
+%defattr(4750,root,disk)
+%{AMLIBEXECDIR}/application/amgtar
+%{AMLIBEXECDIR}/application/amstar
+%{AMLIBEXECDIR}/calcsize
+%{AMLIBEXECDIR}/killpgrp
+%{AMLIBEXECDIR}/rundump
+%{AMLIBEXECDIR}/runtar
+%{AMLIBEXECDIR}/ambind
+%defattr(0750,%{amanda_user},%{amanda_group},0750)
+%{LOGDIR}
+%{SYSCONFDIR}/amanda
+# Files in standard dirs must be listed explicitly
+%{SBINDIR}/activate-devpay
+%{SBINDIR}/amaespipe
+%{SBINDIR}/amcrypt
+%{SBINDIR}/amcrypt-ossl
+%{SBINDIR}/amcrypt-ossl-asym
+%{SBINDIR}/amcryptsimple
+%{SBINDIR}/amgpgcrypt
+%{SBINDIR}/amoldrecover
+%{SBINDIR}/amrecover
+%defattr(0644,%{amanda_user},%{amanda_group})
+%{AMLIBEXECDIR}/amcat.awk
+%{AMLIBEXECDIR}/amplot.awk
+%{AMLIBEXECDIR}/amplot.g
+%{AMLIBEXECDIR}/amplot.gp
+%doc %{AMANDAHOMEDIR}/amanda-release
+%docdir %{AMANDAHOMEDIR}/example
+%docdir %{AMANDAHOMEDIR}/template.d
+%defattr(0644,root,root,0755)
+%docdir %{MANDIR}
+%{MANDIR}/man5/am*
+%{MANDIR}/man5/disklist.5.gz
+%{MANDIR}/man5/tapelist.5.gz
+%{MANDIR}/man7/am*
+%{MANDIR}/man8/am*
+%{MANDIR}/man8/script-email.8.gz
+%doc %{DATADIR}/amanda
+
+# --- ChangeLog
+
+%changelog
+* %%DATE%% Dan Locks <dwlocks at zmanda dot com> %{version}
+- Package created
+* Fri Aug 20 2010 Dan Locks <dwlocks at zmanda dot com> 3.2.0alpha
+- use %%VERSION% macro instead of reading a file.  error reported by ssgelm
+* Thu Aug 19 2010 Dan Locks <dwlocks at zmanda dot com> 3.2.0alpha
+- Added detection of openSuSE 11 as suggested by ssgelm

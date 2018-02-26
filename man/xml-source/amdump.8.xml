@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"
+[
+  <!-- entities files to use -->
+  <!ENTITY % global_entities SYSTEM 'global.entities'>
+  %global_entities;
+]>
+
+<!-- lifted from troff+man by doclifter -->
+<refentry id='amdump.8'>
+
+<refmeta>
+<refentrytitle>amdump</refentrytitle>
+<manvolnum>8</manvolnum>
+&rmi.source;
+&rmi.version;
+&rmi.manual.8;
+</refmeta>
+<refnamediv>
+<refname>amdump</refname>
+<refpurpose>back up all disks in an Amanda configuration</refpurpose>
+</refnamediv>
+<refentryinfo>
+&author.jds;
+&author.sgw.xml;
+</refentryinfo>
+<!-- body begins here -->
+<refsynopsisdiv>
+<cmdsynopsis>
+  <command>amdump</command>    
+    <arg choice='opt'>--no-taper</arg>
+    <arg choice='opt'>--no-dump</arg>
+    <arg choice='opt'>--no-flush</arg>
+    <arg choice='opt'>--no-vault</arg>
+    <arg choice='opt'>--exact-match</arg>
+    &configoverride.synopsis;
+    <arg choice='plain'><replaceable>config</replaceable></arg>
+    <arg choice='opt' rep='repeat'>
+       <arg choice='plain'><replaceable>host</replaceable></arg>
+       <arg choice='opt' rep='repeat'><replaceable>disk</replaceable></arg>
+    </arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1><title>DESCRIPTION</title>
+<para><emphasis remap='B'>Amdump</emphasis>
+is the main interface to the Amanda backup process.  It loads the specified configuration
+and attempts to back up every disk specified by the
+&disklist;.
+<emphasis remap='B'>Amdump</emphasis>
+is normally run by
+<emphasis remap='B'>cron</emphasis>.</para>
+
+<para>The command optionally takes a set of DLE specifications
+    (see <manref
+    name="amanda-match" vol="7"/>) to narrow the DLEs that will be dumped.
+All disks are dumped if no expressions are given.</para>
+
+<para>If a file named <filename>hold</filename> exists in the configuration directory,
+<command>amdump</command>
+will wait until it is removed before starting the backups.
+This allows scheduled backups to be delayed when circumstances warrant, for example, 
+if the tape device is being used for some other purpose.
+While waiting,
+<command>amdump</command>
+checks for the hold file every minute.</para>
+
+<para>In some cases it is desirable to dump all Amanda clients to holding disk
+without writing anything to storage media.  The <option>--no-taper</option>
+option instructs Amanda to not start the taper, and thus enter degraded mode
+immediately.</para>
+
+<para>See the
+<manref name="amanda" vol="8"/>
+man page for more details about Amanda.</para>
+</refsect1>
+
+<refsect1><title>OPTIONS</title>
+<variablelist remap='TP'>
+
+  <varlistentry>
+  <term><option>--no-taper</option></term>
+  <listitem>
+<para>Disable writting to tape, including flush and vault.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><option>--no-dump</option></term>
+  <listitem>
+<para>Disable dump operations.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><option>--no-flush</option></term>
+  <listitem>
+<para>Disable flush, like setting autoflush to NO for all storages.</para>
+<para>Dump done in this run will be flushed.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><option>--no-vault</option></term>
+  <listitem>
+<para>Disable all vault.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><option>--exact-match</option></term>
+  <listitem>
+<para>The host and disk are parsed as exact values.</para>
+  </listitem>
+  </varlistentry>
+
+  &configoverride.varlistentry;
+
+  <varlistentry>
+  <term><replaceable>host</replaceable> [<replaceable>disk</replaceable>]*</term>
+  <listitem>
+<para>Specify the host and disk on which the command will work -- see
+    the description of DLE specifications in <manref name="amanda-match" vol="7"/>. </para>
+  </listitem>
+  </varlistentry>
+
+</variablelist>
+</refsect1>
+
+<refsect1><title>EXAMPLE</title>
+<para>Here is a typical crontab entry. It runs
+<command>amdump</command>
+every weeknight at 1 a.m. as user
+<emphasis remap='B'>bin</emphasis>:</para>
+
+<programlisting>
+0 1 * * 1-5 bin /usr/local/sbin/amdump daily
+</programlisting>
+
+<para>Please see the 
+<manref name="crontab" vol="5"/>
+or
+<manref name="crontab" vol="1"/>
+manual page for the correct crontab format for your system.</para>
+</refsect1>
+
+<refsect1><title>MESSAGES</title>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term>amdump: waiting for hold file to be removed</term>
+  <listitem>
+<para>The &quot;hold&quot; file exists and &amdump; is waiting for it to be removed
+before starting backups.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term>amdump: amdump or amflush is already running, or you must run amcleanup</term>
+  <listitem>
+<para>Amdump detected another &amdump; or &amflush; running,
+or the remains of a previous incomplete &amdump; or &amflush; run.
+This run is terminated.
+If the problem is caused by the remains of a previous run,
+you must execute
+<manref name="amcleanup" vol="8"/>
+and then rerun
+<command>amdump</command>.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+</refsect1>
+
+<refsect1><title>EXIT CODE</title>
+The exit code of <command>amdump</command> is the ORed value of:
+<programlisting>
+ 0  = success
+ 1  = error
+ 2  = a dle give strange message
+ 4  = a dle failed
+ 8  = Don't know the status of a dle (RESULT_MISSING in the report)
+ 16 = tape error or no more tape
+</programlisting>
+</refsect1>
+
+<seealso>
+<manref name="amcheck" vol="8"/>,
+<manref name="amcleanup" vol="8"/>,
+<manref name="amrestore" vol="8"/>,
+<manref name="amflush" vol="8"/>,
+<manref name="cron" vol="8"/>
+<manref name="amanda-match" vol="7"/>
+</seealso>
+
+</refentry>
+

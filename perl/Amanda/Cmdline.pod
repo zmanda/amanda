@@ -1,0 +1,127 @@
+/*
+ * Copyright (c) 2009-2012 Zmanda, Inc.  All Rights Reserved.
+ * Copyright (c) 2013-2016 Carbonite, Inc.  All Rights Reserved.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, write to the Free Software Foundation, Inc.,
+ * 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
+ *
+ * Contact information: Carbonite Inc., 756 N Pastoria Ave
+ * Sunnyvale, CA 94085, or: http://www.zmanda.com
+ */
+
+%perlcode %{
+
+=head1 NAME
+
+Amanda::Cmdline - utilities for handling command lines
+
+=head1 SYNOPSIS
+
+  use Amanda::Cmdline;
+
+  my $spec = Amanda::Cmdline::dumpspec_t->new($host, $disk, $datestamp, $level, $write_timestamp);
+  print "host: $spec->{'host'}; disk: $spec->{'disk'}\n";
+
+  my @specs = Amanda::Cmdline::parse_dumpspecs(["host", "disk", "date"],
+			    $Amanda::Cmdline::CMDLINE_PARSE_DATESTAMP);
+
+=head1 Amanda::Cmdline::dumpspec_t Objects
+
+Note that this class was called C<Amanda::Cmdline::dumpspec_t> in older versions;
+that name will still work, but is deprecated.
+
+=head2 Keys
+
+Each key contains a match expression, in the form of a string, or undef.  Note
+that the values of these keys are read-only.
+
+=over
+
+=item C<< $ds->{'host'} >>
+
+Hostname
+
+=item C<< $ds->{'disk'} >>
+
+Disk name
+
+=item C<< $ds->{'datestamp'} >>
+
+Dump timestamp.
+
+=item C<< $ds->{'level'} >>
+
+Dump level
+
+=item C<< $ds->{'write_timestamp'} >>
+
+Timestamp when the dump is written to storage media.
+
+=back
+
+=head2 Methods
+
+=over
+
+=item C<< $ds->format() >>
+
+Format the dumpspec as a string.
+
+=back
+
+=head1 Package Functions
+
+=over
+
+=item C<format_dumpspec_components($host, $disk, $datestamp, $level)>
+
+This function returns a string representing the formatted form of the
+given dumpspec.  This formatting is the same as performed by
+C<< $ds->format() >>, but does not need a C<Dumpspec>.
+
+=item C<parse_dumpspecs([@cmdline], $flags)>
+
+This function parses C<@cmdline> into a list of C<Dumpspec> objects,
+according to C<$flags>, which is a logical combination of zero or more
+of
+
+ $CMDLINE_PARSE_DATESTAMP - recognize datestamps
+ $CMDLINE_PARSE_LEVEL - recognize levels
+ $CMDLINE_EMPTY_TO_WILDCARD - if @cmdline is empty, make a wildcard dumpspec
+
+These constants are available in export tag C<:constants>.  The command-line
+format is
+
+  [host [disk [datestamp [level [host [..]]]]]]
+
+Note that there is no facility for specifying C<write_timestamp> on the command
+line.
+
+=item C<header_matches_dumpspecs($hdr, [@dumpspecs])>
+
+This function compares a header to a list of dumpspecs, returning true if the
+header matches at least one dumpspec.  If C<@dumpspecs> is empty, the function
+returns false.
+
+=back
+
+=head1 SEE ALSO
+
+L<Amanda::Config> handles C<-o> options itself, through
+C<config_overrides>.
+
+=cut
+
+
+%}

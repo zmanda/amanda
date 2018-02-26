@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"
+[
+  <!-- entities files to use -->
+  <!ENTITY % global_entities SYSTEM 'global.entities'>
+  %global_entities;
+]>
+
+<!-- lifted from troff+man by doclifter -->
+<refentry id='ambackup.8'>
+
+<refmeta>
+<refentrytitle>ambackup</refentrytitle>
+<manvolnum>8</manvolnum>
+&rmi.source;
+&rmi.version;
+&rmi.manual.8;
+</refmeta>
+<refnamediv>
+<refname>ambackup</refname>
+<refpurpose>back up all disks in an Amanda configuration</refpurpose>
+</refnamediv>
+<refentryinfo>
+&author.jlm;
+</refentryinfo>
+<!-- body begins here -->
+<refsynopsisdiv>
+<cmdsynopsis>
+  <command>ambackup</command>
+    &configoverride.synopsis;
+    <arg choice='opt'><option>--config</option> <replaceable>config</replaceable></arg>
+    <arg choice='opt'><option>--verbose</option></arg>
+    <arg choice='plain'><replaceable>CMD</replaceable></arg>
+    <arg choice='opt' rep='repeat'><replaceable>diskname</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1><title>DESCRIPTION</title>
+<para><emphasis remap='B'>Ambackup</emphasis> connect to the
+<emphasis remap='B'>ambackupd</emphasis>  service on an amanda server.</para>
+<para><emphasis remap='B'>Ambackup</emphasis> initiate backup on the client.
+There are three commands (CMD):</para>
+<variablelist remap='TP'>
+
+  <varlistentry><term><amkeyword>list</amkeyword></term>
+  <listitem><para>list all diskname that can be dumped.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry><term><amkeyword>check</amkeyword></term>
+  <listitem><para>Check the configuration of the client and disk.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry><term><amkeyword>backup</amkeyword></term>
+  <listitem><para>Start a backup of the specified diskname, or all diskname if none are specified.</para>
+  </listitem>
+  </varlistentry>
+
+</variablelist>
+</refsect1>
+
+<seealso>
+<manref name="amdump" vol="8"/>,
+<manref name="amanda-match" vol="7"/>
+</seealso>
+
+</refentry>
+

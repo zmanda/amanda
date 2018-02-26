@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"
+[
+  <!-- entities files to use -->
+  <!ENTITY % global_entities SYSTEM 'global.entities'>
+  %global_entities;
+]>
+
+<!-- lifted from troff+man by doclifter -->
+
+<refentry id='amstatus.8'>
+
+<refmeta>
+<refentrytitle>amstatus</refentrytitle>
+<manvolnum>8</manvolnum>
+&rmi.source;
+&rmi.version;
+&rmi.manual.8;
+</refmeta>
+<refnamediv>
+<refname>amstatus</refname>
+<refpurpose>display the state of an Amanda run</refpurpose>
+</refnamediv>
+<refentryinfo>
+&author.sgw.xml;
+</refentryinfo>
+<!-- body begins here -->
+<refsynopsisdiv>
+<cmdsynopsis>
+  <command>amstatus</command>    
+    <arg choice='opt'><arg choice='plain'>--file </arg><arg choice='plain'><replaceable>amdumpfile</replaceable></arg></arg>
+    <arg choice='opt'>--[no]detail </arg>
+    <arg choice='opt'>--[no]summary </arg>
+    <arg choice='opt'>--[no]taped </arg>
+    <arg choice='opt'>--[no]stats </arg>
+    <arg choice='opt'>--[no]locale-independent-date-format </arg>
+    <arg choice='opt'>--config </arg>
+    <arg choice='plain'><replaceable>config</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1><title>DESCRIPTION</title>
+<para><emphasis remap='B'>Amstatus</emphasis>
+gives the current state of the Amanda run specified by the 
+<emphasis remap='I'>config</emphasis>
+configuration.
+If there is no active Amanda running, it summarizes the result of the last run.
+It may also be used to summarize the results of a previous run.</para>
+
+<para>See the
+<manref name="amanda" vol="8"/>
+man page for more details about Amanda.</para>
+</refsect1>
+
+<refsect1><title>OPTIONS</title>
+<para>All options may be abbreviated to the shortest non-ambiguous sub-string.
+If no options are given, everything is displayed.</para>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><emphasis remap='B'>[--config] config</emphasis></term>
+  <listitem>
+<para>Specify the Amanda configuration you want to display the state for.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>--file amdumpfile</option></term>
+  <listitem>
+<para>Specify an alternate file instead of the
+<emphasis remap='I'>amdump</emphasis>
+or
+<emphasis remap='I'>amflush</emphasis>
+file.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>--detail</option></term>
+  <listitem>
+<para>Display a detail of each dles.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>--summary</option></term>
+  <listitem>
+<para>Display a summary of the state of the run.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>--taped</option></term>
+  <listitem>
+<para>Display each tape used in the summary of the state of the run.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>--stats|statistics</option></term>
+  <listitem>
+<para>Display statistics about active-time of taper and dumpers.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>--locale-independent-date-format</option></term>
+  <listitem>
+<para>Output the date in a locale independent format. The format is the same executing: date +'%Y-%m-%d %H:%M:%S %Z'</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+</refsect1>
+
+<refsect1><title>EXAMPLE</title>
+  <para>Run the following command in a shell when a backup is running:
+<programlisting>
+    watch amstatus CONF --summary --notaped
+</programlisting>
+</para>
+</refsect1>
+
+<refsect1><title>EXIT CODE</title>
+The exit code of <command>amstatus</command> is the ORed value of:
+<programlisting>
+ 0  = success
+ 1  = error
+ 4  = a dle failed
+ 8  = Don't know the status of a dle (RESULT_MISSING in the report)
+ 16 = tape error or no more tape
+</programlisting>
+</refsect1>
+
+<seealso>
+<manref name="amcheck" vol="8"/>,
+<manref name="amdump" vol="8"/>,
+<manref name="amrestore" vol="8"/>,
+<manref name="amadmin" vol="8"/>
+</seealso>
+
+</refentry>
+

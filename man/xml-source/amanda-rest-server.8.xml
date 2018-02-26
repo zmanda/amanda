@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"
+[
+  <!-- entities files to use -->
+  <!ENTITY % global_entities SYSTEM 'global.entities'>
+  %global_entities;
+]>
+
+<!-- lifted from troff+man by doclifter -->
+<refentry id='amdump.8'>
+
+<refmeta>
+<refentrytitle>amanda-rest-server</refentrytitle>
+<manvolnum>8</manvolnum>
+&rmi.source;
+&rmi.version;
+&rmi.manual.8;
+</refmeta>
+<refnamediv>
+<refname>amanda-rest-server</refname>
+<refpurpose>Start or stop the Amanda Rest Server</refpurpose>
+</refnamediv>
+<refentryinfo>
+&author.jlm;
+</refentryinfo>
+<!-- body begins here -->
+<refsynopsisdiv>
+<cmdsynopsis>
+  <command>amanda-rest-server</command>
+    <arg choice='opt'>--help</arg>
+    <arg choice='opt'>--version</arg>
+    <arg choice='opt'>--development</arg>
+    <arg choice='opt'>start | stop</arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1><title>DESCRIPTION</title>
+<para><emphasis remap='B'>amanda-rest-server</emphasis>
+start the Amanda Rest Server.  </para>
+
+</refsect1>
+
+<refsect1><title>OPTIONS</title>
+<variablelist remap='TP'>
+
+  <varlistentry>
+  <term>--development</term>
+  <listitem>
+<para>Help debugging server error.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term>start</term>
+  <listitem>
+<para>Start the Amanda Rest Server.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term>stop</term>
+  <listitem>
+<para>Stop the Amanda Rest Server.</para>
+  </listitem>
+  </varlistentry>
+
+</variablelist>
+</refsect1>
+
+<refsect1><title>CONFIGURATIONS</title>
+<para>The configurationmust be in the <emphasis remap='B'>/etc/amanda/amanda.conf</emphasis> file.</para>
+<variablelist remap='TP'>
+
+  <varlistentry>
+  <term><amkeyword>rest-api-port</amkeyword> <amtype>port</amtype></term>
+  <listitem>
+<para>The port the rest server is listening.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><amkeyword>rest-ssl-cert</amkeyword> <amtype>string</amtype></term>
+  <listitem>
+<para>The path to the certicate file for ssl connection.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><amkeyword>rest-ssl-key</amkeyword> <amtype>string</amtype></term>
+  <listitem>
+<para>The path to the key file for ssl connection.</para>
+  </listitem>
+  </varlistentry>
+
+</variablelist>
+</refsect1>
+
+<seealso>
+<manref name="amanda" vol="8"/>,
+</seealso>
+
+</refentry>
+

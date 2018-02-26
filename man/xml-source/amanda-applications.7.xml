@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"
+[
+  <!-- entities files to use -->
+  <!ENTITY % global_entities SYSTEM 'global.entities'>
+  %global_entities;
+]>
+
+<refentry id='amanda-applications.7'>
+
+<refmeta>
+<refentrytitle>amanda-applications</refentrytitle>
+<manvolnum>7</manvolnum>
+&rmi.source;
+&rmi.version;
+&rmi.manual.7;
+</refmeta>
+<refnamediv>
+<refname>amanda-applications</refname>
+<refpurpose>Application-api for amanda</refpurpose>
+</refnamediv>
+<refentryinfo>
+&author.jlm;
+&author.dustin;
+</refentryinfo>
+<!-- body begins here -->
+
+<refsect1><title>DESCRIPTION</title>
+
+<para>Describe how to use application with Amanda</para>
+</refsect1>
+
+<refsect1><title>APPLICATIONS</title>
+
+<para>This section lists the applications included with Amanda. See the individual man pages for instructions on using them.  For complete How-To information, consult the Amanda wiki at http://wiki.zmanda.com.</para>
+
+<itemizedlist>
+<listitem>
+<manref name="amgtar" vol="8"/>,
+- use GNU Tar to backup and restore data.
+</listitem>
+<listitem>
+<manref name="ampgsql" vol="8"/>,
+- use PostgreSQL's continuous WAL archiving.
+</listitem>
+<listitem>
+<manref name="amraw" vol="8"/>,
+- use open and read to read the data.
+</listitem>
+<listitem>
+<manref name="amsamba" vol="8"/>,
+- use smbclient to backup and restore data.
+</listitem>
+<listitem>
+<manref name="amstar" vol="8"/>,
+- use star to backup and restore data.
+</listitem>
+<listitem>
+<manref name="amsuntar" vol="8"/>,
+- use native tar on Solaris to backup and restore data.
+</listitem>
+<listitem>
+<manref name="amzfs-sendrecv" vol="8"/>,
+- use zfs to create a snapshot and use 'zfs send' to generate the backup.
+</listitem>
+<listitem>
+<manref name="amzfs-snapshot" vol="8"/>,
+- use zfs to create a snapshot and for use with other applications (e.g. amgtar)
+</listitem>
+</itemizedlist>
+
+</refsect1>
+
+<refsect1><title>DEFINING APPLICATIONS</title>
+
+<para>An application is defined in &amconf; as follows:
+
+<programlisting>
+define application-tool $appconfigname {
+   plugin "$pluginname"
+   property "$PROPERTY_NAME" "$PROPERTY_VALUE"
+   ...
+}
+</programlisting>
+and then referenced in a dumptype as
+<programlisting>
+define dumptype $dumptypename {
+   ...
+   program "APPLICATION"
+   application "$appconfigname"
+}
+</programlisting></para>
+
+<para>Application properties, like Amanda configuration parameters, are
+insensitive to case, and <literal>-</literal> (dash) and
+<literal>_</literal> (underscore) may be used interchangeably.</para>
+
+<para>See the individual plugin documentation for properties applicable to each
+plugin.</para>
+
+</refsect1>
+
+<seealso>
+<manref name="amanda.conf" vol="5"/>
+</seealso>
+
+</refentry>

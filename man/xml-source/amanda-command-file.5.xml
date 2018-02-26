@@ -1,0 +1,360 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"
+[
+  <!-- entities files to use -->
+  <!ENTITY % global_entities SYSTEM 'global.entities'>
+  %global_entities;
+]>
+
+<refentry id='amanda-command-file.5'>
+
+<refmeta>
+<refentrytitle>amanda-command-file</refentrytitle>
+<manvolnum>5</manvolnum>
+&rmi.source;
+&rmi.version;
+&rmi.manual.5;
+</refmeta>
+<refnamediv>
+<refname>amanda-command-file</refname>
+<refpurpose>Keep status of outgoing dle commands</refpurpose>
+</refnamediv>
+<refentryinfo>
+&author.jlm;
+</refentryinfo>
+<!-- body begins here -->
+
+<refsect1><title>DESCRIPTION</title>
+<para>The
+<emphasis remap='I'>command-file</emphasis>
+file keep information of outgoing dumps commands,
+dumps to flush from holding disk to storage,
+dumps to copy (vault) from one storage to another,
+dumps with outgoing restore request.</para>
+
+<para>The file is in text. The first line is the version of the file, the second line is an id that increment on each new insertion in the file.</para>
+<para>Each following line start with an id followed by one the keywords:</para>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><amkeyword>FLUSH</amkeyword></term>
+  <listitem><para>Entry that list a holding file and a storage where it must be flushed.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><amkeyword>COPY</amkeyword></term>
+  <listitem><para>Entry that list a dump from a storage and a storage where to copy it (vault).</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><amkeyword>RESTORE</amkeyword></term>
+  <listitem><para>Entry that list a dump from a storage that have a restore request. An entry is automatically removed 24 hours after it is created.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+
+<para>Amanda never overwrite a volume if one its dump have a command in the <emphasis remap='I'>command-file</emphasis>.</para>
+</refsect1>
+
+<refsect1><title>FLUSH line</title>
+  <programlisting>id <amkeyword>FLUSH</amkeyword> config holding-file hostname diskname dump-timestamp dump-level storage WORKING:pid STATUS</programlisting>
+
+<variablelist remap='TP'>
+  <varlistentry>
+  <term>id</term>
+  <listitem><para>The id of the command.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term>FLUSH</term>
+  <listitem><para>The FLUSH keyword.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term>config</term>
+  <listitem><para>The config to which that command apply.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term>holding-file</term>
+  <listitem><para>The holding-file to flush.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term>hostname</term>
+  <listitem><para>The hostname of the dump.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term>diskname</term>
+  <listitem><para>The diskname of the dump.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term>dump-timestamp</term>
+  <listitem><para>The timestamp of the dump.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term>dump-level</term>
+  <listitem><para>The level of the dump.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term>storage</term>
+  <listitem><para>The storage where to flush the dump.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term>WORKING:pid</term>
+  <listitem><para>The pid of the process doing the flush, or 0.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term>STATUS</term>
+  <listitem><para>TODO or DONE.</para>
+  </listitem>
+  </varlistentry>
+
+</variablelist>
+
+</refsect1>
+
+<refsect1><title>COPY line</title>
+  <programlisting>id <amkeyword>COPY</amkeyword> config src-storage src-pool src-label src-fileno src-labels-str start-time hostname diskname dump-timestamp dump-level dest-storage WORKING:pid STATUS</programlisting>
+
+<variablelist remap='TP'>
+  <varlistentry>
+  <term>id</term>
+  <listitem><para>The id of the command.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term>COPY</term>
+  <listitem><para>The COPY keyword.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term>config</term>
+  <listitem><para>The config to which that command apply.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term>src-srorage</term>
+  <listitem><para>The storage where to find the dump.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term>src-pool</term>
+  <listitem><para>The pool where to find the dump.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term>src-label</term>
+  <listitem><para>The label of the first part of the dump</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term>src-fileno</term>
+  <listitem><para>The fileno of the first part of the dump</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term>src-labels-str</term>
+  <listitem><para>The list of all source labels required</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term>start-time</term>
+  <listitem><para>When to start the copy</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term>hostname</term>
+  <listitem><para>The hostname of the dump.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term>diskname</term>
+  <listitem><para>The diskname of the dump.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term>dump-timestamp</term>
+  <listitem><para>The timestamp of the dump.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term>dump-level</term>
+  <listitem><para>The level of the dump.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term>dest-storage</term>
+  <listitem><para>The storage where to copy the dump.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term>WORKING:pid</term>
+  <listitem><para>The pid of the process doing the copy, or 0.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term>STATUS</term>
+  <listitem><para>TODO or DONE.</para>
+  </listitem>
+  </varlistentry>
+
+</variablelist>
+
+</refsect1>
+
+<refsect1><title>RESTORE line</title>
+  <para>To restore from a storage:
+  <programlisting>id <amkeyword>RESTORE</amkeyword> config src-storage src-pool src-label    src-fileno expire hostname diskname dump-timestamp dump-level WORKING:pid STATUS</programlisting></para>
+  <para>or to restore from a holding file:
+  <programlisting>id <amkeyword>RESTORE</amkeyword> config HOLDING     HOLDING  holding-file 0          expire hostname diskname dump-timestamp dump-level WORKING:pid STATUS</programlisting></para>
+
+<variablelist remap='TP'>
+  <varlistentry>
+  <term>id</term>
+  <listitem><para>The id of the command.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term>RESTORE</term>
+  <listitem><para>The RESTORE keyword.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term>config</term>
+  <listitem><para>The config to which that command apply.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term>src-srorage</term>
+  <listitem><para>The storage where to find the dump.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term>src-pool</term>
+  <listitem><para>The pool where to find the dump.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term>src-label</term>
+  <listitem><para>The label of the first part of the dump.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term>HOLDING</term>
+  <listitem><para>The HOLDING keyword.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term>holding-file</term>
+  <listitem><para>The full path of the holding file.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term>src-fileno</term>
+  <listitem><para>The fileno of the first part of the dump</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term>expire</term>
+  <listitem><para>When this command expire and can be automatically removed from the file.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term>src-labels-str</term>
+  <listitem><para>The list of all source labels required</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term>start-time</term>
+  <listitem><para>When to start the copy</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term>hostname</term>
+  <listitem><para>The hostname of the dump.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term>diskname</term>
+  <listitem><para>The diskname of the dump.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term>dump-timestamp</term>
+  <listitem><para>The timestamp of the dump.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term>dump-level</term>
+  <listitem><para>The level of the dump.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term>WORKING:pid</term>
+  <listitem><para>The pid of the process doing the copy, or 0.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term>STATUS</term>
+  <listitem><para>TODO or DONE.</para>
+  </listitem>
+  </varlistentry>
+
+</variablelist>
+
+</refsect1>
+
+<seealso>
+<manref name="amanda.conf" vol="5"/>
+</seealso>
+
+</refentry>

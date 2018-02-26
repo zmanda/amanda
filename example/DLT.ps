@@ -1,0 +1,232 @@
+%!
+%%BoundingBox: 25 25 290 900
+%%Title: AMANDA ExaLabel
+%%Creator: AMANDA genlabel program
+%%Pages: 1
+%%EndComments
+
+%%%%
+%%%% This is a template file used by AMANDA to create PostScript tape
+%%%% labels for each dump.  This file is set up for DLT tapes,
+%%%% but you can edit it to work with anything.
+%%%%
+
+
+%
+% The label is made up of 6 parts:  statistics, tape name, date,
+% header, filesystem list, and the logo.  Geometrically, the label
+% looks like this:
+%
+%   +------------------------+
+%   |statistics              |   <- section 'A'
+%   +----+-------------------+
+%   |logo|     TAPE_NAME     |   <- section 'B'  (logo) <- section 'F'
+%   |    | version      date |   <- section 'C'
+%   +----+--+--------+-------+
+%   |h fs  l|h fs   l|h fs  l|   <- section 'D'
+%   +-------+--------+-------+
+%   |       |        |       |   <- section 'E'
+%   |       |        |       |
+%   v       v        v       v
+%
+% Sections D and E, which hold the bulk of the information are 
+% cut into columns.
+%
+
+% section 'A' font, start position, and line separation
+%
+/StatFont 		{ /Courier findfont 10 scalefont setfont } def
+/StatPos		{ 40 738 } def
+/StatSep		{ 15 } def
+
+% section 'B' font and position (text centered around this point)
+%
+/TitleFont		{ /Helvetica-Bold findfont 28 scalefont setfont } def
+/TitlePos		{ 180 635 } def
+
+% section 'C' font, position of the date (left justified) and the version
+%
+/DateFont		{ /Palatino-Bold findfont 10 scalefont setfont } def
+/DatePos		{ 310 610 } def
+/VersFont		{ /Palatino-Bold findfont 10 scalefont setfont } def
+/VersPos		{ 80 610 } def
+
+% section 'D' font, and field positions (x coord is relative to each column)
+%
+
+/HeadingFont		{ /Palatino-Bold findfont 8 scalefont setfont } def
+/HeadingLvlPos		{ 90 590 } def		% Heading is right justified
+/HeadingHostPos		{ 2 590 } def
+/HeadingFsPos		{ 30 590 } def
+
+% section 'E' font, and line separation
+%
+/HostFont		{ /Courier findfont 5 scalefont setfont } def
+/HostSep		{ 5 } def
+
+
+% the following rectangles separate the regions
+%
+/StatBox		{ 320 755 25 680 } def
+/TitleBox		{ 320 680 25 605 } def
+/LogoBox		{ 70 680 25 605 } def
+/HeadingBox		{ 320 605 25 580 } def
+/HostBox		{ 320 580 25 0 } def
+
+
+% number of columns for section 'E,' column width, position of first 
+% entry in first column, y coordinate of top and bottom of dividing lines
+%
+/NumColumns		{ 3 } def
+/ColumnWidth		{ 98 } def
+/ColumnBasePos		{ 25 568 } def
+/TopColDivLine		{ 605 } def
+/BotColDivLine		{ 0 } def
+
+
+%%%%
+%%%% END OF USER-CONFIGURABLE OPTIONS
+%%%%
+%%%% the rest of this file contains the internal functions that are used
+%%%% by genlabel to draw the label
+%%%%
+
+
+%
+% Initial Setup... draws everything that is the same for all labels
+%
+
+% function to draw a box
+%
+/box {
+	/ury exch def
+	/urx exch def
+	/lly exch def
+	/llx exch def
+
+	llx lly moveto
+	llx ury lineto
+	urx ury lineto
+	urx lly lineto
+	closepath
+} def
+
+
+% move the origin up a bit
+%
+0 20 translate
+
+% draw all of the boxes
+%
+0 setgray 
+2 setlinewidth					% thick lines
+StatBox box stroke
+TitleBox box stroke
+LogoBox box stroke
+HeadingBox box stroke
+HostBox box stroke
+
+% draw the column dividers
+%
+0.5 setlinewidth				% thin lines
+
+/i 1 def
+{
+	NumColumns i sub 0 le { exit } if	% no lines if this last col.
+	/xoff ColumnBasePos pop			% get x base position
+	   i ColumnWidth mul add def		% offset for this column
+	xoff TopColDivLine moveto 
+	xoff BotColDivLine lineto stroke	
+	/i i 1 add def
+} loop
+
+
+% draw the heading names
+%
+/i 0 def
+HeadingFont
+{
+	NumColumns i sub 0 le { exit } if
+	/xoff ColumnBasePos pop
+	  i ColumnWidth mul add def
+	HeadingLvlPos exch xoff add exch moveto
+	  (Lv) stringwidth pop neg 0 rmoveto (Lv) show
+	HeadingHostPos exch xoff add exch moveto
+	  (Host) show
+	HeadingFsPos exch xoff add exch moveto
+	  (Fs) show
+	/i i 1 add def
+} loop
+
+
+%
+% the following functions draw strings for each kind of information
+%
+
+/CurrStatY StatPos exch pop def
+ColumnBasePos /CurrColumnY exch def
+  /CurrColumnX exch def
+
+
+% DrawStat draws the string on the top of the stack in the next position
+% in section 'A'
+%
+/DrawStat {
+	StatFont
+	StatPos pop CurrStatY moveto
+	show
+	/CurrStatY CurrStatY StatSep sub def
+} def
+
+
+% DrawTitle draws the string on the top of the stack in section 'B'
+%
+/DrawTitle {
+	TitleFont
+	TitlePos moveto
+	dup stringwidth pop 2 div neg 0 rmoveto
+	show
+} def
+
+
+% DrawDate draws the string on the top of the stack in section 'C'
+%
+/DrawDate {
+	DateFont
+	DatePos moveto
+	dup stringwidth pop neg 0 rmoveto
+	show
+} def
+
+
+% DrawVers draws the string on the top of the stack in section 'C'
+%
+/DrawVers {
+	VersFont
+	VersPos moveto
+	show
+} def
+
+
+% DrawHost expects five strings to be on the stack.  The strings are 
+% Host Name, Partition Name, Dump Level, Tape File Number, and Output Size.
+% Right now, the Output Size and file umber are discarded.
+%
+/DrawHost {
+	HostFont
+	pop pop pop 			% discard sizes and fileno
+	CurrColumnX HeadingLvlPos pop add CurrColumnY moveto
+	show
+	CurrColumnX HeadingFsPos pop add CurrColumnY moveto
+	show
+	CurrColumnX HeadingHostPos pop add CurrColumnY moveto
+	show
+	/CurrColumnY CurrColumnY HostSep sub def
+	CurrColumnY BotColDivLine lt {
+		/CurrColumnY ColumnBasePos exch pop def
+		/CurrColumnX CurrColumnX ColumnWidth add def
+	} if
+} def
+%%%%
+%%%% END OF TEMPLATE FILE
+%%%% 

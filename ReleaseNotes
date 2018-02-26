@@ -1,0 +1,802 @@
+                Release Notes for amanda-3.6
+
+   * Use a database (SQLite, MySQL or ProstgreSQL) to replace the tapelist
+     and log.* file
+     Read the Amanda-Catalog file
+
+
+                Release Notes for amanda-3.5.2
+
+   * amstatus
+       o new --[no]taped argument, useful when running
+         'watch amstatus CONF --summary --notaped' if the run have many tapes
+    * amvault
+       o new --uniq, --no-uniq argument
+       o Behavior change: The default is --uniq
+       o new --delayed argument
+       o new --run-delayed argument
+
+
+                Release Notes for amanda-3.5.1
+
+   * Fix compilation on Solaris
+   * Do not check all 'r' bit on suid binary
+   * Fix parsing of configuration override (-o)
+       - can unset some setting
+   * client code will not fail if shared memory is not available
+   * amreport
+       - lot of improvement
+   * allow '*' for a datestamp wildcard
+   * amgetconf
+       - print an empty string if a parameter is not set instead of  'no such parameter'
+   * amdump
+       - new --no-dump, --no-flush and --no-vault argument
+   * amstatus fix
+   * lock holding disk to protect multiple parallel access
+
+
+                Release Notes for amanda-3.5
+
+* Use different thread to connect to different client
+* amservice, amcheck, planner, dumper are no longer suid root
+* ambind
+    - new suid program to bind to a privileged port
+* amanda-security.conf
+    - new tcp_port_range, range of privileged tcp port
+    - new udp_port_range, range of privileged udp port
+* S3 device
+    - openstack keystone v3 support
+        - device-property STORAGE-API must be set to SWIFT-3
+        - new PROJECT-NAME device-property
+        - new DOMAIN-NAME device-property
+* amfetchdump
+    - rename --directory argument to --target
+* ampgsql
+    - new --incremental property
+    - new --remove-full-wal property
+    - new --remove-incremental-wal property
+
+
+                Release Notes for amanda-3.4.6
+
+* fix planner looping
+* fix overflow in S3 device
+* fix compilation on OpenBSD
+* fix race in amarchive reader
+* fix amflush (flush date selected by user)
+* fix local auth, use getaddrinfo to find if the host is local
+* fix dumper cancelling the shm_ring with a STRANGE result
+* fix chunker hang
+* Improve taperscan with chg-single and interactivity
+
+
+                Release Notes for amanda-3.4.5
+
+* fix amvault
+* fix taper hang
+* fix memory leak in amrecover
+* fix config parser when -o option
+* fix compilation on FreeBSD
+
+
+                Release Notes for amanda-3.4.4
+
+* checkdump
+    - Verify all copies of a dump
+* diskflat device
+    -truncate the file when overwriting a label
+* amrecover
+    -fix hang
+* ambackup
+    -allow incremental backup
+* tapelist file
+    -fix not adding label to tapelist file when creating it
+* email interactivity
+    -improvement
+* S3 device
+    -work with openstack keystone V2 (Juno and newer)
+* labelstr
+    -fix matching a labelstr
+
+
+                Release Notes for amanda-3.4.3
+
+* fix MAJOR issue: amdump can reuse the same tape in the same run
+* amtape slot
+    - add drive selection
+* compile/link with libressl
+* fix portability issue
+* fix for NetBSD
+* fix 'Device busy' problem
+* fix planner crash
+* fix setregid call
+
+
+                Release Notes for amanda-3.4.2
+
+* ambsdtar
+    - add a SPARSE property
+* amsamba
+    - fix for newer samba version
+* s3 device
+    - fix for '/' in prefix
+    - fix for port in S3-HOST
+* fix compatibility with older version (2.4.2)
+* configure
+    - amanda-security.conf is now in $sysconfdir
+* amgetconf
+    - add many build. parameter
+* fix warning reported by the clang compiler
+* fix compilation without SSE4_2 when configure detect it
+* amtoc fix
+* amlabel -f fix
+* many more fixes
+
+
+                Release Notes for amanda-3.4.1
+
+* new --without-rest-server configure option
+* fix reported bugs
+    - build issue
+    - packaging issue
+    - amstar: fix exclude pattern
+    - amrecover: do not print the size too often
+    - amtapetype: fix error with property_set
+    - allow a tapedev in the a storage section
+    - amstatus: small fix
+
+
+                Release Notes for amanda-3.4
+
+* Allow to put a dump on more than one storage
+* Allow to specify which DLE/level go to which storage
+* amdumpcan dothe vaulting operation (copy from one storage to another one)
+* Use shared memory to pass data between processes
+* A CRC is computed on the backup image and is verified on restore.
+* Run multiple backup inparallel, there is no lock preventing concurrent run.
+* Add letter based sequence to autolabel and meta-autolabel.
+* And 'includefile' directive for the disklist.
+* tapepool, tape are in pool
+* amanda.conf (index file can be kept sorted, compressed or uncompressed)
+    - compress-index
+    - sort-index
+* amanda.conf (interface section)
+    - add a src-ip setting.
+* amanda.conf (dumptype section)
+    - add a retry-dump setting.
+    - add atag setting.
+    - deprecate usetimestamps, it is always "yes"
+* amanda.conf (new policy section), define when a tape can be reuse or not.
+    A lot more powerful than the tapecycle setting.
+    - retention-tapes
+    - retention-days
+    - retention-recover
+    - retention-full
+* amanda.conf (new storage section), define how to operate each changer.
+    Many old global setting can be set differently for each storage.
+    - autoflush
+    - autolabel
+    - comment
+    - device-output-buffer-size
+    - dump-selection (select which dle go to that storage)
+    - eject-volume
+    - erase-on-failure
+    - erase-on-full
+    - erase-volume
+    - flush-threshold-dumped
+    - flush-threshold-scheduled
+    - interactivity
+    - labelstr
+    - max-dle-by-volume
+    - meta-autolabel
+    - policy
+    - report-use-media
+    - report-next-media
+    - runtapes
+    - set-no-reuse
+    - tapepool
+    - taperalgo
+    - taperflush
+    - taperscan
+    - taper-parallel-write
+    - tapetype
+    - tpchanger
+* amanda.conf
+    - labelstr can be a new MATCH-AUTOLABEL keyword, labelstr can use
+      the autolabel variable.
+    - storage (default storage)
+      You can set multiple storage, all DLEs will be sent to all storages
+    - amvault-storage (storage used by amvault)
+* amvault
+    - deprecated option: --label-template, --dst-changer, --autolabel
+      they must be set in a storage section
+    - new --dst-storage option to overwrite the default amvault-storage.
+* amlabel
+    - new --pool and --storage options.
+* amrmtape
+    - new --list-retention, --list-no-retention and --remove-no-retention
+      options.
+* amtape
+    - print the RetentionType in the inventory
+* amadmin
+    - new 'retention' command'
+* amfetchdump
+    - --init and --no-restore arguments.
+* s3 device
+    - New READ-FROM-GLACIER and TRANSITION-TO-GLACIER properties, they
+      allow to transition s3 objects to Glacier.
+* tapelist file
+    - include POOL, STORAGE and CONFIG
+    - you can share the same tapelist file across multiple config.
+* amgetconf
+    - New --platform argument
+    - New --distro argument
+* ambackup/ambackupd
+    - New client ambackup program to start a backup of the client
+    - New server service ambackupd
+    - This protocol works even if the client is behind a NAT
+
+
+                Release Notes for amanda-3.3.9
+
+* security-fix
+    - All previous release of amanda allow the 'amanda' user to execute
+      any code as root, and to execute an interactive shell as root.
+    - This is a security vulnerability if you do not trust the 'amanda'
+      user.
+    - There is no need to upgrade if you trust the 'amanda' user and the
+      account is secure.
+        - good password
+        - secure xinetd.conf setting
+        - securae .amandahosts setting
+    - The 'amanda' user can read all files in the machine, it is what a
+      backup program do.
+    - The set of fix disable the abilities to run unwanted code as root
+      or to write file anywhere in the filesystem.
+* security file
+    - security file is /etc/amanda-security.conf
+    - can be changed with --with-security-file configure option
+    - A file that contains security setting.
+    - It list all binaries amanda can execute as root
+    - restore_by_amanda_user
+        - It tell if the 'amanda' user can do restore as root.
+        - It allow the 'amanda' user to write files anywhere in the
+          filesystem
+    - see: man amanda-security.conf
+* amgtar/amstar/ambsdtar/runtar
+    - Disable arguments that can fork program.
+    - Verify the realpath (with symbolic link resolved) is in the
+      amanda-security.conf file.
+    - Verify the tar/star/bsdtar realpath program is secure
+        - owned by root and modifiable only by root.
+    - On restore, check the restore_by_amanda_user setting if not run
+      by root.
+
+
+                Release Notes for amanda-3.3.8
+
+* s3 device
+    o New NEARLINE S3-STORAGE-CLASS for Google storage.
+    o New AWS4 STORAGE-API
+* amcryptsimple
+    o Works with newer gpg2.
+* amgtar
+    o Default SPARSE value is NO if tar < 1.28.
+    o Because a bug in tar and some filesystem.
+* amstar
+    o support include in backup mode.
+* ampgsql
+    o Add FULL-WAL property.
+* Many bugs fix.
+
+
+                Release Notes for amanda-3.3.7
+
+* amvault
+    o new --no-interactivity argument.
+    o new --src-labelstr argument.
+* amdump
+    o compute crc32 of the streams and write them to the debug files.
+* chg-robot
+    o Add a BROKEN-DRIVE-LOADED-SLOT. property.
+* Many bugs fix.
+
+
+                Release Notes for amanda-3.3.6
+
+* ambsdtar
+    o new application that use BSD tar to do the backup.
+* Many bugs fix.
+
+
+                Release Notes for amanda-3.3.5
+
+* amtape
+    o faster 'verify' command.
+* fix parsing of config override arguments.
+* amsamba
+    o Add REGEX-MATCH property.
+* amvault
+    o Print progress status.
+* ndmp device
+    o INDIRECT property default to yes.
+* Many bugs fix.
+
+
+                Release Notes for amanda-3.3.4
+
+* amreport
+    o new --format argument
+    o new 'json' and 'json_raw' format.
+* amanda.conf
+    o new REPORT-FORMAT option.
+* amtape
+    o new 'verify' command.
+* amadmin
+    o new 'force-level-1' command.
+* ampgsql
+    o Add VERBOSE property.
+* S3 device
+    o handle DURABLE_REDUCED_AVAILABILITY for google storage.
+* Many bugs fix.
+
+
+                Release Notes for amanda-3.3.3
+
+* amdump.X log files use timestamp instead of number, amdump and amdump.1
+  are maintained as symlink.
+* chg-disk
+    o Use the changerfile for the statefile.
+* s3 device
+    o support CASTOR storage
+* amanda.conf
+    o New REPORT-USE-MEDIA and REPORT-NEXT-MEDIA.
+* amfetchdump
+    o new --extract, --directory, --data-path and --application-property
+      arguments. It allow to do the extraction on the server.
+* --exact-match argument to many command, and '=' prefix to expression.
+    o It diable use of expression for host, disk, level and datestamp on
+      command line argument.
+* All changer scripts.
+    o Add LOCK-TIMEOUT property.
+* Many bug fix.
+
+
+                Release Notes for amanda-3.3.2
+
+* amgtar
+    o New IGNORE-ZEROS property.
+* amsamba
+    o Fix use of subdir for restore.
+* s3 device
+    o New PROXY property.
+    o New PASSWORD, USERNAME, TENANT_ID, TENANT_NAME properties.
+    o New STORAGE_API property.
+    o New S3_MULTI_DELETE property
+    o New CLIENT_ID, CLIENT_SECRET and REFRESH_TOKEN properties.
+    o New CREATE-BUCKET property.
+    o New PROJECT-ID property.
+    o New REUSE-CONNECTION property.
+    o Works with swift and google storage.
+* NDMP device
+    o Add INDIRECT property.
+* amanda.conf
+    o Add 'max-warnings', The maximum number of warning lines in the report.
+    o Default 'columspec' changed to: HostName=0:-12:12,Disk=1:-11:11,Level=1:-1:1,OrigKB=1:-7:0,OutKB=1:-7:0,Compress=1:-6:1,DumpTime=1:-7:7,Dumprate=1:-6:1,TapeTime=1:-6:6,TapeRate=1:-6:1
+* amadmin
+    o Add --no-default and --print-source arguments for config and
+      disklist command.
+* amfetchdump
+    o Print progress.
+    o Add --decrypt, --no-decrypt, --server-decrypt, --client-decrypt,
+      --compress, --no-compress, --server-compress and --client-compress
+      options.
+* fix for compilation with newer glib.
+* fix for compilation on cigwin.
+* Many bug fix.
+
+
+                Release Notes for amanda-3.3.1
+
+* amrecover
+    o New 'settransalte' command.
+* amanda.conf
+    o new '$s' substitution in autolabel.
+    o new 'max-dle-by-volume' global option.
+    o new 'eject-volume' global option.
+* All perl programs have a new '--version' argument.
+* ampgsql can take property from server configuration.
+* amgetconf can print one property of a section.
+* s3 device
+    o new S3_SERVER_SIDE_ENCRYPTION property.
+* Many bug fix.
+
+
+		Release Notes for amanda-3.3.0
+
+* The default auth is changed to "bsdtcp", if you are using the default bsd
+  then you must add it to your configuration.
+    o in amanda.conf
+    o in amanda-client.conf
+    o in dumptype/disklist
+    o in xinetd (if no '-auth' argument to amandad)
+* amdump trap crtl-c, it still send the report and do cleanup if you do
+  one crtl-c, do it more than once to abort the run.
+* s3 device
+    o use multiple threads to speedup the transfer
+    o can connect to eucalytus.
+    o new NB_THREADS_BACKUP property
+    o new NB_THREADS_RECOVERY property
+    o new S3_HOST property
+    o new S3_SERVICE_PATH property
+    o new S3_SUBDOMAIN property
+* chg-aggregate: new changer that use other changer sequentially.
+* meta-volume
+* Add meta label in tapelist file
+* chg-disk:
+    o new NUM-SLOT property
+    o new AUTO-CREATE-SLOT property
+    o new REMOVABLE property
+    o new MOUNT property
+    o new UMOUNT property
+    o new UMOUNT-LOCKFILE property
+    o new UMOUNT-IDLE property
+* Change in amanda.conf
+    o new meta-autolabel option
+    o autolabel can include org, config, barcode, meta in the label
+    o new client-name option in appication and script.
+* application and script in amanda-client.conf can be used to set default
+  properties for application or script.
+* amlabel
+    o The label argument is no longer required, an autolabel can be
+      generated
+    o new --meta option
+    o new --barcode option
+    o new --assign option
+* amgtar, amstar: The path must be specified, it will not works with a
+  device.
+* amrecover: decompression and decryption are now done on the client if
+             compression/encryption was done on the client.
+* amtape: inventory print the current slot
+* amanda.conf:
+    o autoflush have value "no|yes|all"
+    o script have single-execution setting.
+    o Add pre-amcheck, post-amcheck, pre-estimate, post-estimate, pre-backup
+      and post-backup to execute-on of script.
+    o Add taperscan and interactivity section.
+    o add 'server' value in recovery-limit.
+    o add dump-limit in a dumptype.
+* amanda-client.conf
+    o add amdump-server setting.
+* script are searched in $APPLICATION_DIR, $CONFIG_DIR/<conf>/application
+  and $CONFIG_DIR/application
+* amservice
+    o add -s argument
+    o is also installed on client
+* new amdumpd server service, if enable, it allow client to start a backup
+  of itself.
+* new amdump_client program, it is use on client to start a backup of itself
+* implement restore command amzfs-sendrecv, it can be use with amrecover.
+
+		Release Notes for amanda-3.2.2
+
+* Do not restore the NUL padding bytes, some program fail with them.
+* Fix driver doing nothing if taper crash early.
+* Fix taperalog *FIT no going to second volume.
+* Fix amrestore '-p' not going to next file.
+* flush even if flush threshold are not met if it save tape space.
+* fix crash in amtrmidx due to memory leak.
+* amsamba use 'Use smbclient -TF' for restore.
+
+		Release Notes for amanda-3.2.1
+
+* barcode are added to the tapelist file.
+* Faster 'amadmin find', improve speed on many programs.
+* device-output-buffer-size default to a minimum of 4*block_size.
+* ssh auth use the client-port
+* Bug fixed
+   o "Can't opendata output stream: Connection refused" bug.
+   o Better handling of dump to tape.
+   o Corrupted 'amdump' log file, amstatus not showing correct state.
+   o Execute subprocess with the config overwrite.
+   o tape-device allow to set LEOM.
+   o Crash in robot changer.
+   o Script output property are not sent to application.
+
+		Release Notes for amanda-3.2.0
+
+* Support for multiple simultaneous writes to storage devices
+   o Can write to all available drives in parallel.
+   o Works only with the new changer API.
+   o Useful if two or more volumes are used in a single run.
+   o dump direct to tape can be scheduled any time during the run,
+     previously they were done sequencially after all dump to holding disk.
+   o enabled with the new 'taper-parallel-write' configuration option.
+* Support for LEOM in storage devices
+   o allows splitting without partial parts, saving space
+   o much more efficient, since parts need not be cached on disk in most
+     cases
+* new, simpler splitting commands in the tapetype section:
+  part-size, part-cache-type, part-cache-dir, part-cache-max-size; see
+  amanda.conf(5) for details
+* Amanda server configuration file changes (amanda.conf)
+   o new configuration keyword:
+      + taper-parallel-write -- How many drive amanda can write to
+                                in parallel.
+   o deprecated configuration keywords:
+      + amrecover_do_fsf
+      + amrecover_check_label
+* the CONFIG parameter to amidxtaped is now required; this means that
+  versions of amrecover older than 2.4.3 will be unable to recover from
+  servers running Amanda-3.2 and later.
+* The new dumptype and global parameters 'recovery-limit' can be used to
+  limit which hosts may recover from a particular DLE.  See amanda.conf(5)
+  and amanda-auth(7) for more information.
+* Several old changers have been removed - these changers will work with
+  Amanda for the forseeable future, but are no longer included in the
+  distribution.
+   o chg-chio
+   o chg-chs
+   o chg-iomega
+   o chg-juke
+   o chg-mcutil
+   o chg-mtx
+   o chg-null (use the new "chg-null:")
+   o chg-rait (use the new "chg-rait:{dev1,dev2}")
+   o chg-rth
+   o chg-scsi-chio
+   o chg-scsi
+* Amdump change:
+   o new '--no-taper' option to start the run in degraded mode
+* Amvault is much improved, but still experimental:
+   o supports assembling split parts on the source volume and re-splitting
+     them on the destination
+   o supports filtering dumps with the same syntax as amfetchdump
+   o a --fulls-only option skips all incremental dumps on the source
+   o an --export option tries to move tertiary volumes to import/export
+     slots when completed
+   o command-line syntax has changed incompatibly; see manpage or
+     'amvault --help'
+* Rewritten and improved:
+   o amoverview
+   o amcheckdump
+
+		Release Notes for amanda-3.1.0
+
+config
+  * The 'rawtapedev' keyword was removed, and the 'label_new_tapes' keyword
+    was deprecated.
+  * New warnings for dangerous splitting configurations
+
+changer
+  We have many changers implementing the new changer API. The new changers are
+  faster, more reliable, and have many new features.  One new features is that
+  the changer keeps track of which label is in which slot, allowing it to
+  locate a tape faster. But with some changers (new chg-multi or chg-robot
+  without a barcode), it doesn't get automaticaly notified if you change the
+  volume in a slot. In this case, you must notify the changer of it with the
+  'amtape <conf> update' command:
+    amtape DailySet1 update 3-8
+    amtape DailySet1 update 3-8=
+    amtape DailySet1 update 3=DailySet-003
+  See amanda-changers(7) for more information.
+
+ndmp, dvdrw
+  New Amanda devices - see amanda-devices(7) for more information.
+
+amsamba
+  The default amandapass file for the amsamba application is
+  $CONFIG_DIR/amandapass, but it is /etc/amandapass for program GNUTAR.
+  Don't forget to move the file if you switch to the amsamba application.
+
+ampgsql, amsuntar, amraw
+  New applications to back up PostgreSQL databases, Solaris systems, and
+  raw device files, respectively.
+
+amtape
+  Amtape's behavior has changed; see NEWS
+
+amrmtape
+  Rewritten with new command-line interface; see NEWS
+
+amdevcheck
+  New --label and --properties options give more information about device
+
+amreport
+  New, more natural command-line interface (try 'amreport $config')
+
+
+		Release Notes for amanda-2.6.1
+
+amgtar, amstar, amsamba, amzfs-sendrecv
+  Three new programs implementing application-api.
+  Swithching from the program "GNUTAR" to the application "amgtar" have some
+  advantage:
+   - amgtar use by default the gtar --atime-preserve=system option, you must
+     disable it if you gtar relase doesn't have that option.
+   - Can be configured to cross filesystem.
+   - Can be configured to not check the device number on newer gtar
+     (--no-check-device of gtar).
+   - You can configure error message from gtar you don't want to see in the
+     report.
+
+amzfs-snapshot, script-email
+  Two new scripts implementing script-api.
+  The 'zfs-snapshot' script must be used only with the 'amgtar' application.
+
+amarchiver
+  New program to manipulate file in amanda archive format.
+
+New perl Module:
+  Application (perl utility functions for Applications)
+  Archive (Perl access to the  amanda archive library)
+  Constants (perl access to build-time configuration values)
+  MainLoop (Perl interface to the Glib MainLoop)
+  Process (interface to process), used by amcleanup.
+  Script (perl utility functions for Scripts)
+  Tapelist (Manipulate the Amanda tapelist)
+  Xfer (Xfer-api)
+
+
+		Release Notes for amanda-2.6.0
+
+amcheckdump
+  New program written entirely in perl, it replaces 'amverify' and
+  'amveryfyrun'
+
+amcryptsimple, amgpgcrypt
+  New encryption plugins based on gpg.
+
+amserverconfig, amaddclient
+  New Initial Amanda configuration tools, these tools make assumptions,
+   please see man page.
+
+Deprecated programs
+  'amverify' and 'amveryfyrun' are deprecated -- use amcheckdump.
+  'amdd' and 'ammt' are also deprecated. If you have scripts that use
+  them, then you must rewrite them in perl using the new perl modules.
+
+Configure options
+  --disable-shared doesn't work because perl modules require shared library.
+  Instead, use --with-static-binaries to build staticailly linked binaries.
+  --with-amlibdir, libraries are now installed in $amlibdir
+    --without-amlibdir              : amlibdir=$libdir
+    --with-amlibdir=yes             : amlibdir=$libdir/amanda  (default value)
+    --with-amlibdir=/path/to/libdir : amlibdir=/path/to/libdir
+  --with-amlibexecdir, internal programs are installed in $amlibexecdir
+    --without-amlibexecdir                  : amlibdir=$libexecdir
+    --with-amlibexecdir=yes                 : amlibdir=$libexecdir/amanda
+                                                             (default value)
+    --with-amlibexecdir=/path/to/libexecdir : amlibdir=/path/to/libexecdir
+  --with-amperldir, Where to install perl modules
+    --without-amperldir               : amperldir=$amlibdir/perl
+    --with-amperldir=yes              : amperldir= $(perl installsitelib)
+                                                                (default value)
+    --with-amperldir=/path/to/perldir : amperldir=/path/to/perldir
+
+Path changes
+  Libraries are installed in $amlibdir (previously $libdir)
+  Internal programs are installed in $amlibexecdir (previously $libexecdir)
+  You must change your inetd/xinetd config for the new amandad path.
+  The amandad path change affect rsh/ssh auth, amanda-2.6.0 installations
+  will need to add an 'amandad_path' parameter to configuration files in
+  order to talk to older versions of Amanda:
+     amanda-2.6.0 client -> amanda-2.5.2 or earlier server: add
+       'amandad_path "/usr/libexec/amandad"' (or the appropriate path) to
+       /etc/amanda/amanda-client.conf
+     amanda-2.5.2 or earlier client -> amanda-2.6.0 server: add
+       'amandad_path "/usr/libexec/amanda/amandad"' (or the appropriate path)
+       to /etc/amanda/amanda-client.conf
+     amanda-2.6.0 server -> amanda-2.5.2 or earlier client: add
+       'amandad_path "/usr/libexec/amandad"' (or the appropriate path) to the
+       dumptype
+     amanda-2.5.2 or earlier server -> amanda-2.6.0 client: add
+       'amandad_path "/usr/libexec/amanda/amandad"' (or the appropriate path)
+       to the dumptype
+  The amandates files is now $localstatedir/amanda/amandates, previously it
+  was /etc/amandates, this file must be created on all client.
+
+usetimestamps
+  It now defaults to 'yes'.
+
+Glib
+  glib is required to compile and run amanda.
+  It is free and can be downloaded form http://www.gtk.org/download/
+
+Device API
+  The Device API is a complete rewrite of all tape-access functionality.
+  To use the Device API, all devices must be specified by their full
+  name, e.g., tape:/dev/nst0.  Existing functionality is now available
+  in the tape, file, and rait devices, and a new Amazon S3 backend named
+  's3' is also available.
+
+Perl Module
+  Link directly to Amanda, to support writing Amanda applications in Perl
+  Available Modules:
+    Changer (Execute changer scripts)
+    Cmdline (Parse command line argument)
+    Config (Parse config files)
+    Device (device-api)
+    Debug (Write to debug files)
+    Logfile (Parse log files)
+    Tapefile (Parse tapelist file)
+  Perl modules are installed in $amperldir
+
+local security driver (auth)
+  Allows backups of the Amanda server without any need for network
+  configuration, and similarly allows amrecover to work on the Amanda
+  server without any network configuration.
+
+make installcheck
+  Almost 200 unit tests are available, which should be run on an installed
+  copy of Amanda.  See http://wiki.zmanda.com/index.php/Testing for more
+  information.
+
+flush-threshold-dumped, flush-threshold-scheduled, taperflush
+  These three config options allow to better fill your tapes.
+  They are what was known as the taperstart/taperflush feature.
+
+
+		Release Notes for amanda-2.5.2
+
+IPv6
+
+  IPv6 support is enabled by default if your OS support it, if your OS is
+  not working correctly with IPV6, you can disable it at configure time
+  with '--without-ipv6'.
+
+readblocksize
+
+  This option is useful only if you configured amanda with a big
+  '--with-maxtapeblocksize' and your hardware can't works with big block
+  size.
+  
+
+		Release Notes for amanda-2.5.1
+
+
+usetimestamps
+
+  This new feature will record all dump with timestamp instead of datestamp,
+  it will allow to do many dump in a day and recover easily anyone of them.
+
+  If you use this features, you will not be able to downgrade to 2.5.0 or
+  earlier.
+
+  see the usetimestamps section of 'man amanda.conf'
+
+
+bsdudp/bsdtcp
+
+  These are 2 new auth, they still use bsd authentification like bsd, but
+  use less port.
+
+  bsdudp is like bsd, it use udp for connecting to client but it will use
+  only one tcp port for all data stream.
+
+  bsdtcp use tcp to connect the to client and it's the only network
+  connection use.  It doesn't have the udp packet size limit, so you can
+  have an unlimited number of DLE for a single host.
+
+amrecover use the security-api
+
+  amrecover now use the security-api, You don't need to configure an
+  amindexd and an amidxtaped services in your xinetd.
+  amindexd and amidxtaped will be launched by amandad like any other services.
+  You must do modification to your xinetd configuration and .amandahosts toi
+  allow connection to amindexd and amidxtaped.
+
+new format of xinetd.d/amanda
+
+  amandad get in arguments the list of services it can launch, you must add
+  theses services in the server_args options.
+
+new format of .amandahosts
+
+  You must append to each line the services this client can launch, the
+  default is "amdump"
+
+
+See the AUTHORIZATION section of the amanda man page and the
+docs/howto-auth.txt
+

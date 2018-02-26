@@ -1,0 +1,79 @@
+%F log/log
+INFO amdump amdump pid 23649
+INFO planner planner pid 23682
+DISK planner localhost.localdomain /boot1
+START planner date 20090225080737
+INFO driver driver pid 23684
+START driver date 20090225080737
+STATS driver hostname localhost.localdomain
+STATS driver startup time 0.004
+INFO dumper dumper pid 23686
+INFO taper taper pid 23685
+FINISH planner date 20090225080737 time 0.084
+INFO planner pid-done 23682
+INFO chunker chunker pid 23733
+INFO dumper gzip pid 23738
+SUCCESS dumper localhost.localdomain /boot1 20090225080737 0 [sec 120.00 kb 12000 kps 100.0 orig-kb 12000]
+STATS driver estimate localhost.localdomain /boot1 20090225080737 0 [sec 120 nkb 12000 ckb 12000 kps 100]
+SUCCESS chunker localhost.localdomain /boot1 20090225080737 0 [sec 120 kb 12000 kps 10.0]
+INFO chunker pid-done 23733
+INFO dumper pid-done 23738
+START taper datestamp 20090225080737 label DIRO-TEST-003 tape 1
+PART taper DIRO-TEST-003 1 localhost.localdomain /boot1 20090225080737 1/-1 0 [sec 100.00 kb 10000 kps 100.0]
+INFO taper tape DIRO-TEST-003 kb 12000 fm 1 [OK]
+ERROR taper no-tape config [taperflush criteria not met]
+PARTIAL taper localhost.localdomain /boot1 20090225080737 1 0 [sec 100.00 kb 10000 kps 100.0 orig-kb 12000] "taperflush criteria not met"
+INFO taper pid-done 23685
+FINISH driver date 20090225080737 time 5.306
+INFO driver pid-done 23684
+
+%T report
+Hostname: localhost.localdomain
+Org     : DailySet1
+Config  : TESTCONF
+Date    : February 25, 2009
+
+These dumps were to tape DIRO-TEST-003.
+Not using all tapes because taperflush criteria not met.
+Some dumps may have been left in the holding disk.
+The next tape Amanda expects to use is: 1 new tape.
+
+FAILURE DUMP SUMMARY:
+localhost.localdomain /boot1 lev 0 partial taper: taperflush criteria not met
+
+STATISTICS:
+                          Total       Full      Incr.   Level:#
+                        --------   --------   --------  --------
+Estimate Time (hrs:min)    0:00
+Run Time (hrs:min)         0:00
+Dump Time (hrs:min)        0:02       0:02       0:00
+Output Size (meg)          11.7       11.7        0.0
+Original Size (meg)        11.7       11.7        0.0
+Avg Compressed Size (%)   100.0      100.0        --
+DLEs Dumped                 1          1          0
+Avg Dump Rate (k/s)       100.0      100.0        --
+
+Tape Time (hrs:min)        0:02       0:02       0:00
+Tape Size (meg)             9.8        9.8        0.0
+Tape Used (%)              32.6       32.6        0.0
+DLEs Taped                  1          1          0
+
+Parts Taped                 1          1          0
+Avg Tp Write Rate (k/s)   100.0      100.0       --
+
+USAGE BY TAPE:
+  Label               Time        Size      %  DLEs Parts
+  DIRO-TEST-003       0:02 10000K  32.6     1     1
+
+
+NOTES:
+  taper: tape DIRO-TEST-003 kb 12000 fm 1 [OK]
+
+
+DUMP SUMMARY:
+                                          DUMPER STATS                    TAPER STATS
+HOSTNAME              DISK   L      ORIG-KB  OUT-KB  COMP%  MMM:SS   KB/s MMM:SS   KB/s
+----------------------------------- ---------------------- -------------- -------------
+localhost.localdomain /boot1 0      12000     10000     --    2:00  100.0   1:40  100.0 PARTIAL
+
+(brought to you by Amanda version x.y.z)

@@ -1,0 +1,28 @@
+This directory contains scripts and data files necessary to build various binary
+(or source) installation packages.  These are the currently functional packages:
+	-.deb packages
+	-RPMs for various OSes that use them.  TODO: Wiki page with a full
+	 list of RPM using distros and versions the .spec supports.
+Coming soon:
+	-ebuilds for Gentoo
+	-.msi packages for Windows XP and Server 2003 
+	-macosx-pkg builds
+	-Solaris .pkg builds for 9,10
+	-Common files which can be shared by all packages such License.txt,
+	 README, or Copyrights.
+
+The Directory layout is as follows:
+packaging/
+	deb/		# Debian
+	rpm/		# RPM
+
+Each subdirectory (except common) has a shell script named buildpkg.  This 
+script will actually build the package with Zmanda's defaults for you.
+
+Notes:
+    -deb package changelog is non-standard when checked out.  either use 
+     packaging/deb/buildpkg to build the package, or replace %%VERSION%% with
+     the correct number supplied in configure.ac at approximately line 10:
+     AM_INIT_AUTOMAKE( ... )
+
+See http://wiki.zmanda.com/index.php/Installation for more information.

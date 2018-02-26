@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"
+[
+  <!-- entities files to use -->
+  <!ENTITY % global_entities SYSTEM 'global.entities'>
+  %global_entities;
+]>
+
+<refentry id='amzfs-snapshot.8'>
+
+<refmeta>
+<refentrytitle>amzfs-snapshot</refentrytitle>
+<manvolnum>8</manvolnum>
+&rmi.source;
+&rmi.version;
+&rmi.manual.8;
+</refmeta>
+<refnamediv>
+<refname>amzfs-snapshot</refname>
+<refpurpose>Amanda script to create zfs snapshot</refpurpose>
+</refnamediv>
+<refentryinfo>
+&author.jlm;
+&author.dustin;
+</refentryinfo>
+<!-- body begins here -->
+
+<refsect1><title>DESCRIPTION</title>
+
+<para>amzfs-snapshot is an Amanda script implementing the Script API.  It should
+not be run by users directly.  It create a zfs snapshot of the filesystem
+where the path specified is mounted.</para>
+
+<para>PRE-DLE-* create a snapshot and the POST-DLE-* destroy the snapshot,
+*-DLE-AMCHECK, *-DLE-ESTIMATE and *-DLE-BACKUP must be set to be executed on the client:
+<programlisting>
+    execute-on  pre-dle-amcheck, post-dle-amcheck, pre-dle-estimate, post-dle-estimate, pre-dle-backup, post-dle-backup
+    execute-where client
+</programlisting></para>
+<para>The PRE_DLE_* script output a DIRECTORY property telling where the directory is located in the snapshot. The application must be able to use the DIRECTORY property, amgtar can do it.</para>
+
+<para>The script is run as the amanda user, it must have the privilege to create and destroy snapshot:
+<programlisting>
+    zfs allow -ldu AMANDA_USER mount,snapshot,destroy FILESYSTEM
+</programlisting></para>
+
+<para>Some system doesn't have "zfs allow", but you can give the Amanda backup user the rights to manipulate ZFS filesystems by using the following command:
+<programlisting>
+usermod -P "ZFS File System Management,ZFS Storage Management" AMANDA_USER
+</programlisting>
+This will require that your run zfs under pfexec, set the PFEXEC property to YES.</para>
+
+<para>The format of the DLE must be one of:
+<programlisting>
+Desciption              Example
+----------              -------
+Mountpoint              /data
+Arbitrary mounted dir   /data/interesting_dir
+ZFS pool name           datapool
+ZFS filesystem          datapool/database
+ZFS logical volume      datapool/dbvol
+</programlisting></para>
+<para>The filesystem must be mounted.</para>
+
+</refsect1>
+
+<refsect1><title>PROPERTIES</title>
+
+<para>This section lists the properties that control amzfs-snapshot's functionality.
+See <manref name="amanda-scripts" vol="7"/>
+for information on the Script API, script configuration.</para>
+
+<!-- PLEASE KEEP THIS LIST IN ALPHABETICAL ORDER -->
+<variablelist>
+ <!-- ==== -->
+ <varlistentry><term>DF-PATH</term><listitem>
+Path to the 'df' binary, search in $PATH by default.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>ZFS-PATH</term><listitem>
+Path to the 'zfs' binary, search in $PATH by default.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>PFEXEC-PATH</term><listitem>
+Path to the 'pfexec' binary, search in $PATH by default.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>PFEXEC</term><listitem>
+If "NO" (the default), pfexec is not used, if set to "YES" then pfexec is used.
+</listitem></varlistentry>
+</variablelist>
+
+</refsect1>
+
+<refsect1><title>EXAMPLE</title>
+
+In this example, a dumptype is defined to use amzfs-snapshot script to create a snapshot and use amgtar to backup the snapshot.
+
+<programlisting>
+ define script-tool amzfs_snapshot {
+   comment "backup of zfs snapshot"
+   plugin  "amzfs-snapshot"
+   execute-on  pre-dle-amcheck, post-dle-amcheck, pre-dle-estimate, post-dle-estimate, pre-dle-backup, post-dle-backup
+   execute-where client
+   #property "DF-PATH" "/usr/sbin/df"
+   #property "ZFS-PATH" "/usr/sbin/zfs"
+   #property "PFEXEC-PATH" "/usr/sbin/pfexec"
+   #property "PFEXEC" "NO"
+ }
+
+ define dumptype user-zfs-amgtar {
+   dt_amgtar
+   script "amzfs_snapshot"
+ }
+</programlisting>
+</refsect1>
+
+<seealso>
+<manref name="amanda.conf" vol="5"/>,
+<manref name="amanda-client.conf" vol="5"/>,
+<manref name="amanda-scripts" vol="7"/>
+</seealso>
+
+
+</refentry>

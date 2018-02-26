@@ -1,0 +1,14 @@
+This directory contains odds and ends that have been contributed by
+other Amanda users.  They are made available on a completely "as-is"
+basis for the benefit of the Amanda community.
+
+========
+dbbackup
+========
+
+The dbbackup.* files provide a "hot" backup system for an Oracle database
+to a disk partition, which can then be backed up with Amanda.
+
+Author: Todd M. Helfter
+        Purdue University Computing Center
+        tmh@purdue.edu

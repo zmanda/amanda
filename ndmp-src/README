@@ -1,0 +1,146 @@
+This is a heavily-modified versino of NDMJOB, adapted to build
+as part of Amanda.  Below is the original README file
+
+
+****************************************************************
+
+
+NDMJOB is a NDMP-compatible backup/restore package, reference
+implementation, and conformance test. It is furnished in source
+code form to the public by Traakan, Inc. and other contributors
+free of charge or restriction. NDMP (Network Data Management
+Protocol) is an open protocol for network based backup enabling
+multi-vendor backup solutions. NDMJOB may be used as a ready-to-run
+backup package, used in conjunction with other NDMP products,
+as the basis for new products, as a verification of NDMP products,
+and as a reference of the NDMP protocol standards and conventions.
+
+http://www.traakan.com/ndmjob	NDMJOB latest source and docs
+http://www.ndmp.org		NDMP protocol status and info
+mailto:ndmp-tech@ndmp.org	Questions, comments and bug reports.
+mailto:ndmjob@traakan.com	Contributions and bug fixes
+
+
+
+
+
+
+
+================================================================
+
+1-Mar-2000   NDMJOBLIB:1.1 Release
+
+Howdy NDMP Folx,
+
+A PRE-CONNECTATHON drop of NDMJOB is available. Please see
+
+	http://www.traakan.com/ndmjob/
+
+This is NDMJOBLIB version is 1.1.
+
+There has been a fair bit of shake-out. Many bugs
+are fixed. There will be more shake-out before
+Connectathon. It really is in pretty good shape.
+
+Most of the NDMPv3 work is done. What's missing is the
+ability to provide a name list (nlist[]) to the RECOVER
+and RECOVER_FILEHIST. This needs to be discussed
+because the ndmp3_name is a bit awkward for the
+tar(1) format. Also, ndmjob -x hasn't been tried
+and probably won't work.
+
+It does to direct and sequential recover of the image
+stream. There are lots and lots of DATA_READ messages
+passed around if you enable them with -E RECOVER_DIRECT=yes.
+
+The MD5 stuff isn't integrated, but will be by Connectathon.
+It looks pretty good, and won't take much time.
+
+There are template files ndmos_xxx.h and ndmos_xxx.c for the
+O/S specific portions. ndmos_freebsd.[ch] and ndmos_solaris.[ch]
+are here, and use the tape simulator. No SCSI support. If you
+make a new ndmos_xxx.[ch], or fix the ones already here, please
+be a good sport and contribute them back.
+
+There is a new file in the source directory called
+ThingsToTry. This represents what Traakan will try
+with NDMJOB as a CONTROL agent (client) at Connectathon.
+
+Please send comments, questions, bug reports to ndmp-tech@ndmp.org.
+Please send contributions, like ndmos_xxx.[ch] and bug fixes, to
+ndmjob@traakan.com.
+
+Regards,
+	-gww
+
+
+
+
+PLANNED DROPS
+=============
+
+1.2 Connectathon, Mar-2-2000. Improved tests. Integration
+    of contributions and bug fixes. While at Connectathon,
+    NDMJOB will be adapted real-time to reflect consensus.
+
+1.3 Post Connectathon. Week of Mar-13-2000. Changes at
+    Connectathon integrated.
+
+
+
+
+
+================================================================
+
+18-Feb-2000   NDMJOBLIB:1.0 Release
+
+
+Howdy NDMP Folx,
+
+A PREVIEW drop of NDMJOB is available. Please see
+
+	http://www.traakan.com/ndmjob/
+
+This is the PREVIEW drop of NDMJOB. The NDMJOBLIB version is 1.0.
+
+The NDMPv3 work isn't quite finished. It's close. It's taking
+more than I expected. The Makefile here disables the NDMPv3
+features. You can re-enable them. It does compile, and some
+things work.
+
+There are template files ndmos_xxx.h and ndmos_xxx.c for the
+O/S specific portions. ndmos_freebsd.[ch] and ndmos_solaris.[ch]
+are here, and use the tape simulator. No SCSI support. If you
+make a new ndmos_xxx.[ch], or fix the ones already here, please
+be a good sport and contribute them back.
+
+It's been quite a while and a few hundred changes since I've
+put NDMJOB through it's paces. Bugs and quirks are likely.
+
+Please send comments, questions, bug reports to ndmp-tech@ndmp.org.
+Please send contributions, like ndmos_xxx.[ch] and bug fixes, to
+ndmjob@traakan.com.
+
+Regards,
+	-gww
+
+
+
+
+PLANNED DROPS
+=============
+
+1.1 Week of Feb-21-2000. NDMPv3 work completed. Most DATA agent
+    functions working. Some improvement in -o test-tape and
+    -o test-mover. Lots of work on the docs
+
+1.2 Connectathon, Mar-2-2000. Improved tests. Integration
+    of contributions and bug fixes. While at Connectathon,
+    NDMJOB will be adapted real-time to reflect consensus.
+
+1.3 Post Connectathon. Week of Mar-13-2000. Changes at
+    Connectathon integrated.
+
+
+
+((THINGS TO TRY moved to file ThingsToTry))

@@ -1,0 +1,128 @@
+/*
+ * Copyright (c) 2013-2016 Carbonite, Inc.  All Rights Reserved.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, write to the Free Software Foundation, Inc.,
+ * 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
+ *
+ * Contact information: Carbonite Inc., 756 N Pastoria Ave
+ * Sunnyvale, CA 94085, or: http://www.zmanda.com
+ */
+
+%perlcode %{
+
+=head1 NAME
+
+Amanda::Cmdfile - manage Amanda cmdfile
+
+=head1 SYNOPSIS
+
+  use Amanda::Config qw( :getconf config_dir_relative );
+  use Amanda::Cmdfile;
+
+  my $conf_cmdfile = config_dir_relative(getconf($CNF_CMDFILE));
+  my $cmdfile = Amanda::Cmdfile->new($conf_cmdfile);
+
+  my $cmddata = Amanda::Cmdfile::Cmddata->new(
+		operation      => $Amanda::Cmdfile::CMD_FLUSH,
+		config         => get_config_name(),
+		holding_file   => $hfile,
+		host           => $hostname,
+		disk           => $diskname,
+		dump_timestamp => $dump_timestamp,
+		storage        => $storage_name,
+		working_pid    => getpid(),
+		status         => $Amanda::Cmdfile::CMD_TODO);
+  $cmdfile->add_to_memory($cmddata);
+  if ($cmdfile->has_holding($hfile)) { ... }
+  my $ids = $cmdfile->get_ids_for_holding($hfile);
+  $cmdfile->write();
+
+
+=head2 Cmdfile FUNCTIONS
+
+Use these functions to read/update the cmdfile.
+
+=over
+
+=item C<new>
+
+  my $cmddata = Amanda::Cmdfile::new($conf_cmdfile)
+
+Open a cmdfile, lock the file.
+
+=item C<write>
+
+  $cmddata->writenew();
+
+Write the cmdfile. Unlock the file.
+
+=item C<unlock>
+
+  $cmddata->unlock();
+
+Unlock the file.
+
+=item C<add_to_memory>
+
+  $cmddata->add_to_memory($cmddata);
+
+Add Cmddata to the in memory copy.
+
+=item C<add_to_file>
+
+  $cmddata->add_to_file($cmddata);
+
+Add the Cmddata to the file, write, unlock and close it.
+
+=item C<has_holding>
+
+  $has_holding = $cmddata->has_holding($holding_file);
+
+Return true if there is a command for the holding file.
+
+=item C<get_ids_for_holding>
+
+  $ids = $cmddata->get_ids_for_holding($holding_file);
+
+Return a string of all command ids for the holding file.
+
+=back
+
+=head2 Cmddata FUNCTIONS
+
+Use that function to create a Cmddata
+
+=over
+
+=item C<new>
+
+  my $cmddata = Amanda::Cmdfile::Cmddata->new(
+		operation      => $Amanda::Cmdfile::CMD_FLUSH,
+		config         => get_config_name(),
+		holding_file   => $hfile,
+		host           => $hostname,
+		disk           => $diskname,
+		dump_timestamp => $dump_timestamp,
+		storage        => $storage_name,
+		working_pid    => getpid(),
+		status         => $Amanda::Cmdfile::CMD_TODO);
+
+Create a Cmddata
+
+=back
+
+=cut
+
+
+%}

@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"
+[
+  <!-- entities files to use -->
+  <!ENTITY % global_entities SYSTEM 'global.entities'>
+  %global_entities;
+]>
+
+<refentry id='amcrypt.8'>
+<refmeta>
+<refentrytitle>amcrypt</refentrytitle>
+<manvolnum>8</manvolnum>
+&rmi.source;
+&rmi.version;
+&rmi.manual.8;
+</refmeta>
+<refnamediv>
+<refname>amcrypt</refname>
+<refpurpose>reference crypt program for Amanda symmetric data encryption</refpurpose>
+</refnamediv>
+<refentryinfo>
+&author.ktill;
+</refentryinfo>
+<!-- body begins here -->
+<refsynopsisdiv>
+<cmdsynopsis>
+  <command>amcrypt</command>    
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1><title>DESCRIPTION</title>
+<para>&amcrypt; 
+requires <emphasis remap='B'>aespipe</emphasis>, <emphasis
+remap='B'>uuencode</emphasis> and <emphasis
+remap='B'>gpg</emphasis>  to work. Aespipe is available from <ulink
+url="http://loop-aes.sourceforge.net"/></para>
+<para>&amcrypt; will search for the aespipe program in the following directories:
+/usr/bin:/usr/local/bin:/sbin:/usr/sbin.</para>
+<para>&amcrypt; calls &amaespipe; and pass the
+<emphasis remap='B'>passphrase</emphasis> through file descriptor 3.
+The passphrase should be stored in ~amanda/.am_passphrase.</para>
+</refsect1>
+
+<refsect1><title>How to create encryption keys for amcrypt</title>
+<para>1. Create 65 random encryption keys and encrypt those keys using gpg. Reading
+from /dev/random may take indefinitely long if kernel's random entropy pool
+is empty. If that happens, do some other work on some other console (use
+keyboard, mouse and disks).</para>
+<para> head -c 2925 /dev/random | uuencode -m - | head -n 66 | tail -n 65 \
+        | gpg --symmetric -a > ~amanda/.gnupg/am_key.gpg
+</para>
+<para>This will ask for a passphrase. Remember this passphrase as you will need
+it in the next step.</para>
+<para>2. Store the passphrase inside the home-directory of the AMANDA-user and
+protect it with proper permissions:</para>
+
+<programlisting>
+echo my_secret_passphrase > ~amanda/.am_passphrase
+chown amanda:disk ~amanda/.am_passphrase
+chmod 700 ~amanda/.am_passphrase
+</programlisting>
+
+</refsect1>
+
+<refsect1><title>Key and Passphrase</title>
+<para>&amcrypt; uses the same key to encrypt and decrypt data.</para>
+<para>It is very important to store and protect the key and the passphrase
+properly. Encrypted backup data can <emphasis remap='B'>only</emphasis> be recovered with the correct key and
+passphrase.</para>
+</refsect1>
+
+<seealso>
+<manref name="amanda.conf" vol="5"/>,
+<manref name="aespipe" vol="1"/>,
+<manref name="amaespipe" vol="8"/>,
+<manref name="gpg" vol="1"/>
+</seealso>
+
+</refentry>
+

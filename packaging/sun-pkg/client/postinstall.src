@@ -1,0 +1,88 @@
+#!/bin/sh
+
+LOGFILE=`mktemp /tmp/amanda-client-postinstall.log.XXXXXXXXXXX`
+if [ $? -ne 0 ]; then
+    echo "Unable to mktemp!" 1>&2
+    exit 1
+fi
+amanda_user=amandabackup; export amanda_user
+amanda_group=disk; export amanda_group
+# BASEDIR is set by either in pkginfo, or if not set, by pkgadd at installtime.
+# Unfortunately, it messes things up to have basedir="/".
+[ "x${BASEDIR}" = "x/" ] && basedir="" || basedir=${BASEDIR}
+AMANDAHOMEDIR="${basedir}%%AMANDAHOMEDIR%%"; export AMANDAHOMEDIR
+os=SunOS; export os
+arch=%%ARCH%%; export arch
+LOGDIR="${basedir}%%LOGDIR%%"; export LOGDIR
+INSTALL_LOG="${LOGDIR}/install.log"; export INSTALL_LOG
+SYSCONFDIR="${basedir}/etc"; export SYSCONFDIR
+SBINDIR="${basedir}/usr/sbin"; export SBINDIR
+AMTMP="/tmp/amanda"
+
+AMANDATES=${SYSCONFDIR}/amandates; export AMANDATES
+# uuencode is still standard on sol10, but haven't checked sol 11.
+encoder=`{ command -v base64 2>/dev/null; } || { command -v uuencode 2>/dev/null; }`
+
+# ---------- Common functions ------------
+%%COMMON_FUNCTIONS%%
+%%POST_INST_FUNCTIONS%%
+
+# -------- End Common functions ----------
+
+add_service
+rel=`uname -r`
+if [ "$rel" = "5.8" ]; then
+    check_inetd "amandaclient"
+    case $? in
+      0) backup_inetd "amandaclient"
+           install_inetd "amandaclient"
+      ;;
+      1) install_inetd "amandaclient" ;;
+      2) logger "Error: Amanda service not installed because inetd config was not found: either inetd config is not present or inetd is a directory." ;;
+    esac
+    # Amanda clients should not have the server xinetd installed.
+    check_inetd "amandaserver"
+    case $? in
+      0) backup_inetd "amandaserver" ;;
+    esac
+    reload_inetd
+else
+    # Solaris 10+ uses smf, but we can't differentiate server from client, all
+    # entries end up named "amanda"
+    check_smf "amanda"
+    case $? in
+      0) backup_smf || logger "Warning: Backup of existing service failed. continuing..."
+         install_smf "amandaclient" || \
+            logger "Warning: Amanda service not installed."
+      ;;
+      1) install_smf "amandaclient" ;;
+    esac
+fi
+
+create_amandates
+check_amandates
+create_ampassphrase || \
+    logger "Info: amcryptsimple and amcrpyt will not work until .am_passphrase is created"
+create_gnupg
+create_amkey || \
+    logger "Info: amcrypt will not work until keys are created."
+# Checks permissions, but only tries decrypting if both .am_passphrase
+# and .gnupg/am_key.gpg exist.
+check_gnupg
+create_amandahosts
+check_amandahosts_entry root amindexd amidxtaped
+check_amandahosts_entry ${amanda_user} amdump
+check_amandahosts_perms
+create_ssh_key client
+create_profile
+check_profile
+install_client_conf
+create_amtmp
+
+logger "Amanda installation complete."
+exit_msg="Amanda installation log can be found in '${INSTALL_LOG}'."
+cat $LOGFILE >> $INSTALL_LOG && {
+    rm $LOGFILE
+    echo "${exit_msg} '${INSTALL_LOG}'."
+} || \
+    echo "${exit_msg} $LOGFILE."

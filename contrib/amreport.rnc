@@ -1,0 +1,201 @@
+# Copyright (c) 2005-2012 Zmanda Inc.  All Rights Reserved.
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+# or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+# for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
+#
+# Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
+# Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
+#
+#
+
+# This defines the structure of the entire amreport xml output
+start = AmReport
+AmReport = element amreport {
+   attribute version { text }, # amanda version
+   Org,
+   Config,
+   Date,
+   Programs,
+   DLE+
+}
+
+# These values describe the configuration that the report is detailing
+HostName = element hostname { text }
+
+Org = element org { text }
+Config = element config { text }
+Date = element date { text }
+
+Programs = element programs {
+   Planner?
+ & Driver
+ & Amflush?
+ & Amdump?
+ & DumperP?
+ & TaperP?
+ & ChunkerP?
+}
+
+Planner = element planner {
+   Date
+   & Time
+   & Notes?
+   & Stranges?
+   & Errors?
+}
+
+Driver = element driver {
+   Date
+   & Time
+   & element start_time { xsd:float}
+   & Notes?
+   & Stranges?
+   & Errors?
+}
+
+Amflush = element amflush {
+   Date
+   & Time?
+   & Notes?
+   & Stranges?
+   & Errors?
+}
+
+Amdump = element amdump {
+   Notes?
+ & Stranges?
+ & Errors?
+}
+
+DumperP = element dumper_p {
+   Notes?
+ & Stranges?
+ & Errors?
+}
+
+ChunkerP  = element chunker_p {
+   Notes?
+ & Stranges?
+ & Errors?
+}
+
+TaperP = element taper_p {
+   Notes?
+ & Stranges?
+ & Errors?
+ & Tapelist?
+}
+
+Tapelist = element tapelist {
+   Tape+
+}
+
+Tape = element tape {
+   element name { text }
+ & Date
+ & element files { xsd:integer }
+ & element bytes { xsd:integer }
+}
+
+Disk = element disk {
+   # the encoding and raw attributes are used to represent non-UTF-8
+   # disk names; see
+   # http://tech.zmanda.com/tech/index.php/Encodings_and_XML#XML_2
+   attribute encoding { text },
+   attribute raw { text },
+   text
+}
+
+# A DLE refers to a backup division within a host
+DLE = element dle {
+   HostName,
+   Disk,
+   Estimate,
+   Dump+
+}
+
+Estimate = element estimate {
+   Level,
+   Time,
+   element nbytes { xsd:integer },
+   element cbytes { xsd:float },
+   element bps { xsd:float }
+}
+
+# A dump reprsents a particular dump of this DLE, as more than one dump of
+# a DLE may be performed in a single run
+Dump = element dump {
+    Date,
+    Try+
+}
+
+# a try is a set of actions intended to back up a DLE.  It may invoke
+# the following sub-processes.
+Try = element try {
+   Level
+ & Dumper?
+ & Taper?
+ & Chunker?
+}
+
+Level = element level { xsd:integer }
+
+# NOTE: the contents of this element can occur in any order
+Dumper = element dumper {
+   attribute result { "success" | "partial" | "strange" |
+      "strange+partial" | "fail"}
+ & Level
+ & InSize
+ & OutSize
+ & Time
+ & Bytes
+ & BPS
+}
+
+# NOTE: the contents of this element can occur in any order
+Taper = element taper {
+   attribute result { "success" | "partial" | "strange" |
+      "strange+partial" | "fail"}
+ & Level
+ & Time
+ & element parts { xsd:integer }
+ & Bytes
+ & BPS
+}
+
+# NOTE: the contents of this element can occur in any order
+Chunker = element chunker {
+   attribute result { "success" | "partial" | "strange" |
+      "strange+partial" | "fail"}
+ & Level
+ & Date
+ & Time
+ & Bytes
+ & BPS
+}
+
+InSize = element insize { xsd:float }
+OutSize = element outsize { xsd:float }
+Time = element time { xsd:float }
+BPS = element bps { xsd:float }
+Bytes = element bytes { xsd:integer }
+
+Notes = element notes { Note+ }
+Note = element note { text }
+
+Errors = element errors { Error+ }
+Error = element error { text }
+
+Stranges = element stranges { Strange+ }
+Strange = element strange { text }

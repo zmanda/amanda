@@ -1,0 +1,119 @@
+# a log with a tape error in it
+
+# this has two reports - one when this is the "current" logfile, and one when it
+# is a historical logfile
+
+%F log/log
+INFO amdump amdump pid 32302
+INFO planner planner pid 32323
+START planner date 20100303133320
+DISK planner euclid /A/p/etc
+INFO driver driver pid 32324
+START driver date 20100303133320
+STATS driver hostname euclid
+INFO dumper dumper pid 32331
+INFO dumper dumper pid 32337
+STATS driver startup time 0.130
+INFO dumper dumper pid 32338
+INFO dumper dumper pid 32335
+INFO taper taper pid 32326
+ERROR taper no-tape error [Virtual-tape directory /A/p/vtapes does not exist.]
+FINISH planner date 20100303133320 time 1.137
+INFO planner pid-done 32323
+INFO chunker chunker pid 32351
+INFO dumper gzip pid 32355
+SUCCESS dumper euclid /A/p/etc 20100303133320 0 [sec 0.040 kb 100 kps 2491.0 orig-kb 100]
+SUCCESS chunker euclid /A/p/etc 20100303133320 0 [sec 0.064 kb 100 kps 2044.3]
+INFO chunker pid-done 32351
+STATS driver estimate euclid /A/p/etc 20100303133320 0 [sec 0 nkb 132 ckb 160 kps 1024]
+INFO dumper pid-done 32337
+INFO dumper pid-done 32335
+INFO dumper pid-done 32338
+INFO dumper pid-done 32355
+INFO dumper pid-done 32331
+INFO taper pid-done 32326
+FINISH driver date 20100303133320 time 2.247
+INFO driver pid-done 32324
+INFO amdump pid-done 32302
+
+%T report-holding
+Hostname: euclid
+Org     : DailySet1
+Config  : TESTCONF
+Date    : March 3, 2010
+
+*** A TAPE ERROR OCCURRED: [Virtual-tape directory /A/p/vtapes does not exist.].
+No dumps are left in the holding disk.
+
+The next tape Amanda expects to use is: 1 new tape.
+
+
+STATISTICS:
+                          Total       Full      Incr.   Level:#
+                        --------   --------   --------  --------
+Estimate Time (hrs:min)    0:00
+Run Time (hrs:min)         0:00
+Dump Time (hrs:min)        0:00       0:00       0:00
+Output Size (meg)           0.1        0.1        0.0
+Original Size (meg)         0.1        0.1        0.0
+Avg Compressed Size (%)   100.0      100.0        --
+DLEs Dumped            1          1          0
+Avg Dump Rate (k/s)      2500.0     2500.0        --
+
+Tape Time (hrs:min)        0:00       0:00       0:00
+Tape Size (meg)             0.0        0.0        0.0
+Tape Used (%)               0.0        0.0        0.0
+DLEs Taped             0          0          0
+
+Parts Taped                   0          0          0
+Avg Tp Write Rate (k/s)     --         --         --
+
+
+DUMP SUMMARY:
+                                       DUMPER STATS               TAPER STATS
+HOSTNAME     DISK        L ORIG-KB  OUT-KB  COMP%  MMM:SS   KB/s MMM:SS   KB/s
+-------------------------- ---------------------- -------------- -------------
+euclid       /A/p/etc    0     100     100    --     0:00 2491.0
+
+(brought to you by Amanda version x.y.z)
+
+%T report-noholding
+Hostname: euclid
+Org     : DailySet1
+Config  : TESTCONF
+Date    : March 3, 2010
+
+*** A TAPE ERROR OCCURRED: [Virtual-tape directory /A/p/vtapes does not exist.].
+Some dumps may have been left in the holding disk.
+
+The next tape Amanda expects to use is: 1 new tape.
+
+
+STATISTICS:
+                          Total       Full      Incr.   Level:#
+                        --------   --------   --------  --------
+Estimate Time (hrs:min)    0:00
+Run Time (hrs:min)         0:00
+Dump Time (hrs:min)        0:00       0:00       0:00
+Output Size (meg)           0.1        0.1        0.0
+Original Size (meg)         0.1        0.1        0.0
+Avg Compressed Size (%)   100.0      100.0        --
+DLEs Dumped            1          1          0
+Avg Dump Rate (k/s)      2500.0     2500.0        --
+
+Tape Time (hrs:min)        0:00       0:00       0:00
+Tape Size (meg)             0.0        0.0        0.0
+Tape Used (%)               0.0        0.0        0.0
+DLEs Taped             0          0          0
+
+Parts Taped                   0          0          0
+Avg Tp Write Rate (k/s)     --         --         --
+
+
+DUMP SUMMARY:
+                                       DUMPER STATS               TAPER STATS
+HOSTNAME     DISK        L ORIG-KB  OUT-KB  COMP%  MMM:SS   KB/s MMM:SS   KB/s
+-------------------------- ---------------------- -------------- -------------
+euclid       /A/p/etc    0     100     100    --     0:00 2491.0
+
+(brought to you by Amanda version x.y.z)
