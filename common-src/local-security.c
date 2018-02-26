@@ -295,11 +295,6 @@ runlocal(
 	xamandad_path = g_strjoin(NULL, amlibexecdir, "/", "amandad", NULL);
 
 #ifndef SINGLE_USERID
-    if (client_username && *client_username != '\0') {
-	initgroups(client_username, gid);
-    } else {
-	initgroups(CLIENT_LOGIN, gid);
-    }
     if (gid != 0) {
 	if (setregid(gid, gid) == -1) {
 	    error("Can't setregid(%d,%d): %s", gid, gid, strerror(errno));
