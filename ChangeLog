@@ -1,3 +1,7 @@
+2018-02-26  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/local-security.c: Do not call initgroups since we are no
+	  longer suid root
+
 2018-02-23  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/driver.c: s/g_free/amfree/ for sp->try_again_message
 
