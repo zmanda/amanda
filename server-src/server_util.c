@@ -1015,7 +1015,7 @@ amcatalog_add_cmd(
 	char level_str[NUM_STR_SIZE];
 	char working_pid_str[NUM_STR_SIZE];
 	g_snprintf(level_str, sizeof(level_str), "%d", cmddata->level);
-	g_snprintf(working_pid_str, sizeof(working_pid_str), "%d", cmddata->working_pid);
+	g_snprintf(working_pid_str, sizeof(working_pid_str), "%ld", (long)cmddata->working_pid);
 	line = run_amcatalog("add-flush-cmd", 9, config, holding_file,
 				hostname, diskname, dump_timestamp, level_str,
 				dst_storage, working_pid_str, status_str);
@@ -1028,7 +1028,7 @@ amcatalog_add_cmd(
 	char size_str[NUM_STR_SIZE];
 	char start_time_str[NUM_STR_SIZE];
 	g_snprintf(level_str, sizeof(level_str), "%d", cmddata->level);
-	g_snprintf(working_pid_str, sizeof(working_pid_str), "%d", cmddata->working_pid);
+	g_snprintf(working_pid_str, sizeof(working_pid_str), "%ld", (long)cmddata->working_pid);
 	g_snprintf(size_str, sizeof(size_str), "%lld", (long long)cmddata->size);
 	g_snprintf(start_time_str, sizeof(start_time_str), "%ld", cmddata->start_time);
 	line = run_amcatalog("add-copy-cmd", 12, config, src_storage, src_label,
