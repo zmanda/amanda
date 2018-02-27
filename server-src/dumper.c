@@ -1458,7 +1458,7 @@ finish_tapeheader(
 	char  pid_str[50];
 	char *line1;
 	g_snprintf(level_str, 50, "%d", level);
-	g_snprintf(pid_str, 50, "%d", getpid());
+	g_snprintf(pid_str, 50, "%ld", (long)getpid());
 	line = run_amcatalog("add-image",
 			     7, hostname, diskname, device, dumper_timestamp,
 				level_str, based_on_timestamp, pid_str);

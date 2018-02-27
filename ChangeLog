@@ -1,4 +1,8 @@
 2018-02-27  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/dumper.c, server-src/server_util.c: Cast pid_t to long
+	  before printing
+
+2018-02-27  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/amflock-test.c (int_counter): Fix call to file_lock_write
 	* common-src/amutil.c (unquote_string): Fix
 	* common-src/fileheader-test.c, common-src/ipc-binary-test.c,
