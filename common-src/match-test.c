@@ -250,6 +250,7 @@ test_glob_to_regex(void)
 	    g_fprintf(stderr, "glob_to_regex(\"%s\") returned \"%s\"; expected \"%s\"\n",
 		    t->glob, regex, t->regex);
 	}
+	g_free(regex);
     }
 
     return ok;

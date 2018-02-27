@@ -923,6 +923,7 @@ unquote_string(
 		    }
 		    if (c)
 			*(out++) = c;
+		    continue;
 		} else if (*in == '\0') {
 		    /* trailing backslash -- ignore */
 		    break;
