@@ -103,7 +103,7 @@ static gboolean
 inc_counter(file_lock *lock)
 {
     char old_val = 'a';
-    char new_val;
+    char new_val[2];
 
     if (lock->len) {
 	old_val = lock->data[0];
@@ -111,8 +111,9 @@ inc_counter(file_lock *lock)
 
     g_assert(old_val < 'z');
 
-    new_val = old_val + 1;
-    if (file_lock_write(lock, &new_val, 1) == -1) {
+    new_val[0] = old_val + 1;
+    new_val[1] = '\0';
+    if (file_lock_write(lock, new_val, 1) == -1) {
 	g_fprintf(stderr, "file_lock_write: %s\n",
 			strerror(errno));
 	return FALSE;
@@ -283,6 +284,8 @@ locking_master(int in_fd, int out_fd)
     g_assert(lock->data[0] == 'e');
 
     /* leave it unlocked, just to see what happens */
+
+    file_lock_free(lock);
 
     return 1;
 }

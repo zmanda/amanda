@@ -54,6 +54,7 @@ try_rt(dumpfile_t *hdr)
     n_round_trips++;
 
     dumpfile_free_data(&hdr2);
+    g_free(strval);
     return 1;
 #define PREV_RT try_rt
 }
@@ -389,6 +390,7 @@ test_roundtrip(void)
 
     rv = PREV_RT(&hdr);
     tu_dbg("%d round-trips run\n", n_round_trips);
+    dumpfile_free_data(&hdr);
     return (rv) ? TRUE : FALSE;
 }
 

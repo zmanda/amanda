@@ -79,6 +79,7 @@ test_sync_child(gpointer d)
     ipc_binary_add_arg(msg, MY_PROTO_DATA, 9, "some-data", 0);
     if (ipc_binary_write_message(chan, fd, msg) < 0) return NULL;
 
+    ipc_binary_free_channel(chan);
     return GINT_TO_POINTER(1);
 }
 
@@ -156,6 +157,7 @@ test_sync_parent(ipc_binary_proto_t *proto, int fd)
 	return 0;
     }
     ipc_binary_free_message(msg);
+    ipc_binary_free_channel(chan);
 
     return 1;
 }

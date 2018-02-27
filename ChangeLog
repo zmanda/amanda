@@ -1,3 +1,9 @@
+2018-02-27  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/amflock-test.c (int_counter): Fix call to file_lock_write
+	* common-src/amutil.c (unquote_string): Fix
+	* common-src/fileheader-test.c, common-src/ipc-binary-test.c,
+	  common-src/match-test.c: Fix memory leak
+
 2018-02-26  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/local-security.c: Do not call initgroups since we are no
 	  longer suid root
