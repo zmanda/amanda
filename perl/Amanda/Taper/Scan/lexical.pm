@@ -78,6 +78,22 @@ sub last_use_label {
     my $label = $tles->[0]->{'label'};
 }
 
+sub last_use_label_from_pool {
+    my $self = shift;
+
+    my $tles = $self->{'tapelist'}->{tles};
+    my $count = @{$tles};
+    for (my $i = 0; $i < $count ; $i++) {
+	my $tle = $tles->[$i];
+	if ($tle->{'datestamp'} != '0' &&
+	    (!defined $tle->{'pool'} ||
+	      $tle->{'pool'} eq $self->{'tapepool'})) {
+	    return $tle->{'label'};
+	}
+    }
+    return undef;
+}
+
 sub analyze {
     my $self = shift;
     my $inventory  = shift;
@@ -93,7 +109,7 @@ sub analyze {
     my @unknown;
     my @error;
 
-    my $last_label = $self->last_use_label();
+    my $last_label = $self->last_use_label_from_pool();
 
     for my $i (0..(scalar(@$inventory)-1)) {
 	my $sl = $inventory->[$i];
