@@ -820,14 +820,33 @@ static char *validate_command_options(
     for (copt = argument->command_options; copt != NULL; copt = copt->next) {
 	char *opt = (char *)copt->data;
 
-	if (g_str_has_prefix(opt, "--rsh-command") ||
-	    g_str_has_prefix(opt,"--to-command") ||
-	    g_str_has_prefix(opt,"--info-script") ||
-	    g_str_has_prefix(opt,"--new-volume-script") ||
-	    g_str_has_prefix(opt,"--rmt-command") ||
-	    g_str_has_prefix(opt,"--use-compress-program")) {
-	    return opt;
-	}
+	if (g_str_has_prefix(opt,"--create") ||
+		g_str_has_prefix(opt,"--totals") ||
+		g_str_has_prefix(opt,"--dereference") ||
+		g_str_has_prefix(opt,"--no-recursion") ||
+		g_str_has_prefix(opt,"--one-file-system") ||
+		g_str_has_prefix(opt,"--incremental") ||
+		g_str_has_prefix(opt,"--atime-preserve") ||
+		g_str_has_prefix(opt,"--sparse") ||
+		g_str_has_prefix(opt,"--ignore-failed-read") ||
+		g_str_has_prefix(opt,"--numeric-owner") ||
+		g_str_has_prefix(opt,"--verbose") ||
+		g_str_has_prefix(opt,"--blocking-factor") ||
+		g_str_has_prefix(opt,"--file") ||
+		g_str_has_prefix(opt,"--directory") ||
+		g_str_has_prefix(opt,"--exclude") ||
+		g_str_has_prefix(opt,"--transform") ||
+		g_str_has_prefix(opt,"--listed-incremental") ||
+		g_str_has_prefix(opt,"--newer") ||
+		g_str_has_prefix(opt,"--exclude-from") ||
+		g_str_has_prefix(opt,"--files-from")) {
+			// All the above mentioned options are allowed.
+			continue;
+		}
+		else {
+			// This function return non-null value if one of the not allowed option is given.
+			return opt;
+		}
     }
 
     return NULL;

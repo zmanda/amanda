@@ -69,6 +69,8 @@ main(
     GPtrArray *array = g_ptr_array_new();
     gchar **strings;
     char  **env;
+    int good_option;
+	char *prgName;
 #endif /* ERRMSG */
 
     glib_init();
@@ -176,11 +178,55 @@ main(
     /*
      * Build the array
      */
-
-    g_ptr_array_add(array, g_strdup(dump_program));
-
-    for (i = 1; argv[i]; i++)
-        g_ptr_array_add(array, quote_string(argv[i]));
+	 
+	g_ptr_array_add(array, g_strdup(dump_program));
+	
+	// No need to deallocate "prgName", as strrchr is not returning newly allocated memory
+	// but just returning an offset to the string.
+	prgName = g_strrstr(dump_program, "/");
+	good_option = 0;
+    for (i = 1; argv[i]; i++) {
+    	if (good_option <= 0) {
+			if ( prgName != NULL && g_strcmp0(prgName, "/dump") == 0 ) {
+				if ( g_str_has_prefix(argv[i], "-a") || g_str_has_prefix(argv[i], "-A") || g_str_has_prefix(argv[i], "-b") || 
+				g_str_has_prefix(argv[i], "-B") || g_str_has_prefix(argv[i], "-c") || g_str_has_prefix(argv[i], "-d") || 
+				g_str_has_prefix(argv[i], "-D") || g_str_has_prefix(argv[i], "-e") || g_str_has_prefix(argv[i], "-f") || 
+				g_str_has_prefix(argv[i], "-h") || g_str_has_prefix(argv[i], "-I") || g_str_has_prefix(argv[i], "-j") || 
+				g_str_has_prefix(argv[i], "-k") || g_str_has_prefix(argv[i], "-L") || g_str_has_prefix(argv[i], "-m") || 
+				g_str_has_prefix(argv[i], "-M") || g_str_has_prefix(argv[i], "-n") || g_str_has_prefix(argv[i], "-q") || 
+				g_str_has_prefix(argv[i], "-Q") || g_str_has_prefix(argv[i], "-s") || g_str_has_prefix(argv[i], "-S") || 
+				g_str_has_prefix(argv[i], "-T") || g_str_has_prefix(argv[i], "-u") || g_str_has_prefix(argv[i], "-v") || 
+				g_str_has_prefix(argv[i], "-W") || g_str_has_prefix(argv[i], "-w") || g_str_has_prefix(argv[i], "-y") || 
+				g_str_has_prefix(argv[i], "-z") || 
+				(g_str_has_prefix(argv[i], "-") && g_ascii_isdigit(argv[i][1]) && (strlen(argv[i]) == 2)) || 
+				argv[i][0] != '-' ) {
+					good_option++;
+				}
+			}
+			else if ( prgName != NULL && g_strcmp0(prgName, "/xfsdump") == 0) {
+				if ( g_str_has_prefix(argv[i], "-a") || g_str_has_prefix(argv[i], "-b") || g_str_has_prefix(argv[i], "-d") || 
+				g_str_has_prefix(argv[i], "-e") || g_str_has_prefix(argv[i], "-f") || g_str_has_prefix(argv[i], "-l") ||
+				g_str_has_prefix(argv[i], "-m") || g_str_has_prefix(argv[i], "-o") || g_str_has_prefix(argv[i], "-p") || 
+				g_str_has_prefix(argv[i], "-q") || g_str_has_prefix(argv[i], "-s") || g_str_has_prefix(argv[i], "-t") || 
+				g_str_has_prefix(argv[i], "-v") || g_str_has_prefix(argv[i], "-z") || g_str_has_prefix(argv[i], "-A") || 
+				g_str_has_prefix(argv[i], "-B") || g_str_has_prefix(argv[i], "-D") || g_str_has_prefix(argv[i], "-I") || 
+				g_str_has_prefix(argv[i], "-J") || g_str_has_prefix(argv[i], "-L") || g_str_has_prefix(argv[i], "-M") || 
+				g_str_has_prefix(argv[i], "-R") || g_str_has_prefix(argv[i], "-T") || g_str_has_prefix(argv[i], "-F") ||
+				(g_str_has_prefix(argv[i], "-") && (strlen(argv[i]) == 1)) || argv[i][0] != '-' ) {
+					good_option++;
+				}				
+			}
+			else {
+				good_option = 0;
+			}
+			
+			if (good_option <= 0) {
+				error ("error [%s invalid option: %s]", get_pname(), argv[i]);
+			}
+			good_option--;
+    	}
+		g_ptr_array_add(array, quote_string(argv[i]));
+    }
 
     g_ptr_array_add(array, NULL);
     strings = (gchar **)g_ptr_array_free(array, FALSE);
