@@ -72,6 +72,7 @@ extern am_feature_t *tapesrv_features;
 extern pid_t extract_restore_child_pid;
 extern proplist_t proplist;
 extern gboolean translate_mode;
+extern char *listing_date;
 
 extern void free_dir_item(DIR_ITEM *item);
 
@@ -108,6 +109,7 @@ extern void add_property_value(char *value);
 extern void list_property(void);
 extern void list_all_file(char *dir, char *name, int re);
 extern void find_file(char *name, char *dir, int re);
+extern void list_file_history(char* name);
 
 extern void add_storage_value(char *storage);
 extern void set_storage(void);

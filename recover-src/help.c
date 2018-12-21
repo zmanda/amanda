@@ -76,5 +76,6 @@ help_list(void)
     g_printf(_("settranslate [on|off]              - set/unset translation of non-ASCII characters\n"));
     g_printf(_("storage [storage-name]*            - the name of the storage in order of preference\n"));
     g_printf(_("                                     use 'HOLDING' for the holding disk\n"));
+    g_printf(_("version filename                   - show file history\n"));
     g_printf("\n");
 }

@@ -71,6 +71,107 @@ get_next_dir_item(
 }
 
 
+void list_file_history(char* name)
+{
+    size_t i;
+    DIR_ITEM *item;
+    char *quoted;
+    char *l;
+    char *s;
+    char *date;
+    int ch;
+    int ind = 0;
+    int size = 1;
+    char *next_date;
+    char *cmd;
+    char **list_date;
+    list_date = g_malloc0(sizeof(char *) * size);
+
+    if (disk_path == NULL) {
+        g_printf(_("Must select a disk before listing file history; use the setdisk command.\n"));
+        return;
+    }
+
+    send_command("DHST");
+    get_reply_line();
+
+    while (get_reply_line() != 0)
+    {
+        s = reply_line();
+        l = s;
+        if (strncmp_const_skip(l, "201-", s, ch) != 0) {
+            g_printf("bad reply: not 201-");
+            continue;
+        }
+        ch = *s++;
+        skip_whitespace(s, ch);
+        if(ch == '\0') {
+            g_printf("bad reply: missing date field");
+            continue;
+        }
+        date = s - 1;
+        skip_non_whitespace(s, ch);
+        *(s - 1) = '\0';
+        list_date[ind] = g_strdup(date);
+        ind++;
+        if (ind == size) {
+            size *= 2;
+            list_date = g_realloc(list_date, sizeof(char *) * size);
+            for (int j = size/2; j < size; j++) {
+                list_date[j] = NULL;
+            }
+        }
+    }
+    g_printf("History of file: %s\n", name);
+    i = strlen(disk_tpath);
+    if (i != 1)
+        i++;
+    ind = 0;
+    next_date = g_strdup(list_date[ind]);
+    while ((ind < size) && (list_date[ind] != NULL)) {
+        if (!(strcmp(list_date[ind], next_date) > 0))
+        {
+
+            clear_dir_list();
+            cmd = g_strconcat("DATE ", list_date[ind], NULL);
+            if (exchange(cmd) == -1)
+                exit(1);
+            if (server_happy())
+            {
+                suck_dir_list_from_server();
+            } else {
+                continue;
+            }
+            for (item = get_dir_list(); item != NULL; item = get_next_dir_item(item)) {
+                quoted = quote_string(item->tpath + i);
+                if (strcmp(quoted, name) == 0) {
+                    if (strcmp(item->date, list_date[ind]) == 0) {
+                        g_printf("%s %s\n", item->date, quoted);
+                        amfree(quoted);
+                        break;
+                    } else {
+                        amfree(next_date);
+                        next_date = g_strdup(item->date);
+                    }
+                }
+                amfree(quoted);
+            }
+        }
+        amfree(list_date[ind]);
+        ind++;
+    }
+    amfree(list_date);
+    cmd = g_strconcat("DATE ", listing_date, NULL);
+    if (exchange(cmd) == -1)
+        exit(1);
+    if (server_happy())
+    {
+        suck_dir_list_from_server();
+    }
+    amfree(cmd);
+}
+
+
 void
 list_all_file(char *dir, char *name, int re)
 {

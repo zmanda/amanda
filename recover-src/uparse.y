@@ -55,7 +55,7 @@ extern char *	yytext;
 %token SETHOST SETDISK SETDATE SETTAPE SETMODE SETDEVICE SETPROPERTY
 %token CD CDX QUIT DHIST LS LSALL ADD ADDX EXTRACT DASH_H
 %token LIST DELETE DELETEX PWD CLEAR HELP LCD LPWD MODE SMB TAR
-%token APPEND PRIORITY SETTRANSLATE STORAGE FIND FINDX
+%token APPEND PRIORITY SETTRANSLATE STORAGE FIND FINDX FILEHISTORY
 %token NL
 
         /* typed tokens */
@@ -137,6 +137,9 @@ set_command:
   | FINDX STRING NL { find_file($2, "", 1); amfree($2); }
   | FINDX NL { yyerror("Argument required"); }
   | FINDX STRING STRING invalid_string { yyerror("Invalid argument"); amfree($2); amfree($3); }
+  |	FILEHISTORY STRING NL { list_file_history($2); amfree($2); }
+  |	FILEHISTORY STRING invalid_string { yyerror("Invalid argument"); amfree($2); }
+  |	FILEHISTORY NL { yyerror("Argument required"); }
   ;
 
 setdate_command:

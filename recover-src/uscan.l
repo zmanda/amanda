@@ -109,6 +109,7 @@ mode		{ BEGIN(needstring); return MODE; }
 storage		{ BEGIN(needstring); return STORAGE; }
 find        { BEGIN(needstring); return FIND; }
 findx       { BEGIN(needstring); return FINDX; }
+version     { BEGIN(needstring); return FILEHISTORY; }
 <needmode>tar   { BEGIN(needstring); return TAR; }
 <needmode>smb   { BEGIN(needstring); return SMB; }
 <INITIAL,needdevice,needmode,needstring,astring,propertyappend,propertypriority>{LINEFEED}	{ BEGIN(INITIAL); return NL; }
