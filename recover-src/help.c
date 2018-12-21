@@ -49,6 +49,10 @@ help_list(void)
     g_printf(_("deletex path1 ... - delete from extraction list (regular expressions)\n"));
     g_printf(_("extract           - extract selected files from tapes\n"));
     g_printf(_("exit\n"));
+    g_printf(_("find file         - find file in current directory and subdirectories\n"));
+    g_printf(_("find path file    - find file in path and path subdirectories\n"));
+    g_printf(_("findx filename    - find file in current directory and subdirectories (regular expressions)\n"));
+    g_printf(_("findx path file   - find file in path and path subdirectories (regular expressions)\n"));
     g_printf(_("help\n"));
     g_printf(_("history           - show dump history of disk\n"));
     g_printf(_("list [filename]   - show extraction list, optionally writing to file\n"));

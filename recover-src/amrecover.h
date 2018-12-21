@@ -106,6 +106,8 @@ extern void show_mode(void);
 extern void set_property_name(char *name, int append);
 extern void add_property_value(char *value);
 extern void list_property(void);
+extern void list_all_file(char *dir, char *name, int re);
+extern void find_file(char *name, char *dir, int re);
 
 extern void add_storage_value(char *storage);
 extern void set_storage(void);

@@ -34,6 +34,7 @@
 #include "amanda.h"
 #include "amrecover.h"
 #include "amutil.h"
+#include "match.h"
 
 gboolean translate_mode = TRUE;
 
@@ -50,6 +51,7 @@ static int add_dir_list_item(char *date,
 void list_disk_history(void);
 void suck_dir_list_from_server(void);
 void list_directory(void);
+char *convert_name(char *name);
 
 static DIR_ITEM *dir_list = NULL;
 
@@ -67,6 +69,156 @@ get_next_dir_item(
     return this->next;
     /*@end@*/
 }
+
+
+void
+list_all_file(char *dir, char *name, int re)
+{
+    DIR_ITEM *item;
+    char *quote;
+    int size = 5;
+    int nb_folder = 0;
+    char **dir_list;
+    char *next_dir;
+    int i;
+    int len;
+    int dir_len;
+    int printed = 0;
+
+    if (disk_path == NULL) {
+        g_printf(_("Must select a disk before listing files; use the setdisk command.\n"));
+        return;
+    }
+
+    dir_list = g_malloc0(sizeof(char *) * size);
+
+    if (set_directory(dir, 0) == 1) {
+        dir_len = strlen(disk_tpath);
+        if (dir_len == 1)
+            dir_len = 0;
+        for (item = get_dir_list(); item != NULL; item = get_next_dir_item(item)) {
+            quote = quote_string(item->tpath + 1);
+            i = 0;
+            if (quote[strlen(quote) - 1] == '\"') {
+                quote++;
+                quote[strlen(quote) - 1] = '\0';
+                i = 1;
+            }
+            len = strlen(quote);
+            if (quote[len - 1] == '/') {
+                if (dir[strlen(dir) - 1] == '/') {
+                    next_dir = g_strconcat(dir, &quote[dir_len], NULL);
+                } else {
+                    next_dir = g_strconcat(dir, "/", &quote[dir_len], NULL);
+                }
+                dir_list[nb_folder] = next_dir;
+                nb_folder++;
+                if (nb_folder == size) {
+                    size *= 2;
+                    dir_list = g_realloc(dir_list, sizeof(char *) * size);
+                    for (int j = size/2; j < size; j++) {
+                        dir_list[j] = NULL;
+                    }
+                }
+            } else {
+                if ((re && (match(name, &quote[dir_len]) == 1)) || (!re && (strcmp(name, &quote[dir_len]) == 0))) {
+                    if (!printed) {
+                        printed = 1;
+                        g_printf("\nFolder: %s\n", dir);
+                    }
+                    g_printf("%s: %s\n", item->date, quote);
+                }
+            }
+            quote -= i;
+            amfree(quote);
+        }
+        i = 0;
+        while ((i < size) && (dir_list[i] != NULL)) {
+            list_all_file(dir_list[i], name, re);
+            amfree(dir_list[i]);
+            i++;
+        }
+        set_directory(dir, 0);
+    }
+    amfree(dir_list);
+}
+
+
+void
+find_file(char *name, char *dir, int re)
+{
+    char *error = NULL;
+    char *regex = NULL;
+
+    if (disk_path == NULL) {
+        g_printf(_("Must select a disk before search for a file; use the setdisk command.\n"));
+        return;
+    }
+
+    if ((strlen(dir) != 1) && (dir[0] == '\"') && (dir[strlen(dir) - 1] == '\"')) {
+        dir = &dir[1];
+        dir[strlen(dir) - 1] = '\0';
+    }
+    if (!g_str_has_prefix(dir, mount_point)) {
+        if (dir[0] != '/') {
+            if (disk_tpath[strlen(disk_tpath) - 1] == '/') {
+                dir = g_strconcat(mount_point, disk_tpath, dir, NULL);
+            } else {
+                dir = g_strconcat(mount_point, disk_tpath, "/", dir, NULL);
+            }
+        } else {
+            dir = g_strconcat(mount_point, dir, NULL);
+        }
+    }
+
+    name = convert_name(name);
+    if (re == 1) {
+        error = validate_regexp(name);
+        if (error == NULL) {
+            regex = g_strconcat("^", name, "$", NULL);
+
+            g_printf("Search regex : %s in %s\n", regex, dir);
+
+            list_all_file(dir, regex, re);
+        } else {
+            g_printf("Regex error: %s\n", error);
+        }
+    } else {
+        g_printf("Search %s in %s\n", name, dir);
+
+        list_all_file(dir, name, re);
+    }
+    amfree(name);
+}
+
+
+char *
+convert_name(char *name)
+{
+    char *new_name;
+    char *tmp;
+    int i;
+
+    if ((name[0] == '\"') && (name[strlen(name) - 1] == '\"')) {
+        new_name = g_strdup(name + 1);
+        new_name[strlen(new_name) - 1] = '\0';
+    } else {
+        new_name = g_strdup(name);
+    }
+    i = 0;
+    while (new_name[i] != '\0') {
+        if (new_name[i] == '/') {
+            new_name[i] = '\0';
+            tmp = g_strconcat(new_name, "\342\201\204", &new_name[i + 1], NULL);
+            amfree(new_name);
+            new_name = tmp;
+            i += 2;
+        }
+        i++;
+    }
+    return new_name;
+}
+
 
 
 void
