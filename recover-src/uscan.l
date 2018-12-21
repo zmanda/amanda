@@ -92,6 +92,7 @@ quit		{ BEGIN(needstring); return QUIT; }
 exit		{ BEGIN(needstring); return QUIT; }
 history		{ BEGIN(needstring); return DHIST; }
 ls		{ BEGIN(needstring); return LS; }
+ls-all  { BEGIN(needstring); return LSALL; }
 add		{ BEGIN(needstring); return ADD; }
 addx		{ BEGIN(needstring); return ADDX; }
 list		{ BEGIN(needstring); return LIST; }

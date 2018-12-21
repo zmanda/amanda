@@ -58,6 +58,7 @@ help_list(void)
     g_printf(_("list [filename]   - show extraction list, optionally writing to file\n"));
     g_printf(_("lcd directory     - change cwd on local file system\n"));
     g_printf(_("ls                - list directory on virtual file system\n"));
+    g_printf(_("ls-all            - list all directories and file on virtual file system\n"));
     g_printf(_("lpwd              - show cwd on local file system\n"));
     g_printf(_("mode              - show the method used to extract SMB shares\n"));
     g_printf(_("pwd               - show cwd on virtual file system\n"));
