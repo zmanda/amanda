@@ -40,6 +40,8 @@
 #include "conffile.h"
 
 int main(int argc, char **argv);
+static int validate_dump_option(int argc, char ** argv);
+static int validate_xfsdump_options(int argc, char ** argv);
 
 #if defined(VDUMP) || defined(XFSDUMP)
 #  undef USE_RUNDUMP
@@ -69,7 +71,6 @@ main(
     GPtrArray *array = g_ptr_array_new();
     gchar **strings;
     char  **env;
-    int good_option;
 	char *prgName;
 #endif /* ERRMSG */
 
@@ -174,57 +175,33 @@ main(
 # endif
 #endif
 
-
     /*
      * Build the array
-     */
-	 
+     */	 
 	g_ptr_array_add(array, g_strdup(dump_program));
 	
 	// No need to deallocate "prgName", as strrchr is not returning newly allocated memory
 	// but just returning an offset to the string.
 	prgName = g_strrstr(dump_program, "/");
-	good_option = 0;
+	if (prgName == NULL)
+	{
+		prgName = dump_program;
+	}
+	else
+	{
+		prgName++;
+	}
+	if (g_strcmp0(prgName, "dump") == 0) {
+		if (validate_dump_option(argc, argv) != 0) {
+			error(" ");
+		}
+	}
+	else if (g_strcmp0(prgName, "xfsdump") == 0) {
+		if (validate_xfsdump_options(argc, argv) != 0) {
+			error(" ");
+		}
+	}
     for (i = 1; argv[i]; i++) {
-    	if (good_option <= 0) {
-			if ( prgName != NULL && g_strcmp0(prgName, "/dump") == 0 ) {
-				if ( g_str_has_prefix(argv[i], "-a") || g_str_has_prefix(argv[i], "-A") || g_str_has_prefix(argv[i], "-b") || 
-				g_str_has_prefix(argv[i], "-B") || g_str_has_prefix(argv[i], "-c") || g_str_has_prefix(argv[i], "-d") || 
-				g_str_has_prefix(argv[i], "-D") || g_str_has_prefix(argv[i], "-e") || g_str_has_prefix(argv[i], "-f") || 
-				g_str_has_prefix(argv[i], "-h") || g_str_has_prefix(argv[i], "-I") || g_str_has_prefix(argv[i], "-j") || 
-				g_str_has_prefix(argv[i], "-k") || g_str_has_prefix(argv[i], "-L") || g_str_has_prefix(argv[i], "-m") || 
-				g_str_has_prefix(argv[i], "-M") || g_str_has_prefix(argv[i], "-n") || g_str_has_prefix(argv[i], "-q") || 
-				g_str_has_prefix(argv[i], "-Q") || g_str_has_prefix(argv[i], "-s") || g_str_has_prefix(argv[i], "-S") || 
-				g_str_has_prefix(argv[i], "-T") || g_str_has_prefix(argv[i], "-u") || g_str_has_prefix(argv[i], "-v") || 
-				g_str_has_prefix(argv[i], "-W") || g_str_has_prefix(argv[i], "-w") || g_str_has_prefix(argv[i], "-y") || 
-				g_str_has_prefix(argv[i], "-z") || 
-				(g_str_has_prefix(argv[i], "-") && g_ascii_isdigit(argv[i][1]) && (strlen(argv[i]) == 2)) || 
-				argv[i][0] != '-' ) {
-					good_option++;
-				}
-			}
-			else if ( prgName != NULL && g_strcmp0(prgName, "/xfsdump") == 0) {
-				if ( g_str_has_prefix(argv[i], "-a") || g_str_has_prefix(argv[i], "-b") || g_str_has_prefix(argv[i], "-d") || 
-				g_str_has_prefix(argv[i], "-e") || g_str_has_prefix(argv[i], "-f") || g_str_has_prefix(argv[i], "-l") ||
-				g_str_has_prefix(argv[i], "-m") || g_str_has_prefix(argv[i], "-o") || g_str_has_prefix(argv[i], "-p") || 
-				g_str_has_prefix(argv[i], "-q") || g_str_has_prefix(argv[i], "-s") || g_str_has_prefix(argv[i], "-t") || 
-				g_str_has_prefix(argv[i], "-v") || g_str_has_prefix(argv[i], "-z") || g_str_has_prefix(argv[i], "-A") || 
-				g_str_has_prefix(argv[i], "-B") || g_str_has_prefix(argv[i], "-D") || g_str_has_prefix(argv[i], "-I") || 
-				g_str_has_prefix(argv[i], "-J") || g_str_has_prefix(argv[i], "-L") || g_str_has_prefix(argv[i], "-M") || 
-				g_str_has_prefix(argv[i], "-R") || g_str_has_prefix(argv[i], "-T") || g_str_has_prefix(argv[i], "-F") ||
-				(g_str_has_prefix(argv[i], "-") && (strlen(argv[i]) == 1)) || argv[i][0] != '-' ) {
-					good_option++;
-				}				
-			}
-			else {
-				good_option = 0;
-			}
-			
-			if (good_option <= 0) {
-				error ("error [%s invalid option: %s]", get_pname(), argv[i]);
-			}
-			good_option--;
-    	}
 		g_ptr_array_add(array, quote_string(argv[i]));
     }
 
@@ -248,4 +225,129 @@ main(
     g_fprintf(stderr, _("rundump: could not exec %s: %s\n"), dump_program, e);
     return 1;
 #endif								/* } */
+}
+
+int validate_dump_option(int argc, char ** argv)
+{
+	int c;
+	while ((c = getopt(argc, argv, "0123456789ab:cd:e:f:h:j:kmnqs:uvwyz:A:B:D:I:L:MQ:ST:W")) != -1) 
+	{
+		switch (c) {
+			case '?':
+				//option is not valid
+				printf ("error [%s invalid option: %c]\n", get_pname(), c);
+				return 1;
+			break;
+			// All this options takes another argument
+			case 'b':
+			case 'd':
+			case 'e':
+			case 'f':
+			case 'h':
+			case 'j':
+			case 's':
+			case 'z':
+			case 'A':
+			case 'B':
+			case 'D':
+			case 'I':
+			case 'L':
+			case 'Q':
+			case 'T':
+			{
+				// get optarg and check it against NULL. If it is null, then return error.
+				if (optarg == NULL) {
+					printf ("error [%s additional parameter is missing for option: %c]\n", get_pname(), c);
+					return 1;
+				}
+				break;
+			}
+			case '0':
+			case '1':
+			case '2':
+			case '3':
+			case '4':
+			case '5':
+			case '6':
+			case '7':
+			case '8':
+			case '9':
+			case 'a':
+			case 'c':
+			case 'k':
+			case 'm':
+			case 'n':
+			case 'q':
+			case 'u':
+			case 'v':
+			case 'w':
+			case 'y':
+			case 'M':
+			case 'S':
+			case 'W':
+			{
+				break;
+			}
+			default:
+				printf ("error [%s invalid option: %c]\n", get_pname(), c);
+				return 1;
+			break;
+		}
+	}
+	return 0;
+}
+int validate_xfsdump_options(int argc, char ** argv)
+{
+	int c;
+	while ((c = getopt(argc, argv, "ab:d:ef:l:mop:qs:t:v:z:AB:DFI:JL:M:RT")) != -1)
+	{
+		switch (c) {
+			case '?':
+				//option is not valid
+				printf ("error [%s invalid option: %c]\n", get_pname(), c);
+				return 1;
+			break;
+			// All this options takes another argument
+			case 'b':
+			case 'd':
+			case 'f':
+			case 'l':
+			case 'p':
+			case 's':
+			case 't':
+			case 'v':
+			case 'z':
+			case 'B':
+			case 'I':
+			case 'L':
+			case 'M':
+			{
+				// get optarg and check it against NULL. If it is null, then return error.
+				if (optarg == NULL) {
+					printf ("error [%s additional parameter is missing for option: %c]\n", get_pname(), c);
+					return 1;
+				}
+				break;
+			}
+			case 'a':
+			case 'e':
+			case 'm':
+			case 'o':
+			case 'q':
+			case 'A':
+			case 'D':
+			case 'F':
+			case 'J':
+			case 'R':
+			case 'T':
+			{
+				break;
+			}
+			default:
+				printf ("error [%s invalid option: %c]\n", get_pname(), c);
+				return 1;
+			break;
+		}
+	}
+	return 0;
 }
