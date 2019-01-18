@@ -619,7 +619,9 @@ static char *validate_command_options(
     for (copt = argument->command_options; copt != NULL; copt = copt->next) {
 	char *opt = (char *)copt->data;
 
-	if (g_str_has_prefix(opt, "--compress-command")) {
+	if (g_str_has_prefix(opt, "new-volume-script") ||
+		g_str_has_prefix(opt, "-new-volume-script") ||
+		g_str_has_prefix(opt, "--new-volume-script")) {
 	   return opt;
 	}
     }

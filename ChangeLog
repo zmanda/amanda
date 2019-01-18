@@ -1,3 +1,8 @@
+2019-01-18  Hiten Shah <hiten.shah@betsol.com>
+	* application-src/amgtar.c: Filter GNU tar arguments
+	* application-src/amstar.c: Filter star arguments
+	* client-src/rundump.c: Filter dump and xfsdump arguments
+	
 2018-02-27  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/amflock-test.c (int_counter): Fix call to file_lock_write
 	* common-src/amutil.c (unquote_string): Fix
