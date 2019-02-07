@@ -40,8 +40,8 @@
 #include "conffile.h"
 
 int main(int argc, char **argv);
-static int validate_dump_option(int argc, char ** argv);
-static int validate_xfsdump_options(int argc, char ** argv);
+static void validate_dump_option(int argc, char ** argv);
+static void validate_xfsdump_options(int argc, char ** argv);
 
 #if defined(VDUMP) || defined(XFSDUMP)
 #  undef USE_RUNDUMP
@@ -71,7 +71,6 @@ main(
     GPtrArray *array = g_ptr_array_new();
     gchar **strings;
     char  **env;
-	char *prgName;
 #endif /* ERRMSG */
 
     glib_init();
@@ -163,14 +162,17 @@ main(
 
 #if defined(DUMP)
         dump_program = DUMP;
+        validate_dump_option(argc, argv);
 #else
 # if defined(XFSDUMP)
         dump_program = XFSDUMP;
+        validate_xfsdump_options(argc, argv);
 # else
 #  if defined(VXDUMP)
 	dump_program = VXDUMP;
 #  else
         dump_program = "dump";
+        validate_dump_option(argc, argv);
 #  endif
 # endif
 #endif
@@ -178,29 +180,8 @@ main(
     /*
      * Build the array
      */	 
-	g_ptr_array_add(array, g_strdup(dump_program));
+    g_ptr_array_add(array, g_strdup(dump_program));
 	
-	// No need to deallocate "prgName", as strrchr is not returning newly allocated memory
-	// but just returning an offset to the string.
-	prgName = g_strrstr(dump_program, "/");
-	if (prgName == NULL)
-	{
-		prgName = dump_program;
-	}
-	else
-	{
-		prgName++;
-	}
-	if (g_strcmp0(prgName, "dump") == 0) {
-		if (validate_dump_option(argc, argv) != 0) {
-			error(" ");
-		}
-	}
-	else if (g_strcmp0(prgName, "xfsdump") == 0) {
-		if (validate_xfsdump_options(argc, argv) != 0) {
-			error(" ");
-		}
-	}
     for (i = 1; argv[i]; i++) {
 		g_ptr_array_add(array, quote_string(argv[i]));
     }
@@ -227,16 +208,20 @@ main(
 #endif								/* } */
 }
 
-int validate_dump_option(int argc, char ** argv)
+void validate_dump_option(int argc, char ** argv)
 {
 	int c;
-	while ((c = getopt(argc, argv, "0123456789ab:cd:e:f:h:j:kmnqs:uvwyz:A:B:D:I:L:MQ:ST:W")) != -1) 
+	int numargs = argc;
+	while (numargs > 0)
 	{
+		c = getopt(argc, argv, "0123456789ab:cd:e:f:h:j:kmnqs:uvwyz:A:B:D:I:L:MQ:ST:W");
 		switch (c) {
+			case -1:
+				optind++;
+			break;
 			case '?':
 				//option is not valid
-				printf ("error [%s invalid option: %c]\n", get_pname(), c);
-				return 1;
+				error("error [%s invalid option: %s]\n", get_pname(), argv[optind-1]);
 			break;
 			// All this options takes another argument
 			case 'b':
@@ -257,8 +242,7 @@ int validate_dump_option(int argc, char ** argv)
 			{
 				// get optarg and check it against NULL. If it is null, then return error.
 				if (optarg == NULL) {
-					printf ("error [%s additional parameter is missing for option: %c]\n", get_pname(), c);
-					return 1;
+					error ("error [%s additional parameter is missing for option: %c]\n", get_pname(), c);
 				}
 				break;
 			}
@@ -289,23 +273,26 @@ int validate_dump_option(int argc, char ** argv)
 				break;
 			}
 			default:
-				printf ("error [%s invalid option: %c]\n", get_pname(), c);
-				return 1;
+				error ("error [%s invalid option: %c]\n", get_pname(), c);
 			break;
 		}
+		numargs--;
 	}
-	return 0;
 }
-int validate_xfsdump_options(int argc, char ** argv)
+void validate_xfsdump_options(int argc, char ** argv)
 {
 	int c;
-	while ((c = getopt(argc, argv, "ab:d:ef:l:mop:qs:t:v:z:AB:DFI:JL:M:RT")) != -1)
+	int numargs = argc;
+	while (numargs > 0)
 	{
+		c = getopt(argc, argv, "ab:d:ef:l:mop:qs:t:v:z:AB:DFI:JL:M:RT");
 		switch (c) {
+			case -1:
+				optind++;
+			break;
 			case '?':
 				//option is not valid
-				printf ("error [%s invalid option: %c]\n", get_pname(), c);
-				return 1;
+				error ("error [%s invalid option: %s]\n", get_pname(), argv[optind-1]);
 			break;
 			// All this options takes another argument
 			case 'b':
@@ -324,8 +311,7 @@ int validate_xfsdump_options(int argc, char ** argv)
 			{
 				// get optarg and check it against NULL. If it is null, then return error.
 				if (optarg == NULL) {
-					printf ("error [%s additional parameter is missing for option: %c]\n", get_pname(), c);
-					return 1;
+					error ("error [%s additional parameter is missing for option: %c]\n", get_pname(), c);
 				}
 				break;
 			}
@@ -344,10 +330,9 @@ int validate_xfsdump_options(int argc, char ** argv)
 				break;
 			}
 			default:
-				printf ("error [%s invalid option: %c]\n", get_pname(), c);
-				return 1;
+				error ("error [%s invalid option: %c]\n", get_pname(), c);
 			break;
 		}
+		numargs--;
 	}
-	return 0;
 }
