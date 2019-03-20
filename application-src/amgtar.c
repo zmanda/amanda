@@ -1461,16 +1461,18 @@ amgtar_backup(
 	}
 	if (strncmp(line, "block ", 6) == 0) { /* filename */
 	    off_t block_no = g_ascii_strtoull(line+6, NULL, 0);
-	    char *filename = strchr(line, ':');
-	    if (filename) {
-		filename += 2;
-		if (*filename == '.' && *(filename+1) == '/') {
+	    char *indexline = strchr(line, ':');
+	    if (indexline) {
+		indexline += 2;
+		char *filename = strstr(indexline," ./");
+		if (filename) {
+		    filename += 2; /* remove . */
 		    if (argument->dle.create_index) {
-			fprintf(indexstream, "%s\n", &filename[1]); /* remove . */
+			fprintf(indexstream, "%s\n", indexline);
 		    }
 		    if (argument->state_stream != -1) {
 			char *s = g_strdup_printf("%lld %s\n",
-					 (long long)block_no, &filename[1]);
+					 (long long)block_no, filename);
 			guint a = full_write(argument->state_stream, s, strlen(s));
 			if (a < strlen(s)) {
 			    g_debug("Failed to write to the state stream: %s",
@@ -1481,7 +1483,7 @@ amgtar_backup(
 			       am_has_feature(argument->amfeatures,
 					      fe_sendbackup_state)) {
 			fprintf(mesgstream, "sendbackup: state %lld %s\n",
-			        (long long)block_no, &filename[1]);
+			        (long long)block_no, filename);
 		    }
 		}
 	    }
@@ -2022,7 +2024,7 @@ amgtar_index(
     g_ptr_array_add(argv_ptr, g_strdup(gnutar_path));
     /* ignore trailing zero blocks on input (this was the default until tar-1.21) */
     g_ptr_array_add(argv_ptr, g_strdup("--ignore-zeros"));
-    g_ptr_array_add(argv_ptr, g_strdup("-tf"));
+    g_ptr_array_add(argv_ptr, g_strdup("-tvf"));
     g_ptr_array_add(argv_ptr, g_strdup("-"));
     g_ptr_array_add(argv_ptr, NULL);
 
@@ -2335,6 +2337,7 @@ GPtrArray *amgtar_build_argv(
 
     g_ptr_array_add(argv_ptr, g_strdup("--create"));
     if (command == CMD_BACKUP && argument->dle.create_index) {
+        g_ptr_array_add(argv_ptr, g_strdup("--verbose"));
         g_ptr_array_add(argv_ptr, g_strdup("--verbose"));
         g_ptr_array_add(argv_ptr, g_strdup("--block-number"));
     }

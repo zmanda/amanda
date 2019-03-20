@@ -233,15 +233,16 @@ process_ls_dump(
     int		recursive,
     GPtrArray **emsg)
 {
-    char line[STR_SIZE], old_line[STR_SIZE];
+    char line[STR_SIZE], old_filename[STR_SIZE];
     char *filename = NULL;
     char *dir_slash = NULL;
     FILE *fp;
     char *s;
     int ch;
     size_t len_dir_slash;
+    char *filename_start = NULL;
 
-    old_line[0] = '\0';
+    old_filename[0] = '\0';
     if (g_str_equal(dir, "/")) {
 	dir_slash = g_strdup(dir);
     } else {
@@ -266,12 +267,22 @@ process_ls_dump(
     len_dir_slash=strlen(dir_slash);
 
     while (fgets(line, STR_SIZE, fp) != NULL) {
+	if(line[0] == '/') {
+            filename_start = line;
+	} else {
+	    /* tar continually adjusts the output so we must continually 
+	     * search for the filename */
+	    filename_start = strstr(line," ./");
+	    if (filename_start == NULL)
+		continue;
+	    filename_start += 2;
+        }
 	if (line[0] != '\0') {
 	    if(strlen(line) > 0 && line[strlen(line)-1] == '\n')
 		line[strlen(line)-1] = '\0';
-	    if (g_str_has_prefix(line, dir_slash )) {
+	    if (g_str_has_prefix(filename_start, dir_slash )) {
 		if(!recursive) {
-		    s = line + len_dir_slash;
+		    s = filename_start + len_dir_slash;
 		    ch = *s++;
 		    while(ch && ch != '/')
 			ch = *s++;/* find end of the file name */
@@ -280,9 +291,9 @@ process_ls_dump(
 		    }
 		    s[-1] = '\0';
 		}
-		if(!g_str_equal(line, old_line)) {
-		    add_dir_list_item(dump_item, line);
-		    strcpy(old_line, line);
+		if(!g_str_equal(filename_start, old_filename)) {
+		    add_dir_list_item(dump_item, filename_start);
+		    strcpy(old_filename, filename_start);
 		}
 	    }
 	}
@@ -807,6 +818,7 @@ is_dir_valid_opaque(
     char *filename = NULL;
     size_t ldir_len;
     GPtrArray *emsg = NULL;
+    char *filename_start = NULL;
 
     if (get_config_name() == NULL || dump_hostname == NULL || disk_name == NULL) {
 	reply(502, _("Must set config,host,disk before asking about directories"));
@@ -864,11 +876,21 @@ is_dir_valid_opaque(
 	    return -1;
 	}
 	while (fgets(line, STR_SIZE, fp) != NULL) {
+	    if(line[0] == '/') {
+		filename_start = line;
+	    } else {
+		/* tar continually adjusts the output so we must continually 
+		 * search for the filename */
+		filename_start = strstr(line," ./");
+		if (filename_start == NULL)
+		    continue;
+		filename_start += 2;
+            }
 	    if (line[0] == '\0')
 		continue;
 	    if(strlen(line) > 0 && line[strlen(line)-1] == '\n')
 		line[strlen(line)-1] = '\0';
-	    if (strncmp(line, ldir, ldir_len) != 0) {
+	    if (strncmp(filename_start, ldir, ldir_len) != 0) {
 		continue;			/* not found yet */
 	    }
 	    amfree(filename);
@@ -2104,11 +2126,11 @@ uncompress_file(
 	    gchar *tmpdir = getconf_str(CNF_TMPDIR);
 	    pid_sort = pipespawn(SORT_PATH, STDIN_PIPE|STDERR_PIPE, 0,
 				 &pipe_to_sort, &indexfd, &sort_errfd,
-				 SORT_PATH, "-T", tmpdir, NULL);
+				 SORT_PATH, "-k", "6", "-T", tmpdir, NULL);
 	} else {
 	    pid_sort = pipespawn(SORT_PATH, STDIN_PIPE|STDERR_PIPE, 0,
 				 &pipe_to_sort, &indexfd, &sort_errfd,
-				 SORT_PATH, NULL);
+				 SORT_PATH, "-k", "6", NULL);
 	}
 	aclose(indexfd);
 
@@ -2129,9 +2151,7 @@ uncompress_file(
 	case 0:
 	    while (fgets(line, STR_SIZE, pipe_stream) != NULL) {
 		if (line[0] != '\0') {
-		    if (strchr(line,'/')) {
-			full_write(pipe_to_sort,line,strlen(line));
-		    }
+		    full_write(pipe_to_sort,line,strlen(line));
 		}
 	    }
 	    exit(0);
