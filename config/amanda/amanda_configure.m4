@@ -200,6 +200,7 @@ AC_CHECK_HEADERS(
 	regex.h \
 	stdarg.h \
 	stdlib.h \
+	stdint.h \
 	strings.h \
 	rpc/rpc.h \
 	sys/file.h \
@@ -221,6 +222,13 @@ AC_DEFINE([HAVE_AMANDA_H], 1, [Define to 1 if you have the "amanda.h" header fil
 AC_DEFINE([HAVE_UTIL_H], 1, [Define to 1 if you have the "util.h" header file.])
 
 AC_DEFINE([USE_GETTEXT], 1, [Define to 1 if files will be processed with gettextize])
+
+# okay if not found.. if not needed
+PKG_CHECK_MODULES([TIRPC],[libtirpc],[ 
+   AC_DEFINE([HAVE_RPC_RPC_H], 1) 
+],[
+   dnl nothing here
+])
 
 #
 # Types

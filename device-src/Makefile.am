@@ -62,8 +62,10 @@ libamdevice_la_SOURCES += dvdrw-device.c
 endif
 
 if WANT_NDMP_DEVICE
+AM_CPPFLAGS += ${TIRPC_CFLAGS}
 libamdevice_la_SOURCES += ndmp-device.c
 libamdevice_la_LIBADD += ../ndmp-src/libndmlib.la
+libamdevice_la_LDFLAGS += ${TIRPC_LDFLAGS}
 endif
 
 ## automake-style tests

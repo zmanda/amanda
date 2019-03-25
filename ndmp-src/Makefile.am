@@ -71,7 +71,8 @@ include $(top_srcdir)/config/automake/precompile.am
 
 AM_CPPFLAGS =	-I$(top_builddir)/common-src \
 		-I$(top_srcdir)/common-src   \
-		-I$(top_srcdir)/gnulib
+		-I$(top_srcdir)/gnulib \
+        ${TIRPC_CFLAGS}
 
 # TODO: use existing md5 facility? (openssl?)
 
@@ -166,7 +167,7 @@ libndmjlo = \
 	ndmos.c \
 	ndmos_common.c
 
-libndmlib_la_LDFLAGS = -release $(VERSION) $(AS_NEEDED_FLAGS)
+libndmlib_la_LDFLAGS = -release $(VERSION) $(AS_NEEDED_FLAGS) ${TIRPC_LIBS}
 libndmlib_la_SOURCES = \
 	$(libndmjll) \
 	$(libndmjlp) \
@@ -179,7 +180,7 @@ libndmjob_la_SOURCES = \
 	$(libndmjla) \
 	$(libndmjlr)
 
-libndmjob_la_LDFLAGS = -release $(VERSION) $(AS_NEEDED_FLAGS)
+libndmjob_la_LDFLAGS = -release $(VERSION) $(AS_NEEDED_FLAGS) ${TIRPC_LIBS}
 libndmjob_la_LIBADD = libndmlib.la
 
 ##
