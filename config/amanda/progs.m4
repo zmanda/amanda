@@ -30,7 +30,7 @@ AC_DEFUN([AMANDA_INIT_PROGS],
     LOCPATH=`(
 	test "x$prefix" = xNONE && prefix=$ac_default_prefix
 	test "x$exec_prefix" = xNONE && exec_prefix=${prefix}
-	eval echo "$libexecdir:$PATH:/usr/local/sbin:/usr/local/bin:/usr/ccs/bin"
+	eval "echo \"$libexecdir:$PATH:/usr/local/sbin:/usr/local/bin:/usr/ccs/bin\""
     )`
     SYSLOCPATH="$SYSPATH:$LOCPATH"
     LOCSYSPATH="$LOCPATH:$SYSPATH"
