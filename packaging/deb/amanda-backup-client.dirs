@@ -1,5 +1,4 @@
 etc/amanda
-usr/lib/amanda
 usr/lib/x86_64-linux-gnu/amanda
 usr/share/lintian/overrides
 usr/share/man/man5

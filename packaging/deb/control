@@ -5,7 +5,8 @@ Maintainer: Zmanda Inc <support@zmanda.com>
 Build-Depends: debhelper, dump, fakeroot, flex, gettext, gnuplot-nox|gnuplot,
 	libtool, mailx|bsd-mailx, mtx, perl (>=5.6.0), procps,
 	smbclient, libcurl-dev, libglib2.0-dev, libncurses5-dev,
-	libreadline5-dev|libreadline-dev, libssl-dev
+	libreadline5-dev|libreadline-dev, libssl-dev,
+	docbook-xsl, swig, xsltproc
 Standards-Version: 3.6.1
 
 Package: amanda-backup-server
