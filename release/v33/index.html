@@ -1,0 +1,1082 @@
+<!DOCTYPE html>
+<html lang="en" class="js csstransforms3d">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="Hugo 0.54.0" />
+    <meta name="description" content="">
+
+
+    <link rel="icon" href="../../amanda/images/preview.png" type="image/png">
+
+    <title>Release Notes 3.3 Series :: amanda.org</title>
+
+    
+    <link href="../../amanda/css/nucleus.css?1553737318" rel="stylesheet">
+    <link href="../../amanda/css/fontawesome-all.min.css?1553737318" rel="stylesheet">
+    <link href="../../amanda/css/hybrid.css?1553737318" rel="stylesheet">
+    <link href="../../amanda/css/featherlight.min.css?1553737318" rel="stylesheet">
+    <link href="../../amanda/css/perfect-scrollbar.min.css?1553737318" rel="stylesheet">
+    <link href="../../amanda/css/auto-complete.css?1553737318" rel="stylesheet">
+    <link href="../../amanda/css/theme.css?1553737318" rel="stylesheet">
+    <link href="../../amanda/css/hugo-theme.css?1553737318" rel="stylesheet">
+    
+
+    <script src="../../amanda/js/jquery-2.x.min.js?1553737318"></script>
+
+    <style type="text/css">
+      :root #header + #content > #left > #rlblock_left{
+          display:none !important;
+      }
+      
+    </style>
+    <link href="../../css/custom.css" rel="stylesheet">
+
+  </head>
+  <body class="" data-url="/amanda/release/v33/">
+    <nav id="sidebar" class="">
+
+
+
+  <div id="header-wrapper">
+    <div id="header">
+      <a href="http://zmanda.github.io/amanda/">
+  <svg version="1.1" id="amandalogo" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="198px" height="63px" viewBox="0 0 198 63" enable-background="new 0 0 198 63" xml:space="preserve">  <image id="image0" width="198" height="63" x="0" y="0"
+    xlink:href="data:image/png;base64,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
+RU5ErkJggg==" />
+</svg>
+
+
+</a>
+
+    </div>
+    
+        <div class="searchbox">
+    <label for="search-by"><i class="fas fa-search"></i></label>
+    <input data-search-input id="search-by" type="search" placeholder="Search...">
+    <span data-search-clear=""><i class="fas fa-times"></i></span>
+</div>
+
+<script type="text/javascript" src="../../amanda/js/lunr.min.js?1553737318"></script>
+<script type="text/javascript" src="../../amanda/js/auto-complete.js?1553737318"></script>
+<script type="text/javascript">
+    
+        var baseurl = "http:\/\/zmanda.github.io\/amanda\/";
+    
+</script>
+<script type="text/javascript" src="../../amanda/js/search.js?1553737318"></script>
+
+    
+  </div>
+
+    <div class="highlightable">
+    <ul class="topics">
+
+        
+          
+          
+
+
+ 
+  
+    
+    <li data-nav-id="/amanda/about/" title="     About" class="dd-item 
+        
+        
+        
+        ">
+      <a href="../../amanda/about/">
+          <i class='fas fa-info-circle'></i>     About
+          
+      </a>
+      
+      
+        <ul>
+          
+          
+          
+          
+        
+          
+             
+            
+          
+        
+        </ul>
+              
+    </li>
+  
+ 
+
+          
+          
+
+
+ 
+  
+    
+    <li data-nav-id="/amanda/copyright/" title="     Copyright" class="dd-item 
+        
+        
+        
+        ">
+      <a href="../../amanda/copyright/">
+          <i class='far fa-copyright'></i>     Copyright
+          
+      </a>
+      
+              
+    </li>
+  
+ 
+
+          
+          
+
+
+ 
+  
+    
+    <li data-nav-id="/amanda/download/" title="     Download" class="dd-item 
+        
+        
+        
+        ">
+      <a href="../../amanda/download/">
+          <i class='far fa-arrow-alt-circle-down'></i>     Download
+          
+      </a>
+      
+      
+        <ul>
+          
+          
+          
+          
+        
+          
+             
+            
+          
+             
+            
+          
+        
+        </ul>
+              
+    </li>
+  
+ 
+
+          
+          
+
+
+ 
+  
+    
+    <li data-nav-id="/amanda/release/" title="     Release Notes" class="dd-item 
+        parent
+        
+        
+        ">
+      <a href="../../amanda/release/">
+          <i class='far fa-file-alt'></i>     Release Notes
+          
+      </a>
+      
+      
+        <ul>
+          
+          
+          
+          
+        
+          
+            
+            
+
+
+ 
+  
+    
+      <li data-nav-id="/amanda/release/v35/" title="Release Notes 3.5 Series" class="dd-item ">
+        <a href="../../amanda/release/v35/">
+        Release Notes 3.5 Series
+        
+        </a>
+    </li>
+     
+  
+ 
+
+            
+          
+            
+            
+
+
+ 
+  
+    
+      <li data-nav-id="/amanda/release/v34/" title="Release Notes 3.4 Series" class="dd-item ">
+        <a href="../../amanda/release/v34/">
+        Release Notes 3.4 Series
+        
+        </a>
+    </li>
+     
+  
+ 
+
+            
+          
+            
+            
+
+
+ 
+  
+    
+      <li data-nav-id="/amanda/release/v33/" title="Release Notes 3.3 Series" class="dd-item active">
+        <a href="../../amanda/release/v33/">
+        Release Notes 3.3 Series
+        
+        </a>
+    </li>
+     
+  
+ 
+
+            
+          
+            
+            
+
+
+ 
+  
+    
+      <li data-nav-id="/amanda/release/v32/" title="Release Notes 3.2 Series" class="dd-item ">
+        <a href="../../amanda/release/v32/">
+        Release Notes 3.2 Series
+        
+        </a>
+    </li>
+     
+  
+ 
+
+            
+          
+            
+            
+
+
+ 
+  
+    
+      <li data-nav-id="/amanda/release/v31/" title="Release Notes 3.1 Series" class="dd-item ">
+        <a href="../../amanda/release/v31/">
+        Release Notes 3.1 Series
+        
+        </a>
+    </li>
+     
+  
+ 
+
+            
+          
+            
+            
+
+
+ 
+  
+    
+      <li data-nav-id="/amanda/release/v26/" title="Release Notes 2.6 Series" class="dd-item ">
+        <a href="../../amanda/release/v26/">
+        Release Notes 2.6 Series
+        
+        </a>
+    </li>
+     
+  
+ 
+
+            
+          
+        
+        </ul>
+              
+    </li>
+  
+ 
+
+          
+          
+
+
+ 
+  
+    
+    <li data-nav-id="/amanda/project/" title="     Project" class="dd-item 
+        
+        
+        
+        ">
+      <a href="../../amanda/project/">
+          <i class='far fa-file-code'></i>     Project
+          
+      </a>
+      
+              
+    </li>
+  
+ 
+
+          
+          
+
+
+ 
+  
+    
+    <li data-nav-id="/amanda/support/" title="     Support" class="dd-item 
+        
+        
+        
+        ">
+      <a href="../../amanda/support/">
+          <i class='fas fa-headset'></i>     Support
+          
+      </a>
+      
+      
+        <ul>
+          
+          
+          
+          
+        
+          
+             
+            
+          
+        
+        </ul>
+              
+    </li>
+  
+ 
+
+          
+          
+
+
+ 
+  
+    
+    <li data-nav-id="/amanda/mailing_list/" title="     Mailing List" class="dd-item 
+        
+        
+        
+        ">
+      <a href="../../amanda/mailing_list/">
+          <i class='far fa-envelope'></i>     Mailing List
+          
+      </a>
+      
+      
+        <ul>
+          
+          
+          
+          
+        
+          
+             
+            
+          
+             
+            
+          
+        
+        </ul>
+              
+    </li>
+  
+ 
+
+          
+          
+
+
+ 
+  
+    
+    <li data-nav-id="/amanda/irc/" title="     IRC Channel" class="dd-item 
+        
+        
+        
+        ">
+      <a href="../../amanda/irc/">
+          <i class='far fa-comments'></i>     IRC Channel
+          
+      </a>
+      
+              
+    </li>
+  
+ 
+
+          
+          
+
+
+ 
+  
+    
+    <li data-nav-id="/amanda/to_do/" title="     To Do" class="dd-item 
+        
+        
+        
+        ">
+      <a href="../../amanda/to_do/">
+          <i class='fas fa-tasks'></i>     To Do
+          
+      </a>
+      
+              
+    </li>
+  
+ 
+
+          
+          
+
+
+ 
+  
+    
+    <li data-nav-id="/amanda/contribute/" title="     Contributors" class="dd-item 
+        
+        
+        
+        ">
+      <a href="../../amanda/contribute/">
+          <i class='fas fa-users'></i>     Contributors
+          
+      </a>
+      
+              
+    </li>
+  
+ 
+
+          
+         
+    </ul>
+
+    
+    
+
+    
+    <section id="footer">
+      
+
+    </section>
+  </div>
+</nav>
+
+
+
+
+
+        <section id="body">
+        <div id="overlay"></div>
+        <div class="padding highlightable">
+              
+              
+            
+
+        
+          <div id="chapter">
+        
+        <div id="body-inner">
+          
+
+        
+
+
+
+
+<p><em><sub><sub>Amanda.org is an open source site. Please refer the <a href="../../to_do">TO DO LIST</a> to contribute to this site.</sub></sub></em></p>
+
+<h3 id="release-notes-for-3-3-9">Release Notes for 3.3.9:</h3>
+
+<hr />
+
+<ul>
+<li>new &ndash;with-security-file configure option
+
+<ul>
+<li>It set the default security file.</li>
+<li>default to /etc/amanda-security.conf</li>
+</ul></li>
+<li>security-fix
+
+<ul>
+<li>All previous release of amanda allow the &lsquo;amanda&rsquo; user to
+execute any code as root, and to execute an interactive shell as
+root.</li>
+<li>This is a security vulnerability if you do not trust the
+&lsquo;amanda&rsquo; user.</li>
+<li>There is no need to upgrade if you trust the &lsquo;amanda&rsquo; user and
+the account is secure
+
+<ul>
+<li>good password.</li>
+<li>secure xinetd.conf setting.</li>
+<li>secure .amandahosts setting.</li>
+</ul></li>
+<li>The &lsquo;amanda&rsquo; user can read all files in the machine, it is what
+a backup program do.</li>
+<li>The set of fix disable the abilities to run unwanted code as
+root or to write file anywhere in the filesystem.</li>
+</ul></li>
+<li>/etc/amanda-security.conf/etc/amanda-security.conf
+
+<ul>
+<li>A file that contains security setting.</li>
+<li>It list all binaries amanda can execute as root.</li>
+<li>restore_by_amanda_user
+
+<ul>
+<li>It tell if the &lsquo;amanda&rsquo; user can do restore as root.</li>
+<li>It allow the &lsquo;amanda&rsquo; user to write files anywhere in the
+filesystem.</li>
+</ul></li>
+</ul></li>
+<li>amgtar/amstar/ambsdtar/runtar
+
+<ul>
+<li>Disable arguments that can fork program.</li>
+<li>Verify the realpath (with symbolic link resolved) is in the
+amanda-security.conf file.</li>
+<li>Verify the tar/star/bsdtar realpath program is secure
+
+<ul>
+<li>owned by root and modifiable only by root.</li>
+</ul></li>
+<li>On restore, check the restore_by_amanda_user setting if not
+run by root.</li>
+</ul></li>
+</ul>
+
+<h3 id="release-notes-for-3-3-8">Release Notes for 3.3.8:</h3>
+
+<hr />
+
+<ul>
+<li>s3 devices
+
+<ul>
+<li>New NEARLINE S3-STORAGE-CLASS for Google storage.</li>
+<li>New AWS4 STORAGE-API</li>
+</ul></li>
+<li>amcryptsimple
+
+<ul>
+<li>Works with newer gpg2.</li>
+</ul></li>
+<li>amgtar
+
+<ul>
+<li>Default SPARSE value is NO if tar &lt; 1.28.</li>
+<li>Because a bug in tar with some filesystem.</li>
+</ul></li>
+<li>amstar
+
+<ul>
+<li>support include in backup mode.</li>
+</ul></li>
+<li>ampgsql
+
+<ul>
+<li>Add FULL-WAL property.</li>
+</ul></li>
+<li>Many bugs fix.</li>
+</ul>
+
+<h3 id="release-notes-for-3-3-7p1">Release Notes for 3.3.7p1:</h3>
+
+<hr />
+
+<ul>
+<li>Fix build in 3.3.7.</li>
+</ul>
+
+<h3 id="release-notes-for-3-3-7">Release Notes for 3.3.7:</h3>
+
+<hr />
+
+<ul>
+<li>amvault
+
+<ul>
+<li>new &ndash;no-interactivity argument.</li>
+<li>new &ndash;src-labelstr argument.</li>
+</ul></li>
+<li>amdump
+
+<ul>
+<li>compute crc32 of the streams and write them to the debug files.</li>
+</ul></li>
+<li>chg-robot
+
+<ul>
+<li>Add a BROKEN-DRIVE-LOADED-SLOT property.</li>
+</ul></li>
+<li>Many bugs fix.</li>
+</ul>
+
+<h3 id="release-notes-for-3-3-6">Release Notes for 3.3.6:</h3>
+
+<hr />
+
+<ul>
+<li>ambsdtar
+
+<ul>
+<li>new application that use BSD tar to do the backup.</li>
+</ul></li>
+<li>Many bugs fix.</li>
+</ul>
+
+<h3 id="release-notes-for-3-3-5">Release Notes for 3.3.5:</h3>
+
+<hr />
+
+<ul>
+<li>amtape
+
+<ul>
+<li>faster &lsquo;verify&rsquo; command.</li>
+</ul></li>
+<li>fix parsing of config override arguments.</li>
+<li>amsamba
+
+<ul>
+<li>Add REGEX-MATCH property.</li>
+</ul></li>
+<li>amvault
+
+<ul>
+<li>Print progress status.</li>
+</ul></li>
+<li>ndmp device
+
+<ul>
+<li>INDIRECT property default to yes.</li>
+</ul></li>
+<li>Many bugs fix.</li>
+</ul>
+
+<h3 id="release-notes-for-3-3-4">Release Notes for 3.3.4:</h3>
+
+<hr />
+
+<ul>
+<li>amreport
+
+<ul>
+<li>new &ndash;format argument</li>
+<li>new &lsquo;json&rsquo; and &lsquo;json_raw&rsquo; format.</li>
+</ul></li>
+<li>amanda.conf
+
+<ul>
+<li>new REPORT-FORMAT option.</li>
+</ul></li>
+<li>amtape
+
+<ul>
+<li>new &lsquo;verify&rsquo; command.</li>
+</ul></li>
+<li>amadmin
+
+<ul>
+<li>new &lsquo;force-level-1&rsquo; command.</li>
+</ul></li>
+<li>ampgsql
+
+<ul>
+<li>Add VERBOSE property.</li>
+</ul></li>
+<li>S3 device
+
+<ul>
+<li>handle DURABLE_REDUCED_AVAILABILITY for google storage.</li>
+</ul></li>
+<li>Many bugs fix.</li>
+</ul>
+
+<h3 id="release-notes-for-3-3-3">Release Notes for 3.3.3:</h3>
+
+<hr />
+
+<ul>
+<li>amdump.X log files use timestamp instead of number, amdump and
+amdump.1 are maintained as symlink.</li>
+<li>chg-disk
+
+<ul>
+<li>Use the changerfile for the statefile.</li>
+</ul></li>
+<li>s3 device
+
+<ul>
+<li>Support CASTOR storage</li>
+</ul></li>
+<li>amanda.conf
+
+<ul>
+<li>New REPORT-USE-MEDIA and REPORT-NEXT-MEDIA setting.</li>
+</ul></li>
+<li>amfetchdump
+
+<ul>
+<li>New &ndash;extract, &ndash;directory, &ndash;data-path and
+&ndash;application-property arguments. It allow to do the extraction
+on the server.</li>
+</ul></li>
+<li>&ndash;exact-match argument to many command, and &lsquo;=&rsquo; prefix to
+expression.
+
+<ul>
+<li>It diable use of expression for host, disk, level and datestamp
+on command line argument.</li>
+</ul></li>
+<li>All changer scripts.
+
+<ul>
+<li>Add LOCK-TIMEOUT property.</li>
+</ul></li>
+<li>Many bug fix</li>
+</ul>
+
+<h3 id="release-notes-for-3-3-2">Release Notes for 3.3.2:</h3>
+
+<hr />
+
+<ul>
+<li>amgtar
+
+<ul>
+<li>New IGNORE-ZEROS property</li>
+</ul></li>
+<li>amsamba
+
+<ul>
+<li>Fix use of subdir for restore</li>
+</ul></li>
+<li>s3 device
+
+<ul>
+<li>New PROXY property</li>
+<li>New PASSWORD, USERNAME, TENANT_ID, TENANT_NAME properties</li>
+<li>New STORAGE_API property</li>
+<li>New S3_MULTI_DELETE property</li>
+<li>New CLIENT_ID, CLIENT_SECRET and REFRESH_TOKEN properties</li>
+<li>New CREATE-BUCKET property</li>
+<li>New PROJECT-ID property</li>
+<li>New REUSE-CONNECTION property</li>
+<li>Works with swift and google storage.</li>
+</ul></li>
+<li>NDMP device
+
+<ul>
+<li>Add INDIRECT property</li>
+</ul></li>
+<li>amanda.conf
+
+<ul>
+<li>Add &lsquo;max-warnings&rsquo;, The maximum number of warning lines in the
+report.</li>
+<li>Default &lsquo;columspec&rsquo; changed to:
+HostName=0:-12:12,Disk=1:-11:11,Level=1:-1:1,OrigKB=1:-7:0,OutKB=1:-7:0,
+Compress=1:-6:1,DumpTime=1:-7:7,Dumprate=1:-6:1,TapeTime=1:-6:6,
+TapeRate=1:-6:1</li>
+</ul></li>
+<li>amadmin
+
+<ul>
+<li>Add &ndash;no-default and &ndash;print-source arguments for config and
+disklist command.</li>
+</ul></li>
+<li>amfetchdump
+
+<ul>
+<li>Print progress.</li>
+<li>Add &ndash;decrypt, &ndash;no-decrypt, &ndash;server-decrypt, &ndash;client-decrypt,
+&ndash;compress, &ndash;no-compress, &ndash;server-compress and
+&ndash;client-compress options.</li>
+</ul></li>
+<li>fix for compilation with newer glib</li>
+<li>fix for compilation on cigwin</li>
+<li>Many bug fix</li>
+</ul>
+
+<h3 id="release-notes-for-3-3-1">Release Notes for 3.3.1:</h3>
+
+<hr />
+
+<ul>
+<li>amrecover
+
+<ul>
+<li>new &lsquo;settransalte&rsquo; command</li>
+</ul></li>
+<li>amanda.conf
+
+<ul>
+<li>new &lsquo;\$s&rsquo; substitution in autolabel</li>
+<li>new &lsquo;max-dle-by-volume&rsquo; global option</li>
+<li>new &lsquo;eject-volume&rsquo; global option</li>
+</ul></li>
+<li>diskfile
+
+<ul>
+<li>new &lsquo;&ndash;client-verbose&rsquo; argument</li>
+</ul></li>
+<li>all programs have a new &lsquo;&ndash;version&rsquo; argument</li>
+<li>ampgsql can take property from server configuration</li>
+<li>amgetconf can print one property of a section.</li>
+<li>s3 device
+
+<ul>
+<li>new S3_SERVER_SIDE_ENCRYPTION property</li>
+<li>use multiple thread to speedup deleting a volume</li>
+</ul></li>
+<li>many bug fix</li>
+</ul>
+
+<h3 id="release-notes-for-3-3-0">Release Notes for 3.3.0:</h3>
+
+<hr />
+
+<ul>
+<li>The default auth is changed to &ldquo;bsdtcp&rdquo;, if you are using the
+default bsd then you must add it to your configuration:
+
+<ul>
+<li>in amanda.conf</li>
+<li>in amanda-client.conf</li>
+<li>in dumptype/disklist</li>
+<li>in xinetd (if no &lsquo;-auth&rsquo; argument to amandad)</li>
+</ul></li>
+<li>amdump trap crtl-c, it still send the report and do cleanup if you
+do one crtl-c, do it more than once to abort the run</li>
+<li>S3 device
+
+<ul>
+<li>use multiple threads to speedup the transfer</li>
+<li>can connect to eucalytus and google storage</li>
+<li>new NB_THREADS_BACKUP property</li>
+<li>new NB_THREADS_RECOVERY property</li>
+<li>new S3_HOST property</li>
+<li>new S3_SERVICE_PATH property</li>
+<li>new S3_SUBDOMAIN property</li>
+</ul></li>
+<li>chg-aggregate: new changer that use other changer sequentially</li>
+<li>meta-volume</li>
+<li>Add meta label in tapelist file</li>
+<li>chg-disk:
+
+<ul>
+<li>new NUM-SLOT property</li>
+<li>new AUTO-CREATE-SLOT property</li>
+<li>new REMOVABLE property</li>
+<li>new MOUNT property</li>
+<li>new UMOUNT property</li>
+<li>new UMOUNT-LOCKFILE property</li>
+<li>new UMOUNT-IDLE property</li>
+</ul></li>
+<li>Change in amanda.conf
+
+<ul>
+<li>new meta-autolabel option</li>
+<li>autolabel can include org, config, barcode, meta in the label</li>
+<li>new client-name option in appication and script.</li>
+</ul></li>
+<li>application and script in amanda-client.conf can be used to set
+default properties for application or script</li>
+<li>amlabel
+
+<ul>
+<li>The label argument is no longer required, an autolabel can be
+generated</li>
+<li>new &ndash;meta option</li>
+<li>new &ndash;barcode option</li>
+<li>new &ndash;assign option</li>
+</ul></li>
+<li>amgtar, amstar: The path must be specified, it will not works with a
+device</li>
+<li>amrecover: decompression and decryption are now done on the client
+if compression/encryption was done on the client</li>
+<li>amtape: inventory print the current slot</li>
+<li>amanda.conf:
+
+<ul>
+<li>autoflush have value &ldquo;no|yes|all&rdquo;</li>
+<li>script have single-execution setting</li>
+<li>Add pre-amcheck, post-amcheck, pre-estimate, post-estimate,
+pre-backup and post-backup to execute-on of script</li>
+<li>Add taperscan and interactivity section</li>
+<li>add &lsquo;server&rsquo; value in recovery-limit</li>
+<li>add dump-limit in a dumptype</li>
+</ul></li>
+<li>amanda-client.conf
+
+<ul>
+<li>add amdump-server setting.</li>
+</ul></li>
+<li>script are searched in \$APPLICATION_DIR,
+\$CONFIG_DIR//application and \$CONFIG_DIR/application</li>
+<li>amservice
+
+<ul>
+<li>add -s argument</li>
+<li>is also installed on client</li>
+</ul></li>
+<li>new amdumpd server service, if enable, it allow client to start a
+backup of itself</li>
+<li>new amdump_client program, it is use on client to start a backup of
+itself</li>
+<li>implement restore command in amzfs-sendrecv, it can be use with
+amrecover</li>
+</ul>
+
+
+<footer class=" footline" >
+	
+</footer>
+
+
+        
+            </div> 
+        
+        </div> 
+        
+
+      </div>
+
+    
+
+    </section>
+    
+    <div style="left: -1000px; overflow: scroll; position: absolute; top: -1000px; border: none; box-sizing: content-box; height: 200px; margin: 0px; padding: 0px; width: 200px;">
+      <div style="border: none; box-sizing: content-box; height: 200px; margin: 0px; padding: 0px; width: 200px;"></div>
+    </div>
+    <script src="../../amanda/js/clipboard.min.js?1553737318"></script>
+    <script src="../../amanda/js/perfect-scrollbar.min.js?1553737318"></script>
+    <script src="../../amanda/js/perfect-scrollbar.jquery.min.js?1553737318"></script>
+    <script src="../../amanda/js/jquery.sticky.js?1553737318"></script>
+    <script src="../../amanda/js/featherlight.min.js?1553737318"></script>
+    <script src="../../amanda/js/html5shiv-printshiv.min.js?1553737318"></script>
+    <script src="../../amanda/js/highlight.pack.js?1553737318"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+    <script src="../../amanda/js/modernizr.custom.71422.js?1553737318"></script>
+    <script src="../../amanda/js/learn.js?1553737318"></script>
+    <script src="../../amanda/js/hugo-learn.js?1553737318"></script>
+
+    <link href="../../amanda/mermaid/mermaid.css?1553737318" type="text/css" rel="stylesheet" />
+    <script src="../../amanda/mermaid/mermaid.js?1553737318"></script>
+    <script>
+        mermaid.initialize({ startOnLoad: true });
+    </script>
+    
+
+  </body>
+</html>
+

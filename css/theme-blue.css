@@ -1,0 +1,209 @@
+
+:root{
+    
+    --MAIN-TEXT-color:#000000; /* Color of text by default */
+    --MAIN-TITLES-TEXT-color: #5e5e5e; /* Color of titles h2-h3-h4-h5 */
+    --MAIN-LINK-color:#1C90F3; /* Color of links */
+    --MAIN-LINK-HOVER-color:orange; /* Color of hovered links */
+    --MAIN-ANCHOR-color: #1C90F3; /* color of anchors on titles */
+
+    --MENU-HEADER-BG-color:#4D726E; /* Background color of menu header */
+    --MENU-HEADER-BORDER-color:#4D726E; /*Color of menu header border */ 
+
+    --MENU-SEARCH-BG-color:white; /* Search field background color (by default borders + icons) */
+    --MENU-SEARCH-BOX-color: #4d726e; /* Override search field border color */
+    --MENU-SEARCH-BOX-ICONS-color: black; /* Override search field icons color */
+
+    --MENU-SECTIONS-ACTIVE-BG-color:#F7F7F7; /* Background color of the active section and its childs */
+    --MENU-SECTIONS-BG-color:#F7F7F7; /* Background color of other sections */
+    --MENU-SECTIONS-LINK-color: #20272b; /* Color of links in menu */
+    --MENU-SECTIONS-LINK-HOVER-color: orange;  /* Color of links in menu, when hovered */
+    --MENU-SECTION-ACTIVE-CATEGORY-color: black; /* Color of active category text */
+    --MENU-SECTION-ACTIVE-CATEGORY-BG-color: #fff; /* Color of background for the active category (only) */
+
+    --MENU-VISITED-color: #33a1ff; /* Color of 'page visited' icons in menu */
+    --MENU-SECTION-HR-color: #20272b; /* Color of <hr> separator in menu */
+    
+}
+
+.leftbar
+{
+background-color:#e0f2f1;
+}
+
+.buttons
+{
+background-color:#F7F7F7;
+width:100%;
+height:40px;
+border-bottom:0;
+border-top:0;
+border-right:0;
+border-left:0;
+color:black;
+font-weight: 400;
+text-align: left;
+}
+
+#i{
+    font-size:2em;
+}
+#svg,#svg:hover{
+    font-weight: 400;
+color:black;
+padding-left: 2em;
+}
+
+#amandalogo
+{
+    width:80%;
+    height:10%;
+    padding-left:0em;
+    padding-top: 1em;
+}
+
+svg{
+    width:20%;
+    height:3%;
+    padding-left: 1em;
+}
+
+i{
+    padding-right:1em;
+}
+
+.buttons:hover
+{
+background-color:#b2dfdb;
+}
+
+.buttons:active
+{
+    border:none;
+border-color:white;
+background-color:white;
+outline-color: white;
+}
+
+.buttons:focus
+{
+    border:none;
+    border-color:white;
+    background-color:white;
+    outline-color: white;
+}
+
+#arrow,#arrow2,#arrow3
+{
+    display:inline;
+}
+
+#release,#copyright,#supports,#srccode,#about_amanda,#v351,#downr,#rightr,#downr2,#rightr2,#downr3,#rightr3,#download,#com,#mail,#am
+{
+display:none;
+}
+
+#release{
+  background-color:   #F7F7F7
+
+}
+
+p,ul,li
+{
+    color: black;
+    font-size:20px;
+    font-weight: 350;
+}
+
+
+.options
+{
+background-color:white;
+color:black;
+margin: 0%;
+
+}
+
+body {
+     color: var(--MAIN-TEXT-color) !important; 
+}
+
+h1
+{
+    font-weight:900;
+    color:#4D726E;
+}
+
+
+textarea:focus, input[type="email"]:focus, input[type="number"]:focus, input[type="password"]:focus, input[type="search"]:focus, input[type="tel"]:focus, input[type="text"]:focus, input[type="url"]:focus, input[type="color"]:focus, input[type="date"]:focus, input[type="datetime"]:focus, input[type="datetime-local"]:focus, input[type="month"]:focus, input[type="time"]:focus, input[type="week"]:focus, select[multiple=multiple]:focus {
+    border-color: none;
+    box-shadow: none;
+}
+
+h2, h3, h4, h5 {
+    color: var(--MAIN-TITLES-TEXT-color) !important;
+}
+
+a {
+    color: var(--MAIN-LINK-color);
+}
+
+.anchor {
+    color: var(--MAIN-ANCHOR-color);
+}
+
+a:hover {
+    color: var(--MAIN-LINK-HOVER-color);
+}
+
+#sidebar ul li.visited > a .read-icon {
+	color: var(--MENU-VISITED-color);
+}
+
+#body a.highlight:after {
+    display: block;
+    content: "";
+    height: 1px;
+    width: 0%;
+    -webkit-transition: width 0.5s ease;
+    -moz-transition: width 0.5s ease;
+    -ms-transition: width 0.5s ease;
+    transition: width 0.5s ease;
+    background-color: var(--MAIN-LINK-HOVER-color);
+}
+#sidebar {
+	background-color: var(--MENU-SECTIONS-BG-color);
+}
+#sidebar #header-wrapper {
+    background: var(--MENU-HEADER-BG-color);
+    color: var(--MENU-SEARCH-BOX-color);
+    border-color: var(--MENU-HEADER-BORDER-color);
+}
+#sidebar .searchbox {
+	border-color: var(--MENU-SEARCH-BOX-color);
+    background: var(--MENU-SEARCH-BG-color);
+}
+#sidebar ul.topics > li.parent, #sidebar ul.topics > li.active {
+    background: var(--MENU-SECTIONS-ACTIVE-BG-color);
+}
+#sidebar .searchbox * {
+    color: var(--MENU-SEARCH-BOX-ICONS-color);
+}
+
+#sidebar a {
+    color: var(--MENU-SECTIONS-LINK-color);
+}
+
+#sidebar a:hover {
+    color: var(--MENU-SECTIONS-LINK-HOVER-color);
+}
+
+#sidebar ul li.active > a {
+    background: var(--MENU-SECTION-ACTIVE-CATEGORY-BG-color);
+    color: var(--MENU-SECTION-ACTIVE-CATEGORY-color) !important;
+}
+
+#sidebar hr {
+    border-color: var(--MENU-SECTION-HR-color);
+}
+
