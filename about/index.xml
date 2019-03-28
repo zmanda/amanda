@@ -1,22 +1,22 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes" ?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>     About on amanda.org</title>
-    <link>http://shriya-magadal.github.io/about/</link>
-    <description>Recent content in      About on amanda.org</description>
+    <title>     About on amanda</title>
+    <link>http://zmanda.github.io/about/</link>
+    <description>Recent content in      About on amanda</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <lastBuildDate>Fri, 22 Mar 2019 23:18:00 +0530</lastBuildDate>
     
-	<atom:link href="http://shriya-magadal.github.io/about/index.xml" rel="self" type="application/rss+xml" />
+	<atom:link href="http://zmanda.github.io/about/index.xml" rel="self" type="application/rss+xml" />
     
     
     <item>
       <title>Readme</title>
-      <link>http://shriya-magadal.github.io/about/read_me/</link>
+      <link>http://zmanda.github.io/about/read_me/</link>
       <pubDate>Sat, 23 Mar 2019 15:16:18 +0530</pubDate>
       
-      <guid>http://shriya-magadal.github.io/about/read_me/</guid>
+      <guid>http://zmanda.github.io/about/read_me/</guid>
       <description>Amanda.org is an open source site. Please refer the TO DO LIST to contribute to this site.
 Amanda (The Advanced Maryland Automatic Network Disk Archiver) Backup Software Copyright &amp;copy; 1991-1998 University of Maryland at College Park All Rights Reserved.
 PLEASE NOTE: THIS SOFTWARE IS BEING MADE AVAILABLE &amp;ldquo;AS-IS&amp;rdquo;. We make no warranties that it will work for you. As such there is no support available other than users helping each other on the Amanda mailing lists or forums.</description>

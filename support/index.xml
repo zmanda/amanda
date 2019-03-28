@@ -1,22 +1,22 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes" ?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>     Support on amanda.org</title>
-    <link>http://shriya-magadal.github.io/support/</link>
-    <description>Recent content in      Support on amanda.org</description>
+    <title>     Support on amanda</title>
+    <link>http://zmanda.github.io/support/</link>
+    <description>Recent content in      Support on amanda</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <lastBuildDate>Sat, 23 Mar 2019 11:31:44 +0530</lastBuildDate>
     
-	<atom:link href="http://shriya-magadal.github.io/support/index.xml" rel="self" type="application/rss+xml" />
+	<atom:link href="http://zmanda.github.io/support/index.xml" rel="self" type="application/rss+xml" />
     
     
     <item>
       <title>Commercial support for Amanda</title>
-      <link>http://shriya-magadal.github.io/support/commercial_support/</link>
+      <link>http://zmanda.github.io/support/commercial_support/</link>
       <pubDate>Sat, 23 Mar 2019 11:35:51 +0530</pubDate>
       
-      <guid>http://shriya-magadal.github.io/support/commercial_support/</guid>
+      <guid>http://zmanda.github.io/support/commercial_support/</guid>
       <description>Amanda.org is an open source site. Please refer the TO DO LIST to contribute to this site.
 Commercial support for Amanda We have assembled a list of companies and people who are available to provide some sort of commercial support for amanda. Although Amanda is provided as-is, some consultants and companies have made their services available to provide more support beyond what&amp;rsquo;s available on the mailing lists.
 If you want to be on this list, please Contact us.</description>
