@@ -1,6 +1,6 @@
-baseURL = "http://shriya-magadal.github.io/"
+baseURL = "http://zmanda.github.io/"
 languageCode = "en-us"
-title = "amanda.org"
+title = "amanda"
 theme = "hugo-theme-learn"
 
 relativeURLs = true
