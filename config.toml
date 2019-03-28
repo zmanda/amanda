@@ -1,0 +1,6 @@
+baseURL = "https://shriya-magadal.github.io/"
+languageCode = "en-us"
+title = "amanda.org"
+theme = "hugo-theme-learn"
+
+relativeURLs = true
