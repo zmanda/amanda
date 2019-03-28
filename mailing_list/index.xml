@@ -2,31 +2,31 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>     Mailing List on amanda.org</title>
-    <link>http://zmanda.github.io/amanda/mailing_list/</link>
+    <link>http://shriya-magadal.github.io/mailing_list/</link>
     <description>Recent content in      Mailing List on amanda.org</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <lastBuildDate>Sat, 23 Mar 2019 10:20:00 +0530</lastBuildDate>
     
-	<atom:link href="http://zmanda.github.io/amanda/mailing_list/index.xml" rel="self" type="application/rss+xml" />
+	<atom:link href="http://shriya-magadal.github.io/mailing_list/index.xml" rel="self" type="application/rss+xml" />
     
     
     <item>
       <title>Msg00428</title>
-      <link>http://zmanda.github.io/amanda/mailing_list/msg00428/</link>
+      <link>http://shriya-magadal.github.io/mailing_list/msg00428/</link>
       <pubDate>Sat, 23 Mar 2019 15:47:39 +0530</pubDate>
       
-      <guid>http://zmanda.github.io/amanda/mailing_list/msg00428/</guid>
+      <guid>http://shriya-magadal.github.io/mailing_list/msg00428/</guid>
       <description>Amanda.org is an open source site. Please refer the TO DO LIST to contribute to this site.
 Storing index files in a tree  To: amanda-users@cs.umd.edu Subject: Storing index files in a tree From: &amp;ldquo;John R. Jackson&amp;rdquo; &amp;lt;jrj@gandalf.cc.purdue.edu&amp;gt; Date: Thu, 23 Apr 1998 10:57:00 -0500 Reply-to: jrj@cc.purdue.edu Resent-Date: Thu, 23 Apr 1998 11:57:23 -0400 (EDT) Resent-From: amanda-users@cs.umd.edu Resent-Message-ID: &amp;lt;&amp;ldquo;TtAdR.0.1c2.QJsFr&amp;rdquo;@tove.cs.umd.edu&amp;gt; Resent-Sender: amanda-users-request@cs.umd.edu  I store my index files on an archive file system.</description>
     </item>
     
     <item>
       <title>240index</title>
-      <link>http://zmanda.github.io/amanda/mailing_list/240index/</link>
+      <link>http://shriya-magadal.github.io/mailing_list/240index/</link>
       <pubDate>Sat, 23 Mar 2019 15:45:41 +0530</pubDate>
       
-      <guid>http://zmanda.github.io/amanda/mailing_list/240index/</guid>
+      <guid>http://shriya-magadal.github.io/mailing_list/240index/</guid>
       <description>Amanda.org is an open source site. Please refer the TO DO LIST to contribute to this site.
 After 2.4.0, the structure of the directory holding the index files was changed to have three levels instead of being flat. This greatly reduces the number of files in a given directory, which was a problem for some systems. The new layout is:
 [indexdir]/hostname/filesystem/YYYYMMDDL.gz where hostname and filesystem are &amp;ldquo;sanitized&amp;rdquo; versions of the names from disklist, i.</description>

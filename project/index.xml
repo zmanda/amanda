@@ -2,13 +2,13 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>     Project on amanda.org</title>
-    <link>http://zmanda.github.io/amanda/project/</link>
+    <link>http://shriya-magadal.github.io/project/</link>
     <description>Recent content in      Project on amanda.org</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <lastBuildDate>Sat, 23 Mar 2019 14:38:56 +0530</lastBuildDate>
     
-	<atom:link href="http://zmanda.github.io/amanda/project/index.xml" rel="self" type="application/rss+xml" />
+	<atom:link href="http://shriya-magadal.github.io/project/index.xml" rel="self" type="application/rss+xml" />
     
     
   </channel>

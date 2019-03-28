@@ -2,71 +2,71 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>amanda.org</title>
-    <link>http://zmanda.github.io/amanda/</link>
+    <link>http://shriya-magadal.github.io/</link>
     <description>Recent content on amanda.org</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <lastBuildDate>Fri, 22 Mar 2019 23:18:47 +0530</lastBuildDate>
     
-	<atom:link href="http://zmanda.github.io/amanda/index.xml" rel="self" type="application/rss+xml" />
+	<atom:link href="http://shriya-magadal.github.io/index.xml" rel="self" type="application/rss+xml" />
     
     
     <item>
       <title>Release Notes 3.5 Series</title>
-      <link>http://zmanda.github.io/amanda/release/v35/</link>
+      <link>http://shriya-magadal.github.io/release/v35/</link>
       <pubDate>Sat, 23 Mar 2019 10:57:25 +0530</pubDate>
       
-      <guid>http://zmanda.github.io/amanda/release/v35/</guid>
+      <guid>http://shriya-magadal.github.io/release/v35/</guid>
       <description>Amanda.org is an open source site. Please refer the TO DO LIST to contribute to this site.
 Release Notes for Amanda Version 3.5.1 :  compilation on Solaris Do not check all &amp;lsquo;r&amp;rsquo; bit on suid binary Fix parsing of configuration override (-o)  can unset some setting  client code will not fail if shared memory is not available amreport  lot of improvement  allow &amp;lsquo;*&amp;rsquo; for a datestamp wildcard amgetconf  print an empty string if a parameter is not set instead of &amp;lsquo;no such parameter&amp;rsquo;  amdump  new &amp;ndash;no-dump, &amp;ndash;no-flush and &amp;ndash;no-vault argument  amstatus fix lock holding disk to protect multiple parallel access  Release Notes for 3.</description>
     </item>
     
     <item>
       <title>Release Notes 3.4 Series</title>
-      <link>http://zmanda.github.io/amanda/release/v34/</link>
+      <link>http://shriya-magadal.github.io/release/v34/</link>
       <pubDate>Sat, 23 Mar 2019 11:23:30 +0530</pubDate>
       
-      <guid>http://zmanda.github.io/amanda/release/v34/</guid>
+      <guid>http://shriya-magadal.github.io/release/v34/</guid>
       <description>Amanda.org is an open source site. Please refer the TO DO LIST to contribute to this site.
 Release Notes for 3.4.5:  fix amvault fix taper hang fix memory leak in amrecover fix config parser when -o option fix compilation on FreeBSD fix planner looping  Release Notes for 3.4.4:  checkdump  Verify all copies of a dump  diskflat device  truncate the file when overwriting a label  amrecover  fix hang  ambackup  allow incremental backup  tapelist file  fix not adding label to tapelist file when creating it  email interactivity  improvement  S3 device  work with openstack keystone V2 (Juno and newer)  labelstr  fix matching a labelstr   Release Notes for 3.</description>
     </item>
     
     <item>
       <title>Release Notes 3.3 Series</title>
-      <link>http://zmanda.github.io/amanda/release/v33/</link>
+      <link>http://shriya-magadal.github.io/release/v33/</link>
       <pubDate>Sat, 23 Mar 2019 11:24:59 +0530</pubDate>
       
-      <guid>http://zmanda.github.io/amanda/release/v33/</guid>
+      <guid>http://shriya-magadal.github.io/release/v33/</guid>
       <description>Amanda.org is an open source site. Please refer the TO DO LIST to contribute to this site.
 Release Notes for 3.3.9:  new &amp;ndash;with-security-file configure option  It set the default security file. default to /etc/amanda-security.conf  security-fix  All previous release of amanda allow the &amp;lsquo;amanda&amp;rsquo; user to execute any code as root, and to execute an interactive shell as root. This is a security vulnerability if you do not trust the &amp;lsquo;amanda&amp;rsquo; user.</description>
     </item>
     
     <item>
       <title>Release Notes 3.2 Series</title>
-      <link>http://zmanda.github.io/amanda/release/v32/</link>
+      <link>http://shriya-magadal.github.io/release/v32/</link>
       <pubDate>Sat, 23 Mar 2019 11:27:06 +0530</pubDate>
       
-      <guid>http://zmanda.github.io/amanda/release/v32/</guid>
+      <guid>http://shriya-magadal.github.io/release/v32/</guid>
       <description>Amanda.org is an open source site. Please refer the TO DO LIST to contribute to this site.
 Release Notes for 3.2.3:  fix split arguments and LEOM handling amsuntar: Add SUNTAR-PATH property amstar: Add ACL property amzfs-sendrecv: Implement restore vfs-device (vtapes): LEOM property default to TRUE fix amplot amrecover take correct group when foring amandad with local auth many others small fix  Release Notes for 3.2.2:  Do not restore the NUL padding bytes, some program fail with them Fix driver doing nothing if taper crash early Fix taperalog *FIT no going to second volume Fix amrestore &amp;lsquo;-p&amp;rsquo; not going to next file flush even if flush threshold are not met if it save tape space fix crash in amtrmidx due to memory leak amsamba use &amp;lsquo;Use smbclient -TF&amp;rsquo; for restore  Release Notes for 3.</description>
     </item>
     
     <item>
       <title>Msg00428</title>
-      <link>http://zmanda.github.io/amanda/mailing_list/msg00428/</link>
+      <link>http://shriya-magadal.github.io/mailing_list/msg00428/</link>
       <pubDate>Sat, 23 Mar 2019 15:47:39 +0530</pubDate>
       
-      <guid>http://zmanda.github.io/amanda/mailing_list/msg00428/</guid>
+      <guid>http://shriya-magadal.github.io/mailing_list/msg00428/</guid>
       <description>Amanda.org is an open source site. Please refer the TO DO LIST to contribute to this site.
 Storing index files in a tree  To: amanda-users@cs.umd.edu Subject: Storing index files in a tree From: &amp;ldquo;John R. Jackson&amp;rdquo; &amp;lt;jrj@gandalf.cc.purdue.edu&amp;gt; Date: Thu, 23 Apr 1998 10:57:00 -0500 Reply-to: jrj@cc.purdue.edu Resent-Date: Thu, 23 Apr 1998 11:57:23 -0400 (EDT) Resent-From: amanda-users@cs.umd.edu Resent-Message-ID: &amp;lt;&amp;ldquo;TtAdR.0.1c2.QJsFr&amp;rdquo;@tove.cs.umd.edu&amp;gt; Resent-Sender: amanda-users-request@cs.umd.edu  I store my index files on an archive file system.</description>
     </item>
     
     <item>
       <title>240index</title>
-      <link>http://zmanda.github.io/amanda/mailing_list/240index/</link>
+      <link>http://shriya-magadal.github.io/mailing_list/240index/</link>
       <pubDate>Sat, 23 Mar 2019 15:45:41 +0530</pubDate>
       
-      <guid>http://zmanda.github.io/amanda/mailing_list/240index/</guid>
+      <guid>http://shriya-magadal.github.io/mailing_list/240index/</guid>
       <description>Amanda.org is an open source site. Please refer the TO DO LIST to contribute to this site.
 After 2.4.0, the structure of the directory holding the index files was changed to have three levels instead of being flat. This greatly reduces the number of files in a given directory, which was a problem for some systems. The new layout is:
 [indexdir]/hostname/filesystem/YYYYMMDDL.gz where hostname and filesystem are &amp;ldquo;sanitized&amp;rdquo; versions of the names from disklist, i.</description>
@@ -74,10 +74,10 @@ After 2.4.0, the structure of the directory holding the index files was changed 
     
     <item>
       <title>Patches</title>
-      <link>http://zmanda.github.io/amanda/download/patches/</link>
+      <link>http://shriya-magadal.github.io/download/patches/</link>
       <pubDate>Sat, 23 Mar 2019 15:37:35 +0530</pubDate>
       
-      <guid>http://zmanda.github.io/amanda/download/patches/</guid>
+      <guid>http://shriya-magadal.github.io/download/patches/</guid>
       <description>Amanda.org is an open source site. Please refer the TO DO LIST to contribute to this site.
 The AMANDA Patches Page This page contains a list of important patches to some of the older releases of AMANDA.
 Please be aware of the fact that the current release of AMANDA is 2.6.1p2 or higher, so think twice about applying some old patch. We, the AMANDA Core Team, strongly recommend to update to the latest stable release !</description>
@@ -85,10 +85,10 @@ Please be aware of the fact that the current release of AMANDA is 2.6.1p2 or hig
     
     <item>
       <title>Readme</title>
-      <link>http://zmanda.github.io/amanda/about/read_me/</link>
+      <link>http://shriya-magadal.github.io/about/read_me/</link>
       <pubDate>Sat, 23 Mar 2019 15:16:18 +0530</pubDate>
       
-      <guid>http://zmanda.github.io/amanda/about/read_me/</guid>
+      <guid>http://shriya-magadal.github.io/about/read_me/</guid>
       <description>Amanda.org is an open source site. Please refer the TO DO LIST to contribute to this site.
 Amanda (The Advanced Maryland Automatic Network Disk Archiver) Backup Software Copyright &amp;copy; 1991-1998 University of Maryland at College Park All Rights Reserved.
 PLEASE NOTE: THIS SOFTWARE IS BEING MADE AVAILABLE &amp;ldquo;AS-IS&amp;rdquo;. We make no warranties that it will work for you. As such there is no support available other than users helping each other on the Amanda mailing lists or forums.</description>
@@ -96,10 +96,10 @@ PLEASE NOTE: THIS SOFTWARE IS BEING MADE AVAILABLE &amp;ldquo;AS-IS&amp;rdquo;. 
     
     <item>
       <title>_Security</title>
-      <link>http://zmanda.github.io/amanda/download/security/</link>
+      <link>http://shriya-magadal.github.io/download/security/</link>
       <pubDate>Sat, 23 Mar 2019 15:08:48 +0530</pubDate>
       
-      <guid>http://zmanda.github.io/amanda/download/security/</guid>
+      <guid>http://shriya-magadal.github.io/download/security/</guid>
       <description>Amanda.org is an open source site. Please refer the TO DO LIST to contribute to this site.
 Amanda Security Alert - October 5, 2010 The Amanda development team has discovered a security vulnerability introduced in Amanda-3.1.2. The vulnerability affects both Amanda servers and clients, and could lead to remote execution of code as the Amanda user.
 The problem is fixed in Amanda-3.1.3, which is released as of October 5, 2010.</description>
@@ -107,10 +107,10 @@ The problem is fixed in Amanda-3.1.3, which is released as of October 5, 2010.</
     
     <item>
       <title>Commercial support for Amanda</title>
-      <link>http://zmanda.github.io/amanda/support/commercial_support/</link>
+      <link>http://shriya-magadal.github.io/support/commercial_support/</link>
       <pubDate>Sat, 23 Mar 2019 11:35:51 +0530</pubDate>
       
-      <guid>http://zmanda.github.io/amanda/support/commercial_support/</guid>
+      <guid>http://shriya-magadal.github.io/support/commercial_support/</guid>
       <description>Amanda.org is an open source site. Please refer the TO DO LIST to contribute to this site.
 Commercial support for Amanda We have assembled a list of companies and people who are available to provide some sort of commercial support for amanda. Although Amanda is provided as-is, some consultants and companies have made their services available to provide more support beyond what&amp;rsquo;s available on the mailing lists.
 If you want to be on this list, please Contact us.</description>
@@ -118,20 +118,20 @@ If you want to be on this list, please Contact us.</description>
     
     <item>
       <title>Release Notes 3.1 Series</title>
-      <link>http://zmanda.github.io/amanda/release/v31/</link>
+      <link>http://shriya-magadal.github.io/release/v31/</link>
       <pubDate>Sat, 23 Mar 2019 11:28:09 +0530</pubDate>
       
-      <guid>http://zmanda.github.io/amanda/release/v31/</guid>
+      <guid>http://shriya-magadal.github.io/release/v31/</guid>
       <description>Amanda.org is an open source site. Please refer the TO DO LIST to contribute to this site.
 Release Notes for the 3.1.x release series:  config  The &amp;lsquo;rawtapedev&amp;rsquo; keyword was removed, and the &amp;lsquo;label_new_tapes&amp;rsquo; keyword was deprecated. New warnings for dangerous splitting configurations  changer  We have many changers implementing the new changer API. The new changers are faster, more reliable, and have many new features. One new features is that the changer keeps track of which label is in which slot, allowing it to locate a tape faster.</description>
     </item>
     
     <item>
       <title>Release Notes 2.6 Series</title>
-      <link>http://zmanda.github.io/amanda/release/v26/</link>
+      <link>http://shriya-magadal.github.io/release/v26/</link>
       <pubDate>Sat, 23 Mar 2019 11:29:47 +0530</pubDate>
       
-      <guid>http://zmanda.github.io/amanda/release/v26/</guid>
+      <guid>http://shriya-magadal.github.io/release/v26/</guid>
       <description>Amanda.org is an open source site. Please refer the TO DO LIST to contribute to this site.
 Release Notes for 2.6.1p2:  amtapetype: new -p option Bug Fixes  S3 device driver amcheckdump file not removed from holding disk sendbackup compatibility with a 2.4.2 server handle EROFS error from tape device zfs snapshot name us the diskname fix fd allocation in amandad crash in amflush   Release Notes for 2.</description>
     </item>
