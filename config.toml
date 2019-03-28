@@ -1,4 +1,4 @@
-baseURL = "https://shriya-magadal.github.io/"
+baseURL = "http://zmanda.github.io/amanda/"
 languageCode = "en-us"
 title = "amanda.org"
 theme = "hugo-theme-learn"
