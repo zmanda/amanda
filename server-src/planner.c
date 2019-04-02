@@ -2542,6 +2542,7 @@ static void analyze_estimate(
     info_t info;
     int have_info = 0;
     char *qname = quote_string(dp->name);
+    one_est_t *l0ep;
 
     g_fprintf(stderr, _("pondering %s:%s... "),
 	    dp->host->hostname, qname);
@@ -2613,6 +2614,15 @@ static void analyze_estimate(
 	}
 	if (ep->degr_mesg == NULL) {
 	    ep->degr_mesg = _("Skipping: a full is not planned, so can't dump in degraded mode");
+	}
+    }
+
+    /* Make sure that the incremental really is smaller, protmote if not */
+    if (ep->dump_est->level > 0) {
+	l0ep = est_for_level(ep, 0);
+	if ((l0ep->nsize > 0) && ((l0ep->nsize - ep->dump_est->nsize) < (l0ep->nsize/1000))) {
+	    ep->dump_est = l0ep;
+	    g_fprintf(stderr,_("   incremental does not save space, promoting to level 0\n"));
 	}
     }
 
@@ -2914,6 +2924,10 @@ static void delay_dumps(void)
 	    else if(ep->degr_est->level < 0) {
 		delete = 1;
 		message = _("but no incremental estimate");
+	    }
+	    else if((ep->dump_est->nsize - ep->degr_est->nsize) < ((ep->dump_est->nsize/1000))) {
+		delete = 1;
+		message = _("but incremental does not save space");
 	    }
 	    else if (ep->degr_est->csize > tapetype_get_length(tape)) {
 		delete = 1;
