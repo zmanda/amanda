@@ -37,6 +37,8 @@
 #include "amutil.h"
 
 static void zero_info(info_t *);
+static int get_full_history(history_t *in, history_t **full);
+static int get_incr_history(history_t *in, history_t **incr);
 
   static char *infodir = NULL;
   static char *infofile = NULL;
@@ -609,6 +611,140 @@ perf_average(
     return sum / n;
 }
 
+int get_full_history(
+    history_t *in,
+    history_t **full)
+{
+    int n, i;
+    history_t *hist;
+
+    for(i=0,n=0;i<=NB_HISTORY;i++) {
+	if(in[i].level == 0) n++;
+    }
+    if(n == 0) return 0;
+
+    *full = hist = g_malloc(n * sizeof(history_t));
+    for(i=0,n=0;i<=NB_HISTORY;i++) {
+	if(in[i].level == 0) memcpy(&hist[n++], &in[i], sizeof(history_t));
+    }
+
+    return n;
+}
+
+int
+get_incr_history(
+    history_t *in,
+    history_t **incr)
+{
+    int n, i;
+    history_t *hist;
+
+    for(i=0,n=0;i<=NB_HISTORY;i++) {
+	if(in[i].level > 0) n++;
+    }
+    if(n == 0) return 0;
+
+    *incr = hist = g_malloc(n * sizeof(history_t));
+    for(i=0,n=0;i<=NB_HISTORY;i++) {
+	if(in[i].level > 0) memcpy(&hist[n++], &in[i], sizeof(history_t));
+    }
+
+    return n;
+}
+
+void
+setup_perf_hist(
+    info_t *	info,
+    int		level)
+{
+    history_t *history = 0;
+    int n, *nhist, i, bin, compn[64];
+    off_t size;
+    double *comp_avgs;
+
+    if(level == 0) {
+        comp_avgs = info->comp_avgs_full;
+	nhist = &info->nhist_full;
+	*nhist = n = get_full_history(info->history, &history);
+    } else {
+        comp_avgs = info->comp_avgs_incr;
+	nhist = &info->nhist_incr;
+	*nhist = n = get_incr_history(info->history, &history);
+    }
+    if(n == 0) return;
+
+    /* Total the rates into bins and count them */
+    memset(compn, '\0', sizeof(compn));
+    for(i=0; i<n && i<20; i++) {	/* Limit ourselves to the most recent 20 dumps */
+	size = history[i].size;
+	if(size == 0) size = 1;	/* Fudge zero into smallest bin */
+	bin = -1;
+	while (size >>= 1) bin++;
+	if(compn[bin]<3) {	/* Only take the most recent three dumps in each bin */
+	    comp_avgs[bin] += (double)(history[i].csize)/(double)(history[i].size);
+	    compn[bin]++;
+	}
+    }
+
+    /* Compute the averages */
+    for(bin=0;bin<64;bin++) {
+	if(comp_avgs[bin]>0.0) comp_avgs[bin] /= (double)compn[bin];
+    }
+}
+
+/*
+ * Average historical compression rate binned by original size
+ */
+double
+perf_hist(
+    info_t *	info,
+    int		level,
+    off_t	size,
+    double	def)
+{
+    double *comp_avgs, comp_avg, *compp;
+    int bin = -1, binh, binl, n, *nhist;
+
+    if(level == 0) {
+	comp_avgs = info->comp_avgs_full;
+	compp = info->full.comp;
+	nhist = &info->nhist_full;
+    } else {
+	comp_avgs = info->comp_avgs_incr;
+	compp = info->incr.comp;
+	nhist = &info->nhist_incr;
+    }
+    if(*nhist == -1) setup_perf_hist(info, level);
+    if(*nhist == 0) return def;
+
+    while (size >>= 1) bin++;
+    comp_avg = comp_avgs[bin];
+
+    /* If we don't have any history at this size try the surrounding bins */
+    binl = binh = bin;
+    binl--;
+    binh++;
+    while((comp_avg <= 0.0) && ((binl > 0) || (binh < 63))) {
+	n = 0;
+	if(binl >= 0 && comp_avgs[binl] > 0.0) {
+	    comp_avg += comp_avgs[binl];
+	    n++;
+	}
+	if(binh <= 63 && comp_avgs[binh] > 0.0) {
+	    comp_avg += comp_avgs[binh];
+            n++;
+	}
+	if(n > 0) comp_avg /= (double)n;
+	binl--;
+	binh++;
+    }
+
+    /* This shoudn't happen */
+    if(comp_avg <= 0.0) return def;
+
+    return comp_avg;
+}
+
 static void
 zero_info(
     info_t *info)
@@ -621,6 +757,8 @@ zero_info(
 	info->full.comp[i] = info->incr.comp[i] = -1.0;
 	info->full.rate[i] = info->incr.rate[i] = -1.0;
     }
+
+    info->nhist_full = info->nhist_incr = -1;
 
     for(i = 0; i < DUMP_LEVELS; i++) {
 	info->inf[i].date = (time_t)-1;

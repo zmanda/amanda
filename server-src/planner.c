@@ -1418,8 +1418,8 @@ est_csize(
         return;
     }
 
-    if (one_est->level == 0) ratio = ep->fullcomp;
-    else ratio = ep->incrcomp;
+    if (one_est->level == 0) ratio = perf_average(ep->info->full.comp, ep->fullcomp);
+    else ratio = perf_hist(ep->info, one_est->level, size, ep->incrcomp);
 
     /*
      * make sure over-inflated compression ratios don't throw off the
