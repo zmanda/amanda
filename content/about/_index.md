@@ -6,7 +6,7 @@ chapter = true
 pre = "<i class='fas fa-info-circle'></i>"
 +++
 
-*<sub><sub>Amanda.org is an open source site. Please refer the [TO DO LIST](/to_do) to contribute to this site.</sub></sub>*
+*<sub><sub>This is an open source site. Please refer the [TO DO LIST](/to_do) to contribute to this site.</sub></sub>*
 
 # WHAT IS AMANDA?
 AMANDA, the Advanced Maryland Automatic Network Disk Archiver, is a backup system that allows the administrator of a LAN to set up a single master backup server to back up multiple hosts to a single large capacity tape or disk drive. Amanda uses native tools (such as GNUtar, dump) for backup and can back up a large number of workstations running multiple versions of Unix/Mac OS X/Linux/Windows.

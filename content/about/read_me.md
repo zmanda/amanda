@@ -3,11 +3,10 @@ title = "Readme"
 date = 2019-03-23T15:16:18+05:30
 weight = 5
 chapter = true
-draft = false
-hidden = true
+hidden=true
 +++
 
-*<sub><sub>Amanda.org is an open source site. Please refer the [TO DO LIST](/to_do) to contribute to this site.</sub></sub>*
+*<sub><sub>This is an open source site. Please refer the [TO DO LIST](/to_do) to contribute to this site.</sub></sub>*
 
 ## Amanda (The Advanced Maryland Automatic Network Disk Archiver) Backup Software
 ---

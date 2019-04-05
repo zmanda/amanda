@@ -8,7 +8,7 @@ pre = "<i class='far fa-arrow-alt-circle-down'></i>"
 
 +++
 
-*<sub><sub>Amanda.org is an open source site. Please refer the [TO DO LIST](/to_do) to contribute to this site.</sub></sub>*
+*<sub><sub>This is an open source site. Please refer the [TO DO LIST](/to_do) to contribute to this site.</sub></sub>*
 
 # Download Amanda
 PLEASE NOTE: THIS SOFTWARE IS BEING MADE AVAILABLE ''AS-IS''. UMD and the Amanda contributers are making this work available so that other people can use it. This software is in production use at a number of sites around the world, but we make no warranties that it will work for you. There is no free support available other than users helping each other on the [amanda-users mailing list](../mailing_list). Other support options [can be found here](../support/commercial_support).

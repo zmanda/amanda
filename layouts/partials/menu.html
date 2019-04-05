@@ -13,7 +13,6 @@
 
     <div class="highlightable">
     <ul class="topics">
-
         {{if eq .Site.Params.ordersectionsby "title"}}  
           {{range .Site.Home.Sections.ByTitle}}
           {{ template "section-tree-nav" dict "sect" . "currentnode" $currentNode "showvisitedlinks" $showvisitedlinks}}
@@ -68,13 +67,12 @@
       </a>
       {{ $numberOfPages := (add (len .Pages) (len .Sections)) }}
       {{ if ne $numberOfPages 0 }}
-        <ul>
+        <ul style="display: none;">
           {{ $currentNode.Scratch.Set "pages" .Pages }}
           {{ if .Sections}}
             {{ $currentNode.Scratch.Set "pages" (.Pages | union .Sections) }}
           {{end}}
           {{ $pages := ($currentNode.Scratch.Get "pages") }}
-          
         {{if eq .Site.Params.ordersectionsby "title"}}  
           {{ range $pages.ByTitle }}
             {{ if and .Params.hidden (not $.showhidden) }} 
