@@ -1,3 +1,6 @@
+2019-04-26  Badal Dave <badaladave@gmail.com>
+        * perl/Amanda/Taper/Scribe.pm: Adding tape barcode info to logs
+
 2019-01-18  Hiten Shah <hiten.shah@betsol.com>
 	* application-src/amgtar.c: Filter GNU tar arguments
 	* application-src/amstar.c: Filter star arguments
