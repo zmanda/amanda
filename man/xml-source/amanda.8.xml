@@ -100,6 +100,9 @@ configuration files for quick reference.</para>
 <manref name="amlabel" vol="8"/>,
 </listitem>
 <listitem>
+<manref name="amoracle" vol="8"/>,
+</listitem>
+<listitem>
 <manref name="amoverview" vol="8"/>,
 </listitem>
 <listitem>
@@ -122,6 +125,9 @@ configuration files for quick reference.</para>
 </listitem>
 <listitem>
 <manref name="amrestore" vol="8"/>,
+</listitem>
+<listitem>
+<manref name="amrman" vol="8"/>,
 </listitem>
 <listitem>
 <manref name="amrmtape" vol="8"/>,

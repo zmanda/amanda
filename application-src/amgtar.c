@@ -364,7 +364,7 @@ main(
     gnutar_listdir = NULL;
     gnutar_target = NULL;
     gnutar_onefilesystem = 1;
-    gnutar_atimepreserve = 1;
+    gnutar_atimepreserve = 0;
     gnutar_acls = 0;
     gnutar_selinux = 0;
     gnutar_xattrs = 0;

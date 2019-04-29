@@ -144,7 +144,7 @@ struct ndm_env_table {
 };
 
 #ifndef NDM_MAX_NLIST
-#define NDM_MAX_NLIST		10240
+#define NDM_MAX_NLIST		99000
 #endif
 struct ndm_nlist_table {
 	int			n_nlist;

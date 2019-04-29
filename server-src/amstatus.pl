@@ -1,4 +1,4 @@
-#!@PERL@
+#!@AMPERL@
 #
 
 use lib '@amperldir@';

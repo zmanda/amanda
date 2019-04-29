@@ -16,6 +16,10 @@ die() {
     exit 1
 }
 
+git submodule sync 
+
+[ -L config/set_full_version ] || ln -sf ../packaging/common_z/set_zmanda_version config/set_full_version
+
 echo "See DEVELOPING for instructions on updating:"
 echo " * gettext macros"
 echo " * gnulib"

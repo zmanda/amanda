@@ -1,4 +1,4 @@
-#! @PERL@
+#! @AMPERL@
 # Copyright (c) 2007-2012 Zmanda, Inc.  All Rights Reserved.
 # Copyright (c) 2013-2016 Carbonite, Inc.  All Rights Reserved.
 #

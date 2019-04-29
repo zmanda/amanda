@@ -29,7 +29,7 @@ CLEANFILES += $(SCRIPTS_PERL) config.log
 ## libamdevice.la
 
 amlib_LTLIBRARIES = 	libamdevice.la
-libamdevice_la_LDFLAGS = -release $(VERSION) $(AS_NEEDED_FLAGS) ${LIBDL}
+libamdevice_la_LDFLAGS = -release $(SO_VERSION) $(AS_NEEDED_FLAGS) ${LIBDL}
 libamdevice_la_SOURCES = \
 	property.c \
 	device.c \
@@ -62,8 +62,10 @@ libamdevice_la_SOURCES += dvdrw-device.c
 endif
 
 if WANT_NDMP_DEVICE
+AM_CPPFLAGS += ${TIRPC_CFLAGS}
 libamdevice_la_SOURCES += ndmp-device.c
 libamdevice_la_LIBADD += ../ndmp-src/libndmlib.la
+libamdevice_la_LDFLAGS += ${TIRPC_LDFLAGS}
 endif
 
 ## automake-style tests

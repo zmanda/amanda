@@ -41,12 +41,20 @@
 - use GNU Tar to backup and restore data.
 </listitem>
 <listitem>
+<manref name="amoracle" vol="8" />
+- use Oracle's RMAN Interface to back up Oracle databases in Tar format
+</listitem>
+<listitem>
 <manref name="ampgsql" vol="8"/>,
 - use PostgreSQL's continuous WAL archiving.
 </listitem>
 <listitem>
 <manref name="amraw" vol="8"/>,
 - use open and read to read the data.
+</listitem>
+<listitem>
+<manref name="amrman" vol="8" />
+- use Oracle's RMAN Interface to back up Oracle databases in Amanda archive format
 </listitem>
 <listitem>
 <manref name="amsamba" vol="8"/>,

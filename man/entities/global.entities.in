@@ -33,6 +33,12 @@
 <!ENTITY author.ian '<author><personname>Ian Turner</personname>
 		    &affil.zmanda;
 		    <email>ian@zmanda.com</email></author>'>
+<!ENTITY author.mangesh '<author><personname>Mangesh Kulkarni</personname>
+		    &affil.zmanda;
+		    <email>mangesh@zmanda.com</email></author>'>
+<!ENTITY author.tedwelter '<author><personname>Ted Welter</personname>
+		    &affil.zmanda;
+		    <email>tedwelter@zmanda.com</email></author>'>
 <!ENTITY author.jds '<author><personname>James da Silva</personname>
 		    <email>jds@amanda.org</email></author>'>
 <!ENTITY author.jstange '<author><personname>John Stange</personname>

@@ -1,4 +1,4 @@
-#! @PERL@
+#! @AMPERL@
 # Copyright (c) 2013-2016 Carbonite, Inc.  All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or

@@ -44,7 +44,6 @@ SUBDIRS = . \
 	po \
 	man \
 	example \
-	packaging \
 	installcheck
 
 pkgdata_DATA = \
@@ -78,7 +77,8 @@ EXTRA_DIST += $(SNAPSHOT_STAMP) \
 	UPGRADING			\
 	DEVELOPING			\
 	VERSION				\
-	FULL_VERSION
+	FULL_VERSION			\
+	PKG_REV
 
 FULL_VERSION: VERSION
 	$(srcdir)/config/set_full_version $(top_srcdir)

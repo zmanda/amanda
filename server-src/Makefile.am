@@ -97,7 +97,7 @@ libamserver_la_SOURCES=	amindex.c	cmdfile.c \
 			tapefile.c	find.c		server_util.c   \
                         xfer-dest-holding.c		xfer-source-holding.c
 
-libamserver_la_LDFLAGS= -release $(VERSION) $(AS_NEEDED_FLAGS)
+libamserver_la_LDFLAGS= -release $(SO_VERSION) $(AS_NEEDED_FLAGS)
 libamserver_la_LIBADD= ../device-src/libamdevice.la \
 		       ../common-src/libamanda.la
 

@@ -1,4 +1,4 @@
-#!@PERL@ -w
+#!@AMPERL@ -w
 
 use strict;
 use warnings;

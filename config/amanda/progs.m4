@@ -30,7 +30,7 @@ AC_DEFUN([AMANDA_INIT_PROGS],
     LOCPATH=`(
 	test "x$prefix" = xNONE && prefix=$ac_default_prefix
 	test "x$exec_prefix" = xNONE && exec_prefix=${prefix}
-	eval echo "$libexecdir:$PATH:/usr/local/sbin:/usr/local/bin:/usr/ccs/bin"
+	eval "echo \"$libexecdir:$PATH:/usr/local/sbin:/usr/local/bin:/usr/ccs/bin\""
     )`
     SYSLOCPATH="$SYSPATH:$LOCPATH"
     LOCSYSPATH="$LOCPATH:$SYSPATH"
@@ -342,6 +342,16 @@ AC_DEFUN([AMANDA_PROG_PERL],
     AC_PROG_PERL_VERSION([5.6.0], [], [
 	AC_MSG_ERROR([Amanda requires at least perl 5.6.0])
     ])
+])
+
+#
+# allow external PATH to define perl target
+#
+AC_DEFUN([AMANDA_PROG_AMPERL],
+[
+    : ${AMPERL:=${AMLIBDIR:+${AMLIBDIR}/../bin/perl}}
+    : ${AMPERL:=$PERL}
+    AC_ARG_VAR([AMPERL], [Path to the 'perl' binary for Amanda internal use])
 ])
 
 AC_DEFUN([AMANDA_PROG_SWIG],
