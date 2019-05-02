@@ -1255,13 +1255,14 @@ sub _release_reservation {
 	    $label = $self->{'device'}->volume_label();
 	    $fm = $self->{'device'}->file();
 	    $kb = $self->{'device_size'} / 1024;
+	    my $tl = $self->{'taperscan'}->{'tapelist'};
+	    my $tle = $tl->lookup_tapelabel($label);
 
 	    # log a message for amreport
 	    $self->{'feedback'}->scribe_notif_log_info(
-	        message => "tape $label kb $kb fm $fm [OK]");
+	        message => "tape $label Barcode $tle->{'barcode'} kb $kb fm $fm [OK]");
 	    if ($self->{'taperscan'}->{'storage'}->{'erase_on_failure'} && $self->{'tape_labelled'} && !$self->{'tape_good'}) {
 		# rewrite the tapelist
-		my $tl = $self->{'taperscan'}->{'tapelist'};
 		$tl->reload(1);
 		$label = $self->{'device'}->volume_label;
 		my $tle = $tl->lookup_tapelabel($label);
