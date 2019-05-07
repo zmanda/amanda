@@ -470,8 +470,9 @@ if WANT_NDMP
 # PACKAGE: Amanda::NDMP
 libNDMPdir = $(amperldir)/auto/Amanda/NDMP
 libNDMP_LTLIBRARIES = libNDMP.la
+AM_CPPFLAGS += ${TIRPC_CFLAGS}
 libNDMP_la_SOURCES = Amanda/NDMP.c $(AMGLUE_SWG)
-libNDMP_la_LDFLAGS = $(PERL_EXT_LDFLAGS)
+libNDMP_la_LDFLAGS = $(PERL_EXT_LDFLAGS) ${TIRPC_LDFLAGS}
 libNDMP_la_LIBADD = amglue/libamglue.la \
 	$(top_builddir)/common-src/libamanda.la \
 	$(top_builddir)/ndmp-src/libndmlib.la

@@ -208,6 +208,8 @@ BuildRequires: glib2 >= 2.2.0
 BuildRequires: glib2-devel
 BuildRequires: gettext
 BuildRequires: readline
+BuildRequires: docbook-style-xsl
+BuildRequires: swig
 # Note: newer distros have changed most *-devel to lib*-devel, and added a
 # provides tag for backwards compat.
 BuildRequires: readline-devel
@@ -216,6 +218,7 @@ BuildRequires: %{curl}-devel >= 7.10.0
 BuildRequires: openssl
 BuildRequires: openssl-devel
 BuildRequires: perl(ExtUtils::Embed)
+BuildRequires: mailx
 %{?prereq_sharutils}
 Requires: /bin/awk
 Requires: /bin/date
@@ -224,7 +227,7 @@ Requires: /sbin/ldconfig
 Requires: /bin/sh
 Requires: /usr/sbin/useradd
 Requires: /usr/sbin/usermod
-Requires: fileutils
+Requires: coreutils
 Requires: gettext
 Requires: grep
 Requires: gnuplot
@@ -234,6 +237,7 @@ Requires: xinetd
 Requires: perl >= 5.6.0
 Requires: tar >= %{tarver}
 Requires: readline
+Requires: mailx
 %{?requires_libtermcap}
 %{?requires_initscripts}
 
@@ -241,7 +245,7 @@ Requires: readline
 Summary: The Amanda Backup and Archiving Client
 Group: %{rpm_group}
 Requires: /bin/awk
-Requires: fileutils
+Requires: coreutils
 Requires: grep
 %{?requires_libtermcap}
 %{?requires_initscripts}
@@ -260,7 +264,7 @@ Obsoletes: amanda, amanda-client, amanda-server
 Summary: The Amanda Backup and Archiving Server
 Group: %{rpm_group}
 Requires: /bin/awk
-Requires: fileutils
+Requires: coreutils
 Requires: grep
 %{?requires_libtermcap}
 %{?requires_initscripts}
@@ -396,8 +400,9 @@ find-req-script
         --localstatedir=%{LOCALSTATEDIR} \
         --libdir=%{LIBDIR} \
         --includedir=%{INCLUDEDIR} \
-	--mandir=%{MANDIR} \
-	--with-amdatadir=%{AMDATADIR} \
+        --mandir=%{MANDIR} \
+        --enable-manpage-build \
+        --with-amdatadir=%{AMDATADIR} \
         --with-gnuplot=/usr/bin/gnuplot \
         --with-gnutar-listdir=%{AMANDAHOMEDIR}/gnutar-lists \
         --with-index-server=localhost \
