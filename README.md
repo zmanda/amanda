@@ -203,31 +203,31 @@ client machines.
 
 You can read Amanda documentation at:
 
-        http://www.amanda.org
+http://www.amanda.org
 
 and at the Amanda wiki:
 
-        http://wiki.zmanda.com
+http://wiki.zmanda.com
 
 ## Who do I talk to if I have a problem?
 
-* you may file Issues at GitHub:
+* You may file Issues at GitHub:
 
 https://github.com/zmanda/amanda/issues
 
 * You can get Amanda help and questions answered from the mailing lists and
-Amanda forums:
+Amanda forums.
 
-To join a mailing list, DO NOT, EVER, send mail to that list.  Send
-mail to <listname>-request@amanda.org, or amanda-lists@amanda.org,
-with the following line in the body of the message:
-subscribe <listname> <your-email-address>
+Check http://www.amanda.org/support/mailinglists.php
+
+for instructions how to subscribe.
 
 You will receive an email acknowledging your subscription. Keep
 it. Should you ever wish to depart our company, it has unsubscribe
 and other useful information.
 
 * amanda-announce
+
         The amanda-announce mailing list is for important announcements
         related to the Amanda Network Backup Manager package, including new
         versions, contributions, and fixes.  NOTE: the amanda-users list is
@@ -236,6 +236,7 @@ and other useful information.
         To subscribe, send a message to amanda-announce-request@amanda.org.
 
 * amanda-users
+
         The amanda-users mailing list is for questions and general discussion
         about the Amanda Network Backup Manager.  NOTE: the amanda-users list
         is itself on the amanda-announce distribution, so you only need to
@@ -243,6 +244,7 @@ and other useful information.
         To subscribe, send a message to amanda-users-request@amanda.org.
 
 * amanda-hackers
+
         The amanda-hackers mailing list is for discussion of the
         technical details of the Amanda package, including extensions,
         ports, bugs, fixes, and alpha testing of new versions.
