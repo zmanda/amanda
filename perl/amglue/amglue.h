@@ -67,6 +67,11 @@
 #define G_MAXUINT32 (4294967295U)
 #endif
 
+#ifdef bool
+#undef bool
+#endif
+typedef uint8_t bool;
+
 /*
  * prototypes for ghashtable.c
  */
