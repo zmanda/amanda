@@ -39,8 +39,10 @@ echo "..creating file lists"
 #set the FULL_VERSION file
 config/set_full_version
 
+libtoolize -i 
+
 echo "..aclocal"
-aclocal $includes || die "aclocal failed"
+aclocal --install $includes || die "aclocal failed"
 
 echo "...aclocal patches"
 # See http://bugzilla.gnome.org/show_bug.cgi?id=418778
