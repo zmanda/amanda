@@ -205,9 +205,11 @@ amndmjob_SOURCES = amndmjob_main.c \
 		      amndma_tape_simulator.c
 
 ndmjob_LDADD = libndmjob.la \
-		   ../common-src/libamanda.la
+		libndmlib.la \
+	         ../common-src/libamanda.la
 
 amndmjob_LDADD = libndmjob.la \
+		 libndmlib.la \
 		   ../common-src/libamanda.la
 
 ndmp0_xdr.c : ndmp0.x

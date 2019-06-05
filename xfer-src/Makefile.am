@@ -56,6 +56,7 @@ noinst_PROGRAMS = $(TESTS)
 
 xfer_test_SOURCES = xfer-test.c
 xfer_test_LDADD = \
+	../common-src/libamanda.la \
 	../common-src/libtestutils.la \
 	libamxfer.la
 
