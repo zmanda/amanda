@@ -18,18 +18,7 @@ die() {
 
 [ -L config/set_full_version ] || ln -sf ../packaging/common_z/set_zmanda_version config/set_full_version
 
-if [ -s .gitmodules -a ! -s config/set_full_version -a -L config/set_full_version ]; then
-    # deinit and make *certain* they are fresh..
-    git submodule deinit -f .
-    rm -rf 000-external   # in case...
-    git submodule | sed -e 's,^.*000-external/,000-external/,' | xargs git checkout -f  >/dev/null 2>/dev/null
-    git submodule init
-fi
-
-git submodule update --rebase
-GITMODULES=${PWD}/.gitmodules \
-    git >/dev/null 2>/dev/null submodule foreach \
-    'branch=$(git config -f $GITMODULES --get submodule.$name.branch); [ -n "$branch" ] && git checkout $branch; git pull'
+[ ! -x ./autochk ] || ./autochk || exit -1
 
 echo "See DEVELOPING for instructions on updating:"
 echo " * gettext macros"
