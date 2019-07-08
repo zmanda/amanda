@@ -41,6 +41,10 @@ config/set_full_version
 
 libtoolize -i
 
+# modify libtool.m4 for our needs
+sed -i -e '/[ (]hardcode_libdir_flag_spec.*=/s,\${wl}-rpath ,${wl}-rpath-link ,g' config/libtool.m4
+sed -i -e '/[ (]hardcode_libdir_flag_spec.*=/s,\$wl-rpath ,$wl-rpath-link ,g' config/libtool.m4
+
 # need 2.63 or later autoconf/autom4te
 AUTOM4TE="$(ls -1 /usr/bin/autom4te2[6789]* 2>/dev/null)"
 # last space-separated word only..
@@ -49,9 +53,11 @@ AUTOM4TE=${AUTOM4TE##*\n}
 # suffix numbers only
 AC_VERSION_SFX="${AUTOM4TE##*autom4te}"
 
-echo "..aclocal"
-AUTOM4TE="autom4te${AC_VERSION_SFX}" \
-	aclocal --install $includes || die "aclocal failed"
+export AUTOM4TE="autom4te${AC_VERSION_SFX}"
+export AUTOCONF="autoconf${AC_VERSION_SFX}"
+
+echo "..aclocal with version $AC_VERSION_SFX"
+aclocal --install $includes || die "aclocal failed"
 
 echo "...aclocal patches"
 # See http://bugzilla.gnome.org/show_bug.cgi?id=418778
@@ -64,12 +70,13 @@ sed -e  \
      's/PKG_PROG_PKG_CONFIG(\[0\.16\])/PKG_PROG_PKG_CONFIG([0.7])/g' \
      aclocal.m4 > aclocal.m4~ && mv aclocal.m4~ aclocal.m4
 
-echo "..autoconf"
+echo "..autoconf with version $AC_VERSION_SFX"
 autoconf${AC_VERSION_SFX} || die "autoconf failed"
 
-echo "..autoheader"
+echo "..autoheader with version $AC_VERSION_SFX"
 autoheader${AC_VERSION_SFX} || die "autoheader failed"
 touch config/config.h.in
 
 echo "..automake"
 automake  --add-missing --force --copy --warnings=none || die "automake failed"
+

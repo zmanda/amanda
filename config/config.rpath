@@ -173,7 +173,7 @@ if test "$with_gnu_ld" = yes; then
   # here allows them to be overridden if necessary.
   # Unlike libtool, we use -rpath here, not --rpath, since the documented
   # option of GNU ld is called -rpath, not --rpath.
-  hardcode_libdir_flag_spec='${wl}-rpath ${wl}$libdir'
+  hardcode_libdir_flag_spec='${wl}-rpath-link ${wl}$libdir'
   case "$host_os" in
     aix[3-9]*)
       # On AIX/PPC, the GNU linker is very broken
@@ -411,7 +411,7 @@ else
       fi
       ;;
     irix5* | irix6* | nonstopux*)
-      hardcode_libdir_flag_spec='${wl}-rpath ${wl}$libdir'
+      hardcode_libdir_flag_spec='${wl}-rpath-link ${wl}$libdir'
       hardcode_libdir_separator=:
       ;;
     netbsd*)
@@ -420,7 +420,7 @@ else
       ;;
     newsos6)
       hardcode_direct=yes
-      hardcode_libdir_flag_spec='${wl}-rpath ${wl}$libdir'
+      hardcode_libdir_flag_spec='${wl}-rpath-link ${wl}$libdir'
       hardcode_libdir_separator=:
       ;;
     *nto* | *qnx*)
@@ -449,12 +449,12 @@ else
       hardcode_minus_L=yes
       ;;
     osf3*)
-      hardcode_libdir_flag_spec='${wl}-rpath ${wl}$libdir'
+      hardcode_libdir_flag_spec='${wl}-rpath-link ${wl}$libdir'
       hardcode_libdir_separator=:
       ;;
     osf4* | osf5*)
       if test "$GCC" = yes; then
-        hardcode_libdir_flag_spec='${wl}-rpath ${wl}$libdir'
+        hardcode_libdir_flag_spec='${wl}-rpath-link ${wl}$libdir'
       else
         # Both cc and cxx compiler support -rpath directly
         hardcode_libdir_flag_spec='-rpath $libdir'
