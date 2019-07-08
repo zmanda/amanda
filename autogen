@@ -39,10 +39,19 @@ echo "..creating file lists"
 #set the FULL_VERSION file
 config/set_full_version
 
-libtoolize -i 
+libtoolize -i
+
+# need 2.63 or later autoconf/autom4te
+AUTOM4TE="$(ls -1 /usr/bin/autom4te2[6789]* 2>/dev/null)"
+# last space-separated word only..
+AUTOM4TE=${AUTOM4TE##* }
+AUTOM4TE=${AUTOM4TE##*\n}
+# suffix numbers only
+AC_VERSION_SFX="${AUTOM4TE##*autom4te}"
 
 echo "..aclocal"
-aclocal --install $includes || die "aclocal failed"
+AUTOM4TE="autom4te${AC_VERSION_SFX}" \
+	aclocal --install $includes || die "aclocal failed"
 
 echo "...aclocal patches"
 # See http://bugzilla.gnome.org/show_bug.cgi?id=418778
@@ -56,11 +65,11 @@ sed -e  \
      aclocal.m4 > aclocal.m4~ && mv aclocal.m4~ aclocal.m4
 
 echo "..autoconf"
-autoconf || die "autoconf failed"
+autoconf${AC_VERSION_SFX} || die "autoconf failed"
 
 echo "..autoheader"
-autoheader || die "autoheader failed"
+autoheader${AC_VERSION_SFX} || die "autoheader failed"
 touch config/config.h.in
 
 echo "..automake"
-automake --add-missing --force --copy --warnings=none || die "automake failed"
+automake  --add-missing --force --copy --warnings=none || die "automake failed"
