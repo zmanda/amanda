@@ -42,8 +42,8 @@ config/set_full_version
 libtoolize -i
 
 # modify libtool.m4 for our needs
-sed -i -e '/[ (]hardcode_libdir_flag_spec.*=/s,\${wl}-rpath ,${wl}-rpath-link ,g' config/libtool.m4
-sed -i -e '/[ (]hardcode_libdir_flag_spec.*=/s,\$wl-rpath ,$wl-rpath-link ,g' config/libtool.m4
+sed -i -e '/[ (]hardcode_libdir_flag_spec.*=/s,\${wl}-rpath ,\${wl}--disable-new-dtags ${wl}-rpath-link ,g' config/libtool.m4
+sed -i -e '/[ (]hardcode_libdir_flag_spec.*=/s,\$wl-rpath ,\$wl--disable-new-dtags $wl-rpath-link ,g' config/libtool.m4
 
 # need 2.63 or later autoconf/autom4te
 AUTOM4TE="$(ls -1 /usr/bin/autom4te2[6789]* 2>/dev/null)"
