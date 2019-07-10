@@ -27,10 +27,12 @@ then
 fi
 
 if [ -s $toplevel/.gitmodules ]; then
-    git submodule update --rebase
+    git submodule update --rebase >/dev/null
+    git submodule foreach 'git rebase --abort 2>/dev/null || true'
     GITMODULES=${PWD}/.gitmodules \
         git >/dev/null 2>/dev/null submodule foreach \
-            'branch=$(git config -f $GITMODULES --get submodule.$name.branch); [ -n "$branch" ] && git checkout $branch; git pull'
+            'branch=$(git config -f $GITMODULES --get submodule.$name.branch); [ -n "$branch" ] && git checkout $branch'
+    git submodule foreach 'git pull >/dev/null || true'
 fi
 
 [ -s config/set_full_version -a -L config/set_full_version ] || die "ERROR: cannot use config/set_full_version symlink.  submodule checkout failed."
