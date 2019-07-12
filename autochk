@@ -17,22 +17,28 @@ toplevel=$(git rev-parse --show-toplevel)
 #
 if [ ! -s config/set_full_version -a -L config/set_full_version ] || 
     [ ! -s bitrock-stack/build-var-subst.sh -a -L bitrock-stack ]
-then
-    # perform completed checkout of submodules ...
-    [ -s $toplevel/.gitmodules ] || die "ERROR: no $toplevel/.gitmodules file was found but symlinks are broken."
-    git submodule deinit -f .
-    rm -rf 000-external   # to be certain nothing is checked out now...
-    git submodule | sed -e 's,^.*000-external/,000-external/,' | xargs git checkout -f  >/dev/null 2>/dev/null
-    git submodule init
+then 
+# perform completed checkout of submodules ...
+    ( \
+	cd $toplevel; 
+	[ -s $toplevel/.gitmodules ] || die "ERROR: no $toplevel/.gitmodules file was found but symlinks are broken."
+        git submodule deinit -f .
+    	rm -rf 000-external   # to be certain nothing is checked out now...
+	git submodule | sed -e 's,^.*000-external/,000-external/,' | xargs git checkout -f  >/dev/null 2>/dev/null
+    	git submodule init
+    )
 fi
 
 if [ -s $toplevel/.gitmodules ]; then
-    git submodule update --rebase >/dev/null
-    git submodule foreach 'git rebase --abort 2>/dev/null || true'
-    GITMODULES=${PWD}/.gitmodules \
-        git >/dev/null 2>/dev/null submodule foreach \
-            'branch=$(git config -f $GITMODULES --get submodule.$name.branch); [ -n "$branch" ] && git checkout $branch'
-    git submodule foreach 'git pull >/dev/null || true'
+    ( \
+	cd $toplevel; 
+	git submodule update --rebase >/dev/null;
+        git submodule foreach 'git rebase --abort 2>/dev/null || true';
+        GITMODULES=${PWD}/.gitmodules \
+		git >/dev/null 2>/dev/null submodule foreach \
+		'branch=$(git config -f $GITMODULES --get submodule.$name.branch); [ -n "$branch" ] && git checkout $branch';
+	git submodule foreach 'git pull >/dev/null || true'; 
+    )
 fi
 
 [ -s config/set_full_version -a -L config/set_full_version ] || die "ERROR: cannot use config/set_full_version symlink.  submodule checkout failed."
