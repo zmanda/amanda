@@ -1,13 +1,13 @@
 # Amanda Backup Software
 ## (The Advanced Maryland Automatic Network Disk Archiver)
 
-[License](#license)
-[What is Amanda?](#what-is-amanda)
-[Requirements](#requirements)
-[Supported Systems](#supported-systems)
-[Download](#download)
-[Running it](#running-it)
-[Community](#community)
+- [License](#license)
+- [What is Amanda?](#what-is-amanda)
+- [Requirements](#requirements)
+- [Supported Systems](#supported-systems)
+- [Download](#download)
+- [Running it](#running-it)
+- [Community](#community)
 
 ## License
 Copyright (c) 1991-1998 University of Maryland at College Park
