@@ -627,14 +627,8 @@ sub check_amreport
     my $got_report;
     $skip_size = 1 if !defined $skip_size;
 
-    $report =~ s/\\/\\\\/g;
-    $report =~ s/\?/\\?/g;
-    $report =~ s/\(/\\(/g;
-    $report =~ s/\)/\\)/g;
-    $report =~ s/\[/\\[/g;
-    $report =~ s/\]/\\]/g;
+    $report =~ s{[\]\[\\.*+?)(]}{\\$&}g;
     $report =~ s/0:00/\\d:\\d\\d/g;
-    $report =~ s/\+/\\+/g;
     $report =~ s/sendbackup: (.*)-CRC [^:]*:(\d*)/sendbackup: $1-CRC \(\.\*\):$2/g;
     $report =~ s/PID/\\d\+/g;
     $report =~ s/999999\.9/\[ \\d\]*\\.\\d/g;
@@ -645,7 +639,9 @@ sub check_amreport
     my $hostname = `hostname`;
     chomp $hostname;
     $report =~ s/Hostname: .*$/Hostname: $hostname/mg;
-    $report =~ s/brought to you by Amanda version .*\\/brought to you by Amanda version $Amanda::Constants::VERSION\\/g;
+    my $version = $Amanda::Constants::VERSION;
+    $version =~ s{[+?()\[\]{}]}{\\$&}g;
+    $report =~ s/brought to you by Amanda version .*\\/brought to you by Amanda version $version\\/g;
 
     run("amreport", 'TESTCONF');
 
@@ -713,20 +709,26 @@ sub check_amstatus
     my $tracefile = shift;
     my $text = shift || 'amstatus';
 
-    $status =~ s/\\/\\\\/g;
-    $status =~ s/\+/\\\\+/g;
-    $status =~ s/\[/\\[/g;
-    $status =~ s/\]/\\]/g;
+    $status =~ s{[\]\[\\*+?]}{\\$&}g;
+    $status =~ s/[}{]/\\$&/g;
+
+    # parens and decimal point are special
+    $status =~ s/\([ \d.]{6,8}\%\)/\([ \\d\.]{6,8}%\)/g;
+
+    # now that decimal point is hidden and some patterns will continue
+    $status =~ s{\.}{\\$&}g;
+
+    $status =~ s/00:00:00/[ \\d]\\d:\\d\\d:\\d\\d/g;
+
     $status =~ s/Using: .*$/Using: $tracefile/mg;
     $status =~ s/From .*$/From .*/mg;
-    $status =~ s/\([ \d.]{6,8}%\)/\([ \\d\.]{6,8}%\)/g;
-    $status =~ s/\(/\\(/g;
-    $status =~ s/\)/\\)/g;
-    $status =~ s/00:00:00/[ \\d]\\d:\\d\\d:\\d\\d/g;
     $status =~ s/^(.*dumpers busy[^\)]*\))/$1.*/mg;
     $status =~ s/^(.*dumper busy[^\)]*\))/$1.*/mg;
     $status =~ s/^ *not-idle.*\n//mg;
     $status =~ s/^holding space   : \d+k/holding space   : \\d\+k/mg;
+
+    # only catch parens
+    $status =~ s{[()]}{\\$&}g;
 
     run("amstatus", 'TESTCONF', '--file', $tracefile);
 
