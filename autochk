@@ -8,9 +8,13 @@ die() {
     exit 1
 }
 
+[ $0 = "/bin/sh" -o $0 = "/bin/bash" ] && die "cannot source the autochk script"
+
+devel_cfg=./config
+
 toplevel=$(git rev-parse --show-toplevel)
 
-[ -d config -a -d config/gettext-macros -a -d config/gnulib -a -d config/amanda -a -d config/macro-archive ] || die "ERROR: m4 include check failed"
+[ -d "$toplevel" ] || { pwd -P; die "not within a repository to get version info from"; }
 
 #
 # test absolute requirements for building with submodules checked out...
@@ -37,11 +41,19 @@ if [ -s $toplevel/.gitmodules ]; then
         GITMODULES=${PWD}/.gitmodules \
 		git >/dev/null 2>/dev/null submodule foreach \
 		'branch=$(git config -f $GITMODULES --get submodule.$name.branch); [ -n "$branch" ] && git checkout $branch';
-	git submodule foreach 'git pull >/dev/null || true'; 
+	git submodule foreach '{ git ls-files -m | grep -q -m1 .; } || git pull >/dev/null || true';
     )
 fi
 
-[ -s config/set_full_version -a -L config/set_full_version ] || die "ERROR: cannot use config/set_full_version symlink.  submodule checkout failed."
+[ -L config/set_full_version ] || ln -sf ../packaging/common_z/set_zmanda_version config/set_full_version
+
+[ -d config -a -d $devel_cfg/amanda -a -d $devel_cfg/macro-archive \
+	-a -d $devel_cfg/gnulib -a -d $devel_cfg/gettext-macros ] || \
+    die "ERROR: m4 include check failed"
+
+[ -s config/set_full_version -a -L config/set_full_version ] || \
+    die "ERROR: cannot use config/set_full_version symlink.  submodule checkout failed."
+
 [ -s bitrock-stack/build-var-subst.sh ] || die "ERROR: cannot use bitrock-stack symlink.  submodule checkout failed."
 
 set -- awk make gcc sed libtoolize \
