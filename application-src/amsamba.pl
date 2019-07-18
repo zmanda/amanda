@@ -462,6 +462,7 @@ sub command_selfcheck {
 	debug("stderr: " . $_);
 	next if /^Domain=/;
 	next if /^WARNING/g;
+	next if /^Unable to initialize messaging context/g;
 	# message if samba server is configured with 'security = share'
 	next if /Server not using user level security and no password supplied./;
 	$self->print_to_server("smbclient: $_",
@@ -554,6 +555,7 @@ sub parse_estimate {
 	next if /^Domain=/;
 	next if /dumped \d+ files and directories/;
 	next if /^WARNING/g;
+	next if /^Unable to initialize messaging context/g;
 	# message if samba server is configured with 'security = share'
 	next if /Server not using user level security and no password supplied./;
 	debug("stderr: $_");
@@ -758,6 +760,7 @@ sub command_backup {
 	return if $line =~ /tarmode is now /;
 	return if $line =~ /tar_re_search set/;
 	return if $line =~ /WARNING/g;
+	return if $line =~ /^Unable to initialize messaging context/;
 	if ($line =~ /dumped (\d+) files and directories/) {
 	    $nb_files = $1;
 	    return;
