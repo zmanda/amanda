@@ -20,7 +20,8 @@ toplevel=$(git rev-parse --show-toplevel)
 # test absolute requirements for building with submodules checked out...
 #
 if [ ! -s config/set_full_version -a -L config/set_full_version ] || 
-    [ ! -s bitrock-stack/build-var-subst.sh -a -L bitrock-stack ]
+    [ ! -s bitrock-stack/build-var-subst.sh -a -L bitrock-stack ] ||
+    [ -s bitrock-stack/build-var-subst.sh -a ! -d bitrock-stack/common/include ]
 then 
 # perform completed checkout of submodules ...
     ( \
