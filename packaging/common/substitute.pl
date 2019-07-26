@@ -9,7 +9,7 @@ use POSIX;
 # ARGV[1] = Destination file (usually ARGV[0] - ".src"
 
 #### Checks
-# We must run from the root of a source tree, but we can only check that the 
+# We must run from the root of a source tree, but we can only check that the
 # common files are in the right places
 if ( not -e "packaging/common/substitute.pl" ) {
     die "Error: 'substitute.pl' must be run from the root of a source tree"
@@ -41,7 +41,7 @@ sub read_file {
 		    die "Could not open $file.";
 		chomp($contents = <$f_handle>);
 		close($f_handle);
-		
+
 	} else {
 		die "Could not find $file file. run config/set_full_version or ./autogen";
 	}
@@ -89,7 +89,7 @@ my %replacement_filenames = (
 # TODO: PRE_UNINST?
 );
 
-# These are handled slightly differently: The surrounding line is preserved, 
+# These are handled slightly differently: The surrounding line is preserved,
 # and only the tag is replaced.  This behavior is somewhat arbitrary, but
 # hopefully keeps replacements in comments syntax legal.
 my %replacement_strings_common = (
@@ -202,7 +202,7 @@ while (<$src>) {
 		# Data replaces the line
 		if ( defined($replacement_data{$1})) {
 			print $replacement_data{$1};
-		} 
+		}
 		# strings just replace the tag.
 		elsif ( defined($replacement_strings{$1})) {
 			s/(%%.+?%%)/$replacement_strings{$1}/g;

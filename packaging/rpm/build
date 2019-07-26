@@ -1,13 +1,18 @@
 #!/bin/bash
+# We're assuming that you've copied packaging/* from the 
+# amanda-extensions source tree to the amanda source tree.
+# (buildbot dist tarballs will not contain packaging files!)
 
 # Buildpkg script for producing RPM packages. (Does not require root access.)
 # Buildpkg is designed to be used by both buildbot (to automate rpm production)
-# and by J Random User (to build an rpm for kicks).  The odd way of handling
-# all optioins through environment variables is a product of buildbot.
+# and by J Random User (to build an rpm for kicks).
 #
-# AMVER: the version of amanda we're working on.  This will become part of the
-#     rpm name.  AMVER must line up with the version number mentioned in the
-#     .spec file.
+# VERSION: the identifier for the amanda determined from subversion
+#	information.  
+# PKG_NAME_VER: the full version name of amanda we're working on.  This will
+#	become part of the rpm name.  
+# PKG_TARBALL: the name of the tarball which contains the source code.  it must
+#     unpack into a directory named PKG_NAME_VER. 
 # PKG_DIR: Rpmbuild expects absolute paths, so we provide this var.  It also
 #     allows you to build somewhere other than `pwd`.  You probably don't want
 #     to use the system-wide location, as the script tries to blow these
@@ -22,7 +27,7 @@
 pkg_name=amanda
 . ./packaging/common/build_functions.sh
 
-# Until we get package revisioning in community.
+# This is useful for debugging
 [ -f "PKG_REV" ] || echo "1" > PKG_REV
 
 [ -f "./configure" ] || \
@@ -31,11 +36,6 @@ pkg_name=amanda
 gen_pkg_build_config $pkg_root
 
 # take the spec/spec.src files and make a tarfile
-gen_pkg_environ
+gen_top_environ
 
-[ -f ${PKG_DIR}/rpmbuild/SOURCES/${PKG_NAME_VER}.tar.gz ] || {
-	echo >&2 "missing ${PKG_DIR}/rpmbuild/SOURCES/${PKG_NAME_VER}.tar.gz file version=$PKG_NAME_VER in $PKG_DIR"
-	exit 1
-      }
-
-do_package "amanda.spec"
+do_top_package "amanda.spec"
