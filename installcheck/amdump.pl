@@ -59,7 +59,6 @@ localhost diskname2 $diskname {
     property "a#s" "5%#8"
     application {
 	plugin "amgtar"
-	property "ATIME-PRESERVE" "NO"
     }
 }
 EODLE
