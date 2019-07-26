@@ -43,7 +43,7 @@ if [ -s $toplevel/.gitmodules ]; then
 		git >/dev/null 2>/dev/null submodule foreach \
 		'branch=$(git config -f $GITMODULES --get submodule.$name.branch); [ -n "$branch" ] && git checkout $branch'
 	git submodule foreach -q '{ git ls-files -m | grep -q -m1 .; } || git pull >/dev/null || true'
-	git submodule foreach -q 'name1=$(git name-rev --name HEAD); name2=$(git describe --all HEAD 2>/dev/null); echo "$path ---> $name1 / $name2"'
+	git submodule foreach -q 'name1=$(git name-rev HEAD); name2=$(git describe --tags HEAD || git describe --all HEAD) 2>/dev/null; echo "$path ---> $name1 / $name2"'
     )
 fi
 
