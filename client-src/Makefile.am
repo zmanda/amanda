@@ -36,7 +36,7 @@ if WANT_SAMBA
 libamclient_la_SOURCES += findpass.c
 endif
 
-libamclient_la_LDFLAGS = -release $(VERSION) $(AS_NEEDED_FLAGS)
+libamclient_la_LDFLAGS = -release $(SO_VERSION) $(AS_NEEDED_FLAGS)
 libamclient_la_LIBADD  = ../common-src/libamanda.la
 
 ###

@@ -86,9 +86,11 @@ amlibexec_SCRIPTS = $(amlibexec_SCRIPTS_PERL) $(amlibexec_SCRIPTS_SHELL)
 # routines, and second to pick up any references in the other libraries.
 ###
 
-LDADD = ../common-src/libamanda.la   \
-	libamserver.la               \
+LDADD = ../common-src/libamanda.la       \
+	libamserver.la               	 \
 	../device-src/libamdevice.la     \
+	../xfer-src/libamxfer.la 	\
+	../ndmp-src/libndmlib.la        \
 	../common-src/libamanda.la
 
 libamserver_la_SOURCES=	amindex.c	cmdfile.c \
@@ -97,7 +99,7 @@ libamserver_la_SOURCES=	amindex.c	cmdfile.c \
 			tapefile.c	find.c		server_util.c   \
                         xfer-dest-holding.c		xfer-source-holding.c
 
-libamserver_la_LDFLAGS= -release $(VERSION) $(AS_NEEDED_FLAGS)
+libamserver_la_LDFLAGS= -release $(SO_VERSION) $(AS_NEEDED_FLAGS)
 libamserver_la_LIBADD= ../device-src/libamdevice.la \
 		       ../common-src/libamanda.la
 

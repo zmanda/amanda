@@ -38,7 +38,7 @@ libamxfer_la_SOURCES = \
 	xfer.c \
 	xmsg.c
 
-libamxfer_la_LDFLAGS = -release $(VERSION) $(AS_NEEDED_FLAGS)
+libamxfer_la_LDFLAGS = -release $(SO_VERSION) $(AS_NEEDED_FLAGS)
 libamxfer_la_LIBADD = \
 	../common-src/libamanda.la
 
@@ -56,6 +56,7 @@ noinst_PROGRAMS = $(TESTS)
 
 xfer_test_SOURCES = xfer-test.c
 xfer_test_LDADD = \
+	../common-src/libamanda.la \
 	../common-src/libtestutils.la \
 	libamxfer.la
 
