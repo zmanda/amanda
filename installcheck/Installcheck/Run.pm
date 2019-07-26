@@ -627,25 +627,29 @@ sub check_amreport
     my $got_report;
     $skip_size = 1 if !defined $skip_size;
 
-    $report =~ s/\\/\\\\/g;
-    $report =~ s/\?/\\?/g;
-    $report =~ s/\(/\\(/g;
-    $report =~ s/\)/\\)/g;
-    $report =~ s/\[/\\[/g;
-    $report =~ s/\]/\\]/g;
-    $report =~ s/0:00/\\d:\\d\\d/g;
-    $report =~ s/\+/\\+/g;
-    $report =~ s/sendbackup: (.*)-CRC [^:]*:(\d*)/sendbackup: $1-CRC \(\.\*\):$2/g;
-    $report =~ s/PID/\\d\+/g;
-    $report =~ s/999999\.9/\[ \\d\]*\\.\\d/g;
+    $report =~ s{[\]\[\\*+?)(]}{\\$&}g;
+
+    # absorb decimal points here..
+    $report =~ s/999999\.9/\\s*\[ \\d\]*.\\d/g;
+    $report =~ s/0:00/\\s*\\d:\\d\\d/g;
+    $report =~ s/\s--\n/\\s*--\n/mg;
+
+    $report =~ s{\.}{\\$&}g;
+    $report =~ s/[{}]/\\$&/g;
+
+    $report =~ s{sendbackup: (.*)-CRC [^:]*:(\d*)}{sendbackup: $1-CRC (.*):$2}g;
+    $report =~ s{PID}{\\s*\\d\+}g;
+
     my ($year, $month, $day) = ($timestamp =~ m/^(\d\d\d\d)(\d\d)(\d\d)/);
     my $date  = POSIX::strftime('%B %e, %Y', 0, 0, 0, $day, $month - 1, $year - 1900);
     $date =~ s/  / /g;
-    $report =~ s/Date    : .*$/Date    : $date/mg;
+    $report =~ s/Date\s+:\s+.*$/Date    : $date/mg;
     my $hostname = `hostname`;
     chomp $hostname;
-    $report =~ s/Hostname: .*$/Hostname: $hostname/mg;
-    $report =~ s/brought to you by Amanda version .*\\/brought to you by Amanda version $Amanda::Constants::VERSION\\/g;
+    $report =~ s/Hostname:\s+.*$/Hostname: $hostname/mg;
+    my $version = $Amanda::Constants::VERSION;
+    $version =~ s{[+?()\[\]{}]}{\\$&}g;
+    $report =~ s/brought to you by Amanda version .*\\/brought to you by Amanda version $version\\/g;
 
     run("amreport", 'TESTCONF');
 
@@ -713,25 +717,32 @@ sub check_amstatus
     my $tracefile = shift;
     my $text = shift || 'amstatus';
 
-    $status =~ s/\\/\\\\/g;
-    $status =~ s/\+/\\\\+/g;
-    $status =~ s/\[/\\[/g;
-    $status =~ s/\]/\\]/g;
-    $status =~ s/Using: .*$/Using: $tracefile/mg;
-    $status =~ s/From .*$/From .*/mg;
-    $status =~ s/\([ \d.]{6,8}%\)/\([ \\d\.]{6,8}%\)/g;
-    $status =~ s/\(/\\(/g;
-    $status =~ s/\)/\\)/g;
-    $status =~ s/00:00:00/[ \\d]\\d:\\d\\d:\\d\\d/g;
+    $status =~ s{[\]\[\\*+?]}{\\$&}g;
+    $status =~ s/[}{]/\\$&/g;
+
+    # parens and decimal point are special
+    $status =~ s/\s+\(\s*[\d.]{3,8}\%\)/\\s+\(\\s*[\\d\.]{3,8}%\)/g;
+
+    # now that decimal point is hidden and some patterns will continue
+    $status =~ s{\.}{\\$&}g;
+
+    $status =~ s/00:00:00/[\\s\\d]\\d:\\d\\d:\\d\\d/g;
+    $status =~ s/\s+--\n/\\s+--\n/mg;
+
+    $status =~ s/Using:\s+.*$/Using: $tracefile/mg;
+    $status =~ s/From\s+.*$/From .*/mg;
     $status =~ s/^(.*dumpers busy[^\)]*\))/$1.*/mg;
     $status =~ s/^(.*dumper busy[^\)]*\))/$1.*/mg;
-    $status =~ s/^ *not-idle.*\n//mg;
-    $status =~ s/^holding space   : \d+k/holding space   : \\d\+k/mg;
+    $status =~ s/^\s*not-idle.*\n//mg;
+    $status =~ s/^holding space\s+:\s+\d+k/holding space   : \\d\+k/mg;
+
+    # only catch parens now
+    $status =~ s{[()]}{\\$&}g;
 
     run("amstatus", 'TESTCONF', '--file', $tracefile);
 
     my $got_status = $Installcheck::Run::stdout;
-    $got_status =~ s/^ *not-idle.*\n//mg;
+    $got_status =~ s/^\s*not-idle.*\n//mg;
 
 #    ok($got_status =~ $status, "$text: match") || diag_diff($got_status, $status, $text);
     diag_diff($got_status, $status, $text);

@@ -284,8 +284,15 @@ SCRIPTS_EXTRA_DIST = $(all_tests)
 # skip syntax checks on these files, since we're about to run all of them
 SKIP_CHECKS = yes
 
+installcheck-build: $(SCRIPTS_PERL) $(SCRIPTS_SHELL)
+	[ -x amcat-error-no-exec ] && chmod a-x amcat-error-no-exec || true
+	[ -O . ] && chmod a+w . || true
+	for f in $(tests); do [ -x $$f ] && chmod a-x $$f; true; done
+	[ -d $(top_srcdir)/bitrock-stack/common/include ] && \
+		( cd $(top_srcdir)/bitrock-stack; git reset --hard; ./install-var-subst.sh; ) || true
+
 .PHONY: clobber_my_config_is_ok
-clobber_my_config_is_ok:
+clobber_my_config_is_ok: installcheck-build
 	@if test "$(CONFIG_CLOBBER_MY_CONFIG)" != "OK" -a \
                  "$(CLOBBER_MY_CONFIG)" != "OK"; then \
 		echo ""; \
@@ -303,8 +310,7 @@ clobber_my_config_is_ok:
 
 # newer Test::Harness (v3.18-3.21) implementations get confused by executable
 # test scripts, so this rule chmod a-x's them first
-installcheck-local: clobber_my_config_is_ok $(SCRIPTS_PERL) $(SCRIPTS_SHELL)
-	chmod a-x amcat-error-no-exec
+installcheck-local: clobber_my_config_is_ok
 	rm -rf "$(AMANDA_TMPDIR)/installchecks"
 	$(MKDIR_P) "$(AMANDA_TMPDIR)/installchecks"
 	@if test -f "$(CONFIG_DIR)/amanda-client.conf" -a ! -f "$(CONFIG_DIR)/amanda-client.conf.install-backup"; then \
@@ -316,7 +322,6 @@ installcheck-local: clobber_my_config_is_ok $(SCRIPTS_PERL) $(SCRIPTS_SHELL)
 	@if test -f "$(CONFIG_DIR)/template.d/tapetypes" -a ! -f "$(CONFIG_DIR)/template.d/tapetypes.install-backup"; then \
 	    cp "$(CONFIG_DIR)/template.d/tapetypes" "$(CONFIG_DIR)/template.d/tapetypes.install-backup"; \
 	fi
-	for f in $(tests); do chmod a-x $$f; done
 	srcdir="$(srcdir)" $(PERL) -I$(srcdir) -I. -e 'use Test::Harness qw(&runtests); runtests(sort @ARGV);' $(tests)
 	rm -rf "$(CONFIG_DIR)/TESTCONF"
 	@if test -f "$(CONFIG_DIR)/amanda-client.conf.install-backup"; then \
