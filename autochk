@@ -43,7 +43,7 @@ if [ -s $toplevel/.gitmodules ]; then
         git submodule foreach -q 'git fetch --progress origin'
         # small changes allowed to remain
         git submodule foreach --quiet 'git config -f ${toplevel}/.gitmodules --get submodule.$name.branch' |
-            git submodule foreach --quiet 'read branch; [ -z "$branch" ] || { git branch -D $branch; git checkout --progress $branch; }'
+            git submodule foreach --quiet 'read branch; [ -z "$branch" ] || { git branch -D $branch; git checkout --progress -b $branch origin/$branch; }'
 	git submodule foreach -q 'name1=$(git name-rev HEAD); name2=$(git describe --tags HEAD 2>/dev/null || git describe --all HEAD) ; echo "$path ---> $name1 / $name2"'
     )
 fi
