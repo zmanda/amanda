@@ -40,7 +40,7 @@ if [ -s $toplevel/.gitmodules ]; then
 	git submodule update --rebase >/dev/null;
         git submodule foreach -q 'git rebase --abort 2>/dev/null || true'
         # first half of re-cloning 
-        git submodule foreach -q 'git fetch --progress origin'
+        git submodule foreach -q 'git fetch --progress origin "+refs/heads/*:refs/remotes/origin/*" '
         # small changes allowed to remain
         git submodule foreach --quiet 'git config -f ${toplevel}/.gitmodules --get submodule.$name.branch' |
             git submodule foreach --quiet 'read branch; [ -z "$branch" ] || { git branch -D $branch; git checkout --progress -b $branch origin/$branch; }'
