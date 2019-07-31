@@ -39,10 +39,11 @@ if [ -s $toplevel/.gitmodules ]; then
 	cd $toplevel; 
 	git submodule update --rebase >/dev/null;
         git submodule foreach -q 'git rebase --abort 2>/dev/null || true'
-        GITMODULES=${PWD}/.gitmodules \
-		git >/dev/null 2>/dev/null submodule foreach \
-		'branch=$(git config -f $GITMODULES --get submodule.$name.branch); [ -n "$branch" ] && git checkout $branch'
-	git submodule foreach -q '{ git ls-files -m | grep -q -m1 .; } || git pull >/dev/null || true'
+        # first half of re-cloning 
+        git submodule foreach -q 'git fetch --progress origin'
+        # small changes allowed to remain
+        git submodule foreach --quiet 'git config -f ${toplevel}/.gitmodules --get submodule.$name.branch' |
+            git submodule foreach --quiet 'read branch; [ -z "$branch" ] || { git branch -D $branch; git checkout --progress $branch; }'
 	git submodule foreach -q 'name1=$(git name-rev HEAD); name2=$(git describe --tags HEAD 2>/dev/null || git describe --all HEAD) ; echo "$path ---> $name1 / $name2"'
     )
 fi
