@@ -3,22 +3,23 @@
 # cd to the directory we're run from
 cd `dirname $0`
 
+die() {
+    echo x"${@}" | sed 's/^x//'
+    exit 1
+}
+
 # if you change this, please also change it in the root Makefile.am
-includes="-I . -I config -I config/gettext-macros -I config/gnulib -I config/amanda -I config/macro-archive -I /usr/share/aclocal"
+includes="-I. -Iconfig -Iconfig/gettext-macros -Iconfig/gnulib -Iconfig/amanda -Iconfig/macro-archive -I/usr/share/aclocal"
 
 # clean up
 rm -f aclocal.m4
 rm -rf autom4te*.cache
 rm -f configure
 
-die() {
-    echo x"${@}" | sed 's/^x//'
-    exit 1
-}
-
 [ -L config/set_full_version ] || ln -sf ../packaging/common_z/set_zmanda_version config/set_full_version
 
-( cd bitrock-stack; git checkout -f .; git clean -dfx; )
+# clear out the tools-archives 
+git submodule deinit -f 000-external/tools-archives
 
 [ -x ./autochk ] && ./autochk || exit -1
 
