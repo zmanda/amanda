@@ -37,6 +37,7 @@ fi
 if [ -s $toplevel/.gitmodules ]; then
     ( \
 	cd $toplevel; 
+        git submodule update --init --checkout
         git submodule foreach -q 'git rebase --abort 2>/dev/null || true'
         # first half of re-cloning 
         git submodule foreach -q 'git fetch --progress origin "+refs/heads/*:refs/remotes/origin/*" '
