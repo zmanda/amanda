@@ -19,35 +19,18 @@ toplevel=$(git rev-parse --show-toplevel)
 #
 # test absolute requirements for building with submodules checked out...
 #
-if [ ! -s config/set_full_version -a -L config/set_full_version ] || 
-    [ ! -s bitrock-stack/build-var-subst.sh -a -L bitrock-stack ] ||
-    [ -s bitrock-stack/build-var-subst.sh -a ! -d bitrock-stack/common/include ]
-then 
-# perform completed checkout of submodules ...
-    ( \
-	cd $toplevel; 
-	[ -s $toplevel/.gitmodules ] || die "ERROR: no $toplevel/.gitmodules file was found but symlinks are broken."
-        git submodule deinit -f .
-    	rm -rf 000-external   # to be certain nothing is checked out now...
-	git submodule | sed -e 's,^.*000-external/,000-external/,' | xargs git checkout -f  >/dev/null 2>/dev/null
-    	git submodule init
-    )
-fi
+[ -d packaging/. -a -d bitrock-stack/. -a -s bitrock-stack/install-var-subst.sh ] ||
+(
+    cd $toplevel;
+    [ -s $toplevel/.gitmodules ] || die "ERROR: no $toplevel/.gitmodules file was found but symlinks are broken."
+    git submodule deinit -f .
+    rm -rf 000-external   # to be certain nothing is checked out now...
+    git submodule | while read i j k; do git checkout -f $j >/dev/null 2>/dev/null; done
+)
 
-if [ -s $toplevel/.gitmodules ]; then
-    ( \
-	cd $toplevel; 
-        git submodule update --init --checkout
-        git submodule foreach -q 'git rebase --abort 2>/dev/null || true'
-        # first half of re-cloning 
-        git submodule foreach -q 'git fetch --progress origin "+refs/heads/*:refs/remotes/origin/*" '
-        # small changes allowed to remain
-        git submodule foreach -q 'git config -f ${toplevel}/.gitmodules --get submodule.$name.branch' |
-            git submodule foreach -q 'read branch; [ -z "$branch" ] && exit 0; git pull; true;'
-        git submodule foreach -q 'git rebase --abort 2>/dev/null || true'
-	git submodule foreach -q 'name1=$(git name-rev HEAD); name2=$(git describe --tags HEAD 2>/dev/null || git describe --all HEAD) ; echo "$path ---> $name1 / $name2"'
-    )
-fi
+git submodule update --init --remote --rebase || die "update failed"
+git submodule foreach -q 'git rebase --abort 2>/dev/null || exit 0; exit -1;' || die "failed to update correctly"
+git submodule foreach -q 'name1=$(git name-rev HEAD); name2=$(git describe --tags HEAD 2>/dev/null || git describe --all HEAD) ; echo "$path ---> $name1 / $name2"'
 
 [ -L config/set_full_version ] || ln -sf ../packaging/common_z/set_zmanda_version config/set_full_version
 

@@ -18,7 +18,13 @@ die() {
 
 [ -L config/set_full_version ] || ln -sf ../packaging/common_z/set_zmanda_version config/set_full_version
 
-[ ! -x ./autochk ] || ./autochk || exit -1
+( cd bitrock-stack; git checkout -f .; git clean -dfx; )
+
+[ -x ./autochk ] && ./autochk || exit -1
+
+[ -x ./bitrock-stack/build-var-subst.sh ] && ./bitrock-stack/build-var-subst.sh || exit -1
+
+rm -f ./bitrock-stack/build-var-subst.sh ./bitrock-stack/install-var-subst.sh 
 
 echo "See DEVELOPING for instructions on updating:"
 echo " * gettext macros"
