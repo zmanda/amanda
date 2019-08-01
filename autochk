@@ -38,7 +38,7 @@ while read mod branch; do
 done
 
 git submodule update --init --remote --rebase || die "update failed"
-git submodule foreach -q 'git rebase --abort 2>/dev/null || exit 0; exit -1;' || die "failed to update correctly"
+git submodule foreach -q 'git rebase --abort 2>/dev/null || true;'
 git submodule foreach -q 'name1=$(git name-rev HEAD); name2=$(git describe --tags HEAD 2>/dev/null || git describe --all HEAD) ; echo "$path ---> $name1 / $name2"'
 
 [ -L config/set_full_version ] || ln -sf ../packaging/common_z/set_zmanda_version config/set_full_version
