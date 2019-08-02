@@ -37,7 +37,12 @@ while read mod branch; do
     git --git-dir=$toplevel/.git/modules/$mod fetch origin +refs/heads/$branch:refs/remotes/origin/$branch
 done
 
-git submodule update --init --remote --rebase || die "update failed"
+git submodule update --init --remote --rebase || {
+    git submodule foreach -q 'git checkout -f $(git rev-parse HEAD)'  # detach head-refs if needed
+}
+
+git submodule update --init --remote --rebase || die "update failed"  # rebase is simple then
+
 git submodule foreach -q 'git rebase --abort 2>/dev/null || true;'
 git submodule foreach -q 'name1=$(git name-rev HEAD); name2=$(git describe --tags HEAD 2>/dev/null || git describe --all HEAD) ; echo "$path ---> $name1 / $name2"'
 
