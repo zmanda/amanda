@@ -34,15 +34,25 @@ toplevel=$(git rev-parse --show-toplevel)
 git submodule foreach -q 'git checkout -f $(git rev-parse HEAD) >/dev/null 2>&1'
 
 git config --blob HEAD:.gitmodules --get-regex submodule'.*.branch'  |
-while read mod branch; do
-    mod=${mod#submodule.}; mod=${mod%.branch}; branch=${branch##*/}
-    echo module:$mod '-->' branch:$branch
-    # clean out old tracking branches!
-    git --git-dir=$toplevel/.git/modules/$mod branch -D $branch 2>/dev/null
-    git --git-dir=$toplevel/.git/modules/$mod fetch origin +refs/heads/$branch:refs/remotes/origin/$branch
+while read modname branch; do
+    modname=${modname#submodule.}; modname=${modname%.branch}; branch=${branch##*/}
+    path=$(git config --blob HEAD:.gitmodules --get "submodule.$modname.path")
+    ref="/opt/src/${path##*/}/.git"
+    #
+    echo "module:$modname --> branch:$branch @ $path"
+    # harmless? I suppose...
+    ( 
+        set -xv; 
+        cd $toplevel;
+        git submodule init $path
+        # clean out old tracking branches!
+        git --git-dir=$toplevel/.git/modules/$modname branch -D $branch 2>/dev/null
+        git --git-dir=$toplevel/.git/modules/$modname fetch origin +refs/heads/$branch:refs/remotes/origin/$branch || 
+             die "submodule $modname failed fetch"
+        [ -d $ref ] || ref=""
+        git submodule update --remote --rebase ${ref:+ --reference $ref } --depth 1 $path
+    ) || die "update failed"
 done
-
-git submodule update --init --remote --rebase || die "update failed"  # rebase is simple then
 
 git submodule foreach -q 'git rebase --abort 2>/dev/null || true;'
 git submodule foreach -q 'name1=$(git name-rev HEAD); name2=$(git describe --tags HEAD 2>/dev/null || git describe --all HEAD) ; echo "$path ---> $name1 / $name2"'
