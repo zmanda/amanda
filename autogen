@@ -19,7 +19,7 @@ rm -f configure
 [ -L config/set_full_version ] || ln -sf ../packaging/common_z/set_zmanda_version config/set_full_version
 
 # clear out the tools-archives 
-git submodule deinit -f 000-external/tools-archives
+( cd $(git rev-parse --show-toplevel); git submodule deinit -f 000-external/tools-archives; )
 
 [ -x ./autochk ] && ./autochk || exit -1
 

@@ -25,8 +25,13 @@ toplevel=$(git rev-parse --show-toplevel)
     [ -s $toplevel/.gitmodules ] || die "ERROR: no $toplevel/.gitmodules file was found but symlinks are broken."
     git submodule deinit -f .
     rm -rf 000-external   # to be certain nothing is checked out now...
+    # re-checkout the current paths of the submodule-tops
     git submodule | while read i j k; do git checkout -f $j >/dev/null 2>/dev/null; done
 )
+
+#
+# reset to the detached-head form
+git submodule foreach -q 'git checkout -f $(git rev-parse HEAD) >/dev/null 2>&1'
 
 git config --blob HEAD:.gitmodules --get-regex submodule'.*.branch'  |
 while read mod branch; do
@@ -36,10 +41,6 @@ while read mod branch; do
     git --git-dir=$toplevel/.git/modules/$mod branch -D $branch 2>/dev/null
     git --git-dir=$toplevel/.git/modules/$mod fetch origin +refs/heads/$branch:refs/remotes/origin/$branch
 done
-
-git submodule update --init --remote --rebase || {
-    git submodule foreach -q 'git checkout -f $(git rev-parse HEAD)'  # detach head-refs if needed
-}
 
 git submodule update --init --remote --rebase || die "update failed"  # rebase is simple then
 
