@@ -25,13 +25,13 @@ toplevel=$(git rev-parse --show-toplevel)
     [ -s $toplevel/.gitmodules ] || die "ERROR: no $toplevel/.gitmodules file was found but symlinks are broken."
     git submodule deinit -f .
     rm -rf 000-external   # to be certain nothing is checked out now...
-    # re-checkout the current paths of the submodule-tops
+    # re-checkout the current topdir paths of the submodules
     git submodule | while read i j k; do git checkout -f $j >/dev/null 2>/dev/null; done
 )
 
 #
 # reset to the detached-head form
-git submodule foreach -q 'git checkout -f $(git rev-parse HEAD) >/dev/null 2>&1'
+git submodule foreach -q 'git show -s --pretty=%D | grep -q ", *HEAD," || git checkout HEAD@{0} >/dev/null 2>&1 || true'
 
 git config --blob HEAD:.gitmodules --get-regex submodule'.*.branch'  |
 while read modname branch; do
@@ -46,7 +46,7 @@ while read modname branch; do
         cd $toplevel;
         git submodule init $path
         # clean out old tracking branches!
-        git --git-dir=$toplevel/.git/modules/$modname branch -D $branch 2>/dev/null
+        git --git-dir=$toplevel/.git/modules/$modname branch -D -r $branch >/dev/null 2>&1
         git --git-dir=$toplevel/.git/modules/$modname fetch origin +refs/heads/$branch:refs/remotes/origin/$branch || 
              die "submodule $modname failed fetch"
         [ -d $ref ] || ref=""

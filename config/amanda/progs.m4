@@ -349,9 +349,13 @@ AC_DEFUN([AMANDA_PROG_PERL],
 #
 AC_DEFUN([AMANDA_PROG_AMPERL],
 [
-    AMPERL=${AMLIBDIR%/amanda}
+    : ${AMPERL:=${AMLIBDIR}}
+    # strip off any trailing values to get the root
+    AMPERL=${AMPERL%/amanda}
     AMPERL=${AMPERL%/lib64}
-    AMPERL="${AMPERL%/lib}/bin/perl"
+    AMPERL=${AMPERL%/lib}
+    AMPERL=${AMPERL%/bin/perl}
+    AMPERL="${AMPERL}/bin/perl"
     AC_ARG_VAR([AMPERL], [Path to the 'perl' binary for Amanda internal use])
 ])
 
