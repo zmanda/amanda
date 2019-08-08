@@ -274,6 +274,9 @@ EXTRA_DIST += $(catalogs)
 noinst_SCRIPTS = \
 	run-ndmp
 
+PERL = $(AMPERL)
+BUILT_SOURCES = installcheck-build
+
 CHECK_PERL_FLAGS=-I$(top_srcdir)/installcheck
 
 SCRIPTS_PERL = $(tests) $(mocks) $(noinst_SCRIPTS) amcat-error amcat-error-end amcat-error-no-exec
