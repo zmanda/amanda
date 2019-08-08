@@ -322,7 +322,7 @@ installcheck-local: clobber_my_config_is_ok
 	@if test -f "$(CONFIG_DIR)/template.d/tapetypes" -a ! -f "$(CONFIG_DIR)/template.d/tapetypes.install-backup"; then \
 	    cp "$(CONFIG_DIR)/template.d/tapetypes" "$(CONFIG_DIR)/template.d/tapetypes.install-backup"; \
 	fi
-	srcdir="$(srcdir)" $(PERL) -I$(srcdir) -I. -e 'use Test::Harness qw(&runtests); runtests(sort @ARGV);' $(tests)
+	srcdir="$(srcdir)" $(AMPERL) -I$(srcdir) -I. -e 'use Test::Harness qw(&runtests); runtests(sort @ARGV);' $(tests)
 	rm -rf "$(CONFIG_DIR)/TESTCONF"
 	@if test -f "$(CONFIG_DIR)/amanda-client.conf.install-backup"; then \
 	    mv -f "$(CONFIG_DIR)/amanda-client.conf.install-backup" "$(CONFIG_DIR)/amanda-client.conf"; \
