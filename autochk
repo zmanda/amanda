@@ -31,7 +31,7 @@ toplevel=$(git rev-parse --show-toplevel)
 
 #
 # reset to the detached-head form
-git submodule foreach -q 'git show -s --pretty=%D | grep -q ", *HEAD," || git checkout HEAD@{0} >/dev/null 2>&1 || true'
+git submodule foreach -q 'exec >/dev/null 2>&1; git symbolic-ref HEAD && git checkout HEAD@{0} || true'
 
 git config --blob HEAD:.gitmodules --get-regex submodule'.*.branch'  |
 while read modname branch; do
