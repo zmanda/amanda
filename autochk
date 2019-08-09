@@ -36,21 +36,26 @@ git submodule foreach -q 'exec >/dev/null 2>&1; git symbolic-ref HEAD && git che
 git config --blob HEAD:.gitmodules --get-regex submodule'.*.branch'  |
 while read modname branch; do
     modname=${modname#submodule.}; modname=${modname%.branch}; branch=${branch##*/}
-    path=$(git config --blob HEAD:.gitmodules --get "submodule.$modname.path")
-    ref="/opt/src/${path##*/}/.git"
+    modpath=$(git config --blob HEAD:.gitmodules --get "submodule.$modname.path")
+    ref="/opt/src/${modpath##*/}/.git"
     #
-    echo "module:$modname --> branch:$branch @ $path"
+    echo "module:$modname --> branch:$branch @ $modpath"
     # harmless? I suppose...
-    ( 
+    (
         set -xv; 
         cd $toplevel;
-        git submodule init $path
+	moddepth=
+	git submodule foreach -q 'echo $path' | grep -q "^$modpath" || moddepth="--depth 5"
+
+	git submodule init $modpath
+
         # clean out old tracking branches!
         git --git-dir=$toplevel/.git/modules/$modname branch -D -r $branch >/dev/null 2>&1
         git --git-dir=$toplevel/.git/modules/$modname fetch origin +refs/heads/$branch:refs/remotes/origin/$branch || 
              die "submodule $modname failed fetch"
         [ -d $ref ] || ref=""
-        git submodule update --remote --rebase ${ref:+ --reference $ref } --depth 1 $path
+	
+        git submodule update --remote --rebase ${ref:+ --reference $ref } $moddepth $modpath
     ) || die "update failed"
 done
 
