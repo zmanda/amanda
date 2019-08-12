@@ -30,7 +30,7 @@ toplevel=$(git rev-parse --show-toplevel)
 )
 
 #
-# reset to the detached-head form
+# reset any checkout to the detached-head form
 git submodule foreach -q 'exec >/dev/null 2>&1; git symbolic-ref HEAD && git checkout HEAD@{0} || true'
 
 git config --blob HEAD:.gitmodules --get-regex submodule'.*.branch'  |
@@ -45,12 +45,12 @@ while read modname branch; do
         set -xv; 
         cd $toplevel;
 	moddepth=
-	git submodule foreach -q 'echo $path' | grep -q "^$modpath" || moddepth="--depth 5"
+	git submodule foreach -q 'echo $path || true' | grep -q "^$modpath" || moddepth="--depth 5"
 
 	git submodule init $modpath
 
         # clean out old tracking branches!
-        git --git-dir=$toplevel/.git/modules/$modname branch -D -r $branch >/dev/null 2>&1
+        git --git-dir=$toplevel/.git/modules/$modname branch -D $branch >/dev/null 2>&1
         git --git-dir=$toplevel/.git/modules/$modname fetch origin +refs/heads/$branch:refs/remotes/origin/$branch || 
              die "submodule $modname failed fetch"
         [ -d $ref ] || ref=""
