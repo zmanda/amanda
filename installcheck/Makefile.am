@@ -2,6 +2,8 @@ include $(top_srcdir)/config/automake/vars.am
 include $(top_srcdir)/config/automake/scripts.am
 all_tests =
 
+bin_dirs = $(strip $(wildcard $(top_srcdir)/bitrock-stack/*/bin))
+
 common_tests = \
 	Amanda_Archive \
 	Amanda_Config \
@@ -311,7 +313,8 @@ clobber_my_config_is_ok: installcheck-build
 		echo "  $(MAKE) CLOBBER_MY_CONFIG=OK installcheck"; \
 		exit 1; \
 	fi
-	type starman || echo "starman not found in path"; exit -1; }
+	export PATH="$$(echo "$(bin_dirs)" | tr ' ' ':'):$${PATH}"; \
+		( type starman || { echo "starman not found in path"; exit -1; } )
 
 # newer Test::Harness (v3.18-3.21) implementations get confused by executable
 # test scripts, so this rule chmod a-x's them first
@@ -329,7 +332,9 @@ installcheck-prep: clobber_my_config_is_ok
 	fi
 
 installcheck-run: installcheck-prep
-	srcdir="$(srcdir)" $(PERL) -I$(srcdir) -I. -e 'use Test::Harness qw(&runtests); runtests(sort @ARGV);' $(tests)
+	srcdir="$(srcdir)" \
+	PATH="$$(echo "$(bin_dirs)" | tr ' ' ':'):$${PATH}" \
+		$(PERL) -I$(srcdir) -I. -e 'use Test::Harness qw(&runtests); runtests(sort @ARGV);' $(tests)
 
 installcheck-local: installcheck-run
 	rm -rf "$(CONFIG_DIR)/TESTCONF"
