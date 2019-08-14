@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # cd to the directory we're run from
 cd `dirname $0`
@@ -8,13 +8,18 @@ die() {
     exit 1
 }
 
-[ $0 = "/bin/sh" -o $0 = "/bin/bash" ] && die "cannot source the autochk script"
+[ $0 = "/bin/sh" -o $0 = "/bin/bash" ] && die "ERROR: cannot source the autochk script"
+
+GITVER=$(git --version | { IFS=. read a b c; printf "%03d.%03d.%03d\\n" "${a##* }" $b $c; })
+[ $GITVER '>' 002.006.999 ] || die "ERROR: git is too old for this build."
+
+version_create_script=config/set_full_version
 
 devel_cfg=./config
 
 toplevel=$(git rev-parse --show-toplevel)
 
-[ -d "$toplevel" ] || { pwd -P; die "not within a repository to get version info from"; }
+[ -d "$toplevel" ] || { pwd -P; die "ERROR: not within a repository to get version info from"; }
 
 #
 # test absolute requirements for building with submodules checked out...
@@ -38,7 +43,7 @@ while read modname branch; do
     modname=${modname#submodule.}; modname=${modname%.branch}; branch=${branch##*/}
     modpath=$(git config --blob HEAD:.gitmodules --get "submodule.$modname.path")
     ref="/opt/src/${modpath##*/}/.git"
-    #
+
     echo "module:$modname --> branch:$branch @ $modpath"
     # harmless? I suppose...
     (
@@ -52,28 +57,30 @@ while read modname branch; do
         # clean out old tracking branches!
         git --git-dir=$toplevel/.git/modules/$modname branch -D $branch >/dev/null 2>&1
         git --git-dir=$toplevel/.git/modules/$modname fetch origin +refs/heads/$branch:refs/remotes/origin/$branch || 
-             die "submodule $modname failed fetch"
+             die "ERROR: submodule $modname failed fetch"
         [ -d $ref ] || ref=""
 	
         git submodule update --remote --rebase ${ref:+ --reference $ref } $moddepth $modpath
-    ) || die "update failed"
+    ) || die "ERROR: update failed"
 done
 
 git submodule foreach -q 'git rebase --abort 2>/dev/null || true;'
 git submodule foreach -q 'name1=$(git name-rev HEAD); name2=$(git describe --tags HEAD 2>/dev/null || git describe --all HEAD) ; echo "$path ---> $name1 / $name2"'
 
-[ -L config/set_full_version ] || ln -sf ../packaging/common_z/set_zmanda_version config/set_full_version
+[ -L $version_create_script ] || ln -sf ../packaging/common_z/set_zmanda_version $version_create_script
 
 [ -d config -a -d $devel_cfg/amanda -a -d $devel_cfg/macro-archive \
-	-a -d $devel_cfg/gnulib -a -d $devel_cfg/gettext-macros ] || \
+	-a -d $devel_cfg/gnulib \
+        -a -d $devel_cfg/gettext-macros \
+        ] || \
     die "ERROR: m4 include check failed"
 
-[ -s config/set_full_version -a -L config/set_full_version ] || \
-    die "ERROR: cannot use config/set_full_version symlink.  submodule checkout failed."
+[ -s $version_create_script -a -L $version_create_script ] || \
+    die "ERROR: cannot use $version_create_script symlink.  submodule checkout failed."
 
 [ -s bitrock-stack/build-var-subst.sh ] || die "ERROR: cannot use bitrock-stack symlink.  submodule checkout failed."
 
-set -- awk make gcc sed libtoolize \
+set -- awk make gcc g++ sed libtoolize \
         autoconf automake autoheader \
         swig perl bison flex gettext mailx \
         dump xinetd smbclient git tar cpio \
@@ -89,5 +96,8 @@ set -- CPAN List::Util IO::Socket::SSL Carp Data::Dumper ExtUtils::Embed
 for i do perl -e "use $i;" || failed="$failed $i"; done
 
 if [ -n "$failed" ]; then die "ERROR: failed executible tests: $failed"; fi
+
+SWIGVER=$(swig -version | grep -i 'version *[0-9]' | { IFS=. read a b c; printf "%03d.%03d.%03d" "${a##* }" $b $c; })
+[ $SWIGVER '>' 001.999.999 ] || die "ERROR: swig is too old for this build to succeed."
 
 exit 0
