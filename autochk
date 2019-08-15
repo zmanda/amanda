@@ -97,6 +97,8 @@ git submodule foreach -q ' \
 [ -s $version_create_script -a -L $version_create_script ] || \
     die "ERROR: cannot use $version_create_script symlink.  submodule checkout failed."
 
+[ -s bitrock-stack/build-var-subst.sh ] || die "ERROR: cannot use bitrock-stack symlink.  submodule checkout failed."
+
 set -- awk make gcc g++ sed libtoolize \
         autoconf automake autoheader \
         swig perl bison flex gettext mailx \
