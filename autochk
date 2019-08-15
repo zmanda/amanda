@@ -54,18 +54,33 @@ while read modname branch; do
 
 	git submodule init $modpath
 
-        # clean out old tracking branches!
-        git --git-dir=$toplevel/.git/modules/$modname branch -D $branch >/dev/null 2>&1
-        git --git-dir=$toplevel/.git/modules/$modname fetch origin +refs/heads/$branch:refs/remotes/origin/$branch || 
-             die "ERROR: submodule $modname failed fetch"
+        if [ -d $toplevel/.git/modules/$modname ]; then
+            ( export GIT_DIR=$toplevel/.git/modules/$modname;
+               git branch -D $branch >/dev/null 2>&1;
+               git fetch -P --prune origin;
+               git fetch origin +refs/heads/$branch:refs/remotes/origin/$branch
+            ) || die "ERROR: submodule $modname failed fetch";
+        fi
+   
         [ -d $ref ] || ref=""
-	
-        git submodule update --remote --rebase ${ref:+ --reference $ref } $moddepth $modpath
+
+        if [ ! -f $toplevel/$modpath/.git ]; then
+            git submodule update --remote --checkout ${ref:+ --reference $ref } $moddepth $modpath
+        elif ( cd $toplevel/$modpath; git diff --cached --quiet HEAD || git diff --quiet HEAD; ); then 
+            # no changes to worry about...
+            git submodule update --remote --checkout ${ref:+ --reference $ref } $moddepth $modpath
+        else
+            # blend in with current contents (instead of overwriting)
+            git submodule update --remote --rebase ${ref:+ --reference $ref } $moddepth $modpath
+        fi
+
     ) || die "ERROR: update failed"
 done
 
 git submodule foreach -q 'git rebase --abort 2>/dev/null || true;'
-git submodule foreach -q 'name1=$(git name-rev HEAD); name2=$(git describe --tags HEAD 2>/dev/null || git describe --all HEAD) ; echo "$path ---> $name1 / $name2"'
+git submodule foreach -q 'name1=$(git name-rev "--exclude=*/HEAD" HEAD); \
+   name2=$(git describe --tags --exclude "*/HEAD" HEAD 2>/dev/null || git describe --all --exclude "*/HEAD" HEAD) ; \
+   echo "$path ---> $name1 / $name2"'
 
 [ -L $version_create_script ] || ln -sf ../packaging/common_z/set_zmanda_version $version_create_script
 
