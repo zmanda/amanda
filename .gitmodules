@@ -1,10 +1,10 @@
 [submodule "packaging"]
 	path = 000-external/packaging
 	url = git@git.betsol.com:zmanda/packaging.git
-	branch = unified-build
+	branch = __default_build__
 	update = rebase
 [submodule "tools-archives"]
 	path = 000-external/tools-archives
 	url = git@git.betsol.com:zmanda/tools-archives.git
-	branch = unified-20160408
+	branch = __default_build__
 	update = rebase
