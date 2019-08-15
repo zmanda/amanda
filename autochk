@@ -11,7 +11,7 @@ die() {
 [ $0 = "/bin/sh" -o $0 = "/bin/bash" ] && die "ERROR: cannot source the autochk script"
 
 GITVER=$(git --version | { IFS=. read a b c; printf "%03d.%03d.%03d\\n" "${a##* }" $b $c; })
-[ $GITVER '>' 002.006.999 ] || die "ERROR: git is too old for this build."
+[ $GITVER '>' 002.000.999 ] || die "ERROR: git is too old for this build."
 
 version_create_script=config/set_full_version
 
@@ -57,8 +57,8 @@ while read modname branch; do
         if [ -d $toplevel/.git/modules/$modname ]; then
             ( export GIT_DIR=$toplevel/.git/modules/$modname;
                git branch -D $branch >/dev/null 2>&1;
-               git fetch -P --prune origin;
-               git fetch origin +refs/heads/$branch:refs/remotes/origin/$branch
+               git fetch --prune --tags origin 'refs/tags/*:refs/tags/*'
+               git fetch --prune origin "+refs/heads/$branch:refs/remotes/origin/$branch"
             ) || die "ERROR: submodule $modname failed fetch";
         fi
    
@@ -78,22 +78,24 @@ while read modname branch; do
 done
 
 git submodule foreach -q 'git rebase --abort 2>/dev/null || true;'
-git submodule foreach -q 'name1=$(git name-rev "--exclude=*/HEAD" HEAD); \
-   name2=$(git describe --tags --exclude "*/HEAD" HEAD 2>/dev/null || git describe --all --exclude "*/HEAD" HEAD) ; \
+git submodule foreach -q ' \
+   name1=$(git name-rev "--exclude=*/HEAD" HEAD 2>/dev/null || git name-rev HEAD 2>/dev/null); \
+   name2=$(git describe --tags --exclude "*/HEAD" HEAD 2>/dev/null || git describe --all --exclude "*/HEAD" HEAD 2>/dev/null); \
+   [ -z "$name2" ] && name2=$(git describe --tags HEAD 2>/dev/null || git describe --all HEAD 2>/dev/null); \
    echo "$path ---> $name1 / $name2"'
+
+[ -s bitrock-stack/build-var-subst.sh ] || die "ERROR: cannot use bitrock-stack symlink.  submodule checkout failed."
 
 [ -L $version_create_script ] || ln -sf ../packaging/common_z/set_zmanda_version $version_create_script
 
 [ -d config -a -d $devel_cfg/amanda -a -d $devel_cfg/macro-archive \
-	-a -d $devel_cfg/gnulib \
+       -a -d $devel_cfg/gnulib \
         -a -d $devel_cfg/gettext-macros \
         ] || \
     die "ERROR: m4 include check failed"
 
 [ -s $version_create_script -a -L $version_create_script ] || \
     die "ERROR: cannot use $version_create_script symlink.  submodule checkout failed."
-
-[ -s bitrock-stack/build-var-subst.sh ] || die "ERROR: cannot use bitrock-stack symlink.  submodule checkout failed."
 
 set -- awk make gcc g++ sed libtoolize \
         autoconf automake autoheader \
@@ -114,5 +116,7 @@ if [ -n "$failed" ]; then die "ERROR: failed executible tests: $failed"; fi
 
 SWIGVER=$(swig -version | grep -i 'version *[0-9]' | { IFS=. read a b c; printf "%03d.%03d.%03d" "${a##* }" $b $c; })
 [ $SWIGVER '>' 001.999.999 ] || die "ERROR: swig is too old for this build to succeed."
+
+[ -f /etc/debian_version ] && grep -q '^amandabackup:' /etc/passwd || { echo "ERROR: amandabackup user (uid=63998) is not present on debian build"; exit -1; }
 
 exit 0
