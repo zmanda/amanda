@@ -119,6 +119,7 @@ if [ -n "$failed" ]; then die "ERROR: failed executible tests: $failed"; fi
 SWIGVER=$(swig -version | grep -i 'version *[0-9]' | { IFS=. read a b c; printf "%03d.%03d.%03d" "${a##* }" $b $c; })
 [ $SWIGVER '>' 001.999.999 ] || die "ERROR: swig is too old for this build to succeed."
 
-[ -f /etc/debian_version ] && grep -q '^amandabackup:' /etc/passwd || { echo "ERROR: amandabackup user (uid=63998) is not present on debian build"; exit -1; }
+[ -f /etc/debian_version ] && 
+	{ grep -q '^amandabackup:' /etc/passwd || { echo "ERROR: amandabackup user (uid=63998) is not present on debian build"; exit -1; };}
 
 exit 0
