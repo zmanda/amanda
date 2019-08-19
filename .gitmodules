@@ -1,7 +1,7 @@
 [submodule "packaging"]
 	path = 000-external/packaging
 	url = git@git.betsol.com:zmanda/packaging.git
-	branch = next-v099
+	branch = __default_build__
 	update = rebase
 [submodule "tools-archives"]
 	path = 000-external/tools-archives
