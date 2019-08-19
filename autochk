@@ -64,10 +64,12 @@ while read modname branch; do
 
         if [ ! -f $toplevel/$modpath/.git ]; then
             # first do a setup (NEEDS --init AND NO --remote!!)
-            git submodule update --init --checkout ${ref:+ --reference $ref } $moddepth $modpath
+            git submodule update --init --checkout ${ref:+ --reference $ref } $moddepth $modpath ||
+               git submodule update --init --rebase --remote ${ref:+ --reference $ref } $moddepth $modpath
         elif ( cd $toplevel/$modpath; git diff --cached --quiet HEAD && git diff --quiet HEAD; ); then 
             # no changes to worry about...
-            git submodule update --remote --checkout ${ref:+ --reference $ref } $moddepth $modpath
+            git submodule update --checkout ${ref:+ --reference $ref } $moddepth $modpath ||
+            git submodule update --init --remote --rebase ${ref:+ --reference $ref } $moddepth $modpath
         else
             # blend in with current contents (instead of overwriting)
             git submodule update --remote --rebase ${ref:+ --reference $ref } $moddepth $modpath
