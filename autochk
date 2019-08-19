@@ -52,8 +52,6 @@ while read modname branch; do
 	moddepth=
 	git submodule foreach -q 'echo $path || true' | grep -q "^$modpath" || moddepth="--depth 5"
 
-	git submodule init $modpath
-
         if [ -d $toplevel/.git/modules/$modname ]; then
             ( export GIT_DIR=$toplevel/.git/modules/$modname;
                git branch -D $branch >/dev/null 2>&1;
@@ -65,7 +63,8 @@ while read modname branch; do
         [ -d $ref ] || ref=""
 
         if [ ! -f $toplevel/$modpath/.git ]; then
-            git submodule update --remote --checkout ${ref:+ --reference $ref } $moddepth $modpath
+            # first do a setup (NEEDS --init AND NO --remote!!)
+            git submodule update --init --checkout ${ref:+ --reference $ref } $moddepth $modpath
         elif ( cd $toplevel/$modpath; git diff --cached --quiet HEAD || git diff --quiet HEAD; ); then 
             # no changes to worry about...
             git submodule update --remote --checkout ${ref:+ --reference $ref } $moddepth $modpath
@@ -96,8 +95,6 @@ git submodule foreach -q ' \
 
 [ -s $version_create_script -a -L $version_create_script ] || \
     die "ERROR: cannot use $version_create_script symlink.  submodule checkout failed."
-
-[ -s bitrock-stack/build-var-subst.sh ] || die "ERROR: cannot use bitrock-stack symlink.  submodule checkout failed."
 
 set -- awk make gcc g++ sed libtoolize \
         autoconf automake autoheader \
