@@ -65,12 +65,14 @@ while read modname branch; do
         if [ ! -f $toplevel/$modpath/.git ]; then
             # first do a setup (NEEDS --init AND NO --remote!!)
             git submodule update --init --checkout ${ref:+ --reference $ref } $moddepth $modpath
-	    git submodule update --init --remote --rebase ${ref:+ --reference $ref } $moddepth $modpath
+            ( exec >/dev/null; cd $modpath; git checkout -f "origin/$branch"; )
         elif ( cd $toplevel/$modpath; git diff --cached --quiet HEAD && git diff --quiet HEAD; ); then 
             # no changes to worry about...
             git submodule update --checkout ${ref:+ --reference $ref } $moddepth $modpath
+            ( exec >/dev/null; cd $modpath; git checkout -f "origin/$branch"; )
+        else
+            git submodule update --remote --rebase ${ref:+ --reference $ref } $moddepth $modpath
         fi
-        git submodule update --remote --rebase ${ref:+ --reference $ref } $moddepth $modpath
 
     ) || die "ERROR: update failed"
 done
