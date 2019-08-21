@@ -21,7 +21,8 @@ detect_git_cache() {
     [ -d "$repo" ] || return
     [ ! -s "$repo/shallow" ] || return
 
-    nrepo="$(GIT_DIR=$repo git remote origin get-url)"
+    nrepo="$(GIT_DIR=$repo git remote get-url origin)"
+    nrepo="${nrepo%.git}"
     nrepo="${nrepo##*/}"
 
     [ "$nrepo" = "$url" ] || return;
