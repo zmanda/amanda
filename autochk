@@ -8,26 +8,23 @@ die() {
     exit 1
 }
 
+type -p realpath >/dev/null || eval 'realpath() { [ $1 = -e ] && shift; ( cd $1; builtin pwd -P; ); }'
+
 detect_git_cache() {
-    # must be able to describe this...
-    baseref="$(git describe --all --always --match '*/*' HEAD)"
-    repo=
-    [ "${baseref%/*}" != "$baseref" ] || return
+    url=$1
+    url=${url%.git};
+    url=${url##*/};
 
-    # lose the exact branch name but get remote name
-    baseref=${baseref%/*}
-    baseref=${baseref#refs/}
-    baseref=${baseref#remotes/}
-    repo=$(git remote get-url $baseref);
-    repo=${repo%.git};
-    repo=${repo##*/};
+    [ -n "$url" ] || return
 
-    [ -n "$repo" ] || return
-
-    repo=/opt/src/$repo/.git 
-
+    repo=/opt/src/$url/.git 
     [ -d "$repo" ] || return
     [ ! -s "$repo/shallow" ] || return
+
+    nrepo="$(GIT_DIR=$repo git remote origin get-url)"
+    nrepo="${nrepo##*/}"
+
+    [ "$nrepo" = "$url" ] || return;
     GIT_DIR=$repo git fetch origin || return
     echo $repo
 }
@@ -82,8 +79,8 @@ while read modname branch; do
             ) || die "ERROR: submodule $modname failed fetch";
         fi
    
-        CWD=$(realpath .)
-        cache_repo=$(detect_git_cache HEAD)
+        repo_url=$(git config --blob HEAD:.gitmodules --get "submodule.${modname}.url")
+        cache_repo=$(detect_git_cache $repo_url)
         [ "${CWD/\/jenkins\/}" != "$CWD" -a -d "$cache_repo" ] && moddepth="--depth 5"
 
         if [ ! -f $toplevel/$modpath/.git ]; then
