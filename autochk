@@ -79,6 +79,8 @@ while read modname branch; do
                git fetch --prune origin "+refs/heads/$branch:refs/remotes/origin/$branch"
             ) || die "ERROR: submodule $modname failed fetch";
         fi
+
+        CWD=$(realpath .)
    
         repo_url=$(git config --blob HEAD:.gitmodules --get "submodule.${modname}.url")
         cache_repo=$(detect_git_cache $repo_url)
