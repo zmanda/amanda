@@ -84,7 +84,7 @@ while read modname branch; do
    
         repo_url=$(git config --blob HEAD:.gitmodules --get "submodule.${modname}.url")
         cache_repo=$(detect_git_cache $repo_url)
-        [ "${CWD/\/jenkins\/}" != "$CWD" -a -d "$cache_repo" ] && moddepth="--depth 5"
+        [ "${CWD/\/jenkins\/}" != "$CWD" -a -d "$cache_repo" ] && moddepth="--depth 1"
 
         if [ ! -f $toplevel/$modpath/.git ]; then
             # first do a setup (NEEDS --init AND NO --remote!!)
