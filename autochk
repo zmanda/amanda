@@ -8,6 +8,30 @@ die() {
     exit 1
 }
 
+detect_git_cache() {
+    # must be able to describe this...
+    baseref="$(git describe --all --always --match '*/*' HEAD)"
+    repo=
+    [ "${baseref%/*}" != "$baseref" ] || return
+
+    # lose the exact branch name but get remote name
+    baseref=${baseref%/*}
+    baseref=${baseref#refs/}
+    baseref=${baseref#remotes/}
+    repo=$(git remote get-url $baseref);
+    repo=${repo%.git};
+    repo=${repo##*/};
+
+    [ -n "$repo" ] || return
+
+    repo=/opt/src/$repo/.git 
+
+    [ -d "$repo" ] || return
+    [ ! -s "$repo/shallow" ] || return
+    GIT_DIR=$repo git fetch origin || return
+    echo $repo
+}
+
 [ $0 = "/bin/sh" -o $0 = "/bin/bash" ] && die "ERROR: cannot source the autochk script"
 
 GITVER=$(git --version | { IFS=. read a b c; printf "%03d.%03d.%03d\\n" "${a##* }" $b $c; })
@@ -42,7 +66,6 @@ git config --blob HEAD:.gitmodules --get-regex submodule'.*.branch'  |
 while read modname branch; do
     modname=${modname#submodule.}; modname=${modname%.branch}; branch=${branch##*/}
     modpath=$(git config --blob HEAD:.gitmodules --get "submodule.$modname.path")
-    ref="/opt/src/${modpath##*/}/.git"
 
     echo "module:$modname --> branch:$branch @ $modpath"
     # harmless? I suppose...
@@ -50,7 +73,6 @@ while read modname branch; do
         set -xv; 
         cd $toplevel;
 	moddepth=
-	git submodule foreach -q 'exec >/dev/null; echo "$path" || true' | grep -q "^$modpath" || moddepth="--depth 5"
 
         if [ -d $toplevel/.git/modules/$modname ]; then
             ( export GIT_DIR=$toplevel/.git/modules/$modname;
@@ -60,18 +82,20 @@ while read modname branch; do
             ) || die "ERROR: submodule $modname failed fetch";
         fi
    
-        [ -d $ref ] || ref=""
+        CWD=$(realpath .)
+        cache_repo=$(detect_git_cache HEAD)
+        [ "${CWD/\/jenkins\/}" != "$CWD" -a -d "$cache_repo" ] && moddepth="--depth 5"
 
         if [ ! -f $toplevel/$modpath/.git ]; then
             # first do a setup (NEEDS --init AND NO --remote!!)
-            git submodule update --init --checkout ${ref:+ --reference $ref } $moddepth $modpath
+            git submodule update --init --checkout ${cache_repo:+ --reference $cache_repo } $moddepth $modpath
             ( exec >/dev/null; cd $modpath; git checkout -f "origin/$branch"; )
         elif ( cd $toplevel/$modpath; git diff --cached --quiet HEAD && git diff --quiet HEAD; ); then 
             # no changes to worry about...
-            git submodule update --checkout ${ref:+ --reference $ref } $moddepth $modpath
-            ( exec >/dev/null; cd $modpath; git checkout -f "origin/$branch"; )
+            git submodule update --checkout ${cache_repo:+ --reference $cache_repo } $moddepth $modpath
+            ( exec >/dev/null; cd $toplevel/$modpath; git checkout -f "origin/$branch"; )
         else
-            git submodule update --remote --rebase ${ref:+ --reference $ref } $moddepth $modpath
+            ( cd $toplevel/$modpath; git stash; git checkout -f "origin/$branch"; git cherry-pick -n -m1 stash@{0} && git stash drop; )
         fi
 
     ) || die "ERROR: update failed"
