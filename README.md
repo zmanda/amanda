@@ -226,9 +226,9 @@ You can get Amanda help and questions answered from the mailing lists and
 Amanda forums:
 
 ==> To join a mailing list, DO NOT, EVER, send mail to that list.  Send
-    mail to <listname>-request@amanda.org, or amanda-lists@amanda.org,
+    mail to *LISTNAME*-request@amanda.org, or amanda-lists@amanda.org
     with the following line in the body of the message:
-        subscribe <listname> <your-email-address>
+        subscribe *LISTNAME* *YOUR_EMAIL_ADDRESS*
 
     You will receive an email acknowledging your subscription. Keep
     it. Should you ever wish to depart our company, it has unsubscribe
