@@ -15,7 +15,7 @@
 #set -x
 
 if [ "$(type -t save_version)" != "function" ]; then
-. packaging/common_z/build_functions.sh
+. packaging/common/build_functions.sh
 fi
 
 # Set variables so that builddist might run on different platforms

@@ -43,7 +43,7 @@ set_script_pkg_root() {
     pkg_root_rel="${pkg_root_rel#${src_root}/}"
     pkg_root_rel="${pkg_root_rel#${PWD}/}"
 
-    if [ "${pkg_root_rel##*/}" = common_z -a -d packaging/rpm/. ]; then
+    if [ "${pkg_root_rel##*/}" = common -a -d packaging/rpm/. ]; then
         pkg_root_rel=packaging/.
         [ -s /etc/redhat-release ] && pkg_root_rel=packaging/rpm
         [ -s /etc/debian_version ] && pkg_root_rel=packaging/deb
@@ -124,7 +124,7 @@ set_pkg_naming() {
 	rpm-*) die "rpm pkg unsupported: \"$pkg_type-$pkg_name\"";;
 
         sun-pkg*) true ;; 
-        common_z-*) true
+        common-*) true
 	    ;; 
     esac
 
@@ -145,7 +145,7 @@ detect_root_pkgtime() {
     src_root_pkgtime=$pkg_name_pkgtime;
 
     [ -d $pkg_name_dir ] && pkg_dir_pkgtime=$(cd $pkg_name_dir; git log --author-date-order --pretty='%ad' --date=raw -1 .)
-    [ -d $src_root/packaging/common_z ] && pkg_common_pkgtime=$(cd $src_root/packaging/common_z; git log --author-date-order --pretty='%ad' --date=raw -1 .)
+    [ -d $src_root/packaging/common ] && pkg_common_pkgtime=$(cd $src_root/packaging/common; git log --author-date-order --pretty='%ad' --date=raw -1 .)
 
     pkg_dir_pkgtime=$(( ${pkg_dir_pkgtime% *} + 0 ))
     pkg_common_pkgtime=$(( ${pkg_common_pkgtime% *} + 0 ))
@@ -185,7 +185,7 @@ do_file_subst() {
 	target="$(dirname "${file}")/$(basename ${file} .src)"
 	[ "$file" != "$target" ] ||
 		{ echo "substitution \"$file\" was not intended for substitution ["$target"]"; return -1; }
-	pkg_type=${pkg_type} perl $src_root/$pkg_root/../common_z/substitute.pl \
+	pkg_type=${pkg_type} perl $src_root/$pkg_root/../common/substitute.pl \
 		${file} ${target} ||
 		{ echo "substitution of \"$file\" -> \"$target\" failed somehow"; return -1; }
     done
