@@ -20,6 +20,8 @@ fi
 # find abs top-dir path
 src_root="$(realpath .)"
 
+pkg_name=amanda
+
 set_script_pkg_root() {
     # compute pkg_root relative path.. (if not set)
     pkg_root_rel=$1
@@ -58,102 +60,6 @@ set_script_pkg_root() {
     # remove all-but-last for type-of-package
     declare -g pkg_type=$pkg_type
     declare -g pkg_root=$pkg_root_rel
-}
-
-detect_pkg_name_type() {
-    # remove .../packaging/ prefix
-    pkg_name=${pkg_root#*/packaging/}
-    if [ $pkg_name != $pkg_root ]; then
-	# remove package type name
-	pkg_name=${pkg_name%/rpm}
-	pkg_name=${pkg_name%/deb}
-	pkg_name=${pkg_name%/sun-pkg}
-	pkg_name=${pkg_name%/bitrock}
-	# use dir above package type
-	pkg_name=${pkg_name##*/}
-    else
-	# packaging is *not* in this script's path
-	remote_repo=$(git name-rev --name-only --refs=remotes/*/* --exclude=*/HEAD HEAD)
-	[ "$remote_repo" = undefined ] &&
-	    remote_repo=$(git describe --all --exclude */HEAD --match '*/*' HEAD)
-	remote_repo=${remote_repo#refs/}
-	remote_repo=${remote_repo#remotes/}
-	remote_repo=${remote_repo%%/*}
-	remote_repo=$(git remote get-url $remote_repo)
-	remote_repo=${remote_repo##*/}
-	remote_repo=${remote_repo%.git}
-	pkg_name=$remote_repo
-    fi
-
-    declare -g pkg_name=$pkg_name
-    
-    # try one more time to use pkg_name to derive pkg_type
-    [ "${pkg_root#*/$pkg_name/}" != $pkg_root ] && 
-	declare -g pkg_type="${pkg_root#*/$pkg_name/}"
-}
-
-set_pkg_naming() {
-    case "$pkg_type-$pkg_name" in 
-        rpm-amanda-core|rpm-amanda?enterprise) 
-                              dir_name="amanda-enterprise"
-			       pkg_name="amanda_enterprise" 
-			       repo_name="amanda-core"
-		;;
-        deb-amanda-core|deb-amanda?enterprise) 
-                              dir_name="amanda-enterprise"
-			       pkg_name="amanda-enterprise" 
-			       repo_name="amanda-core"
-		;;
-
-        rpm-amanda-extensions|rpm-amanda?enterprise-extensions|deb-amanda-extensions|deb-amanda?enterprise-extensions) 
-                              dir_name="amanda-extensions"
-			       pkg_name="amanda_enterprise-extensions" 
-			       repo_name="amanda-extensions"
-		;;
-        rpm-zmc-ae-new|rpm-amanda-zmc)
-                              dir_name="amanda-zmc"
-		               pkg_name="amanda-zmc" 
-			       repo_name="zmc-ae-new"
-		;;
-        deb-zmc-ae-new|deb-amanda-zmc)
-        		       pkg_name="amanda-zmc" 
-			       repo_name="zmc-ae-new"
-		;;
-
-	deb-*) die "debian pkg unsupported: \"$pkg_type-$pkg_name\"";;
-	rpm-*) die "rpm pkg unsupported: \"$pkg_type-$pkg_name\"";;
-
-        sun-pkg*) true ;; 
-        common-*) true
-	    ;; 
-    esac
-
-    # re-use path leading to package name .. as needed
-    
-
-    declare -g pkg_name=$pkg_name
-    declare -g repo_name=$repo_name
-    declare -g pkg_name_dir="${pkg_root_abs%$dir_name/*}$dir_name"
-}
-
-detect_root_pkgtime() {
-    a=0
-    b=0
-
-    pkg_name_pkgtime="$(cd $src_root; git log --author-date-order --pretty='%ad' --date=raw -1)"
-    pkg_name_pkgtime="$(( ${pkg_name_pkgtime% *} + 0 ))"
-    src_root_pkgtime=$pkg_name_pkgtime;
-
-    [ -d $pkg_name_dir ] && pkg_dir_pkgtime=$(cd $pkg_name_dir; git log --author-date-order --pretty='%ad' --date=raw -1 .)
-    [ -d $src_root/packaging/common ] && pkg_common_pkgtime=$(cd $src_root/packaging/common; git log --author-date-order --pretty='%ad' --date=raw -1 .)
-
-    pkg_dir_pkgtime=$(( ${pkg_dir_pkgtime% *} + 0 ))
-    pkg_common_pkgtime=$(( ${pkg_common_pkgtime% *} + 0 ))
-
-    [ $pkg_dir_pkgtime -gt $pkg_name_pkgtime ] && pkg_name_pkgtime=$pkg_dir_pkgtime
-    [ $pkg_common_pkgtime -gt $pkg_name_pkgtime ] && pkg_name_pkgtime=$pkg_common_pkgtime
-
-    declare -g pkg_name_pkgtime=$pkg_name_pkgtime
 }
 
 logger() {
@@ -359,7 +265,7 @@ gen_pkg_environ() {
 	(sun-pkgbuild) 
 	    #
 	    # same as top build
-            ln -sf ${PWD} $build_dir/build
+            ln -sf $(realpath .) $build_dir/build
             [ -f Makefile ] && make distclean
             bash autogen
             ;;
@@ -641,10 +547,6 @@ get_git_info() {
     ref=$1
     git --no-pager log $ref --max-count=1 > vcs_repo.info
 
-    # reduce the unix date of pkging dir to Jan 1st 
-    # ... and give a base64 code to each 2 minutes (or so) [range is 0:261342]
-    pkgtime_name="git."
-
     #default branch name
 
     # must be able to describe this... (using remote name!)
@@ -655,13 +557,8 @@ get_git_info() {
     rmtref=${rmtref#refs/}
     rmtref=${rmtref#remotes/}
     repo=$(git remote get-url "${rmtref%/*}");
-    cache_repo=
-    [ -n "$repo" ] && cache_repo=$(detect_git_cache $repo)
 
-    if [ -n "$cache_repo" ]; then
-        export GIT_DIR=$cache_repo
-        oref="origin/${rmtref##*/}"
-    elif [ -n "$rmtref" ]; then
+    if [ -n "$rmtref" ]; then
         oref="$rmtref"
     else
         oref=$ref
@@ -673,7 +570,7 @@ get_git_info() {
         ( set -xv; git fetch --unshallow; )  # must be done.. even if slow
     fi
 
-    REV="$pkgtime_name.git.$(git rev-parse --short $oref)"   # get short hash-version
+    REV="git.$(git rev-parse --short $oref)"   # get short hash-version
     REV_TAGPOS=$(git name-rev --name-only --exclude=HEAD --tags $oref)
     REV_TAGPOS="${REV_TAGPOS/undefined}"
     REF_TAGPOS=${REF_TAGPOS:-$(git name-rev --name-only --tags $oref)}
@@ -755,7 +652,7 @@ set_pkg_rev() {
 	PKG_REV=`echo $BRANCH|sed -e "s/.*\($qa_rc\)/\1/"`
     fi
     # Finally set a default.
-    [ -z "$PKG_REV" ] && PKG_REV=$(get_yearly_tag)
+    [ -z "$PKG_REV" ] && PKG_REV=1
 
     echo "Final PKG_REV value: $PKG_REV"
     # Write the file.
@@ -764,10 +661,14 @@ set_pkg_rev() {
 }
 
 set_version() {
+    declare -g VERSION
     if [ "${BRANCH}" = "trunk" ]; then
         # Debian requires a digit in version identifiers.
-	if [ -n "${REV}" -a -n "${VERSION}" ]; then FULL_VERSION="${VERSION}.${REV}"; 
-	elif [ -n "${REV}" ]; then VERSION="0.$REV"; fi 
+	if [ -n "${REV}" -a -n "${VERSION}" ]; then 
+            VERSION="${VERSION}.${REV}"; 
+	elif [ -n "${REV}" ]; then 
+            VERSION="0.$REV"; 
+        fi 
     else
         # VERSION should never contain package revision info, so strip any
         # flavors
@@ -776,10 +677,10 @@ set_version() {
 	VERSION=$(branch_version_name "$VERSION")
 	echo $(branch_version_name "$VERSION")
         # append .$REV if present (to show it's unofficial)
-	FULL_VERSION="${VERSION}${REV:+.${REV}}";
+	VERSION="${VERSION}${REV:+.${REV}}";
     fi
 
-    PKG_NAME_VER="${pkg_name}-$FULL_VERSION"
+    PKG_NAME_VER="${pkg_name}-$VERSION"
 }
 
 save_version() {
@@ -790,26 +691,29 @@ save_version() {
 
     tmp=$(mktemp -d)
 
-    repo_vers_dir=/tmp/${PKG_NAME_VER}
-    repo_vers_tar=/tmp/${PKG_NAME_VER}-versioning.tar
-    rm -rf $repo_vers_dir
+    if [ -n "$pkg_name" -a -n "$PKG_NAME_VER" ]; then
+        repo_vers_dir=$tmp/${PKG_NAME_VER}
+        repo_vers_tar=$tmp/${PKG_NAME_VER}-versioning.tar
+        rm -rf $repo_vers_dir
 
-    mkdir -p $repo_vers_dir
-    post=${VERSION##*[^0-9.]}
-    root=${VERSION%$post}
-    root=${root%.}
-    echo -n $root > $repo_vers_dir/VERSION
-    echo -n $FULL_VERSION > $repo_vers_dir/FULL_VERSION
-    ln -sf $repo_root/packaging $repo_vers_dir
-    tar -cf ${repo_vers_tar} -C /tmp ${PKG_NAME_VER}/.   # *keep* the /. 
-    rm -rf /tmp/${PKG_NAME_VER}
+        mkdir -p $repo_vers_dir
+        echo -n $VERSION > $repo_vers_dir/FULL_VERSION
+        echo -n $BUILD_VERSION > $repo_vers_dir/BUILD_VERSION
+        echo -n 1 > $repo_vers_dir/PKG_REV
+        tar -cf ${repo_vers_tar} -C $tmp ${PKG_NAME_VER}/.   # *keep* the /. 
 
-    cat <<OUTPUT
-VERSION=$FULL_VERSION
-FULL_VERSION=$FULL_VERSION
-PKG_NAME_VER="${pkg_name}-$FULL_VERSION"
-VERSION_TAR=$repo_vers_tar
-OUTPUT
+        # FIXME: is this to be removed totally?
+        rm -rf $tmp/${PKG_NAME_VER}
+    fi
+
+    PKG_NAME_VER="${pkg_name}-$VERSION"
+    VERSION_TAR="$repo_vers_tar"
+
+    { 
+    declare -p VERSION BUILD_VERSION PKG_REV PKG_NAME_VER VERSION_TAR;
+    declare -p LONG_BRANCH BRANCH REV; 
+    } | sed -e 's,^declare --,declare -g,'
+    echo "echo \"setup version: $VERSION ||| $PKG_NAME_VER\"" 
 }
 
 
@@ -819,17 +723,7 @@ OUTPUT
 
 pkg_root_abs="$(realpath $pkg_root)"
 
-# use pkg_root_abs to derive pkg_name and pkg_type
-[ -z "$pkg_name" -a -n "$pkg_root_abs" ] && 
-    detect_pkg_name_type
-
-# assign standard names and pkg_types (if possible)
-set_pkg_naming
-
 build_dir=${pkg_type}build
-
-# detect time stamp from areas touched by this script
-detect_root_pkgtime
 
 [ -n "$pkg_name" ] || die "pkg_name could not be found"
 [ -n "$pkg_type" ] || die "pkg_type could not be found"

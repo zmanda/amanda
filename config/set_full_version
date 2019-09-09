@@ -75,10 +75,7 @@ if test -n "${BRANCH}${REV}"; then
     # *after* running autogen
     echo "..version substitution"
     echo "SET_VERSION : $VERSION"
-    printf "$VERSION" > FULL_VERSION
-
-    BUILD_VERSION="$(git submodule foreach --quiet "git rev-parse --short HEAD"  | sed -e 'N' -e '$y/\n/./' )"
-    printf "$BUILD_VERSION" > BUILD_VERSION
+    printf "$FULL_VERSION" > FULL_VERSION
 
     # Write out LONG_VERSION for installer build script.
     echo "SET_LONG_BRANCH : $LONG_BRANCH"
