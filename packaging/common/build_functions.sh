@@ -6,19 +6,7 @@
 # SYSCONFDIR
 # os
 
-# find abs top-dir path
-src_root="$(pwd -P)"
-repo_root="$(git rev-parse --show-toplevel 2>/dev/null)"
-repo_root="${repo_root:-$src_root}"
-
-pkg_root=${0#$src_root/}
-pkg_root=$(dirname $pkg_root)
-pkg_root_rel=$pkg_root
-pkg_root_abs="$(cd $pkg_root; pwd -P)"
-
-# remove all-but-last for type-of-package
-pkg_type=${pkg_type:-${pkg_root_rel##*/}}
-build_dir=${pkg_type}build
+type -p realpath >/dev/null || eval 'realpath() { [ $1 = -e ] && shift; ( cd $1; builtin pwd -P; ); }'
 
 if type die 2>/dev/null >&2; then
     :
@@ -29,7 +17,144 @@ die() {
 }
 fi
 
-[ -n "$pkg_name" ] || die "pkg_name was not defined"
+# find abs top-dir path
+src_root="$(realpath .)"
+
+set_script_pkg_root() {
+    # compute pkg_root relative path.. (if not set)
+    pkg_root_rel=$1
+    [ -e "$pkg_root_rel" ] || pkg_root_rel="."
+
+    rel_readlink="$(readlink $pkg_root_rel)"
+
+    # change to full-path or absolute *first*
+    if [ -L "$pkg_root_rel" -a $rel_readlink = ${rel_readlink#/} ]; then
+       [ -f $pkg_root_rel ] && pkg_root_rel="$(dirname $pkg_root_rel)"
+       pkg_root_rel=$pkg_root_rel/$rel_readlink
+    elif [ -L "$pkg_root_rel" ]; then
+       pkg_root_rel=$rel_readlink
+    fi
+
+    # change from file-based symlink to dir based now
+    [ -f $pkg_root_rel ] && pkg_root_rel="$(dirname $pkg_root_rel)"
+
+    # don't use full-abs ... as it may be symlinked-submodule!
+    pkg_root_rel="$(realpath $pkg_root_rel)"
+    pkg_root_rel="${pkg_root_rel#${src_root}/}"
+    pkg_root_rel="${pkg_root_rel#${PWD}/}"
+
+    if [ "${pkg_root_rel##*/}" = common_z -a -d packaging/rpm/. ]; then
+        pkg_root_rel=packaging/.
+        [ -s /etc/redhat-release ] && pkg_root_rel=packaging/rpm
+        [ -s /etc/debian_version ] && pkg_root_rel=packaging/deb
+    	pkg_type=${pkg_type:-${pkg_root_rel##*/}}
+    elif [ -z "$pkg_type" -a "${pkg_root_rel##*/}" = "$pkg_root_rel" ]; then
+        [ -s /etc/redhat-release ] && pkg_type=rpm
+        [ -s /etc/debian_version ] && pkg_type=deb
+    else
+    	pkg_type=${pkg_type:-${pkg_root_rel##*/}}
+    fi
+
+    # remove all-but-last for type-of-package
+    declare -g pkg_type=$pkg_type
+    declare -g pkg_root=$pkg_root_rel
+}
+
+detect_pkg_name_type() {
+    # remove .../packaging/ prefix
+    pkg_name=${pkg_root#*/packaging/}
+    if [ $pkg_name != $pkg_root ]; then
+	# remove package type name
+	pkg_name=${pkg_name%/rpm}
+	pkg_name=${pkg_name%/deb}
+	pkg_name=${pkg_name%/sun-pkg}
+	pkg_name=${pkg_name%/bitrock}
+	# use dir above package type
+	pkg_name=${pkg_name##*/}
+    else
+	# packaging is *not* in this script's path
+	remote_repo=$(git name-rev --name-only --refs=remotes/*/* --exclude=*/HEAD HEAD)
+	[ "$remote_repo" = undefined ] &&
+	    remote_repo=$(git describe --all --exclude */HEAD --match '*/*' HEAD)
+	remote_repo=${remote_repo#refs/}
+	remote_repo=${remote_repo#remotes/}
+	remote_repo=${remote_repo%%/*}
+	remote_repo=$(git remote get-url $remote_repo)
+	remote_repo=${remote_repo##*/}
+	remote_repo=${remote_repo%.git}
+	pkg_name=$remote_repo
+    fi
+
+    declare -g pkg_name=$pkg_name
+    
+    # try one more time to use pkg_name to derive pkg_type
+    [ "${pkg_root#*/$pkg_name/}" != $pkg_root ] && 
+	declare -g pkg_type="${pkg_root#*/$pkg_name/}"
+}
+
+set_pkg_naming() {
+    case "$pkg_type-$pkg_name" in 
+        rpm-amanda-core|rpm-amanda?enterprise) 
+                              dir_name="amanda-enterprise"
+			       pkg_name="amanda_enterprise" 
+			       repo_name="amanda-core"
+		;;
+        deb-amanda-core|deb-amanda?enterprise) 
+                              dir_name="amanda-enterprise"
+			       pkg_name="amanda-enterprise" 
+			       repo_name="amanda-core"
+		;;
+
+        rpm-amanda-extensions|rpm-amanda?enterprise-extensions|deb-amanda-extensions|deb-amanda?enterprise-extensions) 
+                              dir_name="amanda-extensions"
+			       pkg_name="amanda_enterprise-extensions" 
+			       repo_name="amanda-extensions"
+		;;
+        rpm-zmc-ae-new|rpm-amanda-zmc)
+                              dir_name="amanda-zmc"
+		               pkg_name="amanda-zmc" 
+			       repo_name="zmc-ae-new"
+		;;
+        deb-zmc-ae-new|deb-amanda-zmc)
+        		       pkg_name="amanda-zmc" 
+			       repo_name="zmc-ae-new"
+		;;
+
+	deb-*) die "debian pkg unsupported: \"$pkg_type-$pkg_name\"";;
+	rpm-*) die "rpm pkg unsupported: \"$pkg_type-$pkg_name\"";;
+
+        sun-pkg*) true ;; 
+        common_z-*) true
+	    ;; 
+    esac
+
+    # re-use path leading to package name .. as needed
+    
+
+    declare -g pkg_name=$pkg_name
+    declare -g repo_name=$repo_name
+    declare -g pkg_name_dir="${pkg_root_abs%$dir_name/*}$dir_name"
+}
+
+detect_root_pkgtime() {
+    a=0
+    b=0
+
+    pkg_name_pkgtime="$(cd $src_root; git log --author-date-order --pretty='%ad' --date=raw -1)"
+    pkg_name_pkgtime="$(( ${pkg_name_pkgtime% *} + 0 ))"
+    src_root_pkgtime=$pkg_name_pkgtime;
+
+    [ -d $pkg_name_dir ] && pkg_dir_pkgtime=$(cd $pkg_name_dir; git log --author-date-order --pretty='%ad' --date=raw -1 .)
+    [ -d $src_root/packaging/common_z ] && pkg_common_pkgtime=$(cd $src_root/packaging/common_z; git log --author-date-order --pretty='%ad' --date=raw -1 .)
+
+    pkg_dir_pkgtime=$(( ${pkg_dir_pkgtime% *} + 0 ))
+    pkg_common_pkgtime=$(( ${pkg_common_pkgtime% *} + 0 ))
+
+    [ $pkg_dir_pkgtime -gt $pkg_name_pkgtime ] && pkg_name_pkgtime=$pkg_dir_pkgtime
+    [ $pkg_common_pkgtime -gt $pkg_name_pkgtime ] && pkg_name_pkgtime=$pkg_common_pkgtime
+
+    declare -g pkg_name_pkgtime=$pkg_name_pkgtime
+}
 
 logger() {
 	# A non-annoying way to log stuff
@@ -60,21 +185,21 @@ do_file_subst() {
 	target="$(dirname "${file}")/$(basename ${file} .src)"
 	[ "$file" != "$target" ] ||
 		{ echo "substitution \"$file\" was not intended for substitution ["$target"]"; return -1; }
-        pwd_root="${src_root#$repo_root/}"
-	( pkg_type=${pkg_type} perl ./$pkg_root/../common/substitute.pl \
-		${file} ${target}; ) ||
+	pkg_type=${pkg_type} perl $src_root/$pkg_root/../common_z/substitute.pl \
+		${file} ${target} ||
 		{ echo "substitution of \"$file\" -> \"$target\" failed somehow"; return -1; }
     done
     return 0
 }
 
 get_version() {
-    echo "%%VERSION%%" > /tmp/version.src
-    do_file_subst /tmp/version.src ||
-	die "substitution of /tmp/version.src failed";
-    VERSION=`cat /tmp/version`
+    t=$(mktemp)
+    echo "%%VERSION%%" > $t.src
+    do_file_subst $t.src ||
+	die "substitution of $t.src failed";
+    VERSION=`cat $t`
     PKG_NAME_VER="$pkg_name-$VERSION"
-    rm -f /tmp/version.src /tmp/version
+    rm -f $t.src $t
 }
 
 branch_version_name() {
@@ -98,7 +223,7 @@ gen_pkg_build_config() {
 
     # Check for the packaging dirs.
     if [ -z "$PKG_DIR" ]; then
-	PKG_DIR=$src_root
+	export PKG_DIR=$src_root
     fi
     if [ ! -d ${PKG_DIR} ]; then
 	mkdir -p ${PKG_DIR} ||
@@ -113,7 +238,7 @@ gen_pkg_build_config() {
 	(rpmbuild) 
 	    echo "Config rpm package from $setup_dir =============================================="
 	    mkdir -p $build_dir/{SOURCES,SRPMS,SPECS,BUILD,RPMS,BUILDROOT} || 
-		   die "top directories for build under ${PWD}/$build_dir cannot be created."
+		   die "top directories for build under $(realpath .)/$build_dir cannot be created."
 	    # Copy files into rpmbuild locations
 	    [ -z "$(ls 2>/dev/null $setup_dir/*.spec.src)" ] || cp -vf $setup_dir/*.spec.src $build_dir/SPECS || 
 		die "failed to copy spec files ($setup_dir/*.spec.src) to $build_dir/SPECS"; 
@@ -167,20 +292,17 @@ gen_top_environ() {
 
     case $build_dir in
 	(rpmbuild) 
-	    ln -sf ${PWD} $build_dir/BUILD/$PKG_NAME_VER
-            set -e
-            cp $VERSION_TAR $build_dir/SOURCES/${PKG_NAME_VER}.tar
-            tar --delete -vf $build_dir/SOURCES/${PKG_NAME_VER}.tar ${PKG_NAME_VER}/./packaging
-            gzip $build_dir/SOURCES/${PKG_NAME_VER}.tar
+	    ln -sf $(realpath .) $build_dir/BUILD/$PKG_NAME_VER
+            gzip -c < $VERSION_TAR > $build_dir/SOURCES/${PKG_NAME_VER}.tar.gz
 	    ;;
 	(debbuild) 
 	    # simulate the top directory as the build one...
-	    ln -sf ${PWD} $build_dir/$PKG_NAME_VER
+	    ln -sf $(realpath .) $build_dir/$PKG_NAME_VER
 	    ;;
 	(sun-pkgbuild) 
 	    #
 	    # same as gen pkg environ
-            ln -sf ${PWD} $build_dir/build
+            ln -sf $(realpath .) $build_dir/build
             [ -f Makefile ] && make distclean
             bash autogen
 	    ;;
@@ -195,8 +317,9 @@ gen_pkg_environ() {
 
     eval "$(save_version HEAD)"
 
-    rm -f /tmp/${PKG_NAME_VER}
-    ln -sf ${PKG_DIR} /tmp/${PKG_NAME_VER} 
+    tmp=$(mktemp -d)
+    rm -f $tmp/${PKG_NAME_VER}
+    ln -sf ${PKG_DIR} $tmp/${PKG_NAME_VER} 
 
     [ -d $build_dir ] ||
     	die "missing call to gen_pkg_build_config() or missing ${PKG_DIR:-\"<missing>\"}/$build_dir directory"
@@ -210,11 +333,9 @@ gen_pkg_environ() {
 		   --exclude=.git \
 		   --exclude=*.tar.gz \
 		   --exclude=*.tar \
-		   --exclude=packaging \
 		   --exclude=${build_dir} \
-		    -C /tmp ${PKG_NAME_VER}/. ||
+		    -C $tmp ${PKG_NAME_VER}/. ||
 			die "tar creation from $(readlink ${PKG_NAME_VER} || echo "<missing symlink>") failed"
-            tar -Avf $build_dir/SOURCES/${PKG_NAME_VER}.tar $VERSION_TAR
             #
 	    # ready for the spec file to untar it
             gzip -f $build_dir/SOURCES/${PKG_NAME_VER}.tar
@@ -227,14 +348,13 @@ gen_pkg_environ() {
 		   --exclude=.git \
 		   --exclude=*.tar \
 		   --exclude=*.tar.gz \
-		   --exclude=packaging \
 		   --exclude=$build_dir \
-		    -C /tmp $PKG_NAME_VER/. |
+		    -C $tmp $PKG_NAME_VER/. |
 		tar -xf - -C $build_dir ||
 		    die "tar-based copy from $(readlink ${PKG_NAME_VER} || echo "<missing symlink>") to $PKG_DIR/$build_dir failed"
             #
 	    # ready for the build system to use it
-            tar -xvf $VERSION_TAR -C $build_dir
+            #
 	    ;;
 	(sun-pkgbuild) 
 	    #
@@ -250,7 +370,93 @@ gen_pkg_environ() {
 
     # ---------------------------------------------------
     cd $src_root
-    rm -f /tmp/${PKG_NAME_VER}*
+    rm -f $tmp/${PKG_NAME_VER} 
+}
+
+gen_repo_pkg_environ() {
+    repo_name=$1
+    repo_ref=$2
+
+    [ -n "$repo_name" ] || 
+	die "ERROR: usage: <repo-name> <git-ref>, w/first missing";
+    [ -n "$repo_ref" ] ||
+	die "ERROR: usage: <repo-name> <git-ref>, w/second missing";
+
+    remote=$(get_repo_remote $repo_name)
+
+    [ -n "$remote" ] || die "ERROR: could not use $repo_name to create a remote repo name"
+
+    # halt things now if there was an error in the output
+    git remote get-url "$remote" || die "ERROR: could not use $repo_name to create a remote repo name"
+
+    # in case we had a full-path name for our branch
+    repo_ref=${repo_ref#remotes/}
+    repo_ref=${repo_ref#$remote/}
+
+    echo "setup attetmpt: $remote/$repo_ref"
+    set -xv
+    save_version $remote/$repo_ref
+    set +xv
+
+    eval "$(save_version $remote/$repo_ref)"
+
+    cd ${PKG_DIR}/$build_dir
+
+    set -e
+    case $build_dir in
+	(rpmbuild) 
+            repo_tar=SOURCES/${PKG_NAME_VER}.tar
+            repo_targz=SOURCES/${PKG_NAME_VER}.tar.gz
+            rm -f $repo_tar $repo_targz
+            git archive --remote=file://$(realpath .)/.. --format=tar.gz --prefix="$PKG_NAME_VER/./" -o $repo_targz $remote/$repo_ref ||
+		die "ERROR: failed: git archive --format=tar.gz --prefix=\"$PKG_NAME_VER/./\" -o $repo_targz $remote/$repo_ref"
+            gunzip $repo_targz ||
+		die "ERROR: failed: decompress of $build_dir/$repo_targz"
+	    # not needed because another overwrites previous one?
+            tar --delete -vf $repo_tar ${PKG_NAME_VER}/./000-external || true
+
+            # append versioning files...
+            tar -Avf $repo_tar $VERSION_TAR ||
+		die "ERROR: failed to append extra files to $build_dir/$repo_tar"
+
+	    mkdir -p ${PKG_NAME_VER}
+            ln -sf ../../../000-external $PKG_NAME_VER/000-external
+            tar -rf $repo_tar $PKG_NAME_VER/./000-external
+	    rm -rf ${PKG_NAME_VER}
+
+            gzip $repo_tar
+	    ;;
+	(debbuild)
+            rm -rf $PKG_NAME_VER
+            git archive --remote=file://$(realpath .)/.. --format=tar --prefix="$PKG_NAME_VER/" $remote/$repo_ref |
+		tar -xf - --exclude 000-external ||
+		die "ERROR: failed: git archive --format=tar $remote/$repo_ref to tar -xf in $build_dir"
+	    ln -sf ../../000-external "$PKG_NAME_VER/000-external"
+
+            tar -xvf $VERSION_TAR ||
+		die "ERROR: failed: tar extract of $VERSION_TAR into $build_dir/$PKG_NAME_VER"
+	    ;;
+	(sun-pkgbuild) 
+            rm -rf build
+            git archive --remote=file://$(realpath .)/.. --format=tar --prefix="build/" $remote/$repo_ref |
+		tar -xf - --exclude 000-external || 
+		die "ERROR: failed: git archive --format=tar.gz -o $targz $remote/$repo_ref to tar -xf"
+	    ln -sf ../000-external build 
+
+            tar -xvf $VERSION_TAR --strip-components=1 -C build ||
+		die "ERROR: failed: tar extract of $VERSION_TAR into $build_dir/build"
+
+            ( cd build; bash autogen; ) ||
+		die "ERROR: failed autogen for $build_dir/build"
+            ;;
+
+	 (*) die "Unknown packaging for resources of $build_dir"
+	    ;;
+    esac
+
+    cd $src_root
+    rm -f $VERSION_TAR
+    set +e
 }
 
 do_top_package() {
@@ -269,8 +475,7 @@ do_top_package() {
                (
                  cd BUILD/${PKG_NAME_VER} ||
 		 	die "directory or symlink BUILD/${PKG_NAME_VER} missing"
-
-                 src_root=$(pwd -P); 
+                 src_root=$(realpath .); 
                  pkg_root=packaging/$pkg_type
                  do_file_subst ${PKG_DIR}/$build_dir/SPECS/${spec_file}.src && rm -f ${PKG_DIR}/$build_dir/SPECS/${spec_file}.src
                )
@@ -283,9 +488,9 @@ do_top_package() {
 	    [ -f $targz ] ||
 		die "ERROR: missing call to gen_top_environ()"
 
-	    sed -i -e '/^ *%setup.*-D/n' -e '/^ *%setup/s,$, -D,' SPECS/${spec_file}
+	    sed -i -e '/^ *%setup/d' SPECS/${spec_file}
 
-	    rpmbuild -ba --define "_topdir ${PWD}" SPECS/$spec_file "$@" ||
+	    rpmbuild -ba --define "_topdir $(realpath .)" SPECS/$spec_file "$@" ||
 		die "ERROR: rpmbuild compile command failed"
 	    ;;
 
@@ -297,8 +502,6 @@ do_top_package() {
 
             [ -d debian ] || die "missing call to gen_pkg_build_config"
             mv debian $deb_build/. || die "directory $deb_build under ${PKG_DIR}/$build_dir is missing or a broken link"
-
-            tar -xvf $VERSION_TAR -C $deb_build/
             cd $deb_build/. || die "directory $deb_build under ${PKG_DIR}/$build_dir is missing or a broken link"
 
             set -- $(ls debian/*.src)
@@ -317,7 +520,6 @@ do_top_package() {
 	    ;;
 
 	(sun-pkgbuild) 
-            tar -xvf $VERSION_TAR --strip-components=1
 	    make
 	    ;;
 	 (*) die "Unknown packaging for resources for $build_dir"
@@ -327,13 +529,14 @@ do_top_package() {
 }
 
 do_package() {
+    ctxt=$1
     cd ${PKG_DIR}/$build_dir ||
 	die "missing call to gen_pkg_build_config() or missing ${PKG_DIR:-\"<missing>\"}/$build_dir directory"
 
     case $build_dir in
 	(rpmbuild) 
-            echo "Building rpm package from $1 =============================================="
-            spec_file=$1
+            echo "Building rpm package from $ctxt =============================================="
+            spec_file=$ctxt
             targz=SOURCES/${PKG_NAME_VER}.tar.gz
 
             # pre-extract version info to do subst (must have /./ as if top was symlink)
@@ -346,7 +549,7 @@ do_package() {
 
                  cd BUILD/${PKG_NAME_VER} ||
 		 	die "missing call to gen_pkg_environ() or malformed $targz file"
-                 src_root=$(pwd -P); 
+                 src_root=$(realpath .); 
                  pkg_root=packaging/$pkg_type
                  do_file_subst ${PKG_DIR}/$build_dir/SPECS/${spec_file}.src && rm -f ${PKG_DIR}/$build_dir/SPECS/${spec_file}.src
                )
@@ -360,16 +563,16 @@ do_package() {
 		die "ERROR: missing call to gen_pkg_environ()"
 
             shift
-            rpmbuild -ba --define "_topdir ${PWD}" SPECS/$spec_file "$@" ||
+            rpmbuild -ba --define "_topdir $(realpath .)" SPECS/$spec_file "$@" ||
 		die "ERROR: rpmbuild compile command failed"
             echo "RPM package(s) from $spec_file ------------------------------------"
-            mv -vn RPMS/*/*.rpm SRPMS/*rpm ${PKG_DIR}
+            mv -fv RPMS/*/*.rpm SRPMS/*rpm ${PKG_DIR}
 	    ;;
 
 	(debbuild) 
-            echo "Building debian package in $1 =============================================="
+            echo "Building debian package in $ctxt =============================================="
             deb_control=debian/control
-            deb_build="$1"
+            deb_build="$ctxt"
 	    shift
 
             [ -d debian ] || die "missing call to gen_pkg_build_config"
@@ -391,7 +594,7 @@ do_package() {
 		die "ERROR: dpkg-buildpackage compile command failed"
             # Create unsigned packages
 
-            mv -vn ../*deb ${PKG_DIR}
+            mv -fv ../*deb ${PKG_DIR}
             echo "Debian package(s) from $deb_build ---------------------------------------";
 	    ;;
 
@@ -444,38 +647,120 @@ get_git_info() {
 
     #default branch name
 
-    REV="$pkgtime_name$(git rev-parse --short $ref)"   # get short hash-version
-    REV_TAGPOS=$(git name-rev --name-only --tags $ref)
-    REV_TAGROOT=$(git describe --tags $ref | sed -r -e 's,-[0-9]+-g[a-f0-9]+$,,')
-    REV_REFPOS=$(git name-rev --name-only $ref | sed -e 's/\^0$//' -e 's/\~[0-9]*$//')
+    # must be able to describe this... (using remote name!)
+    rmtref="$(git describe --all --always --match '*/*' --exclude '*/HEAD' $ref 2>/dev/null)"
+    rmtref="${rmtref:-$(git describe --all --always --match '*/*' $ref)}"
+
+    # lose the exact branch name but get remote name
+    rmtref=${rmtref#refs/}
+    rmtref=${rmtref#remotes/}
+    repo=$(git remote get-url "${rmtref%/*}");
+    cache_repo=
+    [ -n "$repo" ] && cache_repo=$(detect_git_cache $repo)
+
+    if [ -n "$cache_repo" ]; then
+        export GIT_DIR=$cache_repo
+        oref="origin/${rmtref##*/}"
+    elif [ -n "$rmtref" ]; then
+        oref="$rmtref"
+    else
+        oref=$ref
+    fi
+
+    [ $oref = "origin/HEAD" ] && oref=$ref
+
+    if [ -s $(git rev-parse --git-dir)/shallow ]; then
+        ( set -xv; git fetch --unshallow; )  # must be done.. even if slow
+    fi
+
+    REV="$pkgtime_name.git.$(git rev-parse --short $oref)"   # get short hash-version
+    REV_TAGPOS=$(git name-rev --name-only --exclude=HEAD --tags $oref)
+    REV_TAGPOS="${REV_TAGPOS/undefined}"
+    REF_TAGPOS=${REF_TAGPOS:-$(git name-rev --name-only --tags $oref)}
+    REV_TAGPOS="${REV_TAGPOS/undefined}"
+    REV_TAGPOS="${REV_TAGPOS%^[0-9]*}"
+
+    REV_TAGROOT=$(git describe --tags $oref 2>/dev/null | sed -r -e 's,-[0-9]+-g[a-f0-9]+$,,')
+    REV_TAGDIST=$(git describe --tags $oref 2>/dev/null | sed -r -e 's,.*-([0-9]+)-g[a-f0-9]+$,\1,')
+
+    REF_IDEAL=$(git name-rev --name-only --refs='origin/next*' --refs='origin/stable*' --refs='origin/integ*' --refs='origin/dev*' $oref)
+    REF_IDEAL="${REF_IDEAL/undefined}"
+    REF_IDEAL="${REF_IDEAL:-$(git name-rev --name-only --exclude=HEAD $oref)}"
+    REF_IDEAL="${REF_IDEAL/undefined}"
+    REF_IDEAL="${REF_IDEAL:-$(git name-rev --name-only $oref)}"
+    REF_IDEAL="${REF_IDEAL/undefined}"
+
+    REV_REFPOS=$(echo $REF_IDEAL | sed -e 's/\^0$//' -e 's/\~[0-9]*$//')
+    REV_REFDIST=$(echo $REF_IDEAL | sed -r -e 's/\^0$//' -e 's/^[^~]+$/0/' -e 's/.*\~([0-9]*)$/\1/')
 
     # classify the place found... either a concrete 
     REV_PLACE="$(git rev-parse --short --symbolic-full-name "$REV_TAGPOS" 2>/dev/null)"   # get short hash-version
     REV_PLACE=${REV_PLACE:-"$(git rev-parse --short --symbolic-full-name "$REV_REFPOS" 2>/dev/null)"}
     REV_PLACE=${REV_PLACE:-"$REV"}
 
+    unset GIT_DIR
+
     # in case build is tagged precisely..
-    if [ "$REV_TAGPOS" != "undefined" ]; then
+    if [ -n "$REV_TAGPOS" -a "$REV_TAGPOS" != "undefined" ]; then
         # use from numbers afterward..
         BRANCH="$REV_TAGPOS"
         REV=""  # precise name for it
         LONG_BRANCH="tags/$BRANCH"
     # in case build has *no* easy name-rev name at all
-    elif [ $REV_PLACE = "refs/heads/master" ]; then
+    elif [ "$REV_PLACE" = "refs/heads/master" ]; then
         BRANCH="trunk"
         LONG_BRANCH="$REV.trunk"
         # use branch plus hash
-    elif [ -n "$REV_TAGROOT" ]; then
-        # use from numbers afterward..
-        BRANCH="$REV_TAGROOT"
-        LONG_BRANCH="tags/$BRANCH"
-    else
+    elif [ -n "$REV_REFPOS" -a x$REV_REFDIST = x0 ] && [ 0$REV_TAGDIST -gt 0 ]; then
         BRANCH="${REV_REFPOS##*/}"
         LONG_BRANCH="branches/$BRANCH"
+        REV="${REV}+$REV_TAGDIST"
+    elif [ -n "$REV_TAGROOT" ] && [ 0$REV_TAGDIST -gt 0 ]; then
+        # use from numbers afterward..
+        BRANCH="$REV_TAGROOT"
+        REV="${REV/.git./.tag.}+$REV_TAGDIST"
+        LONG_BRANCH="tags/$BRANCH"
+    fi
+
+    [ -z "$BRANCH" ] && { echo "ref is $ref"; exit -1; }
+
+    if [ $(git rev-parse $ref) != $(git rev-parse HEAD) ]; then
+        :
+    elif GIT_WORKING_DIR=${src_root} git diff --ignore-submodules=all --quiet && 
+	  GIT_WORKING_DIR=${src_root} git diff --cached --ignore-submodules=all --quiet; then
+	:
+    else
+        REV="${REV}.edit" # unversioned changes should be noted
     fi
 
     # default branch name
     BRANCH="${BRANCH:-git}"
+
+    BRANCH="${BRANCH//-/.}"  # remove - for branch name (not allowed)
+    BRANCH="${BRANCH//_/.}"  # remove _ for branch name (not allowed)
+}
+
+set_pkg_rev() {
+    # Check if any known package flavors are found in the variable $BRANCH.
+    # If found, remove from $VERSION and set $PKG_REV
+    PKG_REV=
+    rev=`echo $BRANCH|grep "$flavors"`
+    if [ -n "$rev" ]; then
+	PKG_REV=`echo $BRANCH|sed -e "s/.*\($flavors\)/\1/"` 
+    fi
+
+    # Also check for qa## or rc## and set PKG_REV, but don't strip.
+    rev=`echo $BRANCH| grep "$qa_rc"`
+    if [ -n "$rev" ]; then
+	PKG_REV=`echo $BRANCH|sed -e "s/.*\($qa_rc\)/\1/"`
+    fi
+    # Finally set a default.
+    [ -z "$PKG_REV" ] && PKG_REV=$(get_yearly_tag)
+
+    echo "Final PKG_REV value: $PKG_REV"
+    # Write the file.
+    echo "SET_PKG_REV : $PKG_REV"
+    printf $PKG_REV > PKG_REV
 }
 
 set_version() {
@@ -495,12 +780,15 @@ set_version() {
     fi
 
     PKG_NAME_VER="${pkg_name}-$FULL_VERSION"
-    echo "wrote version: $PKG_NAME_VER"
 }
 
 save_version() {
-    get_git_info $1
-    set_version > /dev/null
+    ref=$1
+    # quiet!  no output until end
+    get_git_info $ref >/dev/null
+    set_version >/dev/null
+
+    tmp=$(mktemp -d)
 
     repo_vers_dir=/tmp/${PKG_NAME_VER}
     repo_vers_tar=/tmp/${PKG_NAME_VER}-versioning.tar
@@ -523,3 +811,28 @@ PKG_NAME_VER="${pkg_name}-$FULL_VERSION"
 VERSION_TAR=$repo_vers_tar
 OUTPUT
 }
+
+
+# get script-context path as pkg_root
+[ -z "$pkg_root" ] && 
+    set_script_pkg_root $0
+
+pkg_root_abs="$(realpath $pkg_root)"
+
+# use pkg_root_abs to derive pkg_name and pkg_type
+[ -z "$pkg_name" -a -n "$pkg_root_abs" ] && 
+    detect_pkg_name_type
+
+# assign standard names and pkg_types (if possible)
+set_pkg_naming
+
+build_dir=${pkg_type}build
+
+# detect time stamp from areas touched by this script
+detect_root_pkgtime
+
+[ -n "$pkg_name" ] || die "pkg_name could not be found"
+[ -n "$pkg_type" ] || die "pkg_type could not be found"
+
+
+# End Common functions

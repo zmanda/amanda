@@ -1,4 +1,4 @@
-#!@PERL@
+#!@BLDPERL@
 
 use POSIX;
 

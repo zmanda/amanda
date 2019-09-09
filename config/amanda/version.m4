@@ -89,7 +89,10 @@ AC_DEFUN([AMANDA_SPLIT_VERSION],
 	    VERSION_COMMENT=`expr "$VERSION" : '[0-9]*\.[0-9]*\.[0-9]*\(.*\)'`
 	fi
     fi
-#    SO_VERSION="${VERSION_MAJOR}.${VERSION_MINOR} -shrext .so.${VERSION_PATCH}.${VERSION_COMMENT}"
+    #
+    # to maintain sub-versions for libraries.. include the following
+    #
+    #SO_VERSION="${VERSION_MAJOR}.${VERSION_MINOR} -shrext .so.${VERSION_PATCH}.${VERSION_COMMENT}"
     SO_VERSION="${VERSION_MAJOR}.${VERSION_MINOR}"
     changequote([,])
 

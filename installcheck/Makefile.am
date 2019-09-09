@@ -2,6 +2,8 @@ include $(top_srcdir)/config/automake/vars.am
 include $(top_srcdir)/config/automake/scripts.am
 all_tests =
 
+bin_dirs = $(strip $(wildcard $(top_srcdir)/bitrock-stack/*/bin))
+
 common_tests = \
 	Amanda_Archive \
 	Amanda_Config \
@@ -274,6 +276,10 @@ EXTRA_DIST += $(catalogs)
 noinst_SCRIPTS = \
 	run-ndmp
 
+PERL = $(top_srcdir)/bitrock-stack/perl/bin/perl
+
+BUILT_SOURCES = installcheck-build
+
 CHECK_PERL_FLAGS=-I$(top_srcdir)/installcheck
 
 SCRIPTS_PERL = $(tests) $(mocks) $(noinst_SCRIPTS) amcat-error amcat-error-end amcat-error-no-exec
@@ -284,27 +290,35 @@ SCRIPTS_EXTRA_DIST = $(all_tests)
 # skip syntax checks on these files, since we're about to run all of them
 SKIP_CHECKS = yes
 
+installcheck-build: $(SCRIPTS_PERL) $(SCRIPTS_SHELL)
+	[ -x amcat-error-no-exec ] && chmod a-x amcat-error-no-exec || true
+	[ -O . ] && chmod a+w . || true
+	for f in $(tests); do [ -x $$f ] && chmod a-x $$f; true; done
+	[ -d $(top_srcdir)/bitrock-stack/common/include ] && \
+		( cd $(top_srcdir)/bitrock-stack; git checkout -f .; git clean -dfx; ./build-var-subst.sh; ) || true
+
 .PHONY: clobber_my_config_is_ok
-clobber_my_config_is_ok:
+clobber_my_config_is_ok: installcheck-build
 	@if test "$(CONFIG_CLOBBER_MY_CONFIG)" != "OK" -a \
                  "$(CLOBBER_MY_CONFIG)" != "OK"; then \
 		echo ""; \
 		echo "'make installcheck' is a dangerous tool.  It will overwrite your"; \
 		echo "amanda-client.conf and amandates, and (if it triggers an as-yet undetected"; \
 		echo "bug) may do other unexpected things.  You are strongly encouraged"; \
-		echo "  - not to run installchecks on a production install"; \
-		echo "  - not to run installchecks as root"; \
+		echo "  - not to run installcheck on a production install"; \
+		echo "  - not to run installcheck as root"; \
 		echo "See http://wiki.zmanda.com/index.php/Testing for instructions on setting up a"; \
 		echo "test environment in which potential damage is limited by your filesystem's"; \
-		echo "permissions.  To actually run the installchecks, invoke make as follows:"; \
+		echo "permissions.  To actually run the installcheck, invoke make as follows:"; \
 		echo "  $(MAKE) CLOBBER_MY_CONFIG=OK installcheck"; \
 		exit 1; \
 	fi
+	export PATH="$$(echo "$(bin_dirs)" | tr ' ' ':'):$${PATH}"; \
+		( type starman || { echo "starman not found in path"; exit -1; } )
 
 # newer Test::Harness (v3.18-3.21) implementations get confused by executable
 # test scripts, so this rule chmod a-x's them first
-installcheck-local: clobber_my_config_is_ok $(SCRIPTS_PERL) $(SCRIPTS_SHELL)
-	chmod a-x amcat-error-no-exec
+installcheck-prep: clobber_my_config_is_ok
 	rm -rf "$(AMANDA_TMPDIR)/installchecks"
 	$(MKDIR_P) "$(AMANDA_TMPDIR)/installchecks"
 	@if test -f "$(CONFIG_DIR)/amanda-client.conf" -a ! -f "$(CONFIG_DIR)/amanda-client.conf.install-backup"; then \
@@ -316,8 +330,13 @@ installcheck-local: clobber_my_config_is_ok $(SCRIPTS_PERL) $(SCRIPTS_SHELL)
 	@if test -f "$(CONFIG_DIR)/template.d/tapetypes" -a ! -f "$(CONFIG_DIR)/template.d/tapetypes.install-backup"; then \
 	    cp "$(CONFIG_DIR)/template.d/tapetypes" "$(CONFIG_DIR)/template.d/tapetypes.install-backup"; \
 	fi
-	for f in $(tests); do chmod a-x $$f; done
-	srcdir="$(srcdir)" $(PERL) -I$(srcdir) -I. -e 'use Test::Harness qw(&runtests); runtests(sort @ARGV);' $(tests)
+
+installcheck-run: installcheck-prep
+	srcdir="$(srcdir)" \
+	PATH="$$(echo "$(bin_dirs)" | tr ' ' ':'):$${PATH}" \
+		$(PERL) -I$(srcdir) -I. -e 'use Test::Harness qw(&runtests); runtests(sort @ARGV);' $(tests)
+
+installcheck-local: installcheck-run
 	rm -rf "$(CONFIG_DIR)/TESTCONF"
 	@if test -f "$(CONFIG_DIR)/amanda-client.conf.install-backup"; then \
 	    mv -f "$(CONFIG_DIR)/amanda-client.conf.install-backup" "$(CONFIG_DIR)/amanda-client.conf"; \

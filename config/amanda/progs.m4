@@ -344,6 +344,21 @@ AC_DEFUN([AMANDA_PROG_PERL],
     ])
 ])
 
+#
+# allow external PATH to define perl target
+#
+AC_DEFUN([AMANDA_PROG_BLDPERL],
+[
+    : ${BLDPERL:=${AMLIBDIR}}
+    # strip off any trailing values to get the root
+    BLDPERL=${BLDPERL%/amanda}
+    BLDPERL=${BLDPERL%/lib64}
+    BLDPERL=${BLDPERL%/lib}
+    BLDPERL=${BLDPERL%/bin/perl}
+    BLDPERL="${BLDPERL}/bin/perl"
+    AC_ARG_VAR([BLDPERL], [Path to the 'perl' binary for Amanda installcheck/build use])
+])
+
 AC_DEFUN([AMANDA_PROG_SWIG],
 [
     AC_REQUIRE([AMANDA_INIT_PROGS])
