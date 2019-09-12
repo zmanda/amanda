@@ -1,0 +1,35 @@
+#! /bin/bash
+# We're assuming that you've copied packaging/* from the 
+# amanda-extensions source tree to the amanda source tree.  
+
+# Buildpkg is designed to be used by both buildbot (to automate deb production)
+# and by J Random User (to build a deb for kicks).
+#
+# VERSION: the identifier for the amanda determined from subversion
+#	information.  
+# PKG_NAME_VER: the full version name of amanda we're working on.  This will
+#	become part of the deb name.  {PKG_NAME_VER} gets substituted into
+#	various package files.  
+#
+# Other Hints:
+# Not everyone will want to use the ./configure options we provide.  The
+# easiest way to change them is by editing the rules file.  This fairly easy:
+# rules is a Makefile, so follow gnu makefile rules and edit the define 
+# CONFIG_FLAGS_COMMON variable.  Don't forget trailing backslashes.
+# set -x
+
+shift
+
+# set pkg_root also
+. ./packaging/common_z/build_functions.sh
+
+# create version files from top ...
+./packaging/common_z/set_zmanda_version
+
+gen_pkg_build_config ..
+
+gen_pkg_environ
+
+[ -n "$PKG_NAME_VER" ] || { declare -p; die "no version to use"; }
+
+do_package ${PKG_NAME_VER}

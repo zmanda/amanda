@@ -20,8 +20,6 @@ fi
 # find abs top-dir path
 src_root="$(realpath .)"
 
-pkg_name=amanda
-
 set_script_pkg_root() {
     # compute pkg_root relative path.. (if not set)
     pkg_root_rel=$1
@@ -293,16 +291,13 @@ gen_repo_pkg_environ() {
     [ -n "$remote" ] || die "ERROR: could not use $repo_name to create a remote repo name"
 
     # halt things now if there was an error in the output
-    git remote get-url "$remote" || die "ERROR: could not use $repo_name to create a remote repo name"
+    git ls-remote --get-url "$remote" || die "ERROR: could not use $repo_name to create a remote repo name"
 
     # in case we had a full-path name for our branch
     repo_ref=${repo_ref#remotes/}
     repo_ref=${repo_ref#$remote/}
 
-    echo "setup attetmpt: $remote/$repo_ref"
-    set -xv
-    save_version $remote/$repo_ref
-    set +xv
+    echo "setup attempt: $remote/$repo_ref"
 
     eval "$(save_version $remote/$repo_ref)"
 
@@ -556,7 +551,7 @@ get_git_info() {
     # lose the exact branch name but get remote name
     rmtref=${rmtref#refs/}
     rmtref=${rmtref#remotes/}
-    repo=$(git remote get-url "${rmtref%/*}");
+    repo=$(git ls-remote --get-url "${rmtref%/*}");
 
     if [ -n "$rmtref" ]; then
         oref="$rmtref"
@@ -628,6 +623,7 @@ get_git_info() {
 	:
     else
         REV="${REV}.edit" # unversioned changes should be noted
+        REV="${REV#.}" # remove a leading .
     fi
 
     # default branch name
@@ -664,18 +660,13 @@ set_version() {
     declare -g VERSION
     if [ "${BRANCH}" = "trunk" ]; then
         # Debian requires a digit in version identifiers.
-	if [ -n "${REV}" -a -n "${VERSION}" ]; then 
-            VERSION="${VERSION}.${REV}"; 
-	elif [ -n "${REV}" ]; then 
-            VERSION="0.$REV"; 
-        fi 
+	[ -n "${REV}" ] && VERSION="${VERSION:-0}.${REV}"; 
     else
         # VERSION should never contain package revision info, so strip any
         # flavors
         VERSION=`echo "${BRANCH}"| sed -e "s/\(.*\)$flavors/\1/"`
         # use _ or . as divisions
 	VERSION=$(branch_version_name "$VERSION")
-	echo $(branch_version_name "$VERSION")
         # append .$REV if present (to show it's unofficial)
 	VERSION="${VERSION}${REV:+.${REV}}";
     fi

@@ -20,7 +20,8 @@
 # statements immediately above it. good luck.
 
 pkg_name=amanda
-. ./packaging/common/build_functions.sh
+. packaging/common/build_functions.sh
+. packaging/common/set_amanda_version
 
 # Until we get package revisioning in community.
 [ -f "PKG_REV" ] || echo "1" > PKG_REV

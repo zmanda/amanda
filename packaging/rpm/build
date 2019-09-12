@@ -25,9 +25,9 @@
 # statements immediately above it. good luck.
 
 pkg_name=amanda
-. ./packaging/common/build_functions.sh
+. packaging/common/build_functions.sh
+. packaging/common/set_amanda_version
 
-# This is useful for debugging
 [ -f "PKG_REV" ] || echo "1" > PKG_REV
 
 [ -f "./configure" ] || \
