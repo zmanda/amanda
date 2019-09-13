@@ -125,6 +125,15 @@ gen_pkg_build_config() {
     [ $pkg_root/../$pkg_type -ef $pkg_root ] ||
 	die "ERROR: gen_pkg_build_config() invoked by script [$0] --> [$pkg_root] outside of $pkg_type dir"
 
+    setup_cwd_dir=${pkg_root}
+
+    # detect if setup-dir is absolute.. and convert back
+    [[ $setup_dir == /* ]] || setup_dir="${setup_dir#${src_root}}"
+
+    # detect if setup-dir is the at or below same as pkg_root or not
+    [ "${setup_dir#${pkg_root}/}" = "$setup_dir" ] && setup_cwd_dir="$pkg_root"
+    [ "${setup_dir}" = "${pkg_root}" ] && setup_cwd_dir=""
+
     # Check for the packaging dirs.
     if [ -z "$PKG_DIR" ]; then
 	export PKG_DIR=$src_root
@@ -150,22 +159,13 @@ gen_pkg_build_config() {
 		die "failed to copy spec files ($setup_dir/*.spec) to $build_dir/SPECS"; 
 	    ;;
 	(debbuild) 
-	    echo "Config deb package from $setup_dir =============================================="
+	    echo "Config deb package from $setup_dir ${setup_cwd:+and $setup_cwd} =============================================="
 	    rm -rf $build_dir/debian
 	    cp -av $setup_dir $build_dir/debian || 
 		die "failed to copy all files from $setup_dir to $build_dir/debian"; 
-
-	    if [ -r $build_dir/debian/control-multi-arch ]; then 
-		mv $build_dir/debian/control-multi-arch $build_dir/debian/control
-
-                type dpkg-query >/dev/null 2>&1 || 
-		    die "need command dpkg-query to use debian/control-multi-arch control file"; 
-		dpkg_ver=$(dpkg-query --show --showformat '${Version}\n' dpkg)
-		if dpkg --compare-versions "$dpkg_ver" lt 1.16; then
-		    [ -r $build_dir/debian/control-single-arch ] && 
-			mv -f $build_dir/debian/control-single-arch $build_dir/debian/control
-		fi
-	    fi
+	    [ -d "$setup_cwd_dir" ] &&
+		    find $setup_cwd_dir/* -type d -prune -o -print | xargs cp -v -t $build_dir/debian || 
+			die "failed to copy all files from $setup_cwd_dir to $build_dir/debian"; 
 
 	    [ -r $build_dir/debian/control ] ||
 		die "debian control file was not present in $setup_dir nor selected automatically"; 
@@ -689,7 +689,6 @@ save_version() {
 
         mkdir -p $repo_vers_dir
         echo -n $VERSION > $repo_vers_dir/FULL_VERSION
-        echo -n $BUILD_VERSION > $repo_vers_dir/BUILD_VERSION
         echo -n 1 > $repo_vers_dir/PKG_REV
         tar -cf ${repo_vers_tar} -C $tmp ${PKG_NAME_VER}/.   # *keep* the /. 
 
@@ -701,7 +700,7 @@ save_version() {
     VERSION_TAR="$repo_vers_tar"
 
     { 
-    declare -p VERSION BUILD_VERSION PKG_REV PKG_NAME_VER VERSION_TAR;
+    declare -p VERSION PKG_REV PKG_NAME_VER VERSION_TAR;
     declare -p LONG_BRANCH BRANCH REV; 
     } | sed -e 's,^declare --,declare -g,'
     echo "echo \"setup version: $VERSION ||| $PKG_NAME_VER\"" 
