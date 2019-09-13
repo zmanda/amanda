@@ -3,7 +3,7 @@
 # This script is run by extension's autogen and amanda enterprise's builddist
 # to create the FULL_VERSION and PKG_REV files.  Amanda Enterprise ignores the
 # contents of VERSION because it comes from community and is static.  Instead
-# Amanda Enterprise uses svn/git branch or tag names.  Amanda Enterprise
+# Amanda Enterprise uses git branch or tag names.  Amanda Enterprise
 # Extensions does not have a VERSION file.
 #
 # If run from a tag, the value of VERSION is the branch or tag name
@@ -14,20 +14,15 @@
 # Amanda Enterprise ./configure has an equivalent macro AMANDA_INIT_VERSION
 #set -x
 
+: ${pkg_name:=amanda}
+
 if [ "$(type -t save_version)" != "function" ]; then
-. packaging/common/build_functions.sh
+    . packaging/common/build_functions.sh
 fi
 
-# Set variables so that builddist might run on different platforms
-os=`uname`
-
-SED=$(type -p gsed || type -p sed)
-MAKE=$(type -p gmake || type -p make)
-GREP=$(type -p ggrep || type -p grep)
-
-[ $SED != $(type -p sed) ] && eval "sed() { $SED \"\$@\"; }"
-[ $MAKE != $(type -p make) ] && eval "make() { $MAKE \"\$@\"; }"
-[ $GREP != $(type -p grep) ] && eval "grep() { $GREP \"\$@\"; }"
+[ -n "$(type -p gsed)" ] && eval "sed() { command gsed \"\$@\"; }"
+[ -n "$(type -p gmake)" ] && eval "make() { command gmake \"\$@\"; }"
+[ -n "$(type -p ggrep)" ] && eval "grep() { command ggrep \"\$@\"; }"
 
 sed --version | grep -i 'GNU sed' >/dev/null || exit 1;
 
@@ -35,54 +30,38 @@ sed --version | grep -i 'GNU sed' >/dev/null || exit 1;
 flavors="deb..\|mac..\|nexenta..\|rpm..\|sun.."
 qa_rc="qa..\|rc.."
 
-# Version control system repository information is sometimes hard to get. Save
-# it for later consumption.
-if test -d .svn; then
-    svn info . > vcs_repo.info
-    VCS=svn
-elif test -d .git; then
-    git remote -v show > vcs_repo.info
-    git --no-pager log --max-count=1 >> vcs_repo.info
-    VCS=git
-    echo "VCS=git"
-# Fall back to previous build (or dist build?)
-elif test -f FULL_VERSION && test -f PKG_REV; then
-    # nothing to do.
-    exit 0
-else
-    echo "Error: No subversion or git info available!"
+# Fall back to previous build (or dist build?)?
+[ ! -d .git -a -f FULL_VERSION -a -f PKG_REV ] && exit 0
+
+if ! [ -d .git ]; then
+    echo "Error: No subversion or git info available!"   #### ERROR
     exit 1
 fi
 
-## Read repository data, set REV, BRANCH, and TYPE.
-# SVN
-if test $VCS = "svn" && ( grep Revision: vcs_repo.info > /dev/null; ); then
-    get_svn_info
-# git
-elif test $VCS = "git"; then
-    get_git_info $(git rev-parse HEAD)
-    echo "git_rev : $REV"
-    echo "git_branch : $BRANCH"
-    echo "git_long_branch : $LONG_BRANCH"
-fi
+git remote -v show > vcs_repo.info
+git --no-pager log --max-count=1 >> vcs_repo.info
+
+get_git_info $(git rev-parse HEAD)
+echo "git_rev : $REV"
+echo "git_branch : $BRANCH"
+echo "git_long_branch : $LONG_BRANCH"
 
 ## Generate version from repository data.
-if test -n "${BRANCH}${REV}"; then
-    set_pkg_rev
-    set_version
-
-    # Amanda makes it easy to "force" a version string: just set FULL_VERSION
-    # *after* running autogen
-    echo "..version substitution"
-    echo "SET_VERSION : $VERSION"
-    printf "$FULL_VERSION" > FULL_VERSION
-
-    # Write out LONG_VERSION for installer build script.
-    echo "SET_LONG_BRANCH : $LONG_BRANCH"
-    printf "$LONG_BRANCH" > LONG_BRANCH
-else
+if [ -z "${BRANCH}${REV}" ]; then
     # uhoh, we couldn't set the version!
-    echo "Couldn't set FULL_VERSION or PKG_REV!"
+    echo "Couldn't set FULL_VERSION or PKG_REV!"   #### ERROR
     exit 1
 fi
 
+set_pkg_rev
+set_version
+
+# Amanda makes it easy to "force" a version string: just set FULL_VERSION
+# *after* running autogen
+echo "..version substitution"
+echo "SET_VERSION : $VERSION"
+printf "$VERSION" > FULL_VERSION
+
+# Write out LONG_VERSION for installer build script.
+echo "SET_LONG_BRANCH : $LONG_BRANCH"
+printf "$LONG_BRANCH" > LONG_BRANCH
