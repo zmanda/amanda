@@ -2,8 +2,6 @@ include $(top_srcdir)/config/automake/vars.am
 include $(top_srcdir)/config/automake/scripts.am
 all_tests =
 
-bin_dirs = $(strip $(wildcard $(top_srcdir)/bitrock-stack/*/bin))
-
 common_tests = \
 	Amanda_Archive \
 	Amanda_Config \
@@ -276,7 +274,7 @@ EXTRA_DIST += $(catalogs)
 noinst_SCRIPTS = \
 	run-ndmp
 
-PERL = $(top_srcdir)/bitrock-stack/perl/bin/perl
+PERL = $(shell type -p perl)
 
 BUILT_SOURCES = installcheck-build
 
@@ -293,9 +291,7 @@ SKIP_CHECKS = yes
 installcheck-build: $(SCRIPTS_PERL) $(SCRIPTS_SHELL)
 	[ -x amcat-error-no-exec ] && chmod a-x amcat-error-no-exec || true
 	[ -O . ] && chmod a+w . || true
-	for f in $(tests); do [ -x $$f ] && chmod a-x $$f; true; done
-	[ -d $(top_srcdir)/bitrock-stack/common/include ] && \
-		( cd $(top_srcdir)/bitrock-stack; git checkout -f .; git clean -dfx; ./build-var-subst.sh; ) || true
+	for f in $(tests); do [ -x $$f ] && chmod a-x $$f || true; done
 
 .PHONY: clobber_my_config_is_ok
 clobber_my_config_is_ok: installcheck-build
@@ -305,16 +301,15 @@ clobber_my_config_is_ok: installcheck-build
 		echo "'make installcheck' is a dangerous tool.  It will overwrite your"; \
 		echo "amanda-client.conf and amandates, and (if it triggers an as-yet undetected"; \
 		echo "bug) may do other unexpected things.  You are strongly encouraged"; \
-		echo "  - not to run installcheck on a production install"; \
-		echo "  - not to run installcheck as root"; \
+		echo "  - not to run installchecks on a production install"; \
+		echo "  - not to run installchecks as root"; \
 		echo "See http://wiki.zmanda.com/index.php/Testing for instructions on setting up a"; \
 		echo "test environment in which potential damage is limited by your filesystem's"; \
-		echo "permissions.  To actually run the installcheck, invoke make as follows:"; \
+		echo "permissions.  To actually run the installchecks, invoke make as follows:"; \
 		echo "  $(MAKE) CLOBBER_MY_CONFIG=OK installcheck"; \
 		exit 1; \
 	fi
-	export PATH="$$(echo "$(bin_dirs)" | tr ' ' ':'):$${PATH}"; \
-		( type starman || { echo "starman not found in path"; exit -1; } )
+	type starman || { echo "starman not found in path"; exit -1; }
 
 # newer Test::Harness (v3.18-3.21) implementations get confused by executable
 # test scripts, so this rule chmod a-x's them first
@@ -333,8 +328,7 @@ installcheck-prep: clobber_my_config_is_ok
 
 installcheck-run: installcheck-prep
 	srcdir="$(srcdir)" \
-	PATH="$$(echo "$(bin_dirs)" | tr ' ' ':'):$${PATH}" \
-		$(PERL) -I$(srcdir) -I. -e 'use Test::Harness qw(&runtests); runtests(sort @ARGV);' $(tests)
+	$(PERL) -I$(srcdir) -I. -e 'use Test::Harness qw(&runtests); runtests(sort @ARGV);' $(tests)
 
 installcheck-local: installcheck-run
 	rm -rf "$(CONFIG_DIR)/TESTCONF"
