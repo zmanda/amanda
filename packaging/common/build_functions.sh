@@ -130,7 +130,7 @@ gen_pkg_build_config() {
     # detect if setup-dir is absolute.. and convert back
     [[ $setup_dir == /* ]] || setup_dir="${setup_dir#${src_root}}"
 
-    # detect if setup-dir is the at or below same as pkg_root or not
+    # detect if setup-dir is at or below same as pkg_root or not
     [ "${setup_dir#${pkg_root}/}" = "$setup_dir" ] && setup_cwd_dir="$pkg_root"
     [ "${setup_dir}" = "${pkg_root}" ] && setup_cwd_dir=""
 
@@ -148,34 +148,34 @@ gen_pkg_build_config() {
     mkdir -p $build_dir
 
     case $build_dir in
-	(rpmbuild) 
+	(rpmbuild)
 	    echo "Config rpm package from $setup_dir =============================================="
-	    mkdir -p $build_dir/{SOURCES,SRPMS,SPECS,BUILD,RPMS,BUILDROOT} || 
+	    mkdir -p $build_dir/{SOURCES,SRPMS,SPECS,BUILD,RPMS,BUILDROOT} ||
 		   die "top directories for build under $(realpath .)/$build_dir cannot be created."
 	    # Copy files into rpmbuild locations
-	    [ -z "$(ls 2>/dev/null $setup_dir/*.spec.src)" ] || cp -vf $setup_dir/*.spec.src $build_dir/SPECS || 
-		die "failed to copy spec files ($setup_dir/*.spec.src) to $build_dir/SPECS"; 
-	    [ -z "$(ls 2>/dev/null $setup_dir/*.spec)" ] || cp -vf $setup_dir/*.spec $build_dir/SPECS || 
-		die "failed to copy spec files ($setup_dir/*.spec) to $build_dir/SPECS"; 
+	    [ -z "$(ls 2>/dev/null $setup_dir/*.spec.src)" ] || cp -vf $setup_dir/*.spec.src $build_dir/SPECS ||
+		die "failed to copy spec files ($setup_dir/*.spec.src) to $build_dir/SPECS";
+	    [ -z "$(ls 2>/dev/null $setup_dir/*.spec)" ] || cp -vf $setup_dir/*.spec $build_dir/SPECS ||
+		die "failed to copy spec files ($setup_dir/*.spec) to $build_dir/SPECS";
 	    ;;
-	(debbuild) 
-	    echo "Config deb package from $setup_dir ${setup_cwd:+and $setup_cwd} =============================================="
+	(debbuild)
+	    echo "Config deb package from $setup_dir ${setup_cwd:+and $setup_cwd }=============================================="
 	    rm -rf $build_dir/debian
-	    cp -av $setup_dir $build_dir/debian || 
-		die "failed to copy all files from $setup_dir to $build_dir/debian"; 
+	    cp -av $setup_dir $build_dir/debian ||
+		die "failed to copy all files from $setup_dir to $build_dir/debian";
 	    [ -d "$setup_cwd_dir" ] &&
-		    { find $setup_cwd_dir/* -type d -prune -o -print | xargs cp -v -t $build_dir/debian || 
+		    { find $setup_cwd_dir/* -type d -prune -o -print | xargs cp -v -t $build_dir/debian ||
 			die "failed to copy all files from $setup_cwd_dir to $build_dir/debian"; }
 
 	    [ -r $build_dir/debian/control ] ||
-		die "debian control file was not present in $setup_dir nor selected automatically"; 
+		die "debian control file was not present in $setup_dir nor selected automatically";
 	    ;;
-	(sun-pkgbuild) 
+	(sun-pkgbuild)
 	    echo "Config sun-pkg from $setup_dir =============================================="
             export INSTALL_DEST=$src_root/sun-pkgbuild/install
             export PKG_DEST=$src_root/sun-pkgbuild/pkg
-            mkdir -p $build_dir $build_dir/install $build_dir/pkg || 
-		die "failed to create $build_dir and other directories."; 
+            mkdir -p $build_dir $build_dir/install $build_dir/pkg ||
+		die "failed to create $build_dir and other directories.";
             ;;
 
 	 (*) die 'Unknown packaging for resources';;
@@ -191,19 +191,19 @@ gen_top_environ() {
 
     eval "$(save_version HEAD)"
 
-    [ -d $build_dir ] || 
+    [ -d $build_dir ] ||
 	die "missing call to gen_pkg_build_config() or missing ${PKG_DIR:-\"<missing>\"}/$build_dir directory"
 
     case $build_dir in
-	(rpmbuild) 
+	(rpmbuild)
 	    ln -sf $(realpath .) $build_dir/BUILD/$PKG_NAME_VER
             gzip -c < $VERSION_TAR > $build_dir/SOURCES/${PKG_NAME_VER}.tar.gz
 	    ;;
-	(debbuild) 
+	(debbuild)
 	    # simulate the top directory as the build one...
 	    ln -sf $(realpath .) $build_dir/$PKG_NAME_VER
 	    ;;
-	(sun-pkgbuild) 
+	(sun-pkgbuild)
 	    #
 	    # same as gen pkg environ
             ln -sf $(realpath .) $build_dir/build
@@ -223,14 +223,14 @@ gen_pkg_environ() {
 
     tmp=$(mktemp -d)
     rm -f $tmp/${PKG_NAME_VER}
-    ln -sf ${PKG_DIR} $tmp/${PKG_NAME_VER} 
+    ln -sf ${PKG_DIR} $tmp/${PKG_NAME_VER}
 
     [ -d $build_dir ] ||
     	die "missing call to gen_pkg_build_config() or missing ${PKG_DIR:-\"<missing>\"}/$build_dir directory"
 
     case $build_dir in
-	(rpmbuild) 
-            rm -f $build_dir/SOURCES/${PKG_NAME_VER}.tar 
+	(rpmbuild)
+            rm -f $build_dir/SOURCES/${PKG_NAME_VER}.tar
 	    tar -cf $build_dir/SOURCES/${PKG_NAME_VER}.tar \
 		   --exclude=*.rpm \
 		   --exclude=*.deb \
@@ -244,7 +244,7 @@ gen_pkg_environ() {
 	    # ready for the spec file to untar it
             gzip -f $build_dir/SOURCES/${PKG_NAME_VER}.tar
 	    ;;
-	(debbuild) 
+	(debbuild)
             rm -rf $build_dir/$PKG_NAME_VER
 	    tar -cf - \
 		   --exclude=*.rpm \
@@ -260,7 +260,7 @@ gen_pkg_environ() {
 	    # ready for the build system to use it
             #
 	    ;;
-	(sun-pkgbuild) 
+	(sun-pkgbuild)
 	    #
 	    # same as top build
             ln -sf $(realpath .) $build_dir/build
@@ -274,14 +274,14 @@ gen_pkg_environ() {
 
     # ---------------------------------------------------
     cd $src_root
-    rm -f $tmp/${PKG_NAME_VER} 
+    rm -f $tmp/${PKG_NAME_VER}
 }
 
 gen_repo_pkg_environ() {
     repo_name=$1
     repo_ref=$2
 
-    [ -n "$repo_name" ] || 
+    [ -n "$repo_name" ] ||
 	die "ERROR: usage: <repo-name> <git-ref>, w/first missing";
     [ -n "$repo_ref" ] ||
 	die "ERROR: usage: <repo-name> <git-ref>, w/second missing";
@@ -305,7 +305,7 @@ gen_repo_pkg_environ() {
 
     set -e
     case $build_dir in
-	(rpmbuild) 
+	(rpmbuild)
             repo_tar=SOURCES/${PKG_NAME_VER}.tar
             repo_targz=SOURCES/${PKG_NAME_VER}.tar.gz
             rm -f $repo_tar $repo_targz
@@ -337,12 +337,12 @@ gen_repo_pkg_environ() {
             tar -xvf $VERSION_TAR ||
 		die "ERROR: failed: tar extract of $VERSION_TAR into $build_dir/$PKG_NAME_VER"
 	    ;;
-	(sun-pkgbuild) 
+	(sun-pkgbuild)
             rm -rf build
             git archive --remote=file://$(realpath .)/.. --format=tar --prefix="build/" $remote/$repo_ref |
-		tar -xf - --exclude 000-external || 
+		tar -xf - --exclude 000-external ||
 		die "ERROR: failed: git archive --format=tar.gz -o $targz $remote/$repo_ref to tar -xf"
-	    ln -sf ../000-external build 
+	    ln -sf ../000-external build
 
             tar -xvf $VERSION_TAR --strip-components=1 -C build ||
 		die "ERROR: failed: tar extract of $VERSION_TAR into $build_dir/build"
@@ -361,11 +361,11 @@ gen_repo_pkg_environ() {
 }
 
 do_top_package() {
-    cd ${PKG_DIR}/$build_dir || 
+    cd ${PKG_DIR}/$build_dir ||
 	die "missing call to gen_pkg_build_config() or missing ${PKG_DIR:-\"<missing>\"}/$build_dir directory"
 
     case $build_dir in
-	(rpmbuild) 
+	(rpmbuild)
             echo "Fake-Building via $1 =============================================="
             spec_file=$1
             shift
@@ -376,7 +376,7 @@ do_top_package() {
                (
                  cd BUILD/${PKG_NAME_VER} ||
 		 	die "directory or symlink BUILD/${PKG_NAME_VER} missing"
-                 src_root=$(realpath .); 
+                 src_root=$(realpath .);
                  pkg_root=packaging/$pkg_type
                  do_file_subst ${PKG_DIR}/$build_dir/SPECS/${spec_file}.src && rm -f ${PKG_DIR}/$build_dir/SPECS/${spec_file}.src
                )
@@ -384,7 +384,7 @@ do_top_package() {
 
             [ -s SPECS/$spec_file ] ||
 		die "ERROR: SPECS/$spec_file is not present for packaging step"
-            [ -n "$(type rpmbuild)" ] || 
+            [ -n "$(type rpmbuild)" ] ||
 		die "ERROR: rpmbuild command was not found.  Cannot build without package \"rpm-build\" installed."
 	    [ -f $targz ] ||
 		die "ERROR: missing call to gen_top_environ()"
@@ -395,7 +395,7 @@ do_top_package() {
 		die "ERROR: rpmbuild compile command failed"
 	    ;;
 
-	(debbuild) 
+	(debbuild)
             echo "Fake building debian package in $1 =============================================="
             deb_control=debian/control
             deb_build="$1"
@@ -420,7 +420,7 @@ do_top_package() {
 		die "ERROR: dpkg-buildpackage compile command failed"
 	    ;;
 
-	(sun-pkgbuild) 
+	(sun-pkgbuild)
 	    make
 	    ;;
 	 (*) die "Unknown packaging for resources for $build_dir"
@@ -435,7 +435,7 @@ do_package() {
 	die "missing call to gen_pkg_build_config() or missing ${PKG_DIR:-\"<missing>\"}/$build_dir directory"
 
     case $build_dir in
-	(rpmbuild) 
+	(rpmbuild)
             echo "Building rpm package from $ctxt =============================================="
             spec_file=$ctxt
             targz=SOURCES/${PKG_NAME_VER}.tar.gz
@@ -450,15 +450,15 @@ do_package() {
 
                  cd BUILD/${PKG_NAME_VER} ||
 		 	die "missing call to gen_pkg_environ() or malformed $targz file"
-                 src_root=$(realpath .); 
+                 src_root=$(realpath .);
                  pkg_root=packaging/$pkg_type
                  do_file_subst ${PKG_DIR}/$build_dir/SPECS/${spec_file}.src && rm -f ${PKG_DIR}/$build_dir/SPECS/${spec_file}.src
                )
             fi
 
-            [ -s SPECS/$spec_file ] || 
+            [ -s SPECS/$spec_file ] ||
 		die "ERROR: SPECS/$spec_file is not present for packaging step"
-            [ -n "$(type rpmbuild)" ] || 
+            [ -n "$(type rpmbuild)" ] ||
 		die "ERROR: rpmbuild command was not found.  Cannot build without package \"rpm-build\" installed."
 	    [ -s $targz ] ||
 		die "ERROR: missing call to gen_pkg_environ()"
@@ -470,7 +470,7 @@ do_package() {
             mv -fv RPMS/*/*.rpm SRPMS/*rpm ${PKG_DIR}
 	    ;;
 
-	(debbuild) 
+	(debbuild)
             echo "Building debian package in $ctxt =============================================="
             deb_control=debian/control
             deb_build="$ctxt"
@@ -487,7 +487,7 @@ do_package() {
 
             chmod ug+x debian/rules || die "chmod of ${PKG_DIR}/$build_dir/$deb_build/debian/rules failed"
 
-            [ -n "$(type dpkg-buildpackage)" ] || 
+            [ -n "$(type dpkg-buildpackage)" ] ||
 		die "ERROR: dpkg-buildpackage command was not found.  Cannot build without package \"dpkg-dev\" installed."
             [ -s debian/control ] ||
 		die "ERROR: no debian/control file is ready in ${PKG_DIR}/$build_dir/$deb_build/debian"
@@ -499,7 +499,7 @@ do_package() {
             echo "Debian package(s) from $deb_build ---------------------------------------";
 	    ;;
 
-#	(sun-pkgbuild) 
+#	(sun-pkgbuild)
 	 (*) die "Unknown packaging for resources for $build_dir"
 	    ;;
     esac
@@ -514,7 +514,7 @@ get_svn_info() {
         branch_field=8
     fi
 
-    SVN_PATH=`grep URL: vcs_repo.info|cut -d "/" -f $branch_field-` 
+    SVN_PATH=`grep URL: vcs_repo.info|cut -d "/" -f $branch_field-`
     [ -z "$SVN_PATH" ] || die "subversion SVN_PATH= .from /vcs_repo.info failed"
     echo "svn_path: $SVN_PATH"
 
@@ -585,7 +585,7 @@ get_git_info() {
     REV_REFPOS=$(echo $REF_IDEAL | sed -e 's/\^0$//' -e 's/\~[0-9]*$//')
     REV_REFDIST=$(echo $REF_IDEAL | sed -r -e 's/\^0$//' -e 's/^[^~]+$/0/' -e 's/.*\~([0-9]*)$/\1/')
 
-    # classify the place found... either a concrete 
+    # classify the place found... either a concrete
     REV_PLACE="$(git rev-parse --short --symbolic-full-name "$REV_TAGPOS" 2>/dev/null)"   # get short hash-version
     REV_PLACE=${REV_PLACE:-"$(git rev-parse --short --symbolic-full-name "$REV_REFPOS" 2>/dev/null)"}
     REV_PLACE=${REV_PLACE:-"$REV"}
@@ -618,7 +618,7 @@ get_git_info() {
 
     if [ $(git rev-parse $ref) != $(git rev-parse HEAD) ]; then
         :
-    elif GIT_WORKING_DIR=${src_root} git diff --ignore-submodules=all --quiet && 
+    elif GIT_WORKING_DIR=${src_root} git diff --ignore-submodules=all --quiet &&
 	  GIT_WORKING_DIR=${src_root} git diff --cached --ignore-submodules=all --quiet; then
 	:
     else
@@ -639,7 +639,7 @@ set_pkg_rev() {
     PKG_REV=
     rev=`echo $BRANCH|grep "$flavors"`
     if [ -n "$rev" ]; then
-	PKG_REV=`echo $BRANCH|sed -e "s/.*\($flavors\)/\1/"` 
+	PKG_REV=`echo $BRANCH|sed -e "s/.*\($flavors\)/\1/"`
     fi
 
     # Also check for qa## or rc## and set PKG_REV, but don't strip.
@@ -660,7 +660,7 @@ set_version() {
     declare -g VERSION
     if [ "${BRANCH}" = "trunk" ]; then
         # Debian requires a digit in version identifiers.
-	[ -n "${REV}" ] && VERSION="${VERSION:-0}.${REV}"; 
+	[ -n "${REV}" ] && VERSION="${VERSION:-0}.${REV}";
     else
         # VERSION should never contain package revision info, so strip any
         # flavors
@@ -690,7 +690,7 @@ save_version() {
         mkdir -p $repo_vers_dir
         echo -n $VERSION > $repo_vers_dir/FULL_VERSION
         echo -n 1 > $repo_vers_dir/PKG_REV
-        tar -cf ${repo_vers_tar} -C $tmp ${PKG_NAME_VER}/.   # *keep* the /. 
+        tar -cf ${repo_vers_tar} -C $tmp ${PKG_NAME_VER}/.   # *keep* the /.
 
         # FIXME: is this to be removed totally?
         rm -rf $tmp/${PKG_NAME_VER}
@@ -699,16 +699,16 @@ save_version() {
     PKG_NAME_VER="${pkg_name}-$VERSION"
     VERSION_TAR="$repo_vers_tar"
 
-    { 
+    {
     declare -p VERSION PKG_REV PKG_NAME_VER VERSION_TAR;
-    declare -p LONG_BRANCH BRANCH REV; 
+    declare -p LONG_BRANCH BRANCH REV;
     } | sed -e 's,^declare --,declare -g,'
-    echo "echo \"setup version: $VERSION ||| $PKG_NAME_VER\"" 
+    echo "echo \"setup version: $VERSION ||| $PKG_NAME_VER\""
 }
 
 
 # get script-context path as pkg_root
-[ -z "$pkg_root" ] && 
+[ -z "$pkg_root" ] &&
     set_script_pkg_root $0
 
 pkg_root_abs="$(realpath $pkg_root)"
