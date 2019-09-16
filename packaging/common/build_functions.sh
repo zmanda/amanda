@@ -164,8 +164,8 @@ gen_pkg_build_config() {
 	    cp -av $setup_dir $build_dir/debian || 
 		die "failed to copy all files from $setup_dir to $build_dir/debian"; 
 	    [ -d "$setup_cwd_dir" ] &&
-		    find $setup_cwd_dir/* -type d -prune -o -print | xargs cp -v -t $build_dir/debian || 
-			die "failed to copy all files from $setup_cwd_dir to $build_dir/debian"; 
+		    { find $setup_cwd_dir/* -type d -prune -o -print | xargs cp -v -t $build_dir/debian || 
+			die "failed to copy all files from $setup_cwd_dir to $build_dir/debian"; }
 
 	    [ -r $build_dir/debian/control ] ||
 		die "debian control file was not present in $setup_dir nor selected automatically"; 
