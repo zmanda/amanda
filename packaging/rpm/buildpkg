@@ -21,13 +21,13 @@
 
 pkg_name=amanda
 . packaging/common/build_functions.sh
-. packaging/common/set_amanda_version
+. config/set_full_version
 
 # Until we get package revisioning in community.
 [ -f "PKG_REV" ] || echo "1" > PKG_REV
 
-[ -f "./configure" ] || \
-    { echo "./configure does not exist, please run ./autogen"; exit 1; }
+#[ -f "./configure" ] || \
+#    { echo "./configure does not exist, please run ./autogen"; exit 1; }
 
 gen_pkg_build_config $pkg_root
 

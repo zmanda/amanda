@@ -192,12 +192,14 @@ BuildRequires: openssl
 BuildRequires: openssl-devel
 BuildRequires: perl(ExtUtils::Embed)
 BuildRequires: rpcgen ncurses-devel
-BuildRequires: expat-devel
+# BuildRequires: expat-devel
 BuildRequires: gcc-c++ readline-devel libtirpc-devel
 BuildRequires: libtool
 BuildRequires: perl-devel perl-generators
-BuildRequires: perl(CPAN) perl(Scalar::List::Utils) perl(IO::Socket::SSL)
-BuildRequires: perl(Carp) perl(Data::Dumper) perl(YAML)
+BuildRequires: perl(CPAN) 
+# BuildRequires: perl(Scalar::List::Utils) perl(IO::Socket::SSL)
+BuildRequires: perl(Carp) perl(Data::Dumper) 
+# BuildRequires: perl(YAML)
 BuildRequires: dump
 BuildRequires: samba-client
 BuildRequires: gettext
@@ -360,6 +362,8 @@ find-req-script
 %{__chmod} u+x %{__find_requires}
 
 %build
+
+[ -x ./configure ] || ./autogen
 
 # Set PKG_CONFIG_PATH=some/path if some/path was set on the command line, or by
 # the platform detection bits.
