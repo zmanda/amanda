@@ -17,7 +17,7 @@ LINTFLAGS=@AMLINTFLAGS@
 amlib_LTLIBRARIES =     libamar.la
 
 libamar_la_SOURCES = amar.c
-libamar_la_LDFLAGS =  -release $(VERSION) $(AS_NEEDED_FLAGS)
+libamar_la_LDFLAGS =  -release $(SO_VERSION) $(AS_NEEDED_FLAGS)
 libamar_la_LIBADD = ../common-src/libamanda.la
 
 noinst_HEADERS = \
@@ -26,7 +26,8 @@ noinst_HEADERS = \
 sbin_PROGRAMS = amarchiver
 
 amarchiver_SOURCES = amarchiver.c
-amarchiver_LDADD = libamar.la
+amarchiver_LDADD = libamar.la \
+	../common-src/libamanda.la
 
 # automake-style tests
 
@@ -35,4 +36,5 @@ noinst_PROGRAMS = $(TESTS)
 
 amar_test_SOURCES = amar-test.c
 amar_test_LDADD = libamar.la \
+	../common-src/libamanda.la \
 	../common-src/libtestutils.la

@@ -21,6 +21,9 @@
 
 # This is useful for debugging
  set -x
+
+[ -s FULL_VERSION ] || ./config/set_full_version
+
 # Check for $AMVER, or pull it from configure.ac
 if [ -z $AMVER ]; then
     VER=`cat FULL_VERSION`
@@ -30,8 +33,11 @@ fi
 # Until we get package revisioning in community.
 [ -f "PKG_REV" ] || echo "1" > PKG_REV
 
-[ -f "./configure" ] || \
-    { echo "./configure does not exist, please run ./autogen"; exit 1; }
+####
+# allow rpm %build script to call autogen directly...
+# [ -f "./configure" ] || \
+#     { echo "./configure does not exist, please run ./autogen"; exit 1; }
+####
 
 # Substitute amanda.spec.src
 /usr/bin/perl packaging/common/substitute.pl \

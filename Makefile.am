@@ -88,6 +88,22 @@ config.status: FULL_VERSION
 libtool: $(LIBTOOL_DEPS)
 	$(SHELL) ./config.status --recheck
 
+SUBDIR_TARGETS = \
+   amandad-src/libamandad.la \
+   amar-src/libamar.la \
+   client-src/libamclient.la \
+   common-src/libamanda.la \
+   common-src/libtestutils.la \
+   config/config.h \
+   device-src/libamdevice.la \
+   gnulib/libgnu.la \
+   ndmp-src/libndmlib.la \
+   server-src/libamserver.la \
+   xfer-src/libamxfer.la
+
+$(SUBDIR_TARGETS):
+	$(MAKE) -C $(dir $@)
+
 # empty out the installperms manifest file when we start
 install-exec-local: installperms-init
 install-data-local: installperms-init

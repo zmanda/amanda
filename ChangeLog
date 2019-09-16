@@ -1,5 +1,14 @@
+2019-09-16  Chris Hassell <chris.hassell@betsol.com>
+	* several Makefile.am files: modern linking dependency set
+	* config/automake/scripts.am: cross-directory dep-ordered builds
+	* amandad-src/amandad.c: block against NULL string-ptr in debug output
+	* autogen, buildpkg: run autogen if configure is missing
+	* packaging/rpm/amanda.spec.src: add libtool, libxslt, rpcgen as build deps
+	* config/amanda/amanda_configure.m4: prefer rpc/rpc.h over libtirpc
+	* config/amanda/version.m4: use SO_VERSION var for suffix/SO_NAME of libraries
+
 2019-04-26  Badal Dave <badaladave@gmail.com>
-        * perl/Amanda/Taper/Scribe.pm: Adding tape barcode info to logs
+	* perl/Amanda/Taper/Scribe.pm: Adding tape barcode info to logs
 
 2019-01-18  Hiten Shah <hiten.shah@betsol.com>
 	* application-src/amgtar.c: Filter GNU tar arguments

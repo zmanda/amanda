@@ -209,6 +209,12 @@ BuildRequires: glib2-devel
 BuildRequires: gettext
 BuildRequires: readline
 BuildRequires: docbook-style-xsl
+# xsltproc for manpages
+BuildRequires: libxslt
+# libtoolize for later autotools
+BuildRequires: libtool
+# rpcgen for libndmp
+BuildRequires: rpcgen
 BuildRequires: swig
 # Note: newer distros have changed most *-devel to lib*-devel, and added a
 # provides tag for backwards compat.
@@ -381,6 +387,8 @@ find-req-script
 %build
 %define config_user %{amanda_user}
 %define config_group %{amanda_group}
+
+[ -x ./configure ] || ./autogen
 
 # Set PKG_CONFIG_PATH=some/path if some/path was set on the command line, or by 
 # the platform detection bits.

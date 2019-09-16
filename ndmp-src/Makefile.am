@@ -167,7 +167,7 @@ libndmjlo = \
 	ndmos.c \
 	ndmos_common.c
 
-libndmlib_la_LDFLAGS = -release $(VERSION) $(AS_NEEDED_FLAGS) ${TIRPC_LIBS}
+libndmlib_la_LDFLAGS = -release $(SO_VERSION) $(AS_NEEDED_FLAGS) ${TIRPC_LIBS}
 libndmlib_la_SOURCES = \
 	$(libndmjll) \
 	$(libndmjlp) \
@@ -180,7 +180,7 @@ libndmjob_la_SOURCES = \
 	$(libndmjla) \
 	$(libndmjlr)
 
-libndmjob_la_LDFLAGS = -release $(VERSION) $(AS_NEEDED_FLAGS) ${TIRPC_LIBS}
+libndmjob_la_LDFLAGS = -release $(SO_VERSION) $(AS_NEEDED_FLAGS) ${TIRPC_LIBS}
 libndmjob_la_LIBADD = libndmlib.la
 
 ##
@@ -205,9 +205,11 @@ amndmjob_SOURCES = amndmjob_main.c \
 		      amndma_tape_simulator.c
 
 ndmjob_LDADD = libndmjob.la \
-		   ../common-src/libamanda.la
+		libndmlib.la \
+	         ../common-src/libamanda.la
 
 amndmjob_LDADD = libndmjob.la \
+		 libndmlib.la \
 		   ../common-src/libamanda.la
 
 ndmp0_xdr.c : ndmp0.x

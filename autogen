@@ -3,18 +3,19 @@
 # cd to the directory we're run from
 cd `dirname $0`
 
+die() {
+    echo x"${@}" | sed 's/^x//'
+    exit 1
+}
+
 # if you change this, please also change it in the root Makefile.am
-includes="-I . -I config -I config/gettext-macros -I config/gnulib -I config/amanda -I config/macro-archive -I /usr/share/aclocal"
+includes="-I. -Iconfig -Iconfig/gettext-macros -Iconfig/gnulib -Iconfig/amanda -Iconfig/macro-archive -I/usr/share/aclocal"
 
 # clean up
 rm -f aclocal.m4
 rm -rf autom4te*.cache
 rm -f configure
 
-die() {
-    echo x"${@}" | sed 's/^x//'
-    exit 1
-}
 
 echo "See DEVELOPING for instructions on updating:"
 echo " * gettext macros"
@@ -35,8 +36,21 @@ echo "..creating file lists"
 #set the FULL_VERSION file
 config/set_full_version
 
-echo "..aclocal"
-aclocal $includes || die "aclocal failed"
+libtoolize -i
+
+# need 2.63 or later autoconf/autom4te
+AUTOM4TE="$(ls -1 /usr/bin/autom4te2[6789]* 2>/dev/null)"
+# last space-separated word only..
+AUTOM4TE=${AUTOM4TE##* }
+AUTOM4TE=${AUTOM4TE##*\n}
+# suffix numbers only
+AC_VERSION_SFX="${AUTOM4TE##*autom4te}"
+
+export AUTOM4TE="autom4te${AC_VERSION_SFX}"
+export AUTOCONF="autoconf${AC_VERSION_SFX}"
+
+echo "..aclocal with version $AC_VERSION_SFX"
+aclocal --install $includes || die "aclocal failed"
 
 echo "...aclocal patches"
 # See http://bugzilla.gnome.org/show_bug.cgi?id=418778
@@ -49,11 +63,11 @@ sed -e  \
      's/PKG_PROG_PKG_CONFIG(\[0\.16\])/PKG_PROG_PKG_CONFIG([0.7])/g' \
      aclocal.m4 > aclocal.m4~ && mv aclocal.m4~ aclocal.m4
 
-echo "..autoconf"
-autoconf || die "autoconf failed"
+echo "..autoconf with version $AC_VERSION_SFX"
+autoconf${AC_VERSION_SFX} || die "autoconf failed"
 
-echo "..autoheader"
-autoheader || die "autoheader failed"
+echo "..autoheader with version $AC_VERSION_SFX"
+autoheader${AC_VERSION_SFX} || die "autoheader failed"
 touch config/config.h.in
 
 echo "..automake"

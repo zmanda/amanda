@@ -89,17 +89,24 @@ AC_DEFUN([AMANDA_SPLIT_VERSION],
 	    VERSION_COMMENT=`expr "$VERSION" : '[0-9]*\.[0-9]*\.[0-9]*\(.*\)'`
 	fi
     fi
+    #
+    # to maintain sub-versions for libraries.. include the following
+    #
+    #SO_VERSION="${VERSION_MAJOR}.${VERSION_MINOR} -shrext .so.${VERSION_PATCH}.${VERSION_COMMENT}"
+    SO_VERSION="${VERSION_MAJOR}.${VERSION_MINOR}"
     changequote([,])
 
     AC_SUBST(VERSION_MAJOR)
     AC_SUBST(VERSION_MINOR)
     AC_SUBST(VERSION_PATCH)
     AC_SUBST(VERSION_COMMENT)
+    AC_SUBST(SO_VERSION)
 
     AC_DEFINE_UNQUOTED([VERSION_MAJOR], [$VERSION_MAJOR], [major Amanda version number])
     AC_DEFINE_UNQUOTED([VERSION_MINOR], [$VERSION_MINOR], [minor Amanda version number])
     AC_DEFINE_UNQUOTED([VERSION_PATCH], [$VERSION_PATCH], [Amanda patch number])
     AC_DEFINE_UNQUOTED([VERSION_COMMENT], [$VERSION_COMMENT], [Amanda version information beyond patch])
+    AC_DEFINE_UNQUOTED([SO_VERSION], [$SO_VERSION], [Version settings for shared object linking])
 ])
 
 # SYNOPSIS
