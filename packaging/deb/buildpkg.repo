@@ -19,22 +19,21 @@
 
 buildref=$1
 shift
-buildtype=$1
-shift
-
 [ -n "$buildref" ] || { echo requires a branch/buildref; exit 1; }
-[ -n "$buildtype" ] || { echo requires server or client argument; exit 1; }
 
 # set pkg_root also
 pkg_name=amanda-$buildtype
 repo_name=amanda
 . ./packaging/common/build_functions.sh
 
-# create version files from top ...
-. ./config/set_full_version
+#
+# don't create version files from working tree
+#
+gen_pkg_build_config "$pkg_root"
 
-gen_pkg_build_config "$pkg_root/$buildtype"
-
+#
+# create version files here
+#
 gen_repo_pkg_environ $repo_name $buildref
 
 [ -n "$PKG_NAME_VER" ] || { declare -p; die "no version to use"; }
