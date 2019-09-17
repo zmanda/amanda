@@ -29,6 +29,7 @@
  * $Id: util.c,v 1.42 2006/08/24 01:57:15 paddy_s Exp $
  */
 
+
 #include "amanda.h"
 #include "amutil.h"
 #include "match.h"
@@ -43,6 +44,9 @@
 #include <string.h>
 #include "fsusage.h"
 #include "ammessage.h"
+
+#include <sys/types.h>
+#include <unistd.h>
 
 GMutex *priv_mutex = NULL;
 static int make_socket(sa_family_t family);
@@ -1790,11 +1794,13 @@ set_root_privs(int need_root)
 {
 #ifndef SINGLE_USERID
     static gboolean first_call = TRUE;
-    static uid_t unpriv = 1;
+    static uid_t unprivu = 1;
+    static gid_t unprivg = 1;
 
     if (first_call) {
 	/* save the original real userid (that of our invoker) */
-	unpriv = getuid();
+	unprivu = getuid();
+	unprivg = getgid();
 
 	/* and set all of our userids (including, importantly, the saved
 	 * userid) to 0
@@ -1817,13 +1823,16 @@ set_root_privs(int need_root)
 	}
 
 	/* now set the uid to the unprivileged userid */
-	if (setuid(unpriv) == -1) return 0;
+	if (setuid(unprivu) == -1) return 0;
     } else {
 	if (geteuid() != 0) return 1; /* already done */
 
+        /* change all prev. groups down to one only */
+        if (setgroups(1,&unprivg) == -1) return 0;
+        if (setegid(unprivg) == -1) return 0;
+
 	/* set the *effective* userid only */
-        if (seteuid(unpriv) == -1) return 0;
-        if (setegid(getgid()) == -1) return 0;
+        if (seteuid(unprivu) == -1) return 0;
     }
 #else
     (void)need_root; /* Quiet unused variable warning */
