@@ -144,5 +144,11 @@ SWIGVER=$(swig -version | grep -i 'version *[0-9]' | { IFS=. read a b c; printf 
 
 [ -f /etc/debian_version ] && 
 	{ grep -q '^amandabackup:' /etc/passwd || { echo "ERROR: amandabackup user (uid=63998) is not present on debian build"; exit -1; };}
+[ -f /etc/debian_version ] && 
+	{ grep -q '^disk:' /etc/group || { echo "ERROR: disk user (uid=63998) is not present on debian build"; exit -1; };}
+[ -f /etc/debian_version ] && 
+	{ grep -q '^mysql:' /etc/passwd || { echo "ERROR: mysql user is not present on debian build"; exit -1; };}
+[ -f /etc/debian_version ] && 
+	{ grep -q '^mysql:' /etc/group || { echo "ERROR: mysql group is not present on debian build"; exit -1; };}
 
 exit 0
