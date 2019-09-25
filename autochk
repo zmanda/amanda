@@ -12,12 +12,13 @@ type -p realpath >/dev/null || eval 'realpath() { [ $1 = -e ] && shift; ( cd $1;
 
 detect_git_cache() {
     url=$1
-    url=${url%.git};
-    url=${url##*/};
+    name=$url
+    name=${name%.git};
+    name=${name##*/};
 
-    [ -n "$url" ] || return
+    [ -n "$name" ] || return
 
-    repo=/opt/src/$url/.git 
+    repo=/opt/src/$name/.git 
     [ -d "$repo" ] || return
     [ ! -s "$repo/shallow" ] || return
 
@@ -25,7 +26,7 @@ detect_git_cache() {
     nrepo="${nrepo%.git}"
     nrepo="${nrepo##*/}"
 
-    [ "$nrepo" = "$url" ] || return;
+    [ "$nrepo" = "$name" ] || return;
     GIT_DIR=$repo git fetch origin || return
     echo $repo
 }
