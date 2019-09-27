@@ -76,7 +76,6 @@ while read modname branch; do
         if [ -d $toplevel/.git/modules/$modname ]; then
             ( export GIT_DIR=$toplevel/.git/modules/$modname;
                git branch -D $branch >/dev/null 2>&1;
-               git fetch --prune --tags origin 'refs/tags/*:refs/tags/*'
                git fetch --prune origin "+refs/heads/$branch:refs/remotes/origin/$branch"
             ) || die "ERROR: submodule $modname failed fetch";
         fi
@@ -91,7 +90,7 @@ while read modname branch; do
             # first do a setup (NEEDS --init AND NO --remote!!)
             git submodule update --init --checkout ${cache_repo:+ --reference $cache_repo } $moddepth $modpath
             ( exec >/dev/null; cd $modpath; git checkout -f "origin/$branch"; )
-        elif ( cd $toplevel/$modpath; git diff --cached --quiet HEAD && git diff --quiet HEAD; ); then 
+        elif ( cd $toplevel/$modpath; git diff --cached --ignore-submodules=all --quiet HEAD && git diff --ignore-submodules=all --quiet HEAD; ); then 
             # no changes to worry about...
             git submodule update --checkout ${cache_repo:+ --reference $cache_repo } $moddepth $modpath
             ( exec >/dev/null; cd $toplevel/$modpath; git checkout -f "origin/$branch"; )
