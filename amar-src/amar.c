@@ -1677,3 +1677,13 @@ void amar_set_error(
     amar_stop_read(archive);
     read_done(archive->hp);
 }
+void amar_set_error1(
+    amar_t *archive,
+    char *msg)
+{
+    g_set_error(archive->hp->error, amar_error_quark(), EINVAL, "%s",
+		g_strdup(msg));
+    amar_stop_read(archive);
+    read_done(archive->hp);
+}
+
