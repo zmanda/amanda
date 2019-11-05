@@ -2550,6 +2550,7 @@ use Amanda::Config qw( :getconf );
 use Amanda::Debug qw( debug warning );
 use Amanda::MainLoop qw( :GIOCondition synchronized make_cb define_steps step );
 use Amanda::Device qw( :constants );
+use Carp;
 
 sub new {
     my $class = shift;
