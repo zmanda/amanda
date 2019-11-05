@@ -92,11 +92,11 @@ You need a User-ID to identify your key; the software constructs the user id
 from Real Name, Comment and Email Address in this form:
     "Heinrich Heine (Der Dichter) (heinrichh@duesseldorf.de)"
 
-Real name: amandabackup
+Real name: backup
 Email address:
-Comment: gpg keys for amandabackup
+Comment: gpg keys for backup
 You selected this USER-ID:
-    "amandabackup (gpg keys for amandabackup)"
+    "backup (gpg keys for backup)"
 
 Change (N)ame, (C)omment, (E)mail or (O)kay/(Q)uit? o
 You need a Passphrase to protect your secret key.
@@ -114,7 +114,7 @@ generator a better chance to gain enough entropy.
 public and secret key created and signed.
 key marked as ultimately trusted.
 
-pub  1024D/4417A8CB 2006-02-07 amandabackup (gpg keys for amandabackup)
+pub  1024D/4417A8CB 2006-02-07 backup (gpg keys for backup)
      Key fingerprint = 139C 6369 44FC 7F1A 655C  E5E9 7EAA 515A 4417 A8CB
 sub  1024g/8C3A6A78 2006-02-07 [expires: 2006-08-06]
 

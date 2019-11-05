@@ -79,7 +79,7 @@ Authentication	  Configure option(s)
 <option>--with-user</option> option.  Most Amanda processes run under
 this user's identity, to minimize security risks.  In binary
 distributions, this username is usually one of 'amanda',
-'amandabackup', or 'backup'.  The examples below use 'amandabackup'
+'backup', or 'backup'.  The examples below use 'backup'
 since it is unambiguous. You may need to adjust accordingly for your
 system.</para>
 
@@ -141,10 +141,10 @@ configuration file.</para>
 
 <para>If service is omitted, it defaults to <emphasis remap='B'>noop selfcheck sendsize sendbackup</emphasis> (which is equivalent to <emphasis remap='B'>amdump</emphasis>).</para>
 
-    <para>Example of the .amandahosts file on an Amanda client, where 'amandabackup' is the Amanda dumpuser.
+    <para>Example of the .amandahosts file on an Amanda client, where 'backup' is the Amanda dumpuser.
 
 <programlisting>
-    <emphasis remap='B'>amandaserver.example.com   amandabackup   amdump</emphasis>
+    <emphasis remap='B'>amandaserver.example.com   backup   amdump</emphasis>
 </programlisting>
     </para>
 
@@ -165,7 +165,7 @@ configuration file.</para>
   </refsect2>
 
   <refsect2><title>bsdtcp communication and authentication</title>
-    <para>The authentication is done using .amandahosts files in the backup user's (for example: amandabackup) home directory. It uses TCP protocol between Amanda server and client. On the client, two reserved ports are used. On the server, all data streams are multiplexed to one port (see PORT USAGE below).</para>
+    <para>The authentication is done using .amandahosts files in the backup user's (for example: backup) home directory. It uses TCP protocol between Amanda server and client. On the client, two reserved ports are used. On the server, all data streams are multiplexed to one port (see PORT USAGE below).</para>
   </refsect2>
 
   <refsect2><title>USING INETD SERVER</title>
@@ -175,24 +175,24 @@ configuration file.</para>
 <emphasis remap='I'>   service_name</emphasis> <emphasis remap='I'>socket_type</emphasis> <emphasis remap='I'>protocol</emphasis> <emphasis remap='I'>wait/nowait</emphasis> <emphasis remap='I'>amanda_backup_user</emphasis> <emphasis remap='I'>absolute_path_to_amandad</emphasis> amandad <emphasis remap='I'>server_args</emphasis>
 </programlisting>
     </para>
-    <para>Client example of using <emphasis remap='B'>bsd</emphasis> authorization for inetd server given Amanda user is "amandabackup":
+    <para>Client example of using <emphasis remap='B'>bsd</emphasis> authorization for inetd server given Amanda user is "backup":
 
 <programlisting>
-<emphasis remap='B'>   amanda dgram udp wait amandabackup /path/to/amandad amandad -auth=bsd amdump</emphasis>
+<emphasis remap='B'>   amanda dgram udp wait backup /path/to/amandad amandad -auth=bsd amdump</emphasis>
 </programlisting>
     </para>
     <para>The same could be used for <emphasis remap='B'>bsdudp</emphasis> if specifying -auth=bsdudp instead of -auth=bsd.</para>
-    <para>Client example of using <emphasis remap='B'>bsdtcp</emphasis> authorization for inetd server given Amanda user is "amandabackup":
+    <para>Client example of using <emphasis remap='B'>bsdtcp</emphasis> authorization for inetd server given Amanda user is "backup":
 
 <programlisting>
-<emphasis remap='B'>   amanda stream tcp nowait amandabackup /path/to/amandad amandad -auth=bsdtcp amdump</emphasis>
+<emphasis remap='B'>   amanda stream tcp nowait backup /path/to/amandad amandad -auth=bsdtcp amdump</emphasis>
 </programlisting>
     </para>
     <para><emphasis remap='B'>amindexd</emphasis> and <emphasis remap='B'>amidxtaped</emphasis> would typically be added at the end of the line as &amandad; server arguments for an Amanda server.</para>
-    <para>Server example of using <emphasis remap='B'>bsdtcp</emphasis> authorization for inetd server given Amanda user is "amandabackup":
+    <para>Server example of using <emphasis remap='B'>bsdtcp</emphasis> authorization for inetd server given Amanda user is "backup":
 
 <programlisting>
-<emphasis remap='B'>   amanda stream tcp nowait amandabackup /path/to/amandad amandad -auth=bsdtcp amdump amindexd amidxtaped</emphasis>
+<emphasis remap='B'>   amanda stream tcp nowait backup /path/to/amandad amandad -auth=bsdtcp amdump amindexd amidxtaped</emphasis>
 </programlisting>
     </para>
     <para>For Amanda version 2.5.0 and earlier, remember that neither <emphasis remap='B'>bsdudp</emphasis> nor <emphasis remap='B'>bsdtcp</emphasis> are supported and the Amanda daemon &amandad; accepts no arguments.  Because of the latter, &amrecover; as of Amanda version 2.5.1  is not compatible with 2.5.0 and earlier servers.  Thus, servers that are 2.5.0 or earlier must, in addition to the <emphasis remap='I'>amanda</emphasis> service, run <emphasis remap='I'>amindexd</emphasis> and <emphasis remap='I'>amidxtaped</emphasis> Amanda services as their own network services, amandaidx and amidxtape, respectively (see below).</para>
@@ -202,8 +202,8 @@ configuration file.</para>
 <para>Example of amindexd and amidxtaped Amanda daemon services configured as their own network services for a 2.5.0 or earlier server or a newer server having 2.5.0 or earlier clients
 
 <programlisting>
-<emphasis remap='B'>   amandaidx stream tcp nowait amandabackup /usr/local/libexec/amanda/current/amindexd   amindexd</emphasis>
-<emphasis remap='B'>   amidxtape stream tcp nowait amandabackup /usr/local/libexec/amanda/current/amidxtaped amidxtaped</emphasis>
+<emphasis remap='B'>   amandaidx stream tcp nowait backup /usr/local/libexec/amanda/current/amindexd   amindexd</emphasis>
+<emphasis remap='B'>   amidxtape stream tcp nowait backup /usr/local/libexec/amanda/current/amidxtaped amidxtaped</emphasis>
 </programlisting>
 </para>
   </refsect2>
@@ -228,7 +228,7 @@ service amanda
 </programlisting>
     </para>
     <para>The <emphasis remap='I'>only_from</emphasis> parameter can be used with xinetd but is usually in addition to the primary form of access control via the .amandahosts file.</para>
-    <para>Client example of using <emphasis remap='B'>bsd</emphasis> authorization for xinetd server and for Amanda user "amandabackup":
+    <para>Client example of using <emphasis remap='B'>bsd</emphasis> authorization for xinetd server and for Amanda user "backup":
 
 <programlisting>
 service amanda
@@ -237,7 +237,7 @@ service amanda
 	socket_type     = dgram
 	protocol        = udp
 	wait            = yes
-	user            = amandabackup
+	user            = backup
 	group           = disk
 	groups          = yes
 	server          = /path/to/amandad
@@ -247,7 +247,7 @@ service amanda
 </programlisting>
     </para>
     <para>The same could be used for <emphasis remap='B'>bsdudp</emphasis> if specifying -auth=bsdudp instead of -auth=bsd.</para>
-    <para>Client example of using <emphasis remap='B'>bsdtcp</emphasis> authorization for xinetd server and for Amanda user "amandabackup":
+    <para>Client example of using <emphasis remap='B'>bsdtcp</emphasis> authorization for xinetd server and for Amanda user "backup":
 
 <programlisting>
 service amanda
@@ -256,7 +256,7 @@ service amanda
 	socket_type     = stream
 	protocol        = tcp
 	wait            = no
-	user            = amandabackup
+	user            = backup
 	group           = disk
 	groups          = yes
 	server          = /path/to/amandad
@@ -468,7 +468,7 @@ For example:
 define dumptype rsh_example {
          ...
          auth "rsh"
-         client-username "amandabackup"
+         client-username "backup"
          amandad-path "/usr/lib/exec/amandad"
          ...
 }
@@ -501,7 +501,7 @@ define dumptype rsh_example {
 <para>Enable SSH authentication and set the <amkeyword>ssh-keys</amkeyword> option in all DLEs for that host by adding the following to the DLE itself or to the corresponding dumptype in amanda.conf:
 <programlisting>
   auth "ssh"
-  ssh-keys "/home/amandabackup/.ssh/id_rsa_amdump"
+  ssh-keys "/home/backup/.ssh/id_rsa_amdump"
 </programlisting>
 </para>
 

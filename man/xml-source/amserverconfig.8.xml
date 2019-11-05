@@ -50,7 +50,7 @@
 It will create /var/lib/amanda/guntar-lists directory if one does
 	  not exist.
 &amserverconfig; does not change existing Amanda configurations.
-&amserverconfig; must be run by user amandabackup.
+&amserverconfig; must be run by user backup.
 </para> 
 </refsect1>
 
@@ -73,7 +73,7 @@ Example:  --templ=harddisk --tapedev /dev/nst0</para>
 	        </para>
 <para>If tape-changer is chosen for this option, program mtx is required. &amserverconfig; will
 search for mtx in the following directory: "/usr/sbin", "/usr/local/sbin",
-"/usr/local/bin", "/usr/bin", "/bin" and amandabackup's PATH.
+"/usr/local/bin", "/usr/bin", "/bin" and backup's PATH.
 </para>
 <para>
 If harddisk is chosen and --no-vtape is not specified, &amserverconfig; will create and label virtual tape
@@ -138,7 +138,7 @@ is supported.</para>
   <varlistentry>
   <term><option>--mailto mailto</option></term>
   <listitem>
-<para> A space separated list of recipients for mail reports. default [amandabackup]  </para>
+<para> A space separated list of recipients for mail reports. default [backup]  </para>
   </listitem>
   </varlistentry>
 
@@ -193,7 +193,7 @@ is supported.</para>
  <varlistentry>
  <term><option>/var/lib/amanda</option></term>
   <listitem>
-<para>amandabackup home directory</para>
+<para>backup home directory</para>
   </listitem>
   </varlistentry>
 

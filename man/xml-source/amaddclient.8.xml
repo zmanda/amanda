@@ -61,7 +61,7 @@ the client.
 (See <refentrytitle>ssh-keygen</refentrytitle><manvolnum>1</manvolnum> and
 <refentrytitle>ssh-add</refentrytitle><manvolnum>1</manvolnum> for detail.)</para>
 <para>
-&amaddclient; must be run by user amandabackup.</para>
+&amaddclient; must be run by user backup.</para>
 <para> --config, --client and --diskdev must be specified.
 </para> 
 </refsect1>
@@ -218,7 +218,7 @@ Specify either --excludefile or --excludelist. </para>
  <varlistentry>
  <term><option>/var/lib/amanda</option></term>
   <listitem>
-<para>amandabackup home directory</para>
+<para>backup home directory</para>
   </listitem>
   </varlistentry>
 

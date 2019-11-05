@@ -39,9 +39,9 @@ must be the directory to backup.</para>
 
 <para>Solaris 10 supports Role Based Access Control(RBAC) which is enabled
 by default. To run backup operations using  sun tar utility by under 
-privileged user like amandabackup, amandabackup user need to have proper 
+privileged user like backup, backup user need to have proper 
 roles and profiles, specially "Media Backup" profile/role. This can be done 
-using 'usermod -P "Media Backup" amandabackup' command.</para>
+using 'usermod -P "Media Backup" backup' command.</para>
 
 
 </refsect1>
