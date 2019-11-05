@@ -216,7 +216,7 @@ $testconf->add_script('my_script', [
   'plugin' => '"script-email"',
   'execute-on' => 'pre-host-backup, post-host-backup',
   'execute-where' => 'client',
-  'property' => '"mailto" "amandabackup" "amanda"',
+  'property' => '"mailto" "backup" "amanda"',
 ]);
 $testconf->add_device('my_device', [
   'comment' => '"my device is mine, not yours"',
