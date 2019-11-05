@@ -400,6 +400,8 @@ protocol_check(void)
 {
 
     /* arg == 1 means don't block */
+    /* doing it two times allow to send the REQ packet immediately */
+    event_loop(1);
     event_loop(1);
 }
 
