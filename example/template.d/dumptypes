@@ -106,7 +106,7 @@
 #   program	- specify the dump system to use.  Valid values are "DUMP" 
 #		  "STAR" and "GNUTAR".  Default: [program "DUMP"].
 #   record	- record the backup in the time-stamp-database of the backup
-#		  program (e.g. /etc/dumpdates for DUMP or
+#		  program (e.g. /var/lib/dumpdates for DUMP or
 #		  /var/lib/amanda/gnutar-lists for GNUTAR.).
 #		  Default: [record yes]
 #   skip-full	- skip the disk when a level 0 is due, to allow full backups
@@ -302,7 +302,7 @@ define dumptype nocomp-high {
 
 define dumptype nocomp-test {
     global
-    comment "test dump without compression, no /etc/dumpdates recording"
+    comment "test dump without compression, no /var/lib/dumpdates recording"
     compress none
     record no
     priority medium
@@ -310,7 +310,7 @@ define dumptype nocomp-test {
 
 define dumptype comp-test {
     nocomp-test
-    comment "test dump with compression, no /etc/dumpdates recording"
+    comment "test dump with compression, no /var/lib/dumpdates recording"
     compress client fast
 }
 
