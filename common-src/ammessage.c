@@ -1424,7 +1424,7 @@ set_message(
     } else if (message->code == 3600085) {
 	msg = "unable to open /etc/amandapass: %{errnostr}";
     } else if (message->code == 3600086) {
-	msg = "dump will not be able to create the /etc/dumpdates file: %{errnostr}";
+	msg = "dump will not be able to create the /var/lib/dumpdates file: %{errnostr}";
     } else if (message->code == 3600087) {
 	msg = "%{device}: samba access error: %{errmsg}";
     } else if (message->code == 3600088) {

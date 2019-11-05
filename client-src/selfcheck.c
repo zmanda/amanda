@@ -1581,8 +1581,8 @@ check_overall(void)
 	delete_message(selfcheck_print_message(check_file_message(COMPRESS_PATH, X_OK)));
 
     if (need_dump || need_xfsdump ) {
-	if (check_file_exist("/etc/dumpdates")) {
-	    delete_message(selfcheck_print_message(check_file_message("/etc/dumpdates",
+	if (check_file_exist("/var/lib/dumpdates")) {
+	    delete_message(selfcheck_print_message(check_file_message("/var/lib/dumpdates",
 #ifdef USE_RUNDUMP
 		       F_OK
 #else
@@ -1602,8 +1602,8 @@ check_overall(void)
     }
 
     if (need_vdump) {
-	if (check_file_exist("/etc/vdumpdates")) {
-            delete_message(selfcheck_print_message(check_file_message("/etc/vdumpdates", F_OK)));
+	if (check_file_exist("/var/lib/vdumpdates")) {
+            delete_message(selfcheck_print_message(check_file_message("/var/lib/vdumpdates", F_OK)));
 	}
     }
 
@@ -1615,6 +1615,7 @@ check_overall(void)
     check_space(AMANDA_DBGDIR, (off_t)64);	/* for amandad i/o */
 #endif
 
+    check_space("/var/lib", (off_t)64);		/* for /var/lib/dumpdates writing */
     check_space("/etc", (off_t)64);		/* for /etc/dumpdates writing */
     }
 }
