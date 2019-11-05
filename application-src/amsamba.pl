@@ -760,6 +760,7 @@ sub command_backup {
 	return if $line =~ /tarmode is now /;
 	return if $line =~ /tar_re_search set/;
 	return if $line =~ /WARNING/g;
+	return if $line =~ /^Unable to initialize messaging context/;
 	if ($line =~ /dumped (\d+) files and directories/) {
 	    $nb_files = $1;
 	    return;
