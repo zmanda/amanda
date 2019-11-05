@@ -99,7 +99,7 @@
 <!ENTITY tapelist '<manref name="tapelist" vol="5"/>'>
 
 <!-- IDs for files used by AMANDA-->
-<!ENTITY dumpdates '<filename>/etc/dumpdates</filename>'>
+<!ENTITY dumpdates '<filename>/var/lib/dumpdates</filename>'>
 
 <!-- IDs for AMANDA commands-->
 <!ENTITY amadmin ' <command>amadmin</command>'>

@@ -2395,7 +2395,7 @@ must be kept secret.
   <listitem>
 <para>Default:
 <amkeyword>yes</amkeyword>.
-Whether to ask the backup program to update its database (e.g. <filename>/etc/dumpdates</filename>
+Whether to ask the backup program to update its database (e.g. <filename>/var/lib/dumpdates</filename>
 for DUMP or <filename>/usr/local/var/amanda/gnutar-lists</filename> for GNUTAR) of time stamps.
 This is normally enabled for daily backups and turned off for periodic archival runs.</para>
   </listitem>

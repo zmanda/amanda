@@ -129,7 +129,7 @@ file.
 specify backup related parameters,
 such as whether to compress the backups,
 whether to record backup results in
-<filename>/etc/dumpdates</filename>, the disk's relative priority, etc.</para>
+<filename>/var/lib/dumpdates</filename>, the disk's relative priority, etc.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
