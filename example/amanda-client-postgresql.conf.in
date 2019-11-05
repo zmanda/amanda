@@ -25,7 +25,7 @@ ssh_keys "/var/lib/amanda/.ssh/id_rsa_amrecover"
 # Use /etc/amanda/pgpassfile for authentication credentials
 # (Note: for PostgreSQL 8.0.x, you must use PG-PASSWORD instead)
 # Should contain an appropriate line for foo (below).Example:
-#   localhost:*:*:amandabackup:my_backup_password
+#   localhost:*:*:backup:my_backup_password
 # The file must be owned by the Amanda user with permissions 0600
 property "PG-PASSFILE" "/etc/amanda/pgpassfile"
 
@@ -34,8 +34,8 @@ property "PG-PASSFILE" "/etc/amanda/pgpassfile"
 property "foo-PG-HOST" "localhost"
 #   Connect to port 5432 (PostgreSQL's default)
 property "foo-PG-PORT" "5432"
-#   Connect as user amandabackup (Note: must be a superuser)
-property "foo-PG-USER" "amandabackup"
+#   Connect as user backup (Note: must be a superuser)
+property "foo-PG-USER" "backup"
 #   Connect to database template1 (exists by default)
 property "foo-PG-DB" "template1"
 #   Database's data directory

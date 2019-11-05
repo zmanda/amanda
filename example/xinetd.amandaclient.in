@@ -10,7 +10,7 @@ service amanda
 	socket_type	= stream
 	protocol	= tcp
 	wait		= no
-	user		= amandabackup
+	user		= backup
 	group		= disk
 	groups		= yes
 	server		= @amlibexecdir@/amandad

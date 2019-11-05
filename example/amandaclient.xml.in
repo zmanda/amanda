@@ -33,7 +33,7 @@
 		exec='@amlibexecdir@/amandad -auth=bsdtcp amdump'
 		timeout_seconds='0'>
 		<method_context>
-			<method_credential user='amandabackup' group='disk' />
+			<method_credential user='backup' group='disk' />
 		</method_context>
 		<propval name='arg0' type='astring'
 		    value='amandad' />
@@ -58,7 +58,7 @@
 		<propval name='converted' type='boolean' value='true' />
 		<propval name='version' type='integer' value='1' />
 		<propval name='source_line' type='astring' value=
-'amanda stream tcp nowait amandabackup @amlibexecdir@/amandad amandad -auth=bsdtcp amdump'
+'amanda stream tcp nowait backup @amlibexecdir@/amandad amandad -auth=bsdtcp amdump'
 		/>
 	</property_group>
 
