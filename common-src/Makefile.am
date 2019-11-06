@@ -10,6 +10,8 @@ AM_CPPFLAGS = -I$(top_srcdir)/gnulib -I$(top_builddir)/common-src
 AM_CFLAGS = $(AMANDA_WARNING_CFLAGS) $(AMANDA_FILE_CFLAGS)
 AM_LDFLAGS = $(AMANDA_STATIC_LDFLAGS) $(AS_NEEDED_FLAGS)
 
+GENDATE = $(shell date --utc --date="@${SOURCE_DATE_EPOCH:-$(shell date +%s)}")
+
 amlib_LTLIBRARIES =	libamanda.la
 
 sbin_PROGRAMS = amservice
@@ -171,7 +173,6 @@ genversion.$(OBJEXT): $(genversion_SOURCES) genversion.h
 genversion.h ../perl/Amanda/Constants.pm.in: $(top_builddir)/config.status
 	-rm -f genversion.h genversion.h.new
 	echo '#define CC "$(CC)"' > genversion.h.new
-	GENDATE=`date`; \
 	echo '#define BUILT_DATE "'$$GENDATE'"' >> genversion.h.new; \
 	echo '#define BUILT_MACH "$(target)"' >> genversion.h.new; \
 	mv genversion.h.new genversion.h; \
