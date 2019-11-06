@@ -471,6 +471,16 @@ sub result_cb {
     if ($msgtype eq Amanda::Chunker::Protocol::DONE ||
 	$msgtype eq Amanda::Chunker::Protocol::PARTIAL) {
 	$msg_params{'size'} = ($params{'data_size'}+0) / 1024;
+        # the message 'size' parameter is in integer kb, but for
+        # small-but-not-empty files round it up to 1 (since
+        # the driver process assumes a zero value indicates the dump was
+        # invalid).
+        if (! $msg_params{'size'} && $params{'data_size'} > 0)  {
+            $msg_params{'size'} = 1;
+            # also update the "stats" string generated earlier in this
+            # function, to match the rounded-up size.
+            $stats = make_chunker_stats(1024, $params{'total_duration'});
+        }
 	$msg_params{'server_crc'} = $self->{'server_crc'};
 	$msg_params{'stats'} = $stats;
     }
