@@ -944,7 +944,7 @@ Relative pathnames are relative to the configuration directory.
   <term><amkeyword>indexdir</amkeyword> <amtype>string</amtype></term>
   <listitem>
 <para>Default
-<amdefault>&quot;/usr/adm/amanda/index&quot;</amdefault>.
+<amdefault>&quot;/etc/amanda/index&quot;</amdefault>.
 The directory where index files (backup image catalogues) are stored.
 Index files are
 only generated for filesystems whose
@@ -959,7 +959,7 @@ option enabled.</para>
   <term><amkeyword>infofile</amkeyword> <amtype>string</amtype></term>
   <listitem>
 <para>Default:
-<amdefault>&quot;/usr/adm/amanda/curinfo&quot;</amdefault>.
+<amdefault>&quot;/etc/amanda/curinfo&quot;</amdefault>.
 The file or directory name for the historical information database.
 If Amanda was configured to use DBM databases, this is the base file
 name for them.
@@ -1026,7 +1026,7 @@ tape label to any blank tape she encounters.</para>
   <term><amkeyword>logdir</amkeyword> <amtype>string</amtype></term>
   <listitem>
 <para>Default:
-<amdefault>&quot;/usr/adm/amanda&quot;</amdefault>.
+<amdefault>&quot;/etc/amanda&quot;</amdefault>.
 The directory for the
 <command>amdump</command>
 and
