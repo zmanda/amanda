@@ -28,7 +28,7 @@ Amanda::Interactivity -- Parent class for user interactivity modules
 
     use Amanda::Interactivity;
 
-    my $inter = Amanda::Interactivity->new(name => 'stdin');
+    my $inter = Amanda::Interactivity->new(name => 'tty');
     $inter->user_request(
 	message => "Insert Volume labelled 'MY_LABEL-001' in changer DLT",
 	label => 'MY_LABEL-001',
