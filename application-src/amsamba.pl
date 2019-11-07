@@ -516,9 +516,9 @@ sub command_estimate {
 	    push @ARGV, "-D", $self->{subdir},
 	}
 	if ($level == 0) {
-	    push @ARGV, "-c", "archive 0;recurse;du";
+	    push @ARGV, "-c", "archive 0;recurse;du *"; # needs '*' for current dir (from {subdir}) and below
 	} else {
-	    push @ARGV, "-c", "archive 1;recurse;du";
+	    push @ARGV, "-c", "archive 1;recurse;du *";
 	}
 	debug("execute: " . $self->{smbclient} . " " .
 	      join(" ", @ARGV));
