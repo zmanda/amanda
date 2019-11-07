@@ -204,7 +204,7 @@ sub roll_amdump_logs {
     my $days = getconf($CNF_TAPECYCLE) + 2;
     $days = ( $days <= @files ? $days : @files+0 );
 
-    splice(@files,-$days); # remove N from end of list
+    splice(@files,-$days); # remove $days from end or remove all
 
     foreach my $name (@files) {
 	unlink $name;
