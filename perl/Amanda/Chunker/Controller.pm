@@ -475,8 +475,8 @@ sub result_cb {
         # small-but-not-empty files round it up to 1 (since
         # the driver process assumes a zero value indicates the dump was
         # invalid).
-        if (! $msg_params{'size'} && $params{'data_size'} > 0)  {
-            $msg_params{'size'} = 1;
+        if ( $msg_params{'size'} < 1 && $params{'data_size'} > 0)  {
+            $msg_params{'size'} = 1;  # 1K .. nonzero
             # also update the "stats" string generated earlier in this
             # function, to match the rounded-up size.
             $stats = make_chunker_stats(1024, $params{'total_duration'});
