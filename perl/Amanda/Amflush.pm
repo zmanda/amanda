@@ -202,9 +202,10 @@ sub roll_amdump_logs {
     my $logdir = $self->{'logdir'};
     my @files = sort {-M $b <=> -M $a} grep { !/^\./ && -f "$_"} <$logdir/amdump.*>;
     my $days = getconf($CNF_TAPECYCLE) + 2;
-    for (my $i = $days-1; $i >= 1; $i--) {
-	my $a = pop @files;
-    }
+    $days = ( $days <= @files ? $days : @files+0 );
+
+    splice(@files,-$days); # remove $days from end or remove all
+
     foreach my $name (@files) {
 	unlink $name;
 	$self->amdump_log("unlink $name");
