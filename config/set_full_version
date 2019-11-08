@@ -59,13 +59,9 @@ set_version
 # Amanda makes it easy to "force" a version string: just set FULL_VERSION
 # *after* running autogen
 echo "..version substitution"
-echo "set version : $VERSION"
+echo "SET_VERSION : $VERSION"
 printf "$VERSION" > FULL_VERSION
 
 # Write out LONG_VERSION for installer build script.
-echo "set branch (long) : $LONG_BRANCH"
+echo "SET_LONG_BRANCH : $LONG_BRANCH"
 printf "$LONG_BRANCH" > LONG_BRANCH
-
-# Write out REV for installer build script.
-echo "set rev : $REV"
-printf "$REV" > REV
