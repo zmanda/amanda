@@ -9,19 +9,16 @@ use POSIX;
 # ARGV[1] = Destination file (usually ARGV[0] - ".src"
 
 #### Checks
-# We must run from the root of a source tree, but we can only check that the 
+# We must run from the root of a source tree, but we can only check that the
 # common files are in the right places
 if ( not -e "packaging/common/substitute.pl" ) {
     die "Error: 'substitute.pl' must be run from the root of a source tree"
 }
 
 sub get_date {
-    my $date;
-    # First parameter should be a date format string.
-    open(my $DATE_PIPE, "-|", "/bin/date $_[0]");
+    my $date = qx{date $_[0]};
     [ $? == 0 ] or die "could not read output of date $_[0]";
-    chomp($date = <$DATE_PIPE>);
-    close($DATE_PIPE);
+    chomp $date;
     return $date;
 };
 
@@ -34,16 +31,16 @@ sub read_file {
 	# $1 is the file name and must exist.
 	my $contents;
 	my $file = "$_[0]";
-	my $f_handle;
 	# Autogen has been run, the file will be there.
-	if (-e $file) {
+	if (-s $file) {
+            local $/;
+            my $f_handle;
 		open($f_handle, "<", "$file") or
 		    die "Could not open $file.";
 		chomp($contents = <$f_handle>);
 		close($f_handle);
-		
 	} else {
-		die "Could not find $file file. run config/set_full_version or ./autogen";
+		die "Could not find $file file. Run config/set_full_version or ./autogen";
 	}
 	return $contents;
 }
@@ -56,7 +53,149 @@ sub fix_pkg_rev {
     # strip pkg_type and maybe a zero, else assign pkg_rev = 1
     $pkg_rev = $pkg_rev =~ s/$type_match_str// || 1;
     return $pkg_rev;
+}
+
+sub find_platform_info {
+    my $arch = get_arch();
+
+    if ( $arch !~ m{x86_64|amd64|i686|i386} ) { 
+        print STDERR "ERROR: get_platform_info(): did not find arch \"$arch\"\n"; 
+        return [];
     }
+
+    my $RELTYPES = qx{exec 2>/dev/null; lsb_release --short --id};
+    chomp $RELTYPES;
+
+    $RELTYPES ||= qx{exec 2>/dev/null; . /etc/os-release; . /etc/lsb-release; echo -n "\$ID \$DISTRIB_ID"};
+    chomp $RELTYPES;
+
+    $RELTYPES ||= qx{exec 2>/dev/null; command ls -1 /etc/\{debian*,*release\}};
+    chomp $RELTYPES;
+
+    # change to all lowercase
+    $RELTYPES = lc($RELTYPES);
+    $RELTYPES =~ s/\n//sg;
+
+    my $RELVER = qx{exec 2>/dev/null; lsb_release --release};
+    chomp $RELVER;
+
+    $RELVER ||= qx{exec 2>/dev/null; cat /etc/debian_version};
+    chomp $RELVER;
+
+    # allow all digits for solaris or centos or rhel 
+    $RELVER ||= qx{exec 2>/dev/null; cat /etc/release /etc/centos-release /etc/redhat-release };
+    chomp $RELVER;
+
+    # get an obvious ident and use first-digit-range only
+    $RELVER ||= qx{exec 2>/dev/null; . /etc/os-release; . /etc/lsb-release; echo "\$VERSION_ID" };
+    chomp $RELVER;
+    
+    $RELVER =~ s/\n//sg;
+    $RELVER =~ s/^\D*//; 
+    $RELVER =~ s/\D*$//; 
+    chomp $RELVER;
+
+    # remove leading non-digits and toss all after first non-digit...
+    my $RELVER1 = $RELVER;
+    my $RELVER2 = $RELVER;
+
+    $RELVER1 =~ s/\D.*$//;
+
+    # remove leading non-digits and toss all after second non-digit...
+    $RELVER2 =~ s/\D(\d+)/$1/; 
+    $RELVER2 =~ s/\D.*$//;
+
+    $arch="amd64" 
+       if ( $RELTYPES =~ m/debian|ubuntu/i && $arch eq "x86_64" );
+    $arch="i386" 
+       if ( $RELTYPES =~ m/debian|ubuntu/i && $arch eq "i686" );
+
+    return [ ".$RELVER.pkg", "SunOS", $RELVER ]
+       if ( $RELTYPES eq "/etc/release" );
+
+    return [ ".fc${RELVER1}.${arch}.rpm", "Fedora", $RELVER1 ]
+       if ( $RELTYPES =~ m/fedora/ );
+
+    return [ ".rhel${RELVER1}.${arch}.rpm", "Centos", $RELVER1 ]
+       if ( $RELTYPES =~ m/centos/ );
+
+    # mention redhat only last
+    return [ ".rhel${RELVER1}.${arch}.rpm", "RHEL", $RELVER1 ]
+       if ( $RELTYPES =~ m/redhat/ );
+
+    return [ ".sles${RELVER2}.${arch}.rpm", "SLES", $RELVER2 ]
+       if ( $RELTYPES =~ m/\bsuse\b/ && $RELTYPES =~ m/\benterprise\b/ );
+
+    return [ ".suse${RELVER2}.${arch}.rpm", "SuSE", $RELVER2 ]
+       if ( $RELTYPES =~ m/opensuse/ );
+
+    return [ "Ubuntu${RELVER2}_${arch}.deb", "Ubuntu", $RELVER2 ]
+       if ( $RELTYPES =~ m/ubuntu/ );
+
+    # mention debian after ubuntu
+    return [ "Debian${RELVER1}_${arch}.deb", "Debian", $RELVER1 ]
+       if ( $RELTYPES =~ m/debian/ );
+
+    return [ ];
+}
+
+sub get_platform_info {
+    return [ $ENV{"PLATFORM_PKG"}, $ENV{"PLATFORM_DIST"}, $ENV{"PLATFORM_DISTVER"} ]
+       if ( $ENV{"PLATFORM_PKG"} && $ENV{"PLATFORM_DIST"} && $ENV{"PLATFORM_DISTVER"} );
+
+    my $arrayp = find_platform_info();
+    my ($suffix,$dist,$distver) = @{$arrayp};
+
+    $ENV{"PLATFORM_PKG"} = $suffix if ( ! $ENV{"PLATFORM_PKG"} );
+    $ENV{"PLATFORM_DIST"} = $dist if ( ! $ENV{"PLATFORM_DIST"} );
+    $ENV{"PLATFORM_DISTVER"} = $distver if ( ! $ENV{"PLATFORM_DISTVER"} );
+    return $arrayp;
+}
+
+use constant PLATFORM_GLIB2_VERSIONS => qw( 
+           rhel6  2.28.8
+           rhel7  2.56.1
+           rhel8  2.56.4
+
+           fc28   2.56.1
+           fc29   2.58.1
+           fc30   2.60.1
+           fc31   2.62.1
+
+           ubuntu1604   2.48.0
+           ubuntu1804   2.56.1
+           ubuntu1810   2.58.1
+           ubuntu1904   2.60.0
+
+           debian811   2.42.1
+           debian99    2.50.3
+           debian100   2.58.3
+           debian101   2.58.3
+    );
+
+sub get_glib2_version {
+    my $suffix = lc($ENV{"PLATFORM_PKG"});
+    my $dist = lc($ENV{"PLATFORM_DIST"}) . $ENV{"PLATFORM_DISTVER"};
+    my %lookup = (PLATFORM_GLIB2_VERSIONS);
+    my $ver = $lookup{$dist};
+
+    return $ver if ( defined($ver) );
+
+    if ( $suffix =~ m/\.deb$/ ) {
+       $ver = qx(dpkg-query -W libglib2.0-0);
+       $ver =~ s/.*\t([\d.]+).*/$1/;
+       return $ver;
+    }
+
+    return qx(exec 2>/dev/null; rpm -q --qf '%{VERSION}' glib2)
+}
+
+sub get_pkg_suffix { return @{get_platform_info()}[0]; }
+sub get_pkg_dist { return @{get_platform_info()}[1]; }
+sub get_pkg_distver { return @{get_platform_info()}[2]; }
+    
+# perform test on platform and remember...
+my $pkg_suffix = get_pkg_suffix();
 
 my $pkg_type;
 # Check environment to see if it's something else.
@@ -64,13 +203,13 @@ if (defined($ENV{'pkg_type'})) {
 	$pkg_type = $ENV{"pkg_type"};
 }
 # Check the file name for a clue
-elsif ( $ARGV[0] =~ /deb/ ) {
+elsif ( $pkg_suffix =~ /\.deb$/ ) {
 	$pkg_type = "deb";
 }
-elsif ( $ARGV[0] =~ /rpm/ ) {
+elsif ( $pkg_suffix =~ /\.rpm$/ ) {
 	$pkg_type = "rpm";
 }
-elsif ( $ARGV[0] =~ /sun/ ) {
+elsif ( $pkg_suffix =~ /\.pkg$/ ) {
 	$pkg_type = "sun";
 }
 else {
@@ -89,7 +228,7 @@ my %replacement_filenames = (
 # TODO: PRE_UNINST?
 );
 
-# These are handled slightly differently: The surrounding line is preserved, 
+# These are handled slightly differently: The surrounding line is preserved,
 # and only the tag is replaced.  This behavior is somewhat arbitrary, but
 # hopefully keeps replacements in comments syntax legal.
 my %replacement_strings_common = (
@@ -97,16 +236,18 @@ my %replacement_strings_common = (
 	"%%PKG_REV%%" => read_file("PKG_REV"),
 	"%%AMANDAHOMEDIR%%" => "/var/lib/amanda",
 	"%%LOGDIR%%" => "/var/log/amanda",
+	"%%PKG_SUFFIX%%" => get_pkg_suffix(),
+	"%%PKG_DIST%%" => lc(get_pkg_dist()),
+	"%%PKG_DISTVER%%" => get_pkg_distver(),
+	"%%DISTRO%%" => get_pkg_dist()
 );
 
 my %replacement_strings_deb = (
-	# Used in debian changelog
-	"%%DISTRO%%" => "",
 	# Used in changelog
-	"%%DEB_REL%%" => "",
+	"%%DEB_REL%%" => get_pkg_distver(),
 	"%%DATE%%" => "'+%a, %d %b %Y %T %z'",
 	# Used in server rules
-	"%%PERL%%" => "",
+	"%%PERL%%" => $^X
 );
 
 my %replacement_strings_rpm = (
@@ -125,92 +266,78 @@ if ( $pkg_type eq "deb" ) {
         $replacement_strings{"%%PKG_REV%%"} =
             fix_pkg_rev($replacement_strings{"%%PKG_REV%%"}, "deb");
 	# Let's determine the distro:
-        my $release;
-        if ( -e "/usr/bin/lsb_release" ) {
-            # Yay!  it's easy.
-            my $distro_id = `/usr/bin/lsb_release --id --short` or die "Could not run lsb_release!";
-            chomp ($replacement_strings{"%%DISTRO%%"} = $distro_id);
-
-            chomp($release = `/usr/bin/lsb_release --release --short`);
-        }
-	if ( $replacement_strings{"%%DISTRO%%"} eq "" ) {
-            # Let's hope it's debian.
-            open(my $DEB_RELEASE, "<", "/etc/debian_version") or die "Could not read \"/etc/debian_version\": $!";
-            # Whew!
-            $replacement_strings{"%%DISTRO%%"} = "Debian";
-            chomp($release = <$DEB_RELEASE>);
-            close($DEB_RELEASE);
-	}
-        # Fix the release version string.
-        if ( $replacement_strings{"%%DISTRO%%"} eq "Ubuntu" ) {
-            $release =~ s/\.//;
-        } else {
-            # Releases can have 3 fields on Debian.  we want the first 2.
-            $release =~ s/(\d+)\.(\d+).*/$1$2/;
-        }
-        $replacement_strings{"%%DEB_REL%%"} = $release;
 	$replacement_strings{"%%DATE%%"} = get_date($replacement_strings{"%%DATE%%"});
-	# 32bit should use bitrock perl, while 64bit should use builtin.  we
-	# live on the edge and assume it's there.
-	my $arch = get_arch();
-	if ( $arch eq "x86_64" ) {
-		$replacement_strings{"%%PERL%%"} = $^X;
-	}
-	else {
+	if ( get_arch() eq "x86_64" ) {
 		$replacement_strings{"%%PERL%%"} = "/opt/zmanda/amanda/perl/bin/perl";
 	}
 }
-elsif ( $pkg_type eq "rpm" ){
+
+if ( $pkg_type eq "rpm" ){
 	%replacement_strings = ( %replacement_strings_rpm,
 				 %replacement_strings_common );
         $replacement_strings{"%%PKG_REV%%"} =
             fix_pkg_rev($replacement_strings{"%%PKG_REV%%"}, "rpm");
 	$replacement_strings{"%%DATE%%"} = get_date($replacement_strings{"%%DATE%%"});
 }
-else {
+
+if ( $pkg_type eq "sun" ){
 	%replacement_strings = ( %replacement_strings_sun,
 				 %replacement_strings_common );
         $replacement_strings{"%%PKG_REV%%"} =
             fix_pkg_rev($replacement_strings{"%%PKG_REV%%"}, "sun");
 	$replacement_strings{"%%DATE%%"} = get_date($replacement_strings{"%%DATE%%"});
+
 	my $arch = get_arch();
-	if ( $arch eq "sun4u" ) {
-	    $replacement_strings{"%%ARCH%%"} = "sparc";
-	}
-	elsif ( $arch eq "i86pc" ) {
-	    $replacement_strings{"%%ARCH%%"} = "intel";
-	}
-	else {
-	    die "Unknown solaris platform!";
-	}
+        $replacement_strings{"%%ARCH%%"} = "sparc"
+            if ( $arch eq "sun4u" );
+        $replacement_strings{"%%ARCH%%"} = "intel"
+            if ( $arch eq "i86pc" );
+        die "Unknown solaris platform!"
+            if ( ! $replacement_strings{"%%ARCH%%"} );
 }
 
 # Make a hash of tags and the contents of replacement files
 my %replacement_data;
 while (my ($tag, $filename) = each %replacement_filenames) {
 	open(my $file, "<", $filename) or die "could not read \"$filename\": $!";
-	$replacement_data{$tag} = join "", <$file>;
+        {
+            local $/;  # remove line endings as barrier
+            $replacement_data{$tag} = join "", <$file>;
+        }
 	close($file);
 }
 open my $src, "<", $ARGV[0] or die "could not read $ARGV[0]: $!";
 open my $dst, ">", $ARGV[1] or die "could not write $ARGV[1]: $!";
 select $dst;
+
+my $line;
+
 while (<$src>) {
-	chomp;
-	# check for tags, using non greedy matching
-	if ( m/(%%.+?%%)/ ) {
-		# Data replaces the line
-		if ( defined($replacement_data{$1})) {
-			print $replacement_data{$1};
-		} 
-		# strings just replace the tag.
-		elsif ( defined($replacement_strings{$1})) {
-			s/(%%.+?%%)/$replacement_strings{$1}/g;
-			print "$_\n";
-		}
+    #
+    # check for tags, using non greedy matching
+    #
+    $line = $_;
+    SUBST:
+    # for all tags found in the line
+    while ( m/%%\w+?%%/g ) {
+        my $tag = $&;
+
+        # Data replaces the line
+        if ( defined($replacement_data{$tag})) {
+            $line = $replacement_data{$tag};
+            $line =~ s/\%/%%/g if ( $ARGV[1] =~ m/\.spec$/ );
+            last SUBST; # no more patterns
+        }
+
+        # strings just replace the tag(s).
+        if ( defined($replacement_strings{$tag})) {
+            my $replacing = $replacement_strings{$tag};
+            $replacing =~ s/\%/%%/g if ( $ARGV[1] =~ m/\.spec$/ );
+            $line =~ s/$tag/$replacing/; # replace one tag only...
 	}
-	else {
-		# If we got here, print the line unmolested
-		print "$_\n";
-	}
+
+        # if not... just print the line as is
+    }
+} continue {
+    print $line;
 }
