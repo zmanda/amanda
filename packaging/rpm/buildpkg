@@ -19,58 +19,24 @@
 # easy, unfortunately.  Look at the %build section, and the %define xxxx 
 # statements immediately above it. good luck.
 
-# This is useful for debugging
- set -x
-# Check for $AMVER, or pull it from configure.ac
-if [ -z $AMVER ]; then
-    VER=`cat FULL_VERSION`
-    AMVER=amanda-${VER}
-fi
+pkg_name=amanda
+. packaging/common/build_functions.sh
+. config/set_full_version
 
 # Until we get package revisioning in community.
 [ -f "PKG_REV" ] || echo "1" > PKG_REV
 
-[ -f "./configure" ] || \
-    { echo "./configure does not exist, please run ./autogen"; exit 1; }
+#[ -f "./configure" ] || \
+#    { echo "./configure does not exist, please run ./autogen"; exit 1; }
 
-# Substitute amanda.spec.src
-/usr/bin/perl packaging/common/substitute.pl \
-    packaging/rpm/amanda.spec.src packaging/rpm/amanda.spec || exit 1
+gen_pkg_build_config $pkg_root
 
-PKG_TARBALL=${AMVER}.tar.gz
-if [ ! -f "${PKG_TARBALL}" ]; then
-    mkdir ${AMVER} || exit 1
-    cp -Rfp * ${AMVER}/
-    tar -cf ${PKG_TARBALL} -z ${AMVER} || exit 1
-    rm -rf ${AMVER} || exit 1
-fi
+# take the spec/spec.src files and make a tarfile
+gen_pkg_environ
 
-# Check for the packaging dirs.
-if [ -z "$PKG_DIR" ]; then
-    PKG_DIR=${PWD}
-fi
-if [ ! -d ${PKG_DIR} ]; then
-    mkdir ${PKG_DIR} || exit 1
-fi
-cd ${PKG_DIR}
+[ -f ${PKG_DIR}/rpmbuild/SOURCES/${PKG_NAME_VER}.tar.gz ] || {
+	echo >&2 "missing ${PKG_DIR}/rpmbuild/SOURCES/${PKG_NAME_VER}.tar.gz file version=$PKG_NAME_VER in $PKG_DIR"
+	exit 1
+      }
 
-if [ -d rpm ]; then
-    rm -rf rpm || exit 1
-fi
-mkdir rpm
-mkdir rpm/SOURCES
-mkdir rpm/SRPMS
-mkdir rpm/SPECS
-mkdir rpm/BUILD
-mkdir rpm/RPMS || exit 1
-
-# Make a copy of the tarball in the rpmbuild location
-cp ${PKG_TARBALL} rpm/SOURCES/${PKG_TARBALL} || exit 1
-cp packaging/rpm/amanda.spec rpm/SPECS || exit 1
-# Rpmbuild requires absolute paths.  annoying.  If you need to change the 
-# default value of some rpm.spec variable, just pass extra --define options.
-# this is useful for changing %amanda_release or %amanda_version
-rpmbuild -ba --define "_topdir ${PKG_DIR}/rpm" \
-             ${PKG_DIR}/rpm/SPECS/amanda.spec || exit 1
-cp rpm/RPMS/*/*.rpm . || exit 1
-cp rpm/SRPMS/*.rpm . || exit 1
+do_package "amanda.spec"
