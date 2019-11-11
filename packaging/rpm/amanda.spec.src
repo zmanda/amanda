@@ -358,6 +358,8 @@ Amanda Documentation is available at: http://wiki.zmanda.com/
 
 # --- Unpack ---
 
+%define _builddir %{_topdir}/BUILD/%{name}-%{amanda_version}
+
 %prep
 %setup -q
 # --- Configure and compile ---
