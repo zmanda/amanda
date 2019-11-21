@@ -70,12 +70,19 @@ sub new {
     return bless ($self, $class);
 }
 
-sub last_use_label {
+sub last_use_label_from_pool {
     my $self = shift;
 
     my $tles = $self->{'tapelist'}->{tles};
-    return undef if !defined $tles->[0];
-    my $label = $tles->[0]->{'label'};
+    my $pool = $self->{'tapepool'};
+    for my $tle ( @{$tles} ) {
+	# skip if not set up
+        next if ( !$tle || !$tle->{'datestamp'});
+	# skip if not in specific pool
+        next if ( exists $tle->{'pool'} && $tle->{'pool'} && $tle->{'pool'} ne $pool );
+	    return $tle->{'label'};
+    }
+    return undef;
 }
 
 sub last_use_label_from_pool {
