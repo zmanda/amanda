@@ -63,9 +63,9 @@ $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/dles/ho
 is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Configs.pm",
-		'cfgerror' => "'$Amanda::Paths::CONFIG_DIR/TESTCONF/amanda.conf', line 10: could not open conf file '$Amanda::Paths::CONFIG_DIR/TESTCONF/amanda.conf': No such file or directory",
+		'cfgerror' => "parse error: could not open conf file '$Amanda::Paths::CONFIG_DIR/TESTCONF/amanda.conf': No such file or directory",
 		'severity' => $Amanda::Message::ERROR,
-		'message' => "config error: '$Amanda::Paths::CONFIG_DIR/TESTCONF/amanda.conf', line 10: could not open conf file '$Amanda::Paths::CONFIG_DIR/TESTCONF/amanda.conf': No such file or directory",
+		'message' => "config error: parse error: could not open conf file '$Amanda::Paths::CONFIG_DIR/TESTCONF/amanda.conf': No such file or directory",
 		'process' => 'Amanda::Rest::Dles',
 		'running_on' => 'amanda-server',
 		'component' => 'rest-server',
