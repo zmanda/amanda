@@ -201,7 +201,7 @@ my $logdir = $testconf->{'logdir'};
     my $logdata = do { local $/; <$fh> };
     close($fh);
 
-    like($logdata, qr/^INFO Amanda_Logfile This is my info/, "log_add works");
+    like($logdata, qr/^INFO (\.\/)?Amanda_Logfile This is my info/, "log_add works");
 
     is(Amanda::Logfile::get_current_log_timestamp(), "20300405060708",
 	"get_current_log_timestamp finds a timestamp");
