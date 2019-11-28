@@ -1,5 +1,6 @@
-Amanda (The Advanced Maryland Automatic Network Disk Archiver) Backup
-Software
+# Amanda
+## The Advanced Maryland Automatic Network Disk Archiver
+### Backup Software
 
 Copyright (c) 1991-1998 University of Maryland at College Park
 Copyright (c) 2007-2012 Zmanda, Inc.  All Rights Reserved.
@@ -11,107 +12,105 @@ available other than users helping each other on the Amanda mailing
 lists or forums. Formal support may be available through vendors.
 
 
-WHAT IS AMANDA?
----------------
+## What is AMANDA?
 
 Amanda is a backup system designed to backup and archive many
 computers on a network to disk, tape changer/drive or cloud storage.
 
 Here are some features of Amanda:
 
-  * Written in C and Perl.
+* Written in C and Perl.
 
-  * Freely distributable source and executable. University of Maryland
-    (BSD style) license and GPL.
+* Freely distributable source and executable. University of Maryland
+  (BSD style) license and GPL.
 
-  * Built on top of standard backup software: Unix dump/restore, GNU
-    Tar and other archival tools. It is extensible to support new
-    archival applications.
+* Built on top of standard backup software: Unix dump/restore, GNU
+  Tar and other archival tools. It is extensible to support new
+  archival applications.
 
-  * Open file and tape formats. If necessary, you can use standard
-    tools like mt and GNU Tar to recover data.
+* Open file and tape formats. If necessary, you can use standard
+  tools like mt and GNU Tar to recover data.
 
-  * Backs up 32 and 64 bit Windows machines.
+* Backs up 32 and 64 bit Windows machines.
 
-  * Will back up multiple machines in parallel to a holding disk. Once
-    a dump is complete, Amanda will copy finished dumps one by one to
-    virtual tape on a disk or tape as fast as it can.  For example:
+* Will back up multiple machines in parallel to a holding disk. Once
+  a dump is complete, Amanda will copy finished dumps one by one to
+  virtual tape on a disk or tape as fast as it can.  For example:
 
-    * A 30 GB backup to virtual tape on disk may take less than 75
-      minutes.
+* A 30 GB backup to virtual tape on disk may take less than 75
+  minutes.
 
-    * A 41GB backup to AIT5 (25MB/s transfer) may take 40 minutes of
+* A 41GB backup to AIT5 (25MB/s transfer) may take 40 minutes of
       tape time.
 
-  * Maintains a catalog of files being backed up and their location on
-    the media.
+* Maintains a catalog of files being backed up and their location on
+  the media.
 
-  * Does tape management: e.g. Amanda will not overwrite the wrong
-    tape.
+* Does tape management: e.g. Amanda will not overwrite the wrong
+  tape.
 
-  * For a restore, tells you what tapes you need, and finds the proper
-    backup image on the tape for you.
+* For a restore, tells you what tapes you need, and finds the proper
+  backup image on the tape for you.
 
-  * Supports tape changers via a generic interface.  Easily
-    customizable to any type of tape library, carousel, robot,
-    stacker, or virtual tape that can be controlled via the unix
-    command line.
+* Supports tape changers via a generic interface.  Easily
+  customizable to any type of tape library, carousel, robot,
+  stacker, or virtual tape that can be controlled via the unix
+  command line.
 
-  * Device API provides a pluggable interface to storage
-    devices. Bundled drivers support tapes and virtual tapes on disk,
-    DVD-RW, RAIT, and Amazon S3. The bundled amvault can then copy to
-    removable media for off-site (D2D2T) or cloud storage (D2D2C).
+* Device API provides a pluggable interface to storage
+  devices. Bundled drivers support tapes and virtual tapes on disk,
+  DVD-RW, RAIT, and Amazon S3. The bundled amvault can then copy to
+  removable media for off-site (D2D2T) or cloud storage (D2D2C).
 
-  * Supports secure communication between server and client using
-    OpenSSH, allowing secure backup of machines in a DMZ or out in the
-    Internet.
+* Supports secure communication between server and client using
+  OpenSSH, allowing secure backup of machines in a DMZ or out in the
+  Internet.
 
-  * Can encrypt backup archives on Amanda client or on Amanda server
-    using GPG or any encryption program.
+* Can encrypt backup archives on Amanda client or on Amanda server
+  using GPG or any encryption program.
 
-  * Can compress backup archives before sending or after sending over
-    the network, with compress, gzip or a custom program.
+* Can compress backup archives before sending or after sending over
+  the network, with compress, gzip or a custom program.
 
-  * Supports Kerberos 5 security, including encrypted dumps.
+* Supports Kerberos 5 security, including encrypted dumps.
 
-  * Recovers gracefully from errors, including down or hung machines.
+* Recovers gracefully from errors, including down or hung machines.
 
-  * Reports results in detail, including all errors, via email.
+* Reports results in detail, including all errors, via email.
 
-  * Dynamically adjusts the backup schedule to keep within
-    constraints: no more juggling by hand when adding disks and
-    computers to your network.
+* Dynamically adjusts the backup schedule to keep within
+  constraints: no more juggling by hand when adding disks and
+  computers to your network.
 
-  * Backup normalization: Amanda schedules full and incremental
-    backups so you don't have to, and so as to spread the load across
-    the backup cycle. Amanda will intelligently promote a backup level
-    in case it is determines that is optimal for resources.
+* Backup normalization: Amanda schedules full and incremental
+  backups so you don't have to, and so as to spread the load across
+  the backup cycle. Amanda will intelligently promote a backup level
+  in case it is determines that is optimal for resources.
 
-  * Includes a pre-run checker program, that conducts sanity checks on
-    both the tape server host and all the client hosts (in parallel),
-    and will send an e-mail report of any problems that could cause
-    the backups to fail.
+* Includes a pre-run checker program, that conducts sanity checks on
+  both the tape server host and all the client hosts (in parallel),
+  and will send an e-mail report of any problems that could cause
+  the backups to fail.
 
-  * IPv6 friendly.
+* IPv6 friendly.
 
-  * Runs transparently from cron as needed.
+* Runs transparently from cron as needed.
 
-  * Span tapes, i.e. if a single backup is too large for one tape,
-    Amanda will split it and put the pieces on multiple tapes
-    automatically.
+* Span tapes, i.e. if a single backup is too large for one tape,
+  Amanda will split it and put the pieces on multiple tapes
+  automatically.
 
-  * Application API allows custom backups for applications such as
-    relational databases, or for special file systems.
+* Application API allows custom backups for applications such as
+  relational databases, or for special file systems.
 
-  * Executes user-provided pre- and post-backup scripts, for,
-    e.g. enforcing database referential integrity.
+* Executes user-provided pre- and post-backup scripts, for,
+  e.g. enforcing database referential integrity.
 
-  * Award-winning! Including: Linux Journal Readers' Choice Award.
+* Award-winning! Including: Linux Journal Readers' Choice Award.
 
-  * Lots of other options; Amanda is very configurable.
+* Lots of other options; Amanda is very configurable.
 
-WHAT ARE THE SYSTEM REQUIREMENTS FOR AMANDA?
---------------------------------------------
+## What are the system requirements for AMANDA?
 
 Amanda requires a host that has access to disks (local, NAS or SAN) or
 a large capacity tape drive or library. All modern tape formats,
@@ -142,9 +141,7 @@ larger than the holding disk: Amanda will send those dumps directly to
 tape one at a time.  If you have many such dumps you will be limited
 by the dump speed of those machines.
 
-
-WHAT SYSTEMS DOES AMANDA RUN ON?
---------------------------------
+## What systems does Amanda run on?
 
 Amanda should run on any modern Unix system that supports dump or GNU
 tar, has sockets and inetd (or a replacement such as xinetd), and
@@ -177,24 +174,25 @@ compression and encryption operations). It is recommended that you
 have a server class CPU in the backup server.
 
 
-WHERE DO I GET AMANDA?
-----------------------
+## Where do I get Amanda?
 
-Amanda, including its source tree, is on SourceForge:
+Until early 2019 Amanda, including its source tree, was on SourceForge:
 
-        http://sourceforge.net/projects/amanda
+http://sourceforge.net/projects/amanda
 
-Or see
-        http://www.amanda.org/download.php
+Since spring 2019 the main development of the community version happens on GitHub:
+
+https://github.com/zmanda/amanda
+
+Or see http://www.amanda.org/download.php
 
 Most Linux distributions include amanda rpms or debian packages
 pre-built for various architectures. Pre-built binaries are also
 available at:
 
-        http://www.zmanda.com/download-amanda.php
+http://www.zmanda.com/download-amanda.php
 
-HOW DO I GET AMANDA UP AND RUNNING?
------------------------------------
+## How do I get Amanda up and running?
 
 Read the file docs/INSTALL.  There are a variety of steps, from
 compiling Amanda to installing it on the backup server host and the
@@ -205,28 +203,31 @@ client machines.
 
 You can read Amanda documentation at:
 
-        http://www.amanda.org
+http://www.amanda.org
 
 and at the Amanda wiki:
 
-        http://wiki.zmanda.com
+http://wiki.zmanda.com
 
-WHO DO I TALK TO IF I HAVE A PROBLEM?
--------------------------------------
+## Who do I talk to if I have a problem?
 
-You can get Amanda help and questions answered from the mailing lists and
-Amanda forums:
+* You may file Issues at GitHub:
 
-==> To join a mailing list, DO NOT, EVER, send mail to that list.  Send
-    mail to <listname>-request@amanda.org, or amanda-lists@amanda.org,
-    with the following line in the body of the message:
-        subscribe <listname> <your-email-address>
+https://github.com/zmanda/amanda/issues
 
-    You will receive an email acknowledging your subscription. Keep
-    it. Should you ever wish to depart our company, it has unsubscribe
-    and other useful information.
+* You can get Amanda help and questions answered from the mailing lists and
+Amanda forums.
 
-    amanda-announce
+Check http://www.amanda.org/support/mailinglists.php
+
+for instructions how to subscribe.
+
+You will receive an email acknowledging your subscription. Keep
+it. Should you ever wish to depart our company, it has unsubscribe
+and other useful information.
+
+* amanda-announce
+
         The amanda-announce mailing list is for important announcements
         related to the Amanda Network Backup Manager package, including new
         versions, contributions, and fixes.  NOTE: the amanda-users list is
@@ -234,14 +235,16 @@ Amanda forums:
         subscribe to one of the two lists, not both.
         To subscribe, send a message to amanda-announce-request@amanda.org.
 
-    amanda-users
+* amanda-users
+
         The amanda-users mailing list is for questions and general discussion
         about the Amanda Network Backup Manager.  NOTE: the amanda-users list
         is itself on the amanda-announce distribution, so you only need to
         subscribe to one of the two lists, not both.
         To subscribe, send a message to amanda-users-request@amanda.org.
 
-    amanda-hackers
+* amanda-hackers
+
         The amanda-hackers mailing list is for discussion of the
         technical details of the Amanda package, including extensions,
         ports, bugs, fixes, and alpha testing of new versions.
@@ -252,4 +255,4 @@ Amanda forums: http://forums.zmanda.com
 Amanda Platform Experts: http://wiki.zmanda.com/index.php/Platform_Experts
 
 Backup, Share and Enjoy,
-The Amanda Development Team
+The Amanda Development Team, 2019
