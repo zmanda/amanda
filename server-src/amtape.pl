@@ -495,7 +495,7 @@ sub {
 	    }
 	};
 
-	$interactivity = Amanda::Interactivity->new(name => 'stdin');
+	$interactivity = Amanda::Interactivity->new(name => 'tty');
 	($storage, $chg) = load_changer($finished_cb) or return;
 	$scan = Amanda::Recovery::Scan->new(chg => $chg,
 					    interactivity => $interactivity);
