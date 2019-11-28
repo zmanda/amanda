@@ -89,6 +89,8 @@ amlibexec_SCRIPTS = $(amlibexec_SCRIPTS_PERL) $(amlibexec_SCRIPTS_SHELL)
 LDADD = ../common-src/libamanda.la   \
 	libamserver.la               \
 	../device-src/libamdevice.la     \
+	../xfer-src/libamxfer.la         \
+	../ndmp-src/libndmlib.la         \
 	../common-src/libamanda.la
 
 libamserver_la_SOURCES=	amindex.c	cmdfile.c \

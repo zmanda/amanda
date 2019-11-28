@@ -26,7 +26,8 @@ noinst_HEADERS = \
 sbin_PROGRAMS = amarchiver
 
 amarchiver_SOURCES = amarchiver.c
-amarchiver_LDADD = libamar.la
+amarchiver_LDADD = libamar.la \
+	../common-src/libamanda.la
 
 # automake-style tests
 
@@ -35,4 +36,5 @@ noinst_PROGRAMS = $(TESTS)
 
 amar_test_SOURCES = amar-test.c
 amar_test_LDADD = libamar.la \
-	../common-src/libtestutils.la
+	../common-src/libtestutils.la \
+	../common-src/libamanda.la

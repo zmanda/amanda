@@ -57,7 +57,8 @@ noinst_PROGRAMS = $(TESTS)
 xfer_test_SOURCES = xfer-test.c
 xfer_test_LDADD = \
 	../common-src/libtestutils.la \
-	libamxfer.la
+	libamxfer.la \
+	../common-src/libamanda.la
 
 # lint support
 
