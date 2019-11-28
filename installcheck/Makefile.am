@@ -288,11 +288,11 @@ SCRIPTS_EXTRA_DIST = $(all_tests)
 # skip syntax checks on these files, since we're about to run all of them
 SKIP_CHECKS = yes
 
+# remove executible perm for amcat-error-no-exec ...
+# and allow the amandabackup user to operate in this dir
 installcheck-build: $(SCRIPTS_PERL) $(SCRIPTS_SHELL)
 	for i in amcat*; do chmod a+x $$i; done
-	# remove executible test for this one...
 	[ -x amcat-error-no-exec ] && chmod a-x amcat-error-no-exec || true
-	# allow the amandabackup user to operate in this dir
 	[ -O . ] && chmod a+w . || true
 	ls -1 $(tests) 2>/dev/null | xargs chmod a-x
 

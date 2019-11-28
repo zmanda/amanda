@@ -555,6 +555,17 @@ bail:
     }
 }
 
+sub get_sortable($) {
+    my ($a) = $_[0];
+    $a =~ s{(\\.)[+]?}{$1}g;
+    $a =~ s{\*|\*\?|\?}{}g;
+    $a =~ s{\\s}{ }g;
+    $a =~ s{\\d}{0}g;
+    $a =~ s{\\}{}g;
+    $a =~ s{^\\s*}{};
+    return $a;
+}
+
 sub diag_diff
 {
     my ( $a, $b, $text ) = @_;
@@ -565,8 +576,20 @@ sub diag_diff
 
     my @a = split /\n/, $a;
     my @b = split /\n/, $b;
+    my ($na,$nb) = (0, 0);
+    my ($blanks) = 0;
     while (defined(my $la = shift @a)) {
+        # revert auto-inc for nb
+        ++$blanks,--$nb,next
+           if ( $la !~ m/\S/ && $b[0] !~ m/\S/ ); # both are blank? absorb recvd line
+
 	my $lb = shift @b;
+
+        # absorb all match-blank lines after some blank<->blank match region is over
+        ($lb = shift @b),++$nb
+           while ( $blanks && @b && $lb !~ m/\S/ );
+
+        $blanks = 0;
 
 	if ($la =~ /^  \/-- /) {
 	    my @ax;
@@ -580,26 +603,39 @@ sub diag_diff
 	    }
 	    $lb = shift @b;
 
-	    @ax = sort @ax;
-	    @bx = sort @bx;
+            # modify out regex and sort the same way (to keep the same)
+	    @ax = grep { m/\S/; } 
+                  sort { our ($a,$b); return get_sortable($a) cmp get_sortable($b); } 
+                     @ax;
+	    @bx = grep { m/\S/; } 
+                  sort { our ($a,$b); return get_sortable($a) cmp get_sortable($b); } 
+                     @bx;
 	    while (defined(my $xa = shift @ax)) {
 		my $xb = shift @bx;
 		if ($xa !~ /^$xb$/){
 		    $fail = 1;
 		    diag("-$xa");
 		    diag("+$xb");
-		}
+		#} else {
+		#    diag("=$xb");
+                }
 	    }
 	}
 	if ($la !~ /^$lb$/){
-		$fail = 1;
-	    diag("-$la");
-	    diag("+$lb");
-	}
+            $fail = 1;
+	    diag("[$na]-$la");
+	    diag("[$nb]+$lb");
+        #} else {
+        #   diag("[$na/$nb]=$lb") if ( $na != $nb );
+        #   diag("[$na]=$lb") if ( $na == $nb );
+        }
+    } continue {
+        ++$nb;
+        ++$na;
     }
     foreach my $lb (@b) {
 	$fail = 1;
-	diag("+$lb");
+	diag("+(extra) $lb");
     }
     ok(!$fail, "$text: match");
 
@@ -617,14 +653,17 @@ sub is_sort_array
     is_deeply(\@aa, \@bb, $text);
 }
 
-sub escape_regex($) {
-    # chars \ ] [ * + ? { } ^ $ ( and ) can safely be escaped into regex-literals
-    $_[0] =~ s/[\\\][*+?\$^{}().]/\\$&/gs;
+sub my_quotemeta($) {
+    # allow spaces, tabs, commas, colons and dashes to be unquoted to make matching easier in program regexes
+    my $v = quotemeta($_[0]);
+    $v =~ s{\\([-@%: \t/,\n\r])}{\1}gs;
+    $v =~ s{\\$}{}gm;
+    return $v;
 }
 
 sub check_amreport
 {
-    my $report = shift;
+    my $report = my_quotemeta(shift);
     my $timestamp = shift;
     my $text = shift || 'amreport';
     my $sorting = shift;
@@ -634,25 +673,25 @@ sub check_amreport
 
     # change patterns into regex... so escape fresh regex-style chars first
 
-    escape_regex($status);
-
     # absorb \. here.. (escaped .)
     $report =~ s/999999\\\.9/\\s*\\d+\\\.\\d/g;
     $report =~ s/0:00/\\s*\\d:\\d\\d/g;
     # absorb \* here.. (escaped *)
     $report =~ s/\s+(\\\*)?--\n/\\s*--\n/mg;
 
-    $report =~ s/sendbackup:\s*(\w+-CRC)\b.*?:(\d+)/sendbackup:\\s*$1.*?([[:xdigit:]]+):$2/g;
+    $report =~ s/sendbackup:\s+(\w+-CRC)\b.*?:(\d+)/sendbackup:\\s+$1.*?([[:xdigit:]]+):$2/g;
     $report =~ s/PID/\\s*\\d+/g;
 
     my ($year, $month, $day) = ($timestamp =~ m/^(\d\d\d\d)(\d\d)(\d\d)/);
     my $date  = POSIX::strftime('%B %e, %Y', 0, 0, 0, $day, $month - 1, $year - 1900);
     $date =~ s/  / /g;
+    $date = my_quotemeta($date);
     my $hostname = `hostname`;
     chomp $hostname;
-    my $version = $Amanda::Constants::VERSION;
-    escape_regex($version);
+    $hostname = my_quotemeta($hostname);
+    my $version = my_quotemeta($Amanda::Constants::VERSION);
 
+    # require correct date, version and hostname to match
     $report =~ s/Date\s+:\s+.*$/Date\\s+:\\s+$date/mg;
     $report =~ s/Hostname:\s+.*$/Hostname:\\s+$hostname/mg;
     $report =~ s/brought to you by Amanda version .*\\/brought to you by Amanda version $version\\/g;
@@ -719,15 +758,13 @@ sub check_amreport
 
 sub check_amstatus
 {
-    my $status = shift;
+    my $status = my_quotemeta(shift);
     my $tracefile = shift;
     my $text = shift || 'amstatus';
 
-    escape_regex($status);
-
     # ( NN.NN%) --> match a decimal number with backref
-    $status =~ s{\s+   \( \s* \d+ \\\. \d+ % \) }
-                {\\s+(\\d+[.]\\d*%)}gx;
+    $status =~ s{\s+   \\\( \s* \d+ \\\. \d+ % \\\) }
+                {\\s+\\(\\s*(\\d+[.]\\d*)%\\)}gx;
 
     # 00:00:00 --> allow any time
     $status =~ s/00:00:00/[\\s\\d]\\d:\\d\\d:\\d\\d/g;
@@ -740,8 +777,8 @@ sub check_amstatus
     # match any "From " line with anything following
     $status =~ s/From\s.*$/From\\s.*/mg;
 
-    # append a "discard-the-rest" for "dumper/dumpers busy" lines.. after a real backref paren
-    $status =~ s/^[\s\d]*dumpers? busy.*?[)]/$&.*/mg;
+    # append a "allow-anything" spacing for "dumper/dumpers busy" lines.. after a real backref paren
+    $status =~ s/^[\s\d]*dumpers? busy.*?\\\)/$&.*/mg;
 
     # discard any not-idle line with anything following
     $status =~ s/^\s*not-idle.*\n//mg;
