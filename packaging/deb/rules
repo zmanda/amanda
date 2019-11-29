@@ -131,6 +131,7 @@ binary-arch: build
 	echo "---->dh_installdocs: " >> $(log)
 	dh_installdocs -v >> $(log) 2>&1
 	install -d $(r)/$(DOCDIR)/amanda-common/examples
+	install -m 644 common-src/amanda-security.conf $(r)/$(SYSCONFDIR)
 	cp -a example/* $(r)/$(DOCDIR)/amanda-common/examples
 	cp ChangeLog $(r)/$(DOCDIR)/amanda-common/changelog
 	echo "---->dh_installchangelogs: " >> $(log)
