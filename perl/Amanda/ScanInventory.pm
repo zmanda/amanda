@@ -238,37 +238,40 @@ sub _scan {
     step action => sub {
 	$self->{'slot-error-message'} = undef;
 
-	if ($res) {
-	    my $dev = $res->{'device'};
-	    if ($dev) {
-		my $volume_header = $dev->volume_header;
-		if ($dev->status == $DEVICE_STATUS_SUCCESS) {
-		    my $label = $volume_header->{'name'};
-		    if ($self->is_reusable_volume(label => $label, new_label_ok => 1)) {
-			    $action = Amanda::ScanInventory::SCAN_DONE;
-			    return $steps->{'call_result_cb'}->(undef, $res);
-		    } else {
-			my $vol_tle = $self->{'tapelist'}->lookup_tapelabel($label);
-			if ($vol_tle) {
-			    if ($self->volume_is_new_labelled($vol_tle, {label => $label, barcode => $res->{barcode}})) {
-				$action = Amanda::ScanInventory::SCAN_DONE;
-				return $steps->{'call_result_cb'}->(undef, $res);
-			    }
-			}
-		   }
-		} else {
-		    if ($self->volume_is_labelable({ device_status => $dev->status,
+        #
+        # perform labelling checks
+        #
+        {
+            last if (!$res);             # cannot label
+            last if (!$res->{'device'}); # cannot label
+
+            my $status = $res->{'device'}->status;
+            my $volume_header = $res->{'device'}->volume_header;
+            my $label = $volume_header->{'name'};
+
+            if ( $status == $DEVICE_STATUS_SUCCESS ) {
+                # success if device has success and is_reusable_volume()
+                next if ($self->is_reusable_volume(label => $label, new_label_ok => 1));
+
+                my $vol_tle = $self->{'tapelist'}->lookup_tapelabel($label);
+                # success if device has success and volume_is_new_labelled()
+                next if ($vol_tle && $self->volume_is_new_labelled($vol_tle, {label => $label, barcode => $res->{barcode}}));
+            }
+
+            # try if volume_is_labelable at all...
+            next if ($self->volume_is_labelable({ device_status => $status,
 						     f_type  => $volume_header->{'type'},
 						     label   => $label,
 						     slot    => $res->{'this_slot'},
 						     barcode => $res->{'barcode'},
-						     meta    => $res->{'meta'} })) {
-			$action = Amanda::ScanInventory::SCAN_DONE;
-			return $steps->{'call_result_cb'}->(undef, $res);
-		    }
-		}
-	    }
-	}
+                                                     meta    => $res->{'meta'} }));
+            last; # cannot complete scan
+        } continue {
+            # next keyword will pass through here...
+            $action = Amanda::ScanInventory::SCAN_DONE;
+            return $steps->{'call_result_cb'}->(undef, $res);
+        }
+
 	delete $self->{'use_sl'};
 	if (!$self->{'slots'} || !@{$self->{'slots'}} || !defined $self->{'slots'}->[0]) {
 	    $self->{'slots'} = $self->analyze($inventory, $self->{seen});
