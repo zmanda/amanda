@@ -33,7 +33,9 @@ LOGDIR=$(LOCALSTATEDIR)/log/amanda
 # Extract the perl site_lib directory.  This is used to install amanda's perl 
 # libs. If configure finds a different install or you specify a different path using
 # --with-amperldir= make sure you change this variable as well.
-PERLSITELIB=$(shell perl -V:installsitelib|sed -e"s:installsitelib='/::;s:'\;::")
+PERLVENDORARCH=$(shell $(shell perl -V:installvendorarch); echo $$installvendorarch)
+PERLSITEARCH=$(shell $(shell perl -V:installsitearch); echo $$installsitearch)
+PERLLIBDIR=$(PERLSITEARCH)
 AMANDAUSER=amandabackup
 AMANDAGROUP=disk
 WITHOUT_SERVER="False"
@@ -56,6 +58,7 @@ WD=$(CWD)
 build: build-stamp
 build-stamp: /sbin/dump /usr/bin/smbclient
 	dh_testdir
+	[ -f ./configure ] || ./autogen
 	./configure \
 		MAKEFLAGS="-j1 " \
 		CFLAGS="-pipe " \
@@ -136,7 +139,7 @@ binary-arch: build
 	echo "---->dh_installchangelogs: " >> $(log)
 	dh_installchangelogs -v >> $(log) 2>&1
 	# Here's how we get the perl modules installed into sitelib
-	echo $(PERLSITELIB)/* >> debian/amanda-backup-server.install
+	echo $(PERLLIBDIR)/* >> debian/amanda-backup-server.install
 	echo "---->dh_install -v --fail-missing: " >> $(log)
 	dh_install -v --sourcedir=$(r) >> $(log) 2>&1
 	echo "---->dh_strip: " >> $(log)
