@@ -250,8 +250,8 @@ Amanda Documentation is available at: http://wiki.zmanda.com/
 %define INCLUDEDIR      %{PREFIX}/include
 %define MANDIR          %{DATADIR}/man
 %define LOGDIR          /var/log/amanda
-%define PERLVENDORARCH   %(eval "perl -V:installvendorarch`"; echo $installvendorarch)
-%define PERLSITEARCH   %(eval "perl -V:installsitearch`"; echo $installsitearch)
+%define PERLVENDORARCH   %(eval $(perl -V:installvendorarch); echo $installvendorarch)
+%define PERLSITEARCH   %(eval $(perl -V:installsitearch); echo $installsitearch)
 %define PERLLIBDIR      %PERLSITEARCH
 %define AMDATADIR	/var/lib/amanda
 
