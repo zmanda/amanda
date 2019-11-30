@@ -556,6 +556,7 @@ typedef struct lifecycle_action {
 
 typedef struct lifecycle_rule {
     char *id;
+    char *filter;
     char *prefix;
     char *status;
     lifecycle_action *transition;

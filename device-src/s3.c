@@ -1047,7 +1047,19 @@ authenticate_request(S3Handle *hdl,
 	}
 	g_string_append(auth_string, "\n");
 
-        /* Header must be in alphebetic order */
+        if (subresource && strcmp(subresource, "lifecycle") == 0 && md5_hash && '\0' != md5_hash[0]) {
+            g_string_append(auth_string, "content-md5:");
+            g_string_append(auth_string, md5_hash);
+            g_string_append(auth_string, "\n");
+
+            buf = g_strdup_printf("Content-MD5: %s", md5_hash);
+            headers = curl_slist_append(headers, buf);
+
+            g_string_append(strSignedHeaders, "content-md5;");
+            g_free(buf);
+        }
+
+    /* Header must be in alphebetic order */
 	if (hdl->use_subdomain) {
 	    g_string_append(auth_string, "host:");
 	    g_string_append(auth_string, bucket);
@@ -1952,7 +1964,7 @@ interpret_response(S3Handle *hdl,
         return FALSE;
     } else if ((hdl->content_type &&
 		!g_str_equal(hdl->content_type, "application/xml")) ||
-	       (!hdl->content_type &&
+	       (!hdl->content_type && hdl->transfer_encoding &&
 		!g_str_equal(hdl->transfer_encoding, "chunked") &&
 		!g_strstr_len(body, body_len, "xml version"))) {
 	return FALSE;
@@ -2491,11 +2503,19 @@ perform_request(S3Handle *hdl,
     }
 
     if (hdl->s3_api == S3_API_AWS4) {
-	if (read_data) {
-	    data_SHA256Hash = s3_compute_sha256_hash_ba(read_data);
-	} else {
-	    data_SHA256Hash = s3_compute_sha256_hash((unsigned char *)"", 0);
-	}
+        if (read_data) {
+            data_SHA256Hash = s3_compute_sha256_hash_ba(read_data);
+        } else {
+            data_SHA256Hash = s3_compute_sha256_hash((unsigned char *)"", 0);
+        }
+        if (subresource && strcmp(subresource, "lifecycle") == 0 && md5_func) {
+            md5_hash = md5_func(read_data);
+            if (md5_hash) {
+                md5_hash_b64 = s3_base64_encode(md5_hash);
+                md5_hash_hex = s3_hex_encode(md5_hash);
+                g_byte_array_free(md5_hash, TRUE);
+            }
+        }
     } else if (md5_func) {
         md5_hash = md5_func(read_data);
         if (md5_hash) {
@@ -4664,6 +4684,7 @@ typedef struct lifecycle_thunk {
     gboolean in_LifecycleConfiguration;
     gboolean in_Rule;
     gboolean in_ID;
+    gboolean in_Filter;
     gboolean in_Prefix;
     gboolean in_Status;
     gboolean in_Transition;
@@ -4687,6 +4708,7 @@ free_lifecycle_rule(
     lifecycle_rule *rule = (lifecycle_rule *)data;
 
     g_free(rule->id);
+    g_free(rule->filter);
     g_free(rule->prefix);
     g_free(rule->status);
     if (rule->transition) {
@@ -4729,6 +4751,9 @@ lifecycle_start_element(GMarkupParseContext *context G_GNUC_UNUSED,
 	thunk->rule = g_new0(lifecycle_rule, 1);
     } else if (g_ascii_strcasecmp(element_name, "id") == 0) {
 	thunk->in_ID = TRUE;
+        thunk->want_text = TRUE;
+    } else if (g_ascii_strcasecmp(element_name, "filter") == 0) {
+        thunk->in_Filter = TRUE;
         thunk->want_text = TRUE;
     } else if (g_ascii_strcasecmp(element_name, "prefix") == 0) {
 	thunk->in_Prefix = TRUE;
@@ -4775,6 +4800,11 @@ lifecycle_end_element(GMarkupParseContext *context G_GNUC_UNUSED,
 	thunk->in_ID = FALSE;
 	thunk->rule->id = thunk->text;
 	thunk->text = NULL;
+        thunk->want_text = FALSE;
+    } else if (g_ascii_strcasecmp(element_name, "filter") == 0) {
+        thunk->in_Filter = FALSE;
+        thunk->rule->filter = thunk->text;
+        thunk->text = NULL;
         thunk->want_text = FALSE;
     } else if (g_ascii_strcasecmp(element_name, "prefix") == 0) {
 	thunk->in_Prefix = FALSE;
@@ -4854,6 +4884,7 @@ s3_get_lifecycle(
     thunk.in_LifecycleConfiguration = FALSE;
     thunk.in_Rule = FALSE;
     thunk.in_ID = FALSE;
+    thunk.in_Filter = FALSE;
     thunk.in_Prefix = FALSE;
     thunk.in_Status = FALSE;
     thunk.in_Transition = FALSE;
@@ -4944,7 +4975,7 @@ s3_put_lifecycle(
     for (life = lifecycle; life != NULL; life = life->next) {
 	rule = (lifecycle_rule *)life->data;
 	g_string_append_printf(body,
-		"<Rule><ID>%s</ID><Prefix>%s</Prefix><Status>%s</Status>",
+		"<Rule><ID>%s</ID><Filter><Prefix>%s</Prefix></Filter><Status>%s</Status>",
 		rule->id, rule->prefix, rule->status);
 	if (rule->transition) {
 	    g_string_append(body, "<Transition>");
