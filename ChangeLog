@@ -1,5 +1,56 @@
+2019-11-30  Chris Hassell <lamby@debian.org>
+	* perl/Amanda/Taper/Scan/lexical.pm (last_use_label_from_pool):  issue #126
+		bad copy-paste fail fix
+
+2019-11-28  Daniel T Chen <crimsun@ubuntu.com>
+	* amar-src/Makefile.am, ndmp-src/Makefile.am, perl/Makefile.am,
+	  server-src/Makefile.am, xfer-src/Makefile.am: issue 129,
+		add libamanda.la, libndmlib.la and libamxfer.la into important linking
+
+2019-11-28  Debian Packagers <chris.hassell@betsol.com>
+	* perl/Amanda/Interactivity.pm, server-src/amtape.pl: issue #128,
+		exchange 'stdin' to 'tty' as interactivity label
+
+2019-11-28  Chris Hassell <chris.hassell@betsol.com>
+	* application-src/amsamba.pl (command_estimate): issue #132 fixed
+		use wildcard to force samba to estimate from dir and not whole disk
+
+2019-11-28  Chris Hassell <chris.hassell@betsol.com>
+	* perl/Amanda/Taper/Scan/lexical.pm (last_use_label_from_pool):  issue #126,
+		lexical.pm now uses matching pool or undefined pool for tapes
+
+2019-11-07  Debian Packagers <chris.hassell@betsol.com>
+	* perl/Amanda/Chunker/Controller.pm: rounding bug for very small backups
+
+2019-11-07  Orion Poplawski <orion@nwra.com>
+	* perl/Amanda/Report/human.pm: Emit a note on small estimates
+
+2019-11-07  Diego Zuccato <diego.zuccato@unibo.it>, Stefan G. Weichinger <office@oops.co.at>
+	* application-src/amsamba.pl: accept "Unable to initialize messaging context" errs
+
+2019-11-07  Debian Packagers <chris.hassell@betsol.com>
+	* perl/Amanda/Amflush.pm: Issue #86: prevent AMINF from infinite loop causing
+
+2019-11-05  Debian Packagers <chris.hassell@betsol.com>
+	* common-src/protocol.c:  double-call reduces latency/missed alarms
+
+2019-11-05  Will Aoki <waoki@umnh.utah.edu>
+	* perl/Amanda/Changer/robot.pm: add Carp module use line
+
+2019-05-07  Chris Hassell <chris.hassell@betsol.com>
+	* config/*: use automake --add-missing to copy files each build
+	    ( compile config.guess config.sub depcomp install-sh missing mkinstalldirs
+		test-driver ylwrap )
+	* device-src/Makefile.am, ndmp-src/Makefile.am, perl/Makefile.am,
+	  config/amanda/amanda_configure.m4: use search for stdint.h and libtirpc
+	* config/amanda/progs.m4: update quotes to make it work
+	* packaging/deb/amanda-backup-client.*: remove extra path-patterns
+	* packaging/deb/compat: allow level 5 and below compatibility
+	* packaging/deb/rules: build manpages by default
+	* packaging/rpm/amanda.spec.src: build manpages by default
+
 2019-04-26  Badal Dave <badaladave@gmail.com>
-        * perl/Amanda/Taper/Scribe.pm: Adding tape barcode info to logs
+	* perl/Amanda/Taper/Scribe.pm: Adding tape barcode info to logs
 
 2019-01-18  Hiten Shah <hiten.shah@betsol.com>
 	* application-src/amgtar.c: Filter GNU tar arguments
