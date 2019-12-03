@@ -132,7 +132,7 @@ sub command_estimate {
 	$self->print_to_server("include-list not supported for backup",
 			       $Amanda::Script_App::ERROR);
     }
-    if ($#{$self->{include_list}} >= 0) {
+    if ($#{$self->{exclude_list}} >= 0) {
 	$self->print_to_server("exclude-list not supported for backup",
 			       $Amanda::Script_App::ERROR);
     }
@@ -188,7 +188,7 @@ sub command_backup {
 	$self->print_to_server("include-list not supported for backup",
 			       $Amanda::Script_App::ERROR);
     }
-    if ($#{$self->{include_list}} >= 0) {
+    if ($#{$self->{exclude_list}} >= 0) {
 	$self->print_to_server("exclude-list not supported for backup",
 			       $Amanda::Script_App::ERROR);
     }
