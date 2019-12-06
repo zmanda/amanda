@@ -140,12 +140,13 @@ ok(!@{$backup->{'errors'}}, "no errors during backup")
 is(length($backup->{'data'}), $backup->{'size'}, "reported and actual size match");
 
 ok(@{$backup->{'index'}}, "index is not empty");
+grep { s{^.*? \.}{}; s{ \-\> \S*$}{}; s{ link to \./.*}{}; } @{$backup->{'index'}};
 ok_foreach(
     sub {
         my $obj = shift @_;
         my $name = $obj->{'name'};
         die "missing $name" unless
-            grep {"/$name" eq $_} @{$backup->{'index'}};
+            grep { "/$name" eq $_ } @{$backup->{'index'}};
     },
     sub {shift(@_)->{'name'}},
     "index contains all names/paths",
