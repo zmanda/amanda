@@ -1,10 +1,11 @@
 etc/amanda
-usr/lib/x86_64-linux-gnu/amanda
+usr/lib/%%ARCH%%-linux-gnu/
+usr/lib/amanda/application
 usr/share/lintian/overrides
 usr/share/man/man5
 usr/share/man/man8
 var/amanda
 var/lib/amanda
 var/lib/amanda/gnutar-lists
-var/lib/amanda/example
+var/lib/amanda/example/label-templates
 var/log/amanda
