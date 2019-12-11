@@ -316,7 +316,7 @@ gen_repo_pkg_environ() {
 
     echo "setup attempt: $remote/$repo_ref"
 
-    eval "$(save_version $remote/$repo_ref)"
+    eval "set -xv; $(save_version $remote/$repo_ref); set +xv"
 
     cd ${PKG_DIR}/$build_dir
 
@@ -462,7 +462,7 @@ do_package() {
                (
                  rm -rf BUILD/${PKG_NAME_VER}
                  tar -xzvf $targz -C BUILD \
-                   ${PKG_NAME_VER}/./{FULL_VERSION,PKG_REV,VERSION,packaging} ||
+                   ${PKG_NAME_VER}/./{FULL_VERSION,PKG_REV,REV,LONG_BRANCH,VERSION,packaging} ||
 		 	die "missing call to gen_pkg_environ() or malformed $targz file"
 
                  cd BUILD/${PKG_NAME_VER} ||
@@ -613,7 +613,7 @@ get_git_info() {
     fi
 
     # keep the package-time in front to alphabetize-over-time
-    REV="+$pkgtime_name.git.$(git rev-parse --short $oref)"   # get short hash-version
+    REV="+${pkgtime_name}.git.$(git rev-parse --short $oref)"   # get short hash-version
 
     # get name-rev version of tag-based names.. but snip any '^0' at end...
     REV_TAGPOS=$(git name-rev --name-only --exclude=HEAD --tags $oref 2>/dev/null)
@@ -747,12 +747,13 @@ save_version() {
         rm -rf $repo_vers_dir
 
         mkdir -p $repo_vers_dir
+
         echo -n $VERSION > $repo_vers_dir/FULL_VERSION
         echo -n 1 > $repo_vers_dir/PKG_REV
-        tar -cf ${repo_vers_tar} -C $tmp ${PKG_NAME_VER}/.   # *keep* the /.
-
-        # FIXME: is this to be removed totally?
-        rm -rf $tmp/${PKG_NAME_VER}
+	echo -n $LONG_BRANCH > $repo_vers_dir/LONG_BRANCH
+	echo -n $REV > $repo_vers_dir/REV
+        tar -cf $VERSION_TAR -C $tmp ${PKG_NAME_VER}/.   # *keep* the /.
+        rm -rf $repo_vers_dir
     fi
 
     PKG_NAME_VER="${pkg_name}-$VERSION"
