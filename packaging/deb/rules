@@ -20,6 +20,7 @@ LIBEXECDIR=$(LIBDIR)
 AMLIBEXECDIR=$(LIBEXECDIR)/amanda
 # must be architecture-specific ...
 SHLIBDIR=$(PREFIX)/lib/$(shell dpkg-architecture -qDEB_HOST_MULTIARCH)
+AMLIBDIR=$(SHLIBDIR)/amanda
 MANDIR=$(PREFIX)/share/man
 DOCDIR=$(PREFIX)/share/doc
 SYSCONFDIR=/etc
@@ -30,9 +31,9 @@ LOGDIR=$(LOCALSTATEDIR)/log/amanda
 # libs. If configure finds a different install or you specify a different path using
 # --with-amperldir= make sure you change this variable in the config dirs.m4 as well.
 # NOTE: perl -V:varname emits a final ";".   Don't let it match to make ";;".
-PERLVENDORARCH=$(shell eval "$$(perl -V:installvendorarch)"; echo $$installvendorarch)
-PERLSITEARCH=$(shell eval "$$(perl -V:installsitearch)"; echo $$installsitearch)
-PERLLIBDIR=$(PERLVENDORARCH)
+# PERLVENDORARCH=$(shell eval "$$(perl -V:installvendorarch)"; echo $$installvendorarch)
+# PERLSITEARCH=$(shell eval "$$(perl -V:installsitearch)"; echo $$installsitearch)
+PERLLIBDIR=$(AMLIBDIR)/perl
 AMANDAUSER=amandabackup
 AMANDAGROUP=disk
 WITHOUT_SERVER="False"
@@ -66,13 +67,14 @@ build-stamp: /sbin/dump /usr/bin/smbclient
 		--host=$(DEB_HOST_GNU_TYPE) \
 		--build=$(DEB_BUILD_GNU_TYPE) \
 		--prefix=$(PREFIX) \
-		--libdir=$(SHLIBDIR) \
+		--libdir=$(AMLIBDIR) \
 		--bindir=$(BINDIR) \
 		--mandir=$(MANDIR) \
 		--libexecdir=$(LIBEXECDIR) \
 		--enable-shared \
 		--sysconfdir=$(SYSCONFDIR) \
 		--localstatedir=$(LOCALSTATEDIR) \
+		--with-amlibdir=$(AMLIBDIR) \
 		--with-amperldir=$(PERLLIBDIR) \
 		--with-amdatadir=$(AMANDAHOMEDIR) \
 		--with-gnutar-listdir=$(AMANDAHOMEDIR)/gnutar-lists \
