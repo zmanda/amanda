@@ -278,9 +278,10 @@ sub create_vtape {
 		    mkpath ("slot$i", $def_perm) ||
 		    ( &mprint ("WARNING: mkpath $parentdir/slot$i failed: $!\n"), $vtape_err++, return);
 		}
-		( @amlabel_out = `$sbindir/amlabel -f $config $mylabelprefix-$i slot $i`) ||
-	        ( &mprint ("WARNING: amlabel vtapes failed at slot $i: $!\n"), $vtape_err++, return);
-    }
+		@amlabel_out = qx{$sbindir/amlabel -f $config $mylabelprefix-$i slot $i 2>&1};
+		( $? == 0 ) || 
+                    (&mprint (join("",@amlabel_out)."WARNING: amlabel vtapes failed at slot $i: $!\n"), $vtape_err++, return);
+        }
 	foreach (@amlabel_out) {
 	  print LOG;
         }
