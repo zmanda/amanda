@@ -91,6 +91,7 @@ build-stamp: /sbin/dump /usr/bin/smbclient
 		--with-debugging=$(LOGDIR) \
 		--with-ssh-security \
 		--with-assertions \
+		--with-failure-code \
 		--enable-s3-device \
 		--disable-installperms
 	touch missing
