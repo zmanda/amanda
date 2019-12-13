@@ -363,6 +363,7 @@ mkdir -p %{ROOT_AMANDAHOMEDIR}/gnutar-lists
 mkdir -p %{ROOT_LOGDIR}
 
 echo "%{amanda_version_info}" >%{ROOT_AMANDAHOMEDIR}/amanda-release
+[ -s LONG_BRANCH ] && echo "ref=$(cat LONG_BRANCH)" >>%{ROOT_AMANDAHOMEDIR}/amanda-release
 
 install -m 644 %{ROOT_SYSCONFDIR}/amanda/amanda-security.conf %{ROOT_SYSCONFDIR}
 # --- Clean up buildroot ---
