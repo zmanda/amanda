@@ -755,12 +755,13 @@ save_version() {
         rm -rf $repo_vers_dir
 
         mkdir -p $repo_vers_dir
+
         echo -n $VERSION > $repo_vers_dir/FULL_VERSION
         echo -n 1 > $repo_vers_dir/PKG_REV
-        tar -cf ${VERSION_TAR} -C $tmp ${PKG_NAME_VER}/.   # *keep* the /.
-
-        # FIXME: is this to be removed totally?
-        rm -rf $tmp/${PKG_NAME_VER}
+        echo -n $LONG_BRANCH > $repo_vers_dir/LONG_BRANCH
+        echo -n $REV > $repo_vers_dir/REV
+        tar -cf $VERSION_TAR -C $tmp ${PKG_NAME_VER}/.   # *keep* the /.
+        rm -rf $repo_vers_dir
     fi
 
     # NOTE: using {} as a sub-scope is broken in earlier bash
