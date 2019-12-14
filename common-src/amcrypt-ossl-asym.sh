@@ -131,7 +131,7 @@ encrypt() {
 	cat "${WORKDIR}/pass.ciphertext"
 
 	# encrypt data using the cipher key and print
-	pad | "${OPENSSL}" enc "-${CIPHER}" -nopad -e -pass "file:${WORKDIR}/pass" -nosalt
+	pad | "${OPENSSL}" enc -pbkdf2 "-${CIPHER}" -nopad -e -pass "file:${WORKDIR}/pass" -nosalt
 	[ $? -eq 0 ] || return 1
 }
 
@@ -164,7 +164,7 @@ decrypt() {
 	[ $? -eq 0 ] || return 1
 
 	# use the cipher key to decrypt data
-	pad | "${OPENSSL}" enc "-${CIPHER}" -nopad -d -pass "file:${WORKDIR}/pass" -nosalt
+	pad | "${OPENSSL}" enc -pbkdf2 "-${CIPHER}" -nopad -d -pass "file:${WORKDIR}/pass" -nosalt
 
 	# N.B.: in the likely event that we're piping to gzip, the above command
 	# may return a spurious error if gzip closes the output stream early.
