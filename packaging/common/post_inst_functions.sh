@@ -17,17 +17,18 @@
 
 add_service() {
     # Only needed on Solaris!
-    entry1="amanda       10080/tcp    # amanda backup services"
-    entry2="amanda       10081/tcp    famdc    # amanda backup services (kerberos)"
+    entryA="amanda       10080/tcp    # amanda backup services"
+    entryK="kamanda       10081/tcp    famdc    # amanda backup services (kerberos)"
     # make sure amanda is in /etc/services
     if ! grep -q 'amanda.*10080/tcp' ${SYSCONFDIR}/services; then
         logger "Adding amanda entry to ${SYSCONFDIR}/services."
-        echo "${entry1}" >> ${SYSCONFDIR}/services
+        echo "${entryA}" >> ${SYSCONFDIR}/services
     fi
 
-    if ! grep -q 'amanda.*10081/tcp' ${SYSCONFDIR}/services; then
+
+    if ! grep -q 'kamanda.*10081/tcp' ${SYSCONFDIR}/services; then
         logger "Adding kamanda entry to ${SYSCONFDIR}/services."
-        echo "${entry2}" >> ${SYSCONFDIR}/services
+        echo "${entryK}" >> ${SYSCONFDIR}/services
     fi
 }
 
@@ -284,7 +285,7 @@ check_profile(){
     fi
     case $os in
       SunOS)
-	sun_paths=/opt/csw/bin:/usr/ucb:${AMANDAHOMEDIR}/sbin
+        sun_paths=/opt/csw/bin:/usr/ucb:${AMANDAHOMEDIR}/sbin
         if [ -z "`grep PATH ${AMANDAHOMEDIR}/.profile | grep ${sun_paths}`" ] ; then
             echo "PATH=\"$PATH:${SBINDIR}:${sun_paths}\"" >>${AMANDAHOMEDIR}/.profile
         fi
