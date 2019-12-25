@@ -2100,6 +2100,8 @@ read_conffile(
     current_filename = get_seen_filename(filename);
     amfree(filename);
 
+    current_line_num = 0;
+
     if ((current_file = fopen(current_filename, "r")) == NULL) {
 	if (!missing_ok || errno != ENOENT)
 	    conf_parserror(_("could not open conf file '%s': %s"),
@@ -2107,8 +2109,6 @@ read_conffile(
 	goto finish;
     }
     g_debug("reading config file %s", current_filename);
-
-    current_line_num = 0;
 
     do {
 	/* read_confline() can invoke us recursively via "includefile" */

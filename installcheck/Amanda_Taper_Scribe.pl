@@ -602,8 +602,8 @@ is_deeply([ @events ], [
 
       [ 'dump_cb', 'DONE', [], undef, bi(655360) ],
       [ 'scribe_notif_tape_done', 'FAKELABEL', bi(3), bi(262144) ],
-    ], "correct event sequence for a multipart scribe of more than a whole volume, without LEOM" . Data::Dumper::Dumper(@events))
-    or print (Dumper([@events]));
+    ], "correct event sequence for a multipart scribe of more than a whole volume, without LEOM")
+    or diag(Dumper([@events]));
 
 # same test, but with LEOM support
 
@@ -641,7 +641,7 @@ is_deeply([ @events ], [
       [ 'dump_cb', 'DONE', [], undef, bi(532480) ],
       [ 'scribe_notif_tape_done', 'FAKELABEL', bi(2), bi(237568) ],
     ], "correct event sequence for a multipart scribe of more than a whole volume, with LEOM")
-    or print (Dumper([@events]));
+    or diag(Dumper([@events]));
 
 # now a multivolume write where the second volume gives a changer error
 
@@ -678,7 +678,7 @@ is_deeply([ @events ], [
       [ 'dump_cb', 'PARTIAL', [$experr], undef, bi(393216) ],
       # (no scribe_notif_tape_done)
     ], "correct event sequence for a multivolume scribe with no second vol, without LEOM")
-    or print (Dumper([@events]));
+    or diag(Dumper([@events]));
 
 reset_taperoot(1);
 $main::scribe = Amanda::Taper::Scribe->new(
@@ -712,7 +712,7 @@ is_deeply([ @events ], [
       [ 'dump_cb', 'PARTIAL', [$experr], undef, bi(294912) ],
       # (no scribe_notif_tape_done)
     ], "correct event sequence for a multivolume scribe with no second vol, with LEOM")
-    or print (Dumper([@events]));
+    or diag(Dumper([@events]));
 
 # now a multivolume write where the second volume does not have permission
 
@@ -745,7 +745,7 @@ is_deeply([ @events ], [
 
       [ 'dump_cb', 'PARTIAL', [], "sorry!", bi(294912) ],
     ], "correct event sequence for a multivolume scribe with next vol denied")
-    or print (Dumper([@events]));
+    or diag(Dumper([@events]));
 
 # a non-splitting xfer on a single volume
 
