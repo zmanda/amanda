@@ -74,6 +74,7 @@
 # packaging/common/substitute.pl.
 %{!?amanda_version: %define amanda_version %%VERSION%% }
 %{!?amanda_release: %define amanda_release 1}
+
 %define amanda_version_info "Amanda Community Edition - version %{amanda_version}"
 %define amanda_user amandabackup
 %define amanda_group disk
@@ -143,7 +144,7 @@ Requires: gettext
 Requires: grep
 Requires: gnuplot
 Requires: xinetd
-Requires: %{curl} >= 7.10.0
+Requires: curl >= 7.10.0
 Requires: openssl
 Requires: perl >= 5.6.0
 Requires: tar >= %{tarver}
@@ -151,7 +152,7 @@ Requires: readline
 Requires: mailx
 %{?requires_libtermcap}
 %{?requires_initscripts}
-Requires: glib2 >= 2.2.0
+Requires: glib2 >= %(rpm -q --qf '%{VERSION}' glib2)
 Provides: amanda-backup_client = %{amanda_version}
 Provides: libamclient-%{version}.so = %{amanda_version}
 Provides: libamanda-%{version}.so = %{amanda_version}
@@ -234,11 +235,10 @@ Amanda Documentation is available at: http://wiki.zmanda.com/
 %define EPREFIX         %{PREFIX}
 %define BINDIR          %{EPREFIX}/bin
 %define SBINDIR         %{EPREFIX}/sbin
-%define LIBEXECDIR      %{EPREFIX}/libexec
-%define AMLIBEXECDIR    %{LIBEXECDIR}/amanda
 %define DATADIR         %{PREFIX}/share
 %define SYSCONFDIR      /etc
 %define LOCALSTATEDIR   /var
+%define SYSLOGDIR       /var/log
 %define AMANDATES       %{AMANDAHOMEDIR}/amandates
 %define AMANDAHOMEDIR   %{LOCALSTATEDIR}/lib/amanda
 %ifarch x86_64
@@ -246,13 +246,16 @@ Amanda Documentation is available at: http://wiki.zmanda.com/
 %else
 %define LIBDIR          %{EPREFIX}/lib
 %endif
+
 %define AMLIBDIR        %{LIBDIR}/amanda
 %define INCLUDEDIR      %{PREFIX}/include
+%define LIBEXECDIR      %{LIBDIR}
+%define AMLIBEXECDIR    %{LIBDIR}/amanda
 %define MANDIR          %{DATADIR}/man
 %define LOGDIR          /var/log/amanda
-%define PERLVENDORARCH   %(eval "perl -V:installvendorarch`"; echo $installvendorarch)
-%define PERLSITEARCH   %(eval "perl -V:installsitearch`"; echo $installsitearch)
-%define PERLLIBDIR      %PERLSITEARCH
+%define PERLVENDORARCH   %(eval $(perl -V:installvendorarch); echo $installvendorarch)
+%define PERLSITEARCH   %(eval $(perl -V:installsitearch); echo $installsitearch)
+%define AMPERLDIR      %PERLSITEARCH
 %define AMDATADIR	/var/lib/amanda
 
 # Installation directories:
@@ -308,15 +311,15 @@ find-req-script
 	%{?enable_as_needed:%{enable_as_needed}} \
         --quiet \
         --prefix=%{PREFIX} \
+        --libdir=%{LIBDIR} \
         --sysconfdir=%{SYSCONFDIR} \
         --sharedstatedir=%{LOCALSTATEDIR} \
         --localstatedir=%{LOCALSTATEDIR} \
-        --libdir=%{LIBDIR} \
         --includedir=%{INCLUDEDIR} \
 	--mandir=%{MANDIR} \
 	--with-amdatadir=%{AMDATADIR} \
+	--with-amperldir=%{AMPERLDIR} \
 	--with-amlibdir=%{AMLIBDIR} \
-	--with-amperldir=%{PERLLIBDIR} \
         --with-gnuplot=/usr/bin/gnuplot \
         --with-gnutar-listdir=%{AMANDAHOMEDIR}/gnutar-lists \
         --with-index-server=localhost \
@@ -707,7 +710,7 @@ fi
 %defattr(0755,%{amanda_user},%{amanda_group},0755)
 %{AMLIBEXECDIR}
 %{AMLIBDIR}
-%{PERLLIBDIR}/auto/Amanda
+%{AMPERLDIR}/auto/Amanda
 %defattr(4750,root,disk)
 %{AMLIBEXECDIR}/application/amgtar
 %{AMLIBEXECDIR}/application/amstar
@@ -726,7 +729,7 @@ fi
 %{SYSCONFDIR}/amanda
 %defattr(0644,%{amanda_user},%{amanda_group},0755)
 %{LOCALSTATEDIR}/amanda
-%{PERLLIBDIR}/Amanda
+%{AMPERLDIR}/Amanda
 %{AMLIBEXECDIR}/amcat.awk
 %{AMANDAHOMEDIR}/gnutar-lists
 %doc %{AMANDAHOMEDIR}/amanda-release
@@ -755,8 +758,8 @@ fi
 %defattr(0755,%{amanda_user},%{amanda_group})
 %{AMLIBEXECDIR}
 %{AMLIBDIR}
-%{PERLLIBDIR}/Amanda
-%{PERLLIBDIR}/auto/Amanda
+%{AMPERLDIR}/Amanda
+%{AMPERLDIR}/auto/Amanda
 %{AMANDAHOMEDIR}
 %{LOCALSTATEDIR}/amanda
 %{SBINDIR}/am*

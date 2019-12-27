@@ -5,10 +5,11 @@
 #	Warning - do *not* use -j on an SMP machine, or the build gets
 #	confused... some sort of race condition in the makefiles?
 #
-CWD := $(shell pwd)
-
+#
+SRCDIR := $(shell pwd -P)
 # Uncomment this to turn on verbose mode.
 export DH_VERBOSE=1
+
 AMVER=`cat FULL_VERSION`
 
 # These are variables that the user can override.  They get used in various
@@ -20,9 +21,11 @@ LIBEXECDIR=$(LIBDIR)
 AMLIBEXECDIR=$(LIBEXECDIR)/amanda
 # must be architecture-specific ...
 SHLIBDIR=$(PREFIX)/lib/$(shell dpkg-architecture -qDEB_HOST_MULTIARCH)
+AMLIBDIR=$(SHLIBDIR)/amanda
 MANDIR=$(PREFIX)/share/man
 DOCDIR=$(PREFIX)/share/doc
 SYSCONFDIR=/etc
+AMANDATES=$(SYSCONFDIR)/amandates
 LOCALSTATEDIR=/var
 AMANDAHOMEDIR=$(LOCALSTATEDIR)/lib/amanda
 LOGDIR=$(LOCALSTATEDIR)/log/amanda
@@ -30,49 +33,53 @@ LOGDIR=$(LOCALSTATEDIR)/log/amanda
 # libs. If configure finds a different install or you specify a different path using
 # --with-amperldir= make sure you change this variable in the config dirs.m4 as well.
 # NOTE: perl -V:varname emits a final ";".   Don't let it match to make ";;".
-PERLVENDORARCH=$(shell eval "$$(perl -V:installvendorarch)"; echo $$installvendorarch)
-PERLSITEARCH=$(shell eval "$$(perl -V:installsitearch)"; echo $$installsitearch)
-PERLLIBDIR=$(PERLVENDORARCH)
+# PERLVENDORARCH=$(shell eval "$$(perl -V:installvendorarch)"; echo $$installvendorarch)
+# PERLSITEARCH=$(shell eval "$$(perl -V:installsitearch)"; echo $$installsitearch)
+AMPERLDIR=$(AMLIBDIR)/perl
 AMANDAUSER=amandabackup
 AMANDAGROUP=disk
 WITHOUT_SERVER="False"
 WITHOUT_CLIENT="False"
 
-r=$(CWD)/debian/tmp
-server=$(CWD)/debian/amanda-backup-server
-client=$(CWD)/debian/amanda-backup-client
+#
+# subpackage paths
+#
+r=$(SRCDIR)/debian/tmp
+server=$(SRCDIR)/debian/amanda-backup-server
+client=$(SRCDIR)/debian/amanda-backup-client
 
-log=$(CWD)/debian/dpkg.log
+log=$(SRCDIR)/debian/dpkg.log
 
 # These are used for cross-compiling and for saving the configure script
 # from having to guess our platform (since we know it already)
 DEB_HOST_GNU_TYPE   ?= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
 DEB_BUILD_GNU_TYPE  ?= $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
-DEB_BUILD_ARCH_BITS  ?= $(shell dpkg-architecture -qDEB_BUILD_ARCH_BITS)
 
-WD=$(CWD)
+WD=$(SRCDIR)
 
 build: build-stamp
-build-stamp: /sbin/dump /usr/bin/smbclient
+build-stamp: /sbin/dump $(BINDIR)/smbclient
 	dh_testdir
 	[ -f ./configure ] || ./autogen
 	./configure \
 		MAKEFLAGS="-j1 " \
 		CFLAGS="-pipe " \
-		MAILER=/usr/bin/mail \
+		MAILER=$(BINDIR)/mail \
 		--enable-as-needed \
 		--enable-manpage-build \
 		--quiet \
 		--host=$(DEB_HOST_GNU_TYPE) \
 		--build=$(DEB_BUILD_GNU_TYPE) \
 		--prefix=$(PREFIX) \
-		--libdir=$(LIBDIR) \
+		--libdir=$(AMLIBDIR) \
 		--bindir=$(BINDIR) \
 		--mandir=$(MANDIR) \
 		--libexecdir=$(LIBEXECDIR) \
 		--enable-shared \
 		--sysconfdir=$(SYSCONFDIR) \
 		--localstatedir=$(LOCALSTATEDIR) \
+		--with-amlibdir=$(AMLIBDIR) \
+		--with-amperldir=$(AMPERLDIR) \
 		--with-amdatadir=$(AMANDAHOMEDIR) \
 		--with-gnutar-listdir=$(AMANDAHOMEDIR)/gnutar-lists \
 		--with-index-server=localhost \
@@ -102,7 +109,9 @@ build-stamp: /sbin/dump /usr/bin/smbclient
 	cat $(WD)/debian/postinst >> $(WD)/debian/amanda-backup-server.postinst
 	cat $(WD)/debian/postrm >> $(WD)/debian/amanda-backup-client.postrm
 	cat $(WD)/debian/postrm >> $(WD)/debian/amanda-backup-server.postrm
-	make -s LIBTOOLFLAGS=--silent
+
+	$(MAKE) -s LIBTOOLFLAGS=--silent
+
 	touch build-stamp
 
 clean:
