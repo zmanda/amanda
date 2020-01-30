@@ -37,7 +37,7 @@ create_user() {
                             -g ${amanda_group} \
                             ${uid_flag} \
                             -d ${AMANDAHOMEDIR} \
-                            -s ${wanted_shell} ${amanda_user}  || \
+                            -s ${wanted_shell} -m ${amanda_user}  || \
                 { logger "WARNING:  Could not create user ${amanda_user}. Installation will fail." ; return 1 ; }
                 logger "Created ${amanda_user} with blank password."
 

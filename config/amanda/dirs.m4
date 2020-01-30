@@ -221,7 +221,7 @@ AC_DEFUN([AMANDA_EXPAND_DIRS],
 
     AC_ARG_WITH(amperldir,
 	AS_HELP_STRING([--with-amperldir[[[[[=PATH]]]]]],
-		[Where amanda's perl modules are installed; default: installsitelib])
+		[Where amanda's perl modules are installed; default: installsitearch])
 	AS_HELP_STRING([--without-amperldir],
 		[Install amanda's perl modules in $amlibdir/perl]),
 	[
@@ -236,8 +236,8 @@ AC_DEFUN([AMANDA_EXPAND_DIRS],
     )
     # apply the default if no value was given.
     if test x"$AMPERLLIB" = x"DEFAULT"; then
-	eval `$PERL -V:installsitelib`
-	AMPERLLIB=$installsitelib
+	eval `$PERL -V:installsitearch`
+	AMPERLLIB=$installsitearch
     fi
     AC_DEFINE_DIR([amperldir], [AMPERLLIB],
 	[Directory in which perl modules should be installed])
