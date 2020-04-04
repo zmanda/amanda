@@ -1384,8 +1384,14 @@ extract_files_setup(
 	return -1;
     }
  
-    if (setegid(getgid()) != 0) { error("Can't set gid"); };
-    if (seteuid(getuid()) != 0) { error("Can't set uid"); }; /* put it back */
+    {
+        gid_t ogid = getgid(); /* tainted with root access, so revert to old group as well */
+        uid_t ouid = getuid();
+
+        if (setgroups(1,&ogid) != 0) { error("Can't set groups"); }
+        if (setegid(ogid) != 0) { error("Can't set gid"); }
+        if (seteuid(ouid) != 0) { error("Can't set uid"); } /* put it back */
+    }
 
     /* do the security thing */
     line = get_security();
