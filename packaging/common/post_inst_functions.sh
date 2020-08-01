@@ -17,18 +17,17 @@
 
 add_service() {
     # Only needed on Solaris!
-    entry="amanda       10080/tcp    # amanda backup services"
+    entry1="amanda       10080/tcp    # amanda backup services"
+    entry2="amanda       10081/tcp    famdc    # amanda backup services (kerberos)"
     # make sure amanda is in /etc/services
-    if [ -z "`grep 'amanda' ${SYSCONFDIR}/services |grep '10080/tcp'`" ] ; then
+    if ! grep -q 'amanda.*10080/tcp' ${SYSCONFDIR}/services; then
         logger "Adding amanda entry to ${SYSCONFDIR}/services."
-        echo "${entry}" >> ${SYSCONFDIR}/services
+        echo "${entry1}" >> ${SYSCONFDIR}/services
     fi
 
-    # make sure kamanda is in /etc/services
-    entry_2="amanda       10081/tcp    famdc    # amanda backup services (kerberos)"
-    if [ -z "`grep 'kamanda' /etc/services |grep '10081/tcp'`" ] ; then
+    if ! grep -q 'amanda.*10081/tcp' ${SYSCONFDIR}/services; then
         logger "Adding kamanda entry to ${SYSCONFDIR}/services."
-        echo "${entry_2}" >> ${SYSCONFDIR}/services
+        echo "${entry2}" >> ${SYSCONFDIR}/services
     fi
 }
 
@@ -92,7 +91,7 @@ get_random_lines() {
 create_ampassphrase() {
     # install am_passphrase file to server
     logger "Checking '${AMANDAHOMEDIR}/.am_passphrase' file."
-    if [ ! -f ${AMANDAHOMEDIR}/.am_passphrase ] ; then
+    if [ ! -f ${AMANDAHOMEDIR}/.am_passphrase -o ! -s ${AMANDAHOMEDIR}/.am_passphrase ] ; then
         # Separate file creation from password creation to ease debugging.
         logger "Creating '${AMANDAHOMEDIR}/.am_passphrase' file."
         log_output_of touch ${AMANDAHOMEDIR}/.am_passphrase || \
@@ -109,30 +108,29 @@ create_ampassphrase() {
         { logger "WARNING:  Could not fix permissions on .am_passphrase" ; return 1; }
 }
 
+
+GPG2=`command -v gpg2 2>/dev/null`
+GPG=`command -v gpg 2>/dev/null`
+GPG_AGENT=`command -v gpg-agent 2>/dev/null`
+if [ -z "$GPG2" -a -z "$GPG" ]; then
+   logger "Error: no gpg"
+elif [ -z "$GPG2" ]; then
+   GPG_EXTRA="--no-use-agent"
+elif [ -z "$GPG_AGENT" ]; then
+   logger "Error: no gpg-agent"
+fi
+
+# NOTE: do NOT attempt to read/log stderr from gpg-agent in bgd
+GPG=${GPG2:-$GPG};   # best available
+
+
 create_amkey() {
     [ -f ${AMANDAHOMEDIR}/.am_passphrase ] || \
         { logger "Error: ${AMANDAHOMEDIR}/.am_passphrase is missing, can't create amcrypt key."; return 1; }
     logger "Creating encryption key for amcrypt"
-    if [ ! -f ${AMANDAHOMEDIR}/.gnupg/am_key.gpg ]; then
+    if [ ! -f ${AMANDAHOMEDIR}/.gnupg/am_key.gpg -o ! -s ${AMANDAHOMEDIR}/.gnupg/am_key.gpg ]; then
         # TODO: don't write this stuff to disk!
         get_random_lines 50 >${AMANDAHOMEDIR}/.gnupg/am_key || return 1
-
-        GPG2=`command -v gpg2 2>/dev/null`
-        if [ "$?" != "0" ]; then
-           GPG=`command -v gpg 2>/dev/null`
-           if [ "$?" != "0" ]; then
-                logger "Error: no gpg"
-           else
-                GPG_EXTRA="--no-use-agent"
-           fi
-        else
-           GPG_AGENT=`command -v gpg-agent 2>/dev/null`
-           if [ "$?" != "0" ]; then
-              logger "Error: no gpg-agent"
-           else
-              GPG="$GPG_AGENT --daemon --no-use-standard-socket -- $GPG2"
-           fi
-        fi
 
         exec 3<${AMANDAHOMEDIR}/.am_passphrase
         # setting homedir prevents some errors, but creates a permissions
@@ -166,26 +164,9 @@ check_gnupg() {
         { logger "WARNING:  Could not set permissions on .gnupg dir." ; return 1; }
     # If am_key.gpg and .am_passphrase already existed, we should check
     # if they match!
-    if [ -f ${AMANDAHOMEDIR}/.gnupg/am_key.gpg ] && [ -f ${AMANDAHOMEDIR}/.am_passphrase ]; then
-
-        GPG2=`command -v gpg2 2>/dev/null`
-        if [ "$?" != "0" ]; then
-           GPG=`command -v gpg 2>/dev/null`
-           if [ "$?" != "0" ]; then
-                logger "Error: no gpg"
-           else
-                GPG_EXTRA="--no-use-agent"
-           fi
-        else
-           GPG_AGENT=`command -v gpg-agent 2>/dev/null`
-           if [ "$?" != "0" ]; then
-              logger "Error: no gpg-agent"
-           else
-              GPG="$GPG_AGENT --daemon --no-use-standard-socket -- $GPG2"
-           fi
-        fi
-
+    if [ -s ${AMANDAHOMEDIR}/.gnupg/am_key.gpg -a -s ${AMANDAHOMEDIR}/.am_passphrase ]; then
         exec 3<${AMANDAHOMEDIR}/.am_passphrase
+
         # Perms warning will persist because we are not running as ${amanda_user}
         log_output_of $GPG --homedir ${AMANDAHOMEDIR}/.gnupg \
                 --no-permission-warning \
@@ -303,7 +284,7 @@ check_profile(){
     fi
     case $os in
       SunOS)
-        sun_paths=/opt/csw/bin:/usr/ucb:${AMANDAHOMEDIR}/sbin
+	sun_paths=/opt/csw/bin:/usr/ucb:${AMANDAHOMEDIR}/sbin
         if [ -z "`grep PATH ${AMANDAHOMEDIR}/.profile | grep ${sun_paths}`" ] ; then
             echo "PATH=\"$PATH:${SBINDIR}:${sun_paths}\"" >>${AMANDAHOMEDIR}/.profile
         fi
@@ -318,19 +299,20 @@ check_profile(){
 
 install_client_conf() {
     # Install client config
+    am_confdir=${SYSCONFDIR}/amanda
+    install="install -m 0600 -o ${amanda_user} -g ${amanda_group}"
     if [ "$os" = "SunOS" ] ; then
         install="install -m 0600 -u ${amanda_user} -g ${amanda_group}"
-    else
-        install="install -m 0600 -o ${amanda_user} -g ${amanda_group}"
     fi
-    logger "Checking '${SYSCONFDIR}/amanda/amanda-client.conf' file."
-    if [ ! -f ${SYSCONFDIR}/amanda/amanda-client.conf ] ; then
+    logger "Checking '${am_confdir}/amanda-client.conf' file."
+    if [ ! -f ${am_confdir}/amanda-client.conf ] ; then
         logger "Installing amanda-client.conf."
-        log_output_of ${install} ${AMANDAHOMEDIR}/example/amanda-client.conf \
-            ${SYSCONFDIR}/amanda/ || \
+        log_output_of ${install} \
+           ${AMANDAHOMEDIR}/example/amanda-client.conf \
+	   ${am_confdir}/ || \
                 { logger "WARNING:  Could not install amanda-client.conf" ; return 1; }
     else
-        logger "Note: ${SYSCONFDIR}/amanda/amanda-client.conf exists. Please check ${AMANDAHOMEDIR}/example/amanda-client.conf for updates."
+        logger "Note: ${am_confdir}/amanda-client.conf exists. Please check ${AMANDAHOMEDIR}/example/amanda-client.conf for updates."
     fi
 }
 
