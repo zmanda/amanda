@@ -44,7 +44,6 @@ SUBDIRS = . \
 	po \
 	man \
 	example \
-	packaging \
 	installcheck
 
 pkgdata_DATA = \
