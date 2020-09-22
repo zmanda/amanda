@@ -73,7 +73,7 @@ ndmda_fh_commission (struct ndm_session *sess)
 int
 ndmda_fh_decommission (struct ndm_session *sess)
 {
-	return 0;
+        return ndmconn_close(sess->plumb.data);
 }
 
 /* Belay -- Cancel partially issued activation/start */
@@ -193,7 +193,7 @@ ndmda_fh_flush (struct ndm_session *sess)
 
 	rc = ndmfhh_get_table (fhh, &fhtype, &table, &n_entry);
 	if (rc == NDMFHH_RET_OK && n_entry > 0) {
-		struct ndmp_xa_buf	xa;
+		ndmp_xa_buf_t	xa;
 		struct ndmfhh_generic_table *request;
 
 		request = (void *) &xa.request.body;

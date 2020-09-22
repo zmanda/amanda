@@ -100,8 +100,8 @@ finalize_impl(GObject *goself)
 
     /* close this connection if necessary */
     if (self->conn) {
-	ndmconn_destruct(self->conn);
-	self->conn = NULL;
+	ndmconn_close(self->conn);
+	ndmconn_destruct(&self->conn);
     }
 
     if (self->log_state) {
@@ -190,6 +190,7 @@ ndmp_connection_scsi_open(
     g_assert(!self->startup_err);
 
     NDMP_TRANS(self, ndmp4_scsi_open)
+        (void) reply;
 	request->device = device;
 	NDMP_CALL(self);
 	NDMP_FREE();
@@ -204,6 +205,7 @@ ndmp_connection_scsi_close(
     g_assert(!self->startup_err);
 
     NDMP_TRANS_NO_REQUEST(self, ndmp4_scsi_close)
+        (void) reply;
 	NDMP_CALL(self);
 	NDMP_FREE();
     NDMP_END
@@ -282,6 +284,7 @@ ndmp_connection_tape_open(
     g_assert(!self->startup_err);
 
     NDMP_TRANS(self, ndmp4_tape_open)
+        (void) reply;
 	request->device = device;
 	request->mode = mode;
 	NDMP_CALL(self);
@@ -297,6 +300,7 @@ ndmp_connection_tape_close(
     g_assert(!self->startup_err);
 
     NDMP_TRANS_NO_REQUEST(self, ndmp4_tape_close)
+        (void) reply;
 	NDMP_CALL(self);
 	NDMP_FREE();
     NDMP_END
@@ -404,6 +408,7 @@ ndmp_connection_mover_set_record_size(
     g_assert(!self->startup_err);
 
     NDMP_TRANS(self, ndmp4_mover_set_record_size)
+        (void) reply;
 	/* this field is "len" in ndmp4, but "record_size" in ndmp9 */
 	request->len = record_size;
 	NDMP_CALL(self);
@@ -421,6 +426,7 @@ ndmp_connection_mover_set_window(
     g_assert(!self->startup_err);
 
     NDMP_TRANS(self, ndmp4_mover_set_window)
+        (void) reply;
 	request->offset = offset;
 	request->length = length;
 	NDMP_CALL(self);
@@ -438,6 +444,7 @@ ndmp_connection_mover_read(
     g_assert(!self->startup_err);
 
     NDMP_TRANS(self, ndmp4_mover_read)
+        (void) reply;
 	request->offset = offset;
 	request->length = length;
 	NDMP_CALL(self);
@@ -453,6 +460,7 @@ ndmp_connection_mover_continue(
     g_assert(!self->startup_err);
 
     NDMP_TRANS_NO_REQUEST(self, ndmp4_mover_continue)
+        (void) reply;
 	NDMP_CALL(self);
 	NDMP_FREE();
     NDMP_END
@@ -519,6 +527,7 @@ ndmp_connection_mover_connect(
 
 
     NDMP_TRANS(self, ndmp4_mover_connect)
+        (void) reply;
 	request->mode = mode;
 	request->addr.addr_type = NDMP4_ADDR_TCP;
 	request->addr.ndmp4_addr_u.tcp_addr.tcp_addr_len = naddrs;
@@ -536,6 +545,7 @@ ndmp_connection_mover_abort(
     g_assert(!self->startup_err);
 
     NDMP_TRANS_NO_REQUEST(self, ndmp4_mover_abort)
+        (void) reply;
 	NDMP_CALL(self);
 	NDMP_FREE();
     NDMP_END
@@ -549,6 +559,7 @@ ndmp_connection_mover_stop(
     g_assert(!self->startup_err);
 
     NDMP_TRANS_NO_REQUEST(self, ndmp4_mover_stop)
+        (void) reply;
 	NDMP_CALL(self);
 	NDMP_FREE();
     NDMP_END
@@ -562,6 +573,7 @@ ndmp_connection_mover_close(
     g_assert(!self->startup_err);
 
     NDMP_TRANS_NO_REQUEST(self, ndmp4_mover_close)
+        (void) reply;
 	NDMP_CALL(self);
 	NDMP_FREE();
     NDMP_END
@@ -596,7 +608,7 @@ ndmconn_handle_notify(
     g_assert(!self->startup_err);
 
     if (nmb->header.message_type == NDMP0_MESSAGE_REQUEST) {
-	switch (nmb->header.message) {
+	switch ((enum ndmp9_message) nmb->header.message) {
 	    case NDMP9_NOTIFY_DATA_HALTED: {
 		ndmp4_notify_data_halted_post *post =
 		    &nmb->body.ndmp4_notify_data_halted_post_body;
@@ -667,7 +679,7 @@ ndmp_connection_wait_for_notify(
 	ndmp9_mover_pause_reason *mover_pause_reason,
 	guint64 *mover_pause_seek_position)
 {
-    struct ndmp_msg_buf nmb;
+    ndmp_msg_buf_t nmb;
 
     g_assert(!self->startup_err);
 
@@ -738,6 +750,7 @@ ndmp_connection_wait_for_notify(
 	}
 
 	ndmconn_handle_notify(self, &nmb);
+        (void) nfound;
     }
 }
 
@@ -770,7 +783,6 @@ ndmp_connection_wait_for_notify_with_cond(
 	GMutex *abort_mutex,
 	GCond *abort_cond)
 {
-    struct ndmp_msg_buf nmb;
     notify_data_t *ndata;
     gboolean found = FALSE;
     int status;
@@ -889,7 +901,7 @@ static void
 handle_notify(void *cookie)
 {
     notify_data_t *ndata = cookie;
-    struct ndmp_msg_buf nmb;
+    ndmp_msg_buf_t nmb;
     gboolean found = FALSE;
     GCond  *abort_cond = ndata->abort_cond;
     GMutex *abort_mutex = ndata->abort_mutex;
@@ -1015,7 +1027,6 @@ ndmp_connection_new(
     gchar *auth)
 {
     NDMPConnection *self = NULL;
-    gchar *key = NULL;
     gchar *errmsg = NULL;
     struct ndmconn *conn = NULL;
     int rc;
@@ -1034,7 +1045,7 @@ ndmp_connection_new(
 
     if (ndmconn_connect_host_port(conn, hostname, port, 0) != 0) {
 	errmsg = ndmconn_get_err_msg(conn);
-	ndmconn_destruct(conn);
+	ndmconn_destruct(&conn);
 	goto out;
     }
 
@@ -1048,20 +1059,23 @@ ndmp_connection_new(
 	rc = ndmconn_auth_text(conn, username, password);
     } else {
 	errmsg = "invalid auth type";
-	ndmconn_destruct(conn);
+	ndmconn_close(conn);
+	ndmconn_destruct(&conn);
 	goto out;
     }
 
     if (rc != 0) {
 	errmsg = ndmconn_get_err_msg(conn);
-	ndmconn_destruct(conn);
+	ndmconn_close(conn);
+	ndmconn_destruct(&conn);
 	goto out;
     }
 
     if (conn->protocol_version != NDMP4VER) {
 	errmsg = g_strdup_printf("Only NDMPv4 is supported; got NDMPv%d",
 	    conn->protocol_version);
-	ndmconn_destruct(conn);
+	ndmconn_close(conn);
+	ndmconn_destruct(&conn);
 	goto out;
     }
 

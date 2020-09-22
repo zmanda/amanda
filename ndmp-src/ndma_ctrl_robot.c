@@ -65,7 +65,7 @@ ndmca_robot_prep_target (struct ndm_session *sess)
 	smc->issue_scsi_req = ndmca_robot_issue_scsi_req;
 
 	rc = ndmscsi_use (sess->plumb.robot,
-				&sess->control_acb.job.robot_target);
+				&sess->control_acb.pjob->robot_target);
 	if (rc) return rc;
 
 	return 0;
@@ -112,7 +112,7 @@ ndmca_robot_startup (struct ndm_session *sess)
 {
 	int		rc;
 
-	if (!sess->control_acb.job.have_robot)
+	if (!sess->control_acb.pjob->have_robot)
 		return -1;	/* Huh? why were we called */
 
 	rc = ndmca_connect_robot_agent(sess);
@@ -136,11 +136,11 @@ ndmca_robot_move (struct ndm_session *sess, int src_addr, int dst_addr)
 			src_addr, dst_addr);
 
 	rc = -1;
-	for (t = 0; t <= ca->job.robot_timeout; t += 10) {
+	for (t = 0; t <= ca->pjob->robot_timeout; t += 10) {
 		if (t > 0) {
 			ndmalogf (sess, 0, 2,
 				"Pausing ten seconds before retry (%d/%d)",
-				t, ca->job.robot_timeout);
+				t, ca->pjob->robot_timeout);
 			sleep (10);
 		}
 		rc = smc_move (smc, src_addr, dst_addr,
@@ -166,8 +166,8 @@ ndmca_robot_load (struct ndm_session *sess, int slot_addr)
 	unsigned		dte_addr = smc->elem_aa.dte_addr;
 	int			rc;
 
-	if (sess->control_acb.job.drive_addr_given)
-		dte_addr = sess->control_acb.job.drive_addr;
+	if (sess->control_acb.pjob->drive_addr_given)
+		dte_addr = sess->control_acb.pjob->drive_addr;
 
 	ndmalogf (sess, 0, 1,
 			"Commanding robot to load slot @%d into drive @%d",
@@ -185,8 +185,8 @@ ndmca_robot_unload (struct ndm_session *sess, int slot_addr)
 	int			dte_addr = smc->elem_aa.dte_addr;
 	int			rc;
 
-	if (sess->control_acb.job.drive_addr_given)
-		dte_addr = sess->control_acb.job.drive_addr;
+	if (sess->control_acb.pjob->drive_addr_given)
+		dte_addr = sess->control_acb.pjob->drive_addr;
 
 	/* tricky part -- some (most?) robots need the drive to eject */
 
@@ -230,13 +230,13 @@ ndmca_robot_check_ready (struct ndm_session *sess)
 	rc = ndmca_robot_obtain_info (sess);
 	if (rc) return rc;
 
-	if (sess->control_acb.job.remedy_all) {
+	if (sess->control_acb.pjob->remedy_all) {
 		first_dte_addr = smc->elem_aa.dte_addr;
 		n_dte_addr = smc->elem_aa.dte_count;
 	} else {
 		n_dte_addr = 1;
-		if (sess->control_acb.job.drive_addr_given) {
-			first_dte_addr = sess->control_acb.job.drive_addr;
+		if (sess->control_acb.pjob->drive_addr_given) {
+			first_dte_addr = sess->control_acb.pjob->drive_addr;
 		} else {
 			first_dte_addr = smc->elem_aa.dte_addr;
 		}
@@ -274,13 +274,13 @@ ndmca_robot_remedy_ready (struct ndm_session *sess)
 	rc = ndmca_robot_obtain_info (sess);
 	if (rc) return rc;
 
-	if (sess->control_acb.job.remedy_all) {
+	if (sess->control_acb.pjob->remedy_all) {
 		first_dte_addr = smc->elem_aa.dte_addr;
 		n_dte_addr = smc->elem_aa.dte_count;
 	} else {
 		n_dte_addr = 1;
-		if (sess->control_acb.job.drive_addr_given) {
-			first_dte_addr = sess->control_acb.job.drive_addr;
+		if (sess->control_acb.pjob->drive_addr_given) {
+			first_dte_addr = sess->control_acb.pjob->drive_addr;
 		} else {
 			first_dte_addr = smc->elem_aa.dte_addr;
 		}
@@ -411,7 +411,7 @@ int
 ndmca_robot_verify_media (struct ndm_session *sess)
 {
 	struct smc_ctrl_block *	smc = &sess->control_acb.smc_cb;
-	struct ndm_media_table *mtab = &sess->control_acb.job.media_tab;
+	struct ndm_media_table *mtab = &sess->control_acb.pjob->media_tab;
 	int			rc;
 	struct ndmmedia *	me;
 	struct smc_element_descriptor *edp;
@@ -466,7 +466,7 @@ int
 ndmca_robot_synthesize_media (struct ndm_session *sess)
 {
 	struct smc_ctrl_block *	smc = &sess->control_acb.smc_cb;
-	struct ndm_media_table *mtab = &sess->control_acb.job.media_tab;
+	struct ndm_media_table *mtab = &sess->control_acb.pjob->media_tab;
 	int			rc;
 	struct ndmmedia *	me;
 	struct smc_element_descriptor *edp;

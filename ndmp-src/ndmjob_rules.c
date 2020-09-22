@@ -45,7 +45,7 @@
 
 
 int
-apply_rules (struct ndm_job_param *job, char *rules)
+apply_rules (ref_ndm_job_param_t job, char *rules)
 {
 	char			reason[100];
 	int			rc = 0;

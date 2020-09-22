@@ -91,7 +91,7 @@
  *	3) Support for pretty-printing the protocol data structures.
  *	   Maybe someday rpcgen(1) will generate these, too.
  */
-
+#pragma once
 
 /*
  * PROTOCOL VERSIONS
@@ -134,24 +134,25 @@
  * Table for binding a ndmp_message to appropriate XDR routines.
  */
 
+typedef
 struct ndmp_xdr_message_table {
 	int	msg;
 	int	(*xdr_request)();
 	int	(*xdr_reply)();
-};
+} ndmp_xdr_message_table_t;
 
-extern struct ndmp_xdr_message_table	ndmp0_xdr_message_table[];
+extern ndmp_xdr_message_table_t	ndmp0_xdr_message_table[];
 
 #ifndef NDMOS_OPTION_NO_NDMP2
-extern struct ndmp_xdr_message_table	ndmp2_xdr_message_table[];
+extern ndmp_xdr_message_table_t	ndmp2_xdr_message_table[];
 #endif /* !NDMOS_OPTION_NO_NDMP2 */
 
 #ifndef NDMOS_OPTION_NO_NDMP3
-extern struct ndmp_xdr_message_table	ndmp3_xdr_message_table[];
+extern ndmp_xdr_message_table_t	ndmp3_xdr_message_table[];
 #endif /* !NDMOS_OPTION_NO_NDMP3 */
 
 #ifndef NDMOS_OPTION_NO_NDMP4
-extern struct ndmp_xdr_message_table	ndmp4_xdr_message_table[];
+extern ndmp_xdr_message_table_t	ndmp4_xdr_message_table[];
 #endif /* !NDMOS_OPTION_NO_NDMP4 */
 
 /* Note: no ndmp9 XDRs */
@@ -167,10 +168,11 @@ extern struct ndmp_xdr_message_table *
  ****************************************************************
  */
 
+typedef
 struct ndmp_enum_str_table {
 	char *		name;
 	int		value;
-};
+} ndmp_enum_str_table_t;
 
 extern char *	ndmp_enum_to_str (int val, struct ndmp_enum_str_table *table);
 extern int	ndmp_enum_from_str (int *valp, char *str,

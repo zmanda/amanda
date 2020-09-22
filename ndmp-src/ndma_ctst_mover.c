@@ -129,18 +129,19 @@ int
 ndmca_op_test_mover (struct ndm_session *sess)
 {
 	struct ndmconn *	conn;
-	int			(*save_call) (struct ndmconn *conn,
-						struct ndmp_xa_buf *xa);
+	//int			(*save_call) (struct ndmconn *conn,
+        //						struct ndmp_xa_buf *xa);
 	int			rc;
 	struct ndm_control_agent *ca = &sess->control_acb;
 
-	if (sess->control_acb.job.data_agent.conn_type != NDMCONN_TYPE_NONE) {
+	if (sess->control_acb.pjob->data_agent.conn_type != NDMCONN_TYPE_NONE) {
 		/*
 		 * Sometimes needed to aid resident tape agent test
 		 */
 		rc = ndmca_connect_data_agent (sess);
 		if (rc) {
-			ndmconn_destruct (sess->plumb.data);
+			ndmconn_close (sess->plumb.data);
+			ndmconn_destruct (&sess->plumb.data);
 			return rc;
 		}
 	}
@@ -149,7 +150,7 @@ ndmca_op_test_mover (struct ndm_session *sess)
 	if (rc) return rc;
 
 	conn = sess->plumb.tape;
-	save_call = conn->call;
+	// save_call = conn->call;
 	conn->call = ndma_call_no_tattle;
 
 	/* perform query to find out about TCP and LOCAL support */
@@ -817,7 +818,8 @@ ndmca_test_mover_set_record_size (struct ndm_session *sess,
 #ifndef NDMOS_OPTION_NO_NDMP2
 	case NDMP2VER:
 	    NDMC_WITH(ndmp2_mover_set_record_size, NDMP2VER)
-		request->len = ca->job.record_size;
+                (void) reply;
+		request->len = ca->pjob->record_size;
 		rc = NDMTEST_CALL(conn);
 	    NDMC_ENDWITH
 	    break;
@@ -825,7 +827,8 @@ ndmca_test_mover_set_record_size (struct ndm_session *sess,
 #ifndef NDMOS_OPTION_NO_NDMP3
 	case NDMP3VER:
 	    NDMC_WITH(ndmp3_mover_set_record_size, NDMP3VER)
-		request->len = ca->job.record_size;
+                (void) reply;
+		request->len = ca->pjob->record_size;
 		rc = NDMTEST_CALL(conn);
 	    NDMC_ENDWITH
 	    break;
@@ -833,7 +836,8 @@ ndmca_test_mover_set_record_size (struct ndm_session *sess,
 #ifndef NDMOS_OPTION_NO_NDMP4
 	case NDMP4VER:
 	    NDMC_WITH(ndmp4_mover_set_record_size, NDMP4VER)
-		request->len = ca->job.record_size;
+                (void) reply;
+		request->len = ca->pjob->record_size;
 		rc = NDMTEST_CALL(conn);
 	    NDMC_ENDWITH
 	    break;

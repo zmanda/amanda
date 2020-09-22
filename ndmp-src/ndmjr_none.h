@@ -25,6 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+#pragma once
 
 /*
  * Project:  NDMJOB
@@ -45,6 +46,6 @@
 #define NDMJR_NONE_HELP_LINE_1 \
 	"no additional rules (default)"
 
-extern int	ndmjr_none_apply (struct ndm_job_param *job, char *reason);
+extern int	ndmjr_none_apply (ref_ndm_job_param_t job, char *reason);
 
 #endif /* !NDMOS_OPTION_NO_CONTROL_AGENT */

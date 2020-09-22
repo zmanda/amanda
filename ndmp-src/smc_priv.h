@@ -25,6 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+#pragma once
 
 /*
  * Project:  NDMJOB
@@ -52,7 +53,7 @@ extern int
 smc_parse_element_status_data (
   char *	raw,
   unsigned	raw_len,
-  struct smc_element_descriptor elem_desc[],
+  smc_element_descriptor_t elem_desc[],
   unsigned	max_elem_desc);
 
 extern int

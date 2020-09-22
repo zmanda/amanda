@@ -66,10 +66,10 @@ ndmca_connect_xxx_agent (
 		return -1;
 	}
 
-	if (sess->control_acb.job.time_limit > 0)
-	    conn->time_limit = sess->control_acb.job.time_limit;
+	if (sess->control_acb.pjob->time_limit > 0)
+	    conn->time_limit = sess->control_acb.pjob->time_limit;
 
-	ndmconn_set_snoop (conn, &sess->param.log, sess->param.log_level);
+	ndmconn_set_snoop (conn, &sess->pparam->log, sess->pparam->log_level);
 
 	conn->call = ndma_call;
 	conn->context = sess;
@@ -92,10 +92,10 @@ ndmca_connect_xxx_agent (
 
   error_out:
 	ndmalogf (sess, prefix, 0, "err %s", ndmconn_get_err_msg (conn));
-	//ndmconn_destruct (conn);
-	*connp = conn;
+	ndmconn_close (*connp);
+	ndmconn_destruct (connp);
+        (void) err;
 	return -1;
-
 }
 
 int
@@ -106,7 +106,7 @@ ndmca_connect_data_agent (struct ndm_session *sess)
 	rc = ndmca_connect_xxx_agent (sess,
 				&sess->plumb.data,
 				"#D",
-				&sess->control_acb.job.data_agent);
+				&sess->control_acb.pjob->data_agent);
 	if (rc == 0) {
 		if (sess->plumb.data->conn_type == NDMCONN_TYPE_RESIDENT) {
 			sess->data_acb.protocol_version =
@@ -122,10 +122,11 @@ ndmca_connect_tape_agent (struct ndm_session *sess)
 {
 	int		rc;
 
-	if (sess->control_acb.job.tape_agent.conn_type == NDMCONN_TYPE_NONE) {
+	if (sess->control_acb.pjob->tape_agent.conn_type == NDMCONN_TYPE_NONE) {
 		rc = ndmca_connect_data_agent (sess);
 		if (rc) {
-			ndmconn_destruct (sess->plumb.data);
+			ndmconn_close (sess->plumb.data);
+			ndmconn_destruct (&sess->plumb.data);
 			return rc;
 		}
 		sess->plumb.tape = sess->plumb.data;
@@ -134,7 +135,7 @@ ndmca_connect_tape_agent (struct ndm_session *sess)
 		rc = ndmca_connect_xxx_agent (sess,
 				&sess->plumb.tape,
 				"#T",
-				&sess->control_acb.job.tape_agent);
+				&sess->control_acb.pjob->tape_agent);
 		ndmalogf (sess, 0, 7, "ndmca_connect_tape_agent: %d %p", rc, sess->plumb.tape);
 	}
 
@@ -153,7 +154,7 @@ ndmca_connect_robot_agent (struct ndm_session *sess)
 {
 	int		rc;
 
-	if (sess->control_acb.job.robot_agent.conn_type == NDMCONN_TYPE_NONE) {
+	if (sess->control_acb.pjob->robot_agent.conn_type == NDMCONN_TYPE_NONE) {
 		rc = ndmca_connect_tape_agent (sess);
 		if (rc) return rc;
 		sess->plumb.robot = sess->plumb.tape;
@@ -162,7 +163,7 @@ ndmca_connect_robot_agent (struct ndm_session *sess)
 		rc = ndmca_connect_xxx_agent (sess,
 				&sess->plumb.robot,
 				"#R",
-				&sess->control_acb.job.robot_agent);
+				&sess->control_acb.pjob->robot_agent);
 	}
 
 	if (rc == 0) {
@@ -178,7 +179,7 @@ ndmca_connect_robot_agent (struct ndm_session *sess)
 int
 ndmca_connect_control_agent (struct ndm_session *sess)
 {
-	struct ndmagent	control_agent;
+	ndmagent_t	control_agent;
 	int		rc;
 
 	ndmagent_from_str (&control_agent, ".");	/* resident */

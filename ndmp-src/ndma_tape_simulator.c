@@ -48,12 +48,13 @@ int	simu_flush_weof (struct ndm_session *sess);
 
 #ifdef NDMOS_OPTION_TAPE_SIMULATOR
 
+typedef
 struct simu_gap {
 	u_long		magic;
 	u_long		rectype;
 	u_long		prev_size;
 	u_long		size;
-};
+} simu_gap_t;
 
 #define SIMU_GAP_MAGIC		0x0BEEFEE0
 #define SIMU_GAP_RT_(a,b,c,d) ((a<<0)+(b<<8)+(c<<16)+(d<<24))
@@ -113,7 +114,7 @@ ndmp9_error
 ndmos_tape_open (struct ndm_session *sess, char *drive_name, int will_write)
 {
 	struct ndm_tape_agent *	ta = &sess->tape_acb;
-	struct simu_gap		gap;
+	simu_gap_t		gap;
 	struct stat		st;
 	int			read_only, omode;
 	int			rc, fd;
@@ -316,7 +317,7 @@ int
 simu_back_one (struct ndm_session *sess, int over_file_mark)
 {
 	struct ndm_tape_agent *	ta = &sess->tape_acb;
-	struct simu_gap		gap;
+	simu_gap_t		gap;
 	off_t			cur_pos;
 	off_t			new_pos;
 	int			rc;
@@ -386,7 +387,7 @@ int
 simu_forw_one (struct ndm_session *sess, int over_file_mark)
 {
 	struct ndm_tape_agent *	ta = &sess->tape_acb;
-	struct simu_gap		gap;
+	simu_gap_t		gap;
 	off_t			cur_pos;
 	off_t			new_pos;
 	int			rc;
@@ -520,7 +521,7 @@ ndmos_tape_mtio (struct ndm_session *sess,
 		*resid = 0;
 		ta->tape_state.file_num.value = 0;
 		ta->tape_state.blockno.value = 0;
-		lseek (ta->tape_fd, (off_t)(sizeof (struct simu_gap)), 0);
+		lseek (ta->tape_fd, (off_t)(sizeof (simu_gap_t)), 0);
 		break;
 
 	case NDMP9_MTIO_OFF:
@@ -556,7 +557,7 @@ ndmos_tape_write (struct ndm_session *sess,
 {
 	struct ndm_tape_agent *	ta = &sess->tape_acb;
 	int			rc;
-	struct simu_gap		gap;
+	simu_gap_t		gap;
 	off_t			cur_pos;
 	ndmp9_error		err;
 	u_long			prev_size;
@@ -655,7 +656,7 @@ ndmos_tape_wfm (struct ndm_session *sess)
 {
 	struct ndm_tape_agent *	ta = &sess->tape_acb;
 	int			rc;
-	struct simu_gap		gap;
+	simu_gap_t		gap;
 	off_t			cur_pos;
 	ndmp9_error		err;
 	u_long			prev_size;
@@ -736,7 +737,7 @@ ndmos_tape_read (struct ndm_session *sess,
 {
 	struct ndm_tape_agent *	ta = &sess->tape_acb;
 	int			rc;
-	struct simu_gap		gap;
+	simu_gap_t		gap;
 	off_t			cur_pos;
 
 	if (ta->tape_fd < 0) {

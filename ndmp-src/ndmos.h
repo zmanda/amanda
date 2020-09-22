@@ -25,6 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+#pragma once
 
 /*
  * Project:  NDMJOB
@@ -151,7 +152,7 @@
  * NDMOS_MACRO_SRAND		-- wrapper around srand(3), for MD5
  * NDMOS_MACRO_RAND		-- wrapper around rand(3), for MD5
  * NDMOS_MACRO_OK_TAPE_REC_LEN	-- Uses NDMOS_CONST_TAPE_REC_MIN/MAX
- * NDMOS_MACRO_SET_SOCKADDR	-- Sets struct sockaddr_in with
+ * NDMOS_MACRO_SET_SOCKADDR	-- Sets sockaddr_in_t with
  *				   respect to NDMOS_OPTION_HAVE_SIN_LEN
  *
  * The NDMOS_MACRO_xxx_ADDITIONS macros allow additional O/S

@@ -1382,6 +1382,7 @@ wrap_reco_pass (struct wrap_ccb *wccb, int write_fd,
 		wrap_reco_consume (wccb, cnt);
 	}
 
+        (void) rc;
 	return wccb->error;
 }
 

@@ -41,6 +41,7 @@
 #define CFG_MAX_SV	32
 
 /* control block */
+typedef 
 struct cfg_cb {
 	FILE *			fp;
 	ndmp9_config_info *	config_info;
@@ -48,16 +49,16 @@ struct cfg_cb {
 	char *			sv[CFG_MAX_SV];
 	int			sc;
 	int			n_error;
-};
+} cfg_cb_t, *ref_cfg_cb_t;
 
 
-static int	cfg_butype (struct cfg_cb *cb);
-static int	cfg_fs (struct cfg_cb *cb);
-static int	cfg_tape (struct cfg_cb *cb);
-static int	cfg_scsi (struct cfg_cb *cb);
-static int	cfg_device (struct cfg_cb *cb, u_int *n_device,
+static int	cfg_butype (ref_cfg_cb_t cb);
+static int	cfg_fs (ref_cfg_cb_t cb);
+static int	cfg_tape (ref_cfg_cb_t cb);
+static int	cfg_scsi (ref_cfg_cb_t cb);
+static int	cfg_device (ref_cfg_cb_t cb, u_int *n_device,
 			ndmp9_device_info **pp);
-static int	cfg_add_env (struct cfg_cb *cb, u_int *n_env,
+static int	cfg_add_env (ref_cfg_cb_t cb, u_int *n_env,
 			ndmp9_pval **pp, char *name, char *value);
 
 
@@ -83,7 +84,7 @@ ndmcfg_load (char *filename, ndmp9_config_info *config_info)
 int
 ndmcfg_loadfp (FILE *fp, ndmp9_config_info *config_info)
 {
-	struct cfg_cb	_cb, *cb = &_cb;
+	cfg_cb_t	_cb, *cb = &_cb;
 	int		rc;
 
 	NDMOS_MACRO_ZEROFILL(cb);
@@ -140,7 +141,7 @@ ndmcfg_loadfp (FILE *fp, ndmp9_config_info *config_info)
  */
 
 static int
-cfg_butype (struct cfg_cb *cb)
+cfg_butype (ref_cfg_cb_t cb)
 {
 	ndmp9_config_info *	cfg = cb->config_info;
 	ndmp9_butype_info *	ent = cfg->butype_info.butype_info_val;
@@ -224,7 +225,7 @@ cfg_butype (struct cfg_cb *cb)
  */
 
 static int
-cfg_fs (struct cfg_cb *cb)
+cfg_fs (ref_cfg_cb_t cb)
 {
 	ndmp9_config_info *	cfg = cb->config_info;
 	ndmp9_fs_info *		ent = cfg->fs_info.fs_info_val;
@@ -298,7 +299,7 @@ cfg_fs (struct cfg_cb *cb)
 }
 
 static int
-cfg_tape (struct cfg_cb *cb)
+cfg_tape (ref_cfg_cb_t cb)
 {
 	ndmp9_config_info *	cfg = cb->config_info;
 
@@ -307,7 +308,7 @@ cfg_tape (struct cfg_cb *cb)
 }
 
 static int
-cfg_scsi (struct cfg_cb *cb)
+cfg_scsi (ref_cfg_cb_t cb)
 {
 	ndmp9_config_info *	cfg = cb->config_info;
 
@@ -324,7 +325,7 @@ cfg_scsi (struct cfg_cb *cb)
  */
 
 static int
-cfg_device (struct cfg_cb *cb, u_int *n_device, ndmp9_device_info **pp)
+cfg_device (ref_cfg_cb_t cb, u_int *n_device, ndmp9_device_info **pp)
 {
 	ndmp9_device_info *	ent = *pp;
 	ndmp9_device_capability *dcap;
@@ -424,7 +425,7 @@ cfg_device (struct cfg_cb *cb, u_int *n_device, ndmp9_device_info **pp)
 }
 
 static int
-cfg_add_env (struct cfg_cb *cb, u_int *n_env,
+cfg_add_env (ref_cfg_cb_t cb, u_int *n_env,
   ndmp9_pval **pp, char *name, char *value)
 {
 	ndmp9_pval *		ent = *pp;

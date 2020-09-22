@@ -25,6 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+#pragma once
 
 /*
  * Project:  NDMJOB
@@ -82,6 +83,7 @@ struct ndmp3_unfortunate_error {
 #endif /* NDMOS_EFFECT_NO_NDMP3_NOR_NDMP4 */
 
 /* 92 bytes, checked 970930 */
+typedef
 struct ndmp_msg_buf {
 	ndmp0_header		header;
 	unsigned char		protocol_version;
@@ -330,6 +332,8 @@ struct ndmp_msg_buf {
 	  ndmp9_error ndmp9_error_reply;
 	  ndmp9_connect_open_request ndmp9_connect_open_request_body;
 	  ndmp9_connect_open_reply ndmp9_connect_open_reply_body;
+          ndmp9_connect_close_request ndmp9_connect_close_request_body;
+          ndmp9_connect_close_reply ndmp9_connect_close_reply_body;
 	  ndmp9_connect_client_auth_request ndmp9_connect_client_auth_request_body;
 	  ndmp9_connect_client_auth_reply ndmp9_connect_client_auth_reply_body;
 	  ndmp9_connect_server_auth_request ndmp9_connect_server_auth_request_body;
@@ -406,12 +410,13 @@ struct ndmp_msg_buf {
 	  ndmp9_mover_connect_request ndmp9_mover_connect_request_body;
 	  ndmp9_mover_connect_reply ndmp9_mover_connect_reply_body;
 	} body;
-};
+} ndmp_msg_buf_t;
 
+typedef
 struct ndmp_xa_buf {
-	struct ndmp_msg_buf	request;
-	struct ndmp_msg_buf	reply;
-};
+	ndmp_msg_buf_t	request;
+	ndmp_msg_buf_t	reply;
+} ndmp_xa_buf_t;
 
 
 

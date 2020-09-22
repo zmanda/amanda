@@ -45,7 +45,7 @@
 int
 ndmca_control_agent (struct ndm_session *sess)
 {
-	struct ndm_job_param *	job = &sess->control_acb.job;
+	ref_ndm_job_param_t	job = sess->control_acb.pjob;
 	int			rc;
 
 	switch (job->operation) {

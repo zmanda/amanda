@@ -25,6 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+#pragma once
 
 /*
  * Project:  NDMJOB
@@ -38,6 +39,7 @@
 #define SMC_MAX_SENSE_DATA	127
 
 /* carefully layed out so that 16-byte/line hex dumps look nice */
+typedef 
 struct smc_scsi_req {
 	unsigned char	completion_status;
 	unsigned char	status_byte;
@@ -53,7 +55,7 @@ struct smc_scsi_req {
 
 	unsigned char	n_sense_data;
 	unsigned char	sense_data[SMC_MAX_SENSE_DATA];
-};
+} smc_scsi_req_t;
 
 #define SMCSR_CS_GOOD	0
 #define SMCSR_CS_FAIL	1
@@ -65,13 +67,15 @@ struct smc_scsi_req {
 
 
 
+typedef
 struct smc_volume_tag {
 	unsigned char	volume_id[32];
 	unsigned short	volume_seq;
-};
+} smc_volume_tag_t;
 
 
 
+typedef
 struct smc_element_address_assignment {
 	unsigned	mte_addr;	/* media transport element */
 	unsigned	mte_count;
@@ -84,7 +88,7 @@ struct smc_element_address_assignment {
 
 	unsigned	dte_addr;	/* data transfer element */
 	unsigned	dte_count;
-};
+} smc_element_address_assignment_t;
 
 
 #define SMC_ELEM_TYPE_ALL	0
@@ -93,6 +97,7 @@ struct smc_element_address_assignment {
 #define SMC_ELEM_TYPE_IEE	3
 #define SMC_ELEM_TYPE_DTE	4
 
+typedef
 struct smc_element_descriptor {
 	unsigned char	element_type_code;
 	unsigned short	element_address;
@@ -119,9 +124,9 @@ struct smc_element_descriptor {
 	unsigned char	scsi_sid;	/* if ID_valid, SID of drive */
 	unsigned char	scsi_lun;	/* if LU_valid, LUN of drive */
 
-	struct smc_volume_tag primary_vol_tag;	/* if PVolTag */
-	struct smc_volume_tag alternate_vol_tag;/* if AVolTag */
-};
+	smc_volume_tag_t primary_vol_tag;	/* if PVolTag */
+	smc_volume_tag_t alternate_vol_tag;/* if AVolTag */
+} smc_element_descriptor_t;
 
 
 
@@ -129,6 +134,7 @@ struct smc_element_descriptor {
 #define SMC_MAX_ELEMENT		80
 #endif
 
+typedef
 struct smc_ctrl_block {
 	unsigned char		ident[32];
 
@@ -142,7 +148,7 @@ struct smc_ctrl_block {
 				elem_desc[SMC_MAX_ELEMENT];
 	unsigned		n_elem_desc;
 
-	struct smc_scsi_req	scsi_req;
+	smc_scsi_req_t	scsi_req;
 
 	int			(*issue_scsi_req)(struct smc_ctrl_block *smc);
 	void *			app_data;
@@ -150,7 +156,7 @@ struct smc_ctrl_block {
 	int			dont_ask_for_voltags;
 
 	char			errmsg[64];
-};
+} smc_ctrl_block_t;
 
 
 extern int	smc_inquire (struct smc_ctrl_block *smc);

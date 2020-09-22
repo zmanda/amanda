@@ -35,7 +35,7 @@
  */
 
 
-#include "ndmlib.h"
+#include "ndmagents.h"
 
 
 
@@ -110,25 +110,25 @@ ndmfhdb_add_dirnode_root (struct ndmlog *ixlog, int tagc,
 
 
 int
-ndmfhdb_add_fh_info_to_nlist (FILE *fp, ndmp9_name *nlist, int n_nlist)
+ndmfhdb_add_fh_info_to_nlist (FILE *fp, ref_ndm_nlist_table_t nlist, void **fpcachep)
 {
-	struct ndmfhdb		_fhcb, *fhcb = &_fhcb;
+	ndmfhdb_t		_fhcb, *fhcb = &_fhcb;
 	int			i, rc, n_found;
 	ndmp9_file_stat		fstat;
 
-	rc = ndmfhdb_open (fp, fhcb);
+	rc = ndmfhdb_open (fp, fhcb, fpcachep);
 	if (rc != 0) {
 		return -31;
 	}
 
 	n_found = 0;
 
-	for (i = 0; i < n_nlist; i++) {
-		char *		name = nlist[i].original_path;
+	for (i = 0; i < nlist->n_nlist; i++) {
+		char *		name = nlist->nlist[i].original_path;
 
 		rc = ndmfhdb_lookup (fhcb, name, &fstat);
 		if (rc > 0) {
-			nlist[i].fh_info = fstat.fh_info;
+			nlist->nlist[i].fh_info = fstat.fh_info;
 			if (fstat.fh_info.valid) {
 				n_found++;
 			}
@@ -139,13 +139,14 @@ ndmfhdb_add_fh_info_to_nlist (FILE *fp, ndmp9_name *nlist, int n_nlist)
 }
 
 int
-ndmfhdb_open (FILE *fp, struct ndmfhdb *fhcb)
+ndmfhdb_open (FILE *fp, struct ndmfhdb *fhcb, void **fpcachep)
 {
 	int		rc;
 
 	NDMOS_MACRO_ZEROFILL (fhcb);
 
 	fhcb->fp = fp;
+        fhcb->fpcachep = fpcachep;
 
 	rc = ndmfhdb_dirnode_root (fhcb);
 	if (rc > 0) {
@@ -185,7 +186,7 @@ ndmfhdb_dirnode_root (struct ndmfhdb *fhcb)
 	p = NDMOS_API_STREND(key);
 	off = p - key;
 
-	rc = ndmbstf_first (fhcb->fp, key, linebuf, sizeof linebuf);
+	rc = ndmbstf_first (fhcb->fp, key, linebuf, sizeof linebuf, fhcb->fpcachep);
 
 	if (rc <= 0) {
 		return rc;	/* error or not found */
@@ -258,7 +259,7 @@ ndmfhdb_dir_lookup (struct ndmfhdb *fhcb, unsigned long long dir_node,
 	p = NDMOS_API_STREND(key);
 	off = p - key;
 
-	rc = ndmbstf_first (fhcb->fp, key, linebuf, sizeof linebuf);
+	rc = ndmbstf_first (fhcb->fp, key, linebuf, sizeof linebuf, fhcb->fpcachep);
 
 	if (rc <= 0) {
 		return rc;	/* error or not found */
@@ -288,7 +289,7 @@ ndmfhdb_node_lookup (struct ndmfhdb *fhcb, unsigned long long node,
 	off = p - key;
 
 
-	rc = ndmbstf_first (fhcb->fp, key, linebuf, sizeof linebuf);
+	rc = ndmbstf_first (fhcb->fp, key, linebuf, sizeof linebuf, fhcb->fpcachep);
 
 	if (rc <= 0) {
 		return rc;	/* error or not found */
@@ -337,7 +338,7 @@ ndmfhdb_file_lookup (struct ndmfhdb *fhcb, char *path,
 	p = NDMOS_API_STREND(key);
 	off = p - key;
 
-	rc = ndmbstf_first (fhcb->fp, key, linebuf, sizeof linebuf);
+	rc = ndmbstf_first (fhcb->fp, key, linebuf, sizeof linebuf, fhcb->fpcachep);
 
 	if (rc <= 0) {
 		return rc;	/* error or not found */

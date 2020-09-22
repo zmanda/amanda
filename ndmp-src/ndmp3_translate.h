@@ -114,6 +114,6 @@ extern int	ndmp_9to3_name_vec (
 			ndmp3_name *name3,
 			unsigned n_name);
 
-extern struct reqrep_xlate		ndmp3_reqrep_xlate_table[];
+extern reqrep_xlate_t		ndmp3_reqrep_xlate_table[];
 
 #endif /* !NDMOS_OPTION_NO_NDMP3 */

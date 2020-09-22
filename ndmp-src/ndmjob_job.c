@@ -37,20 +37,17 @@
 
 #include "ndmjob.h"
 
+#include <glib.h>
+
 
 #ifndef NDMOS_OPTION_NO_CONTROL_AGENT
-
-
 int
-build_job (void)
+build_job (ref_ndm_job_param_t job)
 {
-	struct ndm_job_param *	job = &the_job;
 	int			i, rc, n_err;
 	char			errbuf[100];
 
-	NDMOS_MACRO_ZEROFILL(job);
-
-	args_to_job ();
+	args_to_job (job);
 
 	ndma_job_auto_adjust (job);
 
@@ -76,9 +73,8 @@ build_job (void)
 
 
 int
-args_to_job (void)
+args_to_job (ref_ndm_job_param_t job)
 {
-	struct ndm_job_param *	job = &the_job;
 	int			i;
 
 	switch (the_mode) {
@@ -100,23 +96,23 @@ args_to_job (void)
 		break;
 
 	case NDM_JOB_OP_BACKUP:
-		args_to_job_backup_env();
+		args_to_job_backup_env(&job->nlist_tab, &job->env_tab);
 		break;
 
 	case NDM_JOB_OP_TOC:
-		args_to_job_recover_env();
-		args_to_job_recover_nlist();
+		args_to_job_recover_env(&job->env_tab);
+		args_to_job_recover_nlist(&job->nlist_tab);
 		if (J_index_file) {
-			jndex_doit();
-			jndex_merge_environment();
+			jndex_doit(&job->nlist_tab);
+			jndex_merge_environment(&job->env_tab);
 		}
 		break;
 
 	case NDM_JOB_OP_EXTRACT:
-		args_to_job_recover_env();
-		args_to_job_recover_nlist();
-		jndex_doit();
-		jndex_merge_environment();
+		args_to_job_recover_env(&job->env_tab);
+		args_to_job_recover_nlist(&job->nlist_tab);
+		jndex_doit(&job->nlist_tab);
+		jndex_merge_environment(&job->env_tab);
 		break;
 
 	case 'D':		/* -o daemon */
@@ -131,16 +127,6 @@ args_to_job (void)
 	/* DATA agent */
 	job->data_agent  = D_data_agent;
 	job->bu_type = B_bu_type;
-	for (i = 0; i < nn_E_environment; i++)
-		job->env_tab.env[i] = E_environment[i];
-	job->env_tab.n_env = nn_E_environment;
-	if (the_mode == NDM_JOB_OP_EXTRACT || the_mode == NDM_JOB_OP_TOC) {
-	        for (i = 0; (i < n_file_arg) && (i < NDM_MAX_NLIST); i++) {
-			job->nlist_tab.nlist[i] = nlist[i];
-			job->nlist_tab.nlist_new[i] = nlist_new[i];
-			job->nlist_tab.n_nlist = i + 1;
-		}
-	}
 	job->index_log.deliver = ndmjob_ixlog_deliver;
 
 	/* TAPE agent */
@@ -180,97 +166,58 @@ args_to_job (void)
 }
 
 
-int
-args_to_job_backup_env (void)
+static void 
+append_global_args (ref_ndm_env_table_t job_envp)
 {
-	int		n_env = n_E_environment;
-	int		i;
+    int i;
 
-	if (C_chdir) {
-		E_environment[n_env].name = "FILESYSTEM";
-		E_environment[n_env].value = C_chdir;
-		n_env++;
-	}
+    ENV_ARRAY_APPEND(job_envp, "HIST", (I_index_file ? "y" : "n") );
+    ENV_ARRAY_APPEND(job_envp, "TYPE",  B_bu_type);
 
-	E_environment[n_env].name = "HIST";
-	E_environment[n_env].value = I_index_file ? "y" : "n";
-	n_env++;
+    if (U_user) {
+        ENV_ARRAY_APPEND(job_envp, "USER",  U_user);
+    }
 
-	E_environment[n_env].name = "TYPE";
-	E_environment[n_env].value = B_bu_type;
-	n_env++;
+    for (i = 0; i < n_e_exclude_pattern ; i++) {
+        ENV_ARRAY_APPEND(job_envp, "EXCLUDE",  e_exclude_pattern[i]);
+    }
 
-	if (U_user) {
-		E_environment[n_env].name = "USER";
-		E_environment[n_env].value = U_user;
-		n_env++;
-	}
+    if (o_rules) {
+        ENV_ARRAY_APPEND(job_envp, "RULES", o_rules);
+    }
 
-	for (i = 0; (i < n_e_exclude_pattern) && (n_env < NDM_MAX_ENV-2); i++) {
-		E_environment[n_env].name = "EXCLUDE";
-		E_environment[n_env].value = e_exclude_pattern[i];
-		n_env++;
-	}
-	for (i = 0; (i < n_file_arg) && (n_env < NDM_MAX_ENV-1); i++) {
-		E_environment[n_env].name = "FILES";
-		E_environment[n_env].value = file_arg[i];
-		n_env++;
-	}
-
-	if (o_rules) {
-		E_environment[n_env].name = "RULES";
-		E_environment[n_env].value = o_rules;
-	}
-
-	nn_E_environment = n_env;
-
-	return n_env;
 }
 
 int
-args_to_job_recover_env (void)
+args_to_job_backup_env (ref_ndm_nlist_table_t nlist, ref_ndm_env_table_t job_envp)
 {
-	int		n_env = n_E_environment;
 	int		i;
 
 	if (C_chdir) {
-		E_environment[n_env].name = "PREFIX";
-		E_environment[n_env].value = C_chdir;
-		n_env++;
+            ENV_ARRAY_APPEND(job_envp, "FILESYSTEM", C_chdir);
 	}
 
-	E_environment[n_env].name = "HIST";
-	E_environment[n_env].value = I_index_file ? "y" : "n";
-	n_env++;
+        append_global_args(job_envp);
 
-	E_environment[n_env].name = "TYPE";
-	E_environment[n_env].value = B_bu_type;
-	n_env++;
+        for (i = 0; i < nlist->n_nlist ; i++) {
+            ENV_ARRAY_APPEND(job_envp, "FILES", nlist->nlist[i].original_path);
+        }
 
-	if (U_user) {
-		E_environment[n_env].name = "USER";
-		E_environment[n_env].value = U_user;
-		n_env++;
+	return job_envp->n_env;
+}
+
+int
+args_to_job_recover_env (ref_ndm_env_table_t job_envp)
+{
+	if (C_chdir) {
+           ENV_ARRAY_APPEND(job_envp, "PREFIX", C_chdir);
 	}
 
-	for (i = 0; i < n_e_exclude_pattern; i++) {
-		E_environment[n_env].name = "EXCLUDE";
-		E_environment[n_env].value = e_exclude_pattern[i];
-		n_env++;
-	}
-
-	if (o_rules) {
-		E_environment[n_env].name = "RULES";
-		E_environment[n_env].value = o_rules;
-	}
-
-	nn_E_environment = n_env;
+        append_global_args(job_envp);
 
 	/* file_arg[]s are done in nlist[] */
 
-	jndex_merge_environment ();
-
-	return nn_E_environment;
+	return job_envp->n_env;
 }
 
 void
@@ -293,61 +240,39 @@ normalize_name (char *name)
 }
 
 int
-args_to_job_recover_nlist (void)
+args_to_job_recover_nlist (ref_ndm_nlist_table_t nlist)
 {
-	int		not_found = 0;
-	int		i, prefix_len, len;
-	char *		dest;
+	int		i, prefix_len = 0;
 
 	if (C_chdir) {
-		prefix_len = strlen (C_chdir) + 2;
-	} else {
-		prefix_len = 0;
+            prefix_len = strlen (C_chdir) + 2;
+	} 
+
+	for (i = 0; i < nlist->n_nlist ; i++) 
+        {
+            char *destpath;
+            char *buff;
+            name_value_t *const pair = &nlist->nlist[i];
+
+            // complete original path 
+            normalize_name (pair->original_path);
+
+            // transform destination path (or create from original_path)
+            destpath = ( pair->destination_path ? : pair->original_path );
+            buff = alloca(strlen(destpath) + prefix_len + 1);
+
+            strcpy(buff, ( C_chdir ? : "" ) );
+            strcat(buff, destpath);
+
+            // complete destination path 
+            normalize_name (buff);
+            if ( pair->destination_path && pair->destination_path != pair->original_path ) {
+                free(pair->destination_path);
+            }
+            pair->destination_path = NDMOS_API_STRDUP(buff);
 	}
 
-	for (i = 0; (i < n_file_arg) && (i < NDM_MAX_NLIST); i++) {
-	    if (file_arg_new[i]) {
-		len = strlen (file_arg_new[i]) + prefix_len + 1;
-
-		dest = NDMOS_API_MALLOC (len);
-		*dest = 0;
-		if (C_chdir) {
-			strcpy (dest, C_chdir);
-		}
-		if (file_arg_new[i][0] != '/') {
-			strcat (dest, "/");
-		}
-		strcat (dest, file_arg_new[i]);
-
-		normalize_name (file_arg_new[i]);
-		normalize_name (file_arg[i]);
-		normalize_name (dest);
-
-		nlist[i].original_path = file_arg[i];
-		nlist[i].destination_path = dest;
-	    } else {
-		len = strlen (file_arg[i]) + prefix_len + 1;
-
-		dest = NDMOS_API_MALLOC (len);
-		*dest = 0;
-		if (C_chdir) {
-			strcpy (dest, C_chdir);
-		}
-		if (file_arg[i][0] != '/') {
-			strcat (dest, "/");
-		}
-
-		strcat (dest, file_arg[i]);
-
-		normalize_name (file_arg[i]);
-		normalize_name (dest);
-
-		nlist[i].original_path = file_arg[i];
-		nlist[i].destination_path = dest;
-	    }
-	}
-
-	return not_found;	/* should ALWAYS be 0 */
+	return 0;	/* should ALWAYS be 0 */
 }
 
 
@@ -361,9 +286,10 @@ FILE *		jndex_open (void);
 
 
 int
-jndex_doit (void)
+jndex_doit (ref_ndm_nlist_table_t nlist)
 {
 	FILE *		fp;
+        void *          fpcache = NULL;
 	int		rc;
 
 	fp = jndex_open();
@@ -374,24 +300,28 @@ jndex_doit (void)
 
 	ndmjob_log (1, "Processing input index (-J%s)", J_index_file);
 
-	if (n_file_arg > 0) {
-		rc = ndmfhdb_add_fh_info_to_nlist (fp, nlist, n_file_arg);
+	if (nlist->n_nlist > 0) {
+		rc = ndmfhdb_add_fh_info_to_nlist (fp, nlist, &fpcache);
 		if (rc < 0) {
 			/* toast one way or another */
 		}
 	}
 
-	jndex_fetch_post_backup_data_env(fp);
-	jndex_fetch_post_backup_media(fp);
+	jndex_fetch_post_backup_data_env(fp, &fpcache);
+	jndex_fetch_post_backup_media(fp, &fpcache);
 
-	jndex_tattle();
+	ndmjob_log (1, "Completed input index (-J%s)", J_index_file);
 
-	if (jndex_audit_not_found ()) {
+	jndex_tattle(nlist);
+
+	if (jndex_audit_not_found (nlist)) {
 		ndmjob_log (1,
 			"Warning: Missing index entries, valid file name(s)?");
 	}
 
 	jndex_merge_media ();
+
+        ndmfhdb_clear_cache(&fpcache);
 
 	fclose(fp);
 	return 0;
@@ -402,6 +332,9 @@ jndex_open (void)
 {
 	char		buf[256];
 	FILE *		fp;
+        struct stat     st;
+        int             bufsize;
+        char            *indexvbuf;
 
 	if (!J_index_file) {
 		/* Hmmm. */
@@ -416,6 +349,27 @@ jndex_open (void)
 		error_byebye ("Can not open -J%s input index", J_index_file);
 		/* no return */
 	}
+
+        if (fstat(fileno(fp), &st) <0) {
+		perror (J_index_file);
+		error_byebye ("Can not fstat -J%s input index", J_index_file);
+        }
+
+        // load a narrow 100K window if it is very huge.. 
+        //       otherwise load the whole thing immediately
+        bufsize = ( st.st_size > NDM_INDEX_HOLDING_LIMIT ? NDM_INDEX_PROBE_BUFFER : st.st_size );
+        indexvbuf = malloc(bufsize);
+
+        // attmempt to use the max buffer (up to a sane limit)
+        if ( ! indexvbuf ) { 
+            indexvbuf = malloc(NDM_INDEX_PROBE_BUFFER);
+            bufsize = NDM_INDEX_PROBE_BUFFER;
+        }
+
+        // try *only* if memory was received...
+        if ( indexvbuf ) {
+            setvbuf(fp, indexvbuf, _IOFBF, bufsize);
+        }
 
 	if (fgets (buf, sizeof buf, fp) == NULL) {
 		fclose (fp);
@@ -448,7 +402,7 @@ jndex_open (void)
 
 
 int
-jndex_tattle (void)
+jndex_tattle (ref_ndm_nlist_table_t nlist)
 {
 	char		buf[100];
 	int		i;
@@ -460,19 +414,19 @@ jndex_tattle (void)
 		ndmjob_log (3, "ji me[%d] %s", i, buf);
 	}
 
-	for (i = 0; i < n_ji_environment; i++) {
-		ndmp9_pval *		pv = &ji_environment[i];
+	for (i = 0; i < ji_env.n_env; i++) {
+		env_value_t		*pv = &ji_env.env[i];
 
 		ndmjob_log (3, "ji env[%d] %s=%s", i, pv->name, pv->value);
 	}
 
-	for (i = 0; (i < n_file_arg) && (i < NDM_MAX_NLIST); i++) {
-		if (nlist[i].fh_info.valid) {
+	for (i = 0; i < nlist->n_nlist ; i++) {
+		if (nlist->nlist[i].fh_info.valid) {
 			ndmjob_log (3, "ji fil[%d] fi=%lld %s",
-				i, nlist[i].fh_info.value, file_arg[i]);
+				i, nlist->nlist[i].fh_info.value, nlist->nlist[i].original_path);
 		} else {
 			ndmjob_log (3, "ji fil[%d] not-found %s",
-				i, file_arg[i]);
+				i, nlist->nlist[i].original_path);
 		}
 	}
 
@@ -526,14 +480,14 @@ jndex_merge_media (void)
 }
 
 int
-jndex_audit_not_found (void)
+jndex_audit_not_found (ref_ndm_nlist_table_t nlist)
 {
 	int		i;
 	int		not_found = 0;
 
-	for (i = 0; (i < n_file_arg) && (i < NDM_MAX_NLIST); i++) {
-		if (!nlist[i].fh_info.valid) {
-			ndmjob_log (0, "No index entry for %s", file_arg[i]);
+	for (i = 0; i < nlist->n_nlist ; i++) {
+		if (!nlist->nlist[i].fh_info.valid) {
+			ndmjob_log (0, "No index entry for %s", nlist->nlist[i].original_path);
 			not_found++;
 		}
 	}
@@ -542,16 +496,16 @@ jndex_audit_not_found (void)
 }
 
 int
-jndex_merge_environment (void)
+jndex_merge_environment (ref_ndm_env_table_t job_envp) 
 {
 	int		i;
 
-	for (i = 0; i < n_ji_environment; i++) {
-		if (strcmp(ji_environment[i].name, "FILESYSTEM") != 0 &&
-		    strcmp(ji_environment[i].name, "PREFIX") != 0 &&
-		    strcmp(ji_environment[i].name, "HIST") != 0 &&
-		    strcmp(ji_environment[i].name, "TYPE") != 0) {
-			E_environment[nn_E_environment++] = ji_environment[i];
+	for (i = 0; i < ji_env.n_env; i++) {
+		if (strcmp(ji_env.env[i].name, "FILESYSTEM") != 0 &&
+		    strcmp(ji_env.env[i].name, "PREFIX") != 0 &&
+		    strcmp(ji_env.env[i].name, "HIST") != 0 &&
+		    strcmp(ji_env.env[i].name, "TYPE") != 0) {
+                       ENV_ARRAY_APPEND(job_envp, ji_env.env[i].name, ji_env.env[i].value);
 		}
 	}
 
@@ -559,24 +513,20 @@ jndex_merge_environment (void)
 }
 
 int
-jndex_fetch_post_backup_data_env (FILE *fp)
+jndex_fetch_post_backup_data_env (FILE *fp, void **fpcachep)
 {
 	int		rc;
 	char		buf[512];
 	char *		p;
 	char *		q;
 
-	rc = ndmbstf_first (fp, "DE ", buf, sizeof buf);
+	rc = ndmbstf_first (fp, "DE ", buf, sizeof buf, fpcachep);
 	if (rc <= 0) {
 		return rc;	/* error or not found */
 	}
 
 	/* DE HIST=Yes */
 	while (buf[0] == 'D' && buf[1] == 'E' && buf[2] == ' ') {
-		if (n_ji_environment >= NDM_MAX_ENV) {
-			goto overflow;
-		}
-
 		p = &buf[2];
 		while (*p == ' ') p++;
 
@@ -591,10 +541,7 @@ jndex_fetch_post_backup_data_env (FILE *fp)
 		}
 		*q++ = 0;
 
-		ji_environment[n_ji_environment].name = p;
-		ji_environment[n_ji_environment].value = q;
-
-		n_ji_environment++;
+                ENV_ARRAY_APPEND(&ji_env, p, q);
 
 		rc = ndmbstf_getline (fp, buf, sizeof buf);
 		if (rc <= 0) {
@@ -614,12 +561,12 @@ jndex_fetch_post_backup_data_env (FILE *fp)
 }
 
 int
-jndex_fetch_post_backup_media (FILE *fp)
+jndex_fetch_post_backup_media (FILE *fp, void **fpcachep)
 {
 	int		rc;
 	char		buf[512];
 
-	rc = ndmbstf_first (fp, "CM ", buf, sizeof buf);
+	rc = ndmbstf_first (fp, "CM ", buf, sizeof buf, fpcachep);
 	if (rc <= 0) {
 		return rc;	/* error or not found */
 	}

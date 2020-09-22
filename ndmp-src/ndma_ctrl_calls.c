@@ -48,10 +48,26 @@
 int
 ndmca_data_get_state (struct ndm_session *sess)
 {
-	struct ndmconn *	conn = sess->plumb.data;
-	struct ndm_control_agent *ca = &sess->control_acb;
+	struct ndmconn  		   *conn = sess->plumb.data;
+	struct ndm_control_agent             *ca = &sess->control_acb;
 	struct ndmp9_data_get_state_reply *state = &ca->data_state;
-	int			rc;
+	int				      rc;
+
+	if (!conn) {
+		ndmalogf (sess, 0, 0, "data_get_state(): connection is NULL");
+		return 0;
+	}
+	if (conn->conn_type == NDMCONN_TYPE_REMOTE && conn->chan.fd < 0)  {
+		ndmalogf (sess, 0, 0, "data_get_state(): connection is down/destroyed");
+		return 0;
+	}
+	if (conn->conn_type == NDMCONN_TYPE_REMOTE 
+		&& conn->chan.mode != NDMCHAN_MODE_READCHK 
+		&& conn->chan.mode != NDMCHAN_MODE_WRITE) 
+	{
+		ndmalogf (sess, 0, 0, "data_get_state(): connection chan is in mode %d");
+		return 0;
+	}
 
 	NDMC_WITH_VOID_REQUEST(ndmp9_data_get_state, NDMP9VER)
 		rc = NDMC_CALL(conn);
@@ -103,13 +119,13 @@ ndmca_data_connect (struct ndm_session *sess)
 	int			rc;
 	ndmp9_addr		addr;
 
-	if (ca->job.tape_tcp) {
+	if (ca->pjob->tape_tcp) {
 		char *host;
 		char *port;
 		struct sockaddr_in sin;
 
-		host = ca->job.tape_tcp;
-		port = strchr(ca->job.tape_tcp, ':');
+		host = ca->pjob->tape_tcp;
+		port = strchr(ca->pjob->tape_tcp, ':');
 		if (!port) {
 		    return 1;
 		}
@@ -123,6 +139,7 @@ ndmca_data_connect (struct ndm_session *sess)
 	}
 
 	NDMC_WITH(ndmp9_data_connect, NDMP9VER)
+                (void) reply;
 		request->addr = addr;
 		rc = NDMC_CALL(conn);
 	NDMC_ENDWITH
@@ -135,8 +152,8 @@ ndmca_data_start_backup (struct ndm_session *sess)
 {
 	struct ndmconn *	conn = sess->plumb.data;
 	struct ndm_control_agent *ca = &sess->control_acb;
-	unsigned		n_env = ca->job.env_tab.n_env;
-	ndmp9_pval *		env = ca->job.env_tab.env;
+	unsigned		n_env = ca->pjob->env_tab.n_env;
+	ndmp9_pval *		env = ca->pjob->env_tab.env;
 	ndmp9_addr		addr;
 	int			rc;
 
@@ -156,8 +173,9 @@ ndmca_data_start_backup (struct ndm_session *sess)
 	}
 
 	NDMC_WITH(ndmp9_data_start_backup, NDMP9VER)
+                (void) reply;
 		request->addr = addr;
-		request->bu_type = ca->job.bu_type;
+		request->bu_type = ca->pjob->bu_type;
 		request->env.env_len = n_env;
 		request->env.env_val = env;
 
@@ -172,10 +190,10 @@ ndmca_data_start_recover (struct ndm_session *sess)
 {
 	struct ndmconn *	conn = sess->plumb.data;
 	struct ndm_control_agent *ca = &sess->control_acb;
-	unsigned		n_env = ca->job.env_tab.n_env;
-	ndmp9_pval *		env = ca->job.env_tab.env;
-	unsigned		n_nlist = ca->job.nlist_tab.n_nlist;
-	ndmp9_name *		nlist = ca->job.nlist_tab.nlist;
+	unsigned		n_env = ca->pjob->env_tab.n_env;
+	ndmp9_pval *		env = ca->pjob->env_tab.env;
+	unsigned		n_nlist = ca->pjob->nlist_tab.n_nlist;
+	ndmp9_name *		nlist = ca->pjob->nlist_tab.nlist;
 	ndmp9_addr		addr;
 	int			rc;
 
@@ -195,8 +213,9 @@ ndmca_data_start_recover (struct ndm_session *sess)
 	}
 
 	NDMC_WITH(ndmp9_data_start_recover, NDMP9VER)
+                (void) reply;
 		request->addr = addr;
-		request->bu_type = ca->job.bu_type;
+		request->bu_type = ca->pjob->bu_type;
 		request->env.env_len = n_env;
 		request->env.env_val = env;
 		request->nlist.nlist_len = n_nlist;
@@ -213,10 +232,10 @@ ndmca_data_start_recover_filehist (struct ndm_session *sess)
 {
 	struct ndmconn *	conn = sess->plumb.data;
 	struct ndm_control_agent *ca = &sess->control_acb;
-	unsigned		n_env = ca->job.env_tab.n_env;
-	ndmp9_pval *		env = ca->job.env_tab.env;
-	unsigned		n_nlist = ca->job.nlist_tab.n_nlist;
-	ndmp9_name *		nlist = ca->job.nlist_tab.nlist;
+	unsigned		n_env = ca->pjob->env_tab.n_env;
+	ndmp9_pval *		env = ca->pjob->env_tab.env;
+	unsigned		n_nlist = ca->pjob->nlist_tab.n_nlist;
+	ndmp9_name *		nlist = ca->pjob->nlist_tab.nlist;
 	ndmp9_addr		addr;
 	int			rc;
 
@@ -236,8 +255,9 @@ ndmca_data_start_recover_filehist (struct ndm_session *sess)
 	}
 
 	NDMC_WITH(ndmp9_data_start_recover_filehist, NDMP9VER)
+                (void) reply;
 		request->addr = addr;
-		request->bu_type = ca->job.bu_type;
+		request->bu_type = ca->pjob->bu_type;
 		request->env.env_len = n_env;
 		request->env.env_val = env;
 		request->nlist.nlist_len = n_nlist;
@@ -256,6 +276,7 @@ ndmca_data_abort (struct ndm_session *sess)
 	int			rc;
 
 	NDMC_WITH_VOID_REQUEST(ndmp9_data_abort, NDMP9VER)
+                (void) reply;
 		rc = NDMC_CALL(conn);
 	NDMC_ENDWITH
 
@@ -269,21 +290,17 @@ ndmca_data_get_env (struct ndm_session *sess)
 	struct ndm_control_agent *ca = &sess->control_acb;
 	int			rc;
 	unsigned int		i;
-	ndmp9_pval *		d_pv;
-	ndmp9_pval *		s_pv;
 
 	NDMC_WITH_VOID_REQUEST(ndmp9_data_get_env, NDMP9VER)
 		rc = NDMC_CALL(conn);
 		if (rc) return rc;
 
-		for (i = 0; i < reply->env.env_len; i++) {
-			s_pv = &reply->env.env_val[i];
-			d_pv = &ca->job.result_env_tab.env[i];
-			d_pv->name  = NDMOS_API_STRDUP (s_pv->name);
-			d_pv->value = NDMOS_API_STRDUP (s_pv->value);
-		}
-		ca->job.result_env_tab.n_env = i;
+		for (i = 0; i < reply->env.env_len; i++)
+                {
+                        ndmp9_pval *s_pv = &reply->env.env_val[i];
 
+                        ENV_ARRAY_APPEND(&ca->pjob->result_env_tab, s_pv->name, s_pv->value);
+		}
 		NDMC_FREE_REPLY();
 	NDMC_ENDWITH
 
@@ -297,6 +314,7 @@ ndmca_data_stop (struct ndm_session *sess)
 	int			rc;
 
 	NDMC_WITH_VOID_REQUEST(ndmp9_data_stop, NDMP9VER)
+                (void) reply;
 		rc = NDMC_CALL(conn);
 	NDMC_ENDWITH
 
@@ -320,7 +338,7 @@ ndmca_tape_open (struct ndm_session *sess)
 	int			rc;
 
 	NDMC_WITH (ndmp9_tape_open, NDMP9VER)
-		request->device = ca->job.tape_device;
+		request->device = ca->pjob->tape_device;
 		request->mode = ca->tape_mode;
 		rc = NDMC_CALL(conn);
 		ca->tape_state.error = reply->error;
@@ -336,6 +354,7 @@ ndmca_tape_close (struct ndm_session *sess)
 	int			rc;
 
 	NDMC_WITH_VOID_REQUEST(ndmp9_tape_close, NDMP9VER)
+                (void) reply;
 		rc = NDMC_CALL(conn);
 	NDMC_ENDWITH
 
@@ -345,10 +364,26 @@ ndmca_tape_close (struct ndm_session *sess)
 int
 ndmca_tape_get_state (struct ndm_session *sess)
 {
-	struct ndmconn *	conn = sess->plumb.tape;
-	struct ndm_control_agent *ca = &sess->control_acb;
+	struct ndmconn 			   *conn = sess->plumb.tape;
+	struct ndm_control_agent 	     *ca = &sess->control_acb;
 	struct ndmp9_tape_get_state_reply *state = &ca->tape_state;
-	int			rc;
+	int				      rc;
+
+	if (!conn) {
+		ndmalogf (sess, 0, 0, "tape_get_state(): connection is NULL");
+		return 0;
+	}
+	if (conn->conn_type == NDMCONN_TYPE_REMOTE && conn->chan.fd < 0)  {
+		ndmalogf (sess, 0, 0, "tape_get_state(): connection is down/destroyed");
+		return 0;
+	}
+	if (conn->conn_type == NDMCONN_TYPE_REMOTE 
+		&& conn->chan.mode != NDMCHAN_MODE_READCHK 
+		&& conn->chan.mode != NDMCHAN_MODE_WRITE) 
+	{
+		ndmalogf (sess, 0, 0, "tape_get_state(): connection chan is in mode %d");
+		return 0;
+	}
 
 	NDMC_WITH_VOID_REQUEST(ndmp9_tape_get_state, NDMP9VER)
 		rc = NDMC_CALL(conn);
@@ -372,6 +407,24 @@ ndmca_tape_get_state_no_tattle (struct ndm_session *sess)
 	struct ndmp9_tape_get_state_reply *state = &ca->tape_state;
 	int			rc;
 
+	if (conn && conn->conn_type != NDMCONN_TYPE_REMOTE) {
+		return 0;
+	}
+
+	if (sess->tape_acb.tape_state.state != NDMP9_TAPE_STATE_OPEN) {
+		return 0;
+	}
+
+	if (!conn || conn->chan.fd < 0) {
+		ndmalogf (sess, 0, 0, "tape_get_state_no_tattle(): connection is down/destroyed");
+		return 0;
+	}
+
+	if (conn->chan.mode != NDMCHAN_MODE_READCHK && conn->chan.mode != NDMCHAN_MODE_WRITE) {
+		ndmalogf (sess, 0, 0, "tape_get_state_no_tattle(): connection chan is in mode %d");
+		return 0;
+	}
+
 	NDMC_WITH_VOID_REQUEST(ndmp9_tape_get_state, NDMP9VER)
 		rc = ndma_call_no_tattle (conn, xa);
 		if (rc) {
@@ -380,9 +433,8 @@ ndmca_tape_get_state_no_tattle (struct ndm_session *sess)
 		} else {
 			*state = *reply;
 		}
-		if (rc < 0
-		 ||  (reply->error != NDMP9_DEV_NOT_OPEN_ERR
-		   && reply->error != NDMP9_NO_ERR))
+		if (rc < 0 ||  (reply->error != NDMP9_DEV_NOT_OPEN_ERR
+		   		 && reply->error != NDMP9_NO_ERR))
 			ndma_tattle (sess->plumb.tape, xa, rc);
 	NDMC_ENDWITH
 
@@ -486,10 +538,26 @@ ndmca_tape_read_partial (struct ndm_session *sess, char *buf, unsigned count, in
 int
 ndmca_mover_get_state (struct ndm_session *sess)
 {
-	struct ndmconn *	conn = sess->plumb.tape;
-	struct ndm_control_agent *ca = &sess->control_acb;
+	struct ndmconn 			   *conn = sess->plumb.tape;
+	struct ndm_control_agent 	     *ca = &sess->control_acb;
 	struct ndmp9_mover_get_state_reply *state = &ca->mover_state;
-	int			rc;
+	int				      rc;
+
+	if (!conn) {
+		ndmalogf (sess, 0, 0, "mover_get_state(): connection is NULL");
+		return 0;
+	}
+	if (conn->conn_type == NDMCONN_TYPE_REMOTE && conn->chan.fd < 0)  {
+		ndmalogf (sess, 0, 0, "mover_get_state(): connection is down/destroyed");
+		return 0;
+	}
+	if (conn->conn_type == NDMCONN_TYPE_REMOTE 
+		&& conn->chan.mode != NDMCHAN_MODE_READCHK 
+		&& conn->chan.mode != NDMCHAN_MODE_WRITE) 
+	{
+		ndmalogf (sess, 0, 0, "mover_get_state(): connection chan is in mode %d");
+		return 0;
+	}
 
 	NDMC_WITH_VOID_REQUEST(ndmp9_mover_get_state, NDMP9VER)
 		rc = NDMC_CALL(conn);
@@ -543,6 +611,7 @@ ndmca_mover_connect (struct ndm_session *sess)
 	int			rc;
 
 	NDMC_WITH(ndmp9_mover_connect, NDMP9VER)
+                (void) reply;
 		request->mode = ca->mover_mode;
 		request->addr = ca->data_addr;
 		rc = NDMC_CALL(conn);
@@ -558,6 +627,7 @@ ndmca_mover_continue (struct ndm_session *sess)
 	int			rc;
 
 	NDMC_WITH_VOID_REQUEST(ndmp9_mover_continue, NDMP9VER)
+                (void) reply;
 		rc = NDMC_CALL(conn);
 	NDMC_ENDWITH
 
@@ -571,6 +641,7 @@ ndmca_mover_abort (struct ndm_session *sess)
 	int			rc;
 
 	NDMC_WITH_VOID_REQUEST(ndmp9_mover_abort, NDMP9VER)
+                (void) reply;
 		rc = NDMC_CALL(conn);
 	NDMC_ENDWITH
 
@@ -584,6 +655,7 @@ ndmca_mover_stop (struct ndm_session *sess)
 	int			rc;
 
 	NDMC_WITH_VOID_REQUEST(ndmp9_mover_stop, NDMP9VER)
+                (void) reply;
 		rc = NDMC_CALL(conn);
 	NDMC_ENDWITH
 
@@ -598,6 +670,7 @@ ndmca_mover_set_window (struct ndm_session *sess,
 	int			rc;
 
 	NDMC_WITH(ndmp9_mover_set_window, NDMP9VER)
+                (void) reply;
 		request->offset = offset;
 		request->length = length;
 		rc = NDMC_CALL(conn);
@@ -614,6 +687,7 @@ ndmca_mover_read (struct ndm_session *sess,
 	int			rc;
 
 	NDMC_WITH(ndmp9_mover_read, NDMP9VER)
+                (void) reply;
 		request->offset = offset;
 		request->length = length;
 		rc = NDMC_CALL(conn);
@@ -629,6 +703,7 @@ ndmca_mover_close (struct ndm_session *sess)
 	int			rc;
 
 	NDMC_WITH_VOID_REQUEST(ndmp9_mover_close, NDMP9VER)
+                (void) reply;
 		rc = NDMC_CALL(conn);
 	NDMC_ENDWITH
 
@@ -643,7 +718,8 @@ ndmca_mover_set_record_size (struct ndm_session *sess)
 	int			rc;
 
 	NDMC_WITH(ndmp9_mover_set_record_size, NDMP9VER)
-		request->record_size = ca->job.record_size;
+                (void) reply;
+		request->record_size = ca->pjob->record_size;
 		rc = NDMC_CALL(conn);
 	NDMC_ENDWITH
 

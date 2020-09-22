@@ -25,6 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+#pragma once
 
 /*
  * Project:  NDMJOB
@@ -34,10 +35,12 @@
  *
  */
 
-
 #include "ndmagents.h"
+#include "ndmprotocol.h"
+#include "ndmlib.h"
 
-
+#define NDM_INDEX_HOLDING_LIMIT      5*1024*1024
+#define NDM_INDEX_PROBE_BUFFER       100*1024
 
 #ifndef GLOBAL
 #define GLOBAL extern
@@ -45,8 +48,7 @@
 
 GLOBAL char *		progname;
 
-GLOBAL struct ndm_session	the_session;
-GLOBAL struct ndm_session_param	the_param;
+extern struct ndm_session_param *const the_logpparams;
 
 GLOBAL int		the_mode;
 GLOBAL int		d_debug;
@@ -60,15 +62,15 @@ GLOBAL char *		o_load_files_file;
 
 extern void		error_byebye (char *fmt, ...);
 
-extern struct ndmp_enum_str_table	mode_long_name_table[];
+extern ndmp_enum_str_table_t	mode_long_name_table[];
 
-extern int		process_args (int argc, char *argv[]);
+extern int		process_args (int argc, char *argv[], ref_ndm_nlist_table_t nlist, ref_ndm_env_table_t env);
 extern int		handle_long_option (char *str);
 extern void		set_job_mode (int mode);
 extern void		usage (void);
 extern void		help (void);
 extern void		ndmjob_version_info (void);
-extern void		dump_settings (void);
+extern void		dump_settings (ref_ndm_nlist_table_t nlist, ref_ndm_env_table_t env);
 
 extern int		copy_args_expanding_macros (int argc, char *argv[],
 					char *av[], int max_ac);
@@ -84,56 +86,43 @@ extern void		ndmjob_log (int level, char *fmt, ...);
 #ifndef NDMOS_OPTION_NO_CONTROL_AGENT
 
 #define MAX_EXCLUDE_PATTERN	100
-#define MAX_FILE_ARG		NDM_MAX_NLIST
 
 GLOBAL char *		B_bu_type;
 GLOBAL int		b_bsize;
 GLOBAL char *		C_chdir;
-GLOBAL struct ndmagent	D_data_agent;
-GLOBAL ndmp9_pval	E_environment[NDM_MAX_ENV];
-GLOBAL int		n_E_environment;
-GLOBAL int		nn_E_environment;
+GLOBAL ndmagent_t	D_data_agent;
 GLOBAL char *		e_exclude_pattern[MAX_EXCLUDE_PATTERN];
 GLOBAL int		n_e_exclude_pattern;
 GLOBAL char *		f_tape_device;
 GLOBAL char *		I_index_file;	/* output */
 GLOBAL char *		J_index_file;	/* input */
-GLOBAL struct ndmmedia	m_media[NDM_MAX_MEDIA];
+GLOBAL ndmmedia_t	m_media[NDM_MAX_MEDIA];
 GLOBAL int		n_m_media;
-GLOBAL struct ndmagent	R_robot_agent;
-GLOBAL struct ndmscsi_target r_robot_target;
-GLOBAL struct ndmagent	T_tape_agent;
+GLOBAL ndmagent_t	R_robot_agent;
+GLOBAL ndmscsi_target_t r_robot_target;
+GLOBAL ndmagent_t	T_tape_agent;
 GLOBAL char *		U_user;
 
-GLOBAL int		o_time_limit;
+GLOBAL int		o_time_limit;    // currently ignored
 GLOBAL int		o_swap_connect;
 GLOBAL int		o_use_eject;
 GLOBAL int		o_tape_addr;
 GLOBAL int		o_from_addr;
 GLOBAL int		o_to_addr;
-GLOBAL struct ndmscsi_target o_tape_scsi;
+GLOBAL ndmscsi_target_t o_tape_scsi;
 GLOBAL int		o_tape_timeout;
 GLOBAL int		o_robot_timeout;
 GLOBAL char *		o_rules;
 GLOBAL off_t		o_tape_limit;
 GLOBAL int		p_ndmp_port;
 
-GLOBAL char *		file_arg[MAX_FILE_ARG];
-GLOBAL char *		file_arg_new[MAX_FILE_ARG];
-GLOBAL int		n_file_arg;
-
 /* The ji_ variables are set according to the -J input index */
-GLOBAL struct ndmmedia	ji_media[NDM_MAX_MEDIA];
+GLOBAL ndmmedia_t	ji_media[NDM_MAX_MEDIA];
 GLOBAL int		n_ji_media;
-GLOBAL ndmp9_pval	ji_environment[NDM_MAX_ENV];
-GLOBAL int		n_ji_environment;
 
-GLOBAL ndmp9_name	nlist[MAX_FILE_ARG];	/* parallels file_arg[] */
-GLOBAL ndmp9_name	nlist_new[MAX_FILE_ARG];/* parallels file_arg[] */
+GLOBAL ndm_env_table_t	ji_env;
 
 GLOBAL FILE *		index_fp;
-
-GLOBAL struct ndm_job_param	the_job;
 
 #define AGENT_GIVEN(AGENT)	(AGENT.conn_type != NDMCONN_TYPE_NONE)
 #define ROBOT_GIVEN()		(r_robot_target.dev_name[0] != 0)
@@ -152,19 +141,21 @@ extern void		ndmjob_ixlog_deliver(struct ndmlog *log, char *tag,
 #ifndef NDMOS_OPTION_NO_CONTROL_AGENT
 extern int		start_index_file (void);
 extern int		sort_index_file (void);
-extern int		build_job (void);
-extern int		args_to_job (void);
-extern int		args_to_job_backup_env (void);
-extern int		args_to_job_recover_env (void);
-extern int		args_to_job_recover_nlist (void);
-extern int		jndex_doit (void);
-extern int		jndex_tattle (void);
+extern int		build_job (ref_ndm_job_param_t job);
+extern int		args_to_job (ref_ndm_job_param_t job);
+extern int		args_to_job_backup_env (ref_ndm_nlist_table_t nlist, 
+                                                ref_ndm_env_table_t env);
+extern int		args_to_job_recover_env (ref_ndm_env_table_t env);
+extern int		args_to_job_recover_nlist (ref_ndm_nlist_table_t nlist);
+extern int		jndex_doit (ref_ndm_nlist_table_t nlist);
+extern int		jndex_tattle (ref_ndm_nlist_table_t nlist);
 extern int		jndex_merge_media (void);
-extern int		jndex_audit_not_found (void);
-extern int		jndex_merge_environment (void);
-extern int		jndex_fetch_post_backup_data_env (FILE *fp);
-extern int		jndex_fetch_post_backup_media (FILE *fp);
+extern int		jndex_audit_not_found (ref_ndm_nlist_table_t nlist);
+extern int		jndex_merge_environment (ref_ndm_env_table_t env);
+extern int		jndex_fetch_post_backup_data_env (FILE *fp, void **fpcachep);
+extern int		jndex_fetch_post_backup_media (FILE *fp, void **fpcachep);
 
-extern int		apply_rules (struct ndm_job_param *job, char *rules);
+extern int		apply_rules (ref_ndm_job_param_t job, 
+                                     char *rules);
 extern int		help_rules (void);
 #endif /* !NDMOS_OPTION_NO_CONTROL_AGENT */

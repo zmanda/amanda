@@ -145,5 +145,19 @@ ndmjob_log (int lev, char *fmt, ...)
 	vsnprintf (buf, sizeof(buf), fmt, ap);
 	va_end (ap);
 
-	ndmjob_log_deliver (&the_param.log, the_param.log_tag, lev, buf);
+	ndmjob_log_deliver (&the_logpparams->log, the_logpparams->log_tag, lev, buf);
+}
+
+int ndm_resize_dyn_array(void **hook, void **array, int len, int eltsize)
+{
+    GArray **arrhook = (GArray **) hook;
+    if ( ! arrhook || ! array || eltsize <= 0 || len < 0 )
+        return -1;
+
+    if ( ! *arrhook )
+        *arrhook = g_array_sized_new(FALSE,TRUE,eltsize,64);
+
+    g_array_set_size(*arrhook,len+1); // pre-make room for next append
+    *array = &g_array_index(*arrhook,char,0);
+    return len;
 }

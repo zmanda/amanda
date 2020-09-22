@@ -164,7 +164,7 @@ convert_strdup (char *src, char **dstp)
  ****************************************************************
  */
 
-struct reqrep_xlate_version_table reqrep_xlate_version_table[] = {
+reqrep_xlate_version_table_t reqrep_xlate_version_table[] = {
 #ifndef NDMOS_OPTION_NO_NDMP2
 	{ NDMP2VER,	ndmp2_reqrep_xlate_table },
 #endif /* !NDMOS_OPTION_NO_NDMP2 */

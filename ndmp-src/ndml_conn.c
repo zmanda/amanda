@@ -37,6 +37,8 @@
 
 #include "ndmjob.h"
 #include "ndmlib.h"
+#include <netinet/in.h>
+#include <netinet/tcp.h>
 
 
 #ifndef NDMOS_OPTION_NO_NDMP4
@@ -82,7 +84,8 @@ ndmconn_initialize (struct ndmconn *aconn, char *name)
 	ndmchan_initialize (&conn->chan, name);
 	conn->was_allocated = aconn == 0;
 	conn->next_sequence = 1;
-	xdrrec_create (&conn->xdrs, 0, 0, (void*) conn,
+        // 2 Meg buffers
+	xdrrec_create (&conn->xdrs, 0x800000, 0x800000, (void*) conn,
 				(void*)ndmconn_readit,
 				(void*)ndmconn_writeit);
 	conn->unexpected = ndmconn_unexpected;
@@ -98,8 +101,9 @@ ndmconn_initialize (struct ndmconn *aconn, char *name)
  * Get rid of an ndmconn.
  */
 void
-ndmconn_destruct (struct ndmconn *conn)
+ndmconn_destruct (struct ndmconn **connp)
 {
+	struct ndmconn *conn = *connp;
 	if (conn->chan.fd >= 0) {
 		close (conn->chan.fd);
 		conn->chan.fd = -1;
@@ -109,7 +113,7 @@ ndmconn_destruct (struct ndmconn *conn)
 
 	if (conn->was_allocated) {
 		NDMOS_API_FREE (conn);
-		conn = 0;
+		*connp = NULL;
 	}
 }
 
@@ -183,8 +187,10 @@ ndmconn_connect_sockaddr_in (struct ndmconn *conn,
 {
 	int			fd = -1;
 	int			rc;
-	char *			err = "???";
+	char *			err = alloca(1024);
 	unsigned		max_protocol_version = MAX_PROTOCOL_VERSION;
+
+	strcpy(err,"???");
 
 	if (conn->chan.fd >= 0) {
 		err = "already-connected";
@@ -193,7 +199,6 @@ ndmconn_connect_sockaddr_in (struct ndmconn *conn,
 
 	fd = socket (AF_INET, SOCK_STREAM, 0);
 	if (fd < 0) {
-		err = malloc(1024);
 		snprintf(err, 1023, "open a socket failed: %s", strerror(errno));
 		goto error_out;
 	}
@@ -201,10 +206,19 @@ ndmconn_connect_sockaddr_in (struct ndmconn *conn,
 	/* reserved port? */
 	if (connect (fd, (struct sockaddr *)sin, sizeof *sin) < 0) {
 		// leak memory
-		err = malloc(1024);
 		snprintf(err, 1023, "connect failed: %s", strerror(errno));
 		goto error_out;
 	}
+
+        rc = 1;
+        // turn off Nagle to send instantly (if remote side hasn't replied to unrecvd data)
+        setsockopt(fd, SOL_TCP, TCP_NODELAY, (void*)&rc, sizeof(rc));
+        setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, (void*)&rc, sizeof(rc));
+	
+	// two minutes between keepalive checks.. always
+	rc = 120;
+        setsockopt(fd, SOL_TCP, TCP_KEEPIDLE, (void*)&rc, sizeof(rc));
+        setsockopt(fd, SOL_TCP, TCP_KEEPINTVL, (void*)&rc, sizeof(rc));
 
 	ndmchan_start_readchk (&conn->chan, fd);
 	conn->conn_type = NDMCONN_TYPE_REMOTE;
@@ -247,6 +261,7 @@ ndmconn_connect_sockaddr_in (struct ndmconn *conn,
 	 * Send the OPEN request
 	 */
 	NDMC_WITH(ndmp0_connect_open,0)
+                (void) reply;
 		request->protocol_version = want_protocol_version;
 		rc = NDMC_CALL(conn);
 		if (rc) {
@@ -282,6 +297,7 @@ ndmconn_try_open (struct ndmconn *conn, unsigned protocol_version)
 	 * Send the OPEN request
 	 */
 	NDMC_WITH(ndmp0_connect_open,0)
+                (void) reply;
 		request->protocol_version = protocol_version;
 		rc = NDMC_CALL(conn);
 		if (rc) {
@@ -344,7 +360,52 @@ ndmconn_abort (struct ndmconn *conn)
 int
 ndmconn_close (struct ndmconn *conn)
 {
-	return 0;
+    int	 rc = -1;
+    const char *errmsg;
+
+    if (! conn || conn->conn_type != NDMCONN_TYPE_REMOTE || conn->chan.fd < 0) {
+        return rc;
+    }
+
+    errmsg = "not-active-channel";
+    if (conn->chan.mode != NDMCHAN_MODE_READCHK) 
+        goto err_out;                     /// GOTO
+
+    NDMC_WITH_NO_REPLY(ndmp9_connect_close,NDMP9VER)
+        (void) request;
+	xa->request.protocol_version = conn->protocol_version; 
+
+        errmsg = "send-close-failed";
+        if ((rc=ndmconn_send_nmb(conn, &xa->request)) != 0)
+            goto err_out;                     /// GOTO
+    NDMC_ENDWITH
+
+    NDMC_WITH_NO_REPLY(ndmp0_notify_connected,0)
+        errmsg = "recv-notify-failed";
+        if ((rc=ndmconn_recv_nmb(conn, &xa->request)) != 0)
+            goto err_out;                     /// GOTO
+
+        errmsg = "no-recv-notify-connected";
+        if (xa->request.header.message_type != NDMP0_MESSAGE_REQUEST)
+            goto err_out;                     /// GOTO
+        errmsg = "msg-not-notify-shutdown";
+        if (request->reason != NDMP0_SHUTDOWN)
+            goto err_out;                     /// GOTO
+    NDMC_ENDWITH
+
+    // close socket finally...
+    ndmchan_cleanup(&conn->chan);
+    return 0;
+
+  err_out:
+    {
+        char buff[100];
+        snprintf(buff,sizeof(buff)-1,"%s [%s]",errmsg,conn->chan.name);
+        ndmconn_set_err_msg (conn, buff);
+        ndmchan_cleanup(&conn->chan);
+        return rc;
+    }
+    return rc;
 }
 
 
@@ -416,6 +477,7 @@ ndmconn_auth_none (struct ndmconn *conn)
 #ifndef NDMOS_OPTION_NO_NDMP2
 	case NDMP2VER:
 	    NDMC_WITH(ndmp2_connect_client_auth, NDMP2VER)
+                (void) reply;
 		request->auth_data.auth_type = NDMP2_AUTH_NONE;
 		rc = NDMC_CALL(conn);
 	    NDMC_ENDWITH
@@ -425,6 +487,7 @@ ndmconn_auth_none (struct ndmconn *conn)
 #ifndef NDMOS_OPTION_NO_NDMP3
 	case NDMP3VER:
 	    NDMC_WITH(ndmp3_connect_client_auth, NDMP3VER)
+                (void) reply;
 		request->auth_data.auth_type = NDMP3_AUTH_NONE;
 		rc = NDMC_CALL(conn);
 	    NDMC_ENDWITH
@@ -434,6 +497,7 @@ ndmconn_auth_none (struct ndmconn *conn)
 #ifndef NDMOS_OPTION_NO_NDMP4
 	case NDMP4VER:
 	    NDMC_WITH(ndmp4_connect_client_auth, NDMP4VER)
+                (void) reply;
 		request->auth_data.auth_type = NDMP4_AUTH_NONE;
 		rc = NDMC_CALL(conn);
 	    NDMC_ENDWITH
@@ -462,6 +526,7 @@ ndmconn_auth_text (struct ndmconn *conn, char *id, char *pw)
 #ifndef NDMOS_OPTION_NO_NDMP2
 	case NDMP2VER:
 	    NDMC_WITH(ndmp2_connect_client_auth, NDMP2VER)
+                (void) reply;
 		struct ndmp2_auth_text *at;
 
 		request->auth_data.auth_type = NDMP2_AUTH_TEXT;
@@ -476,6 +541,7 @@ ndmconn_auth_text (struct ndmconn *conn, char *id, char *pw)
 #ifndef NDMOS_OPTION_NO_NDMP3
 	case NDMP3VER:
 	    NDMC_WITH(ndmp3_connect_client_auth, NDMP3VER)
+                (void) reply;
 		struct ndmp3_auth_text *at;
 
 		request->auth_data.auth_type = NDMP3_AUTH_TEXT;
@@ -490,6 +556,7 @@ ndmconn_auth_text (struct ndmconn *conn, char *id, char *pw)
 #ifndef NDMOS_OPTION_NO_NDMP4
 	case NDMP4VER:
 	    NDMC_WITH(ndmp4_connect_client_auth, NDMP4VER)
+                (void) reply;
 		struct ndmp4_auth_text *at;
 
 		request->auth_data.auth_type = NDMP4_AUTH_TEXT;
@@ -595,6 +662,7 @@ ndmconn_auth_md5 (struct ndmconn *conn, char *id, char *pw)
 #ifndef NDMOS_OPTION_NO_NDMP2
 	case NDMP2VER:
 	    NDMC_WITH(ndmp2_connect_client_auth, NDMP2VER)
+                (void) reply;
 		struct ndmp2_auth_md5 *am;
 
 		request->auth_data.auth_type = NDMP2_AUTH_MD5;
@@ -609,6 +677,7 @@ ndmconn_auth_md5 (struct ndmconn *conn, char *id, char *pw)
 #ifndef NDMOS_OPTION_NO_NDMP3
 	case NDMP3VER:
 	    NDMC_WITH(ndmp3_connect_client_auth, NDMP3VER)
+                (void) reply;
 		struct ndmp3_auth_md5 *am;
 
 		request->auth_data.auth_type = NDMP3_AUTH_MD5;
@@ -623,6 +692,7 @@ ndmconn_auth_md5 (struct ndmconn *conn, char *id, char *pw)
 #ifndef NDMOS_OPTION_NO_NDMP4
 	case NDMP4VER:
 	    NDMC_WITH(ndmp4_connect_client_auth, NDMP4VER)
+                (void) reply;
 		struct ndmp4_auth_md5 *am;
 
 		request->auth_data.auth_type = NDMP4_AUTH_MD5;

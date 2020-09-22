@@ -62,7 +62,7 @@
  */
 
 int
-ndma_job_audit (struct ndm_job_param *job, char *errbuf, int errskip)
+ndma_job_audit (ref_ndm_job_param_t job, char *errbuf, int errskip)
 {
 	int		errcnt = 0;
 	char *		audit_what;
@@ -169,7 +169,7 @@ ndma_job_audit (struct ndm_job_param *job, char *errbuf, int errskip)
 }
 
 int
-ndma_job_media_audit (struct ndm_job_param *job, char *errbuf, int errskip)
+ndma_job_media_audit (ref_ndm_job_param_t job, char *errbuf, int errskip)
 {
 	struct ndm_media_table *mtab = &job->media_tab;
 	int			n_media =  mtab->n_media;
@@ -240,7 +240,7 @@ ndma_job_media_audit (struct ndm_job_param *job, char *errbuf, int errskip)
 }
 
 void
-ndma_job_auto_adjust (struct ndm_job_param *job)
+ndma_job_auto_adjust (ref_ndm_job_param_t job)
 {
 	if (job->media_tab.n_media == 0
 	 && !job->have_robot

@@ -328,7 +328,7 @@ ndma_dispatch_ctrl_unexpected (struct ndmconn *conn, struct ndmp_msg_buf *nmb)
 			"w/ wrong reply_sequence");
 #if 0
 		/* causes crash, needs investigation */
-		ndmnmb_snoop (&sess->param.log, "WTF", 5,
+		ndmnmb_snoop (&sess->pparam->log, "WTF", 5,
 					nmb, conn->chan.name);
 #endif
 		ndmnmb_free (nmb);
@@ -600,6 +600,7 @@ ndmp_sxa_connect_open (struct ndm_session *sess,
   struct ndmp_xa_buf *xa, struct ndmconn *ref_conn)
 {
     NDMS_WITH(ndmp0_connect_open)
+        (void) reply;
 	if (sess->conn_open) {
 	    if (request->protocol_version != ref_conn->protocol_version) {
 		NDMADR_RAISE_ILLEGAL_ARGS("too late to change version");
@@ -665,6 +666,7 @@ ndmp_sxa_connect_client_auth (struct ndm_session *sess,
 	char *		proof = 0;
 
       NDMS_WITH(ndmp9_connect_client_auth)
+        (void) reply;
 
 	auth_type = request->auth_data.auth_type;
 	switch (auth_type) {
@@ -906,6 +908,7 @@ ndmp_sxa_scsi_open (struct ndm_session *sess,
 	ndmp9_error		error;
 
       NDMS_WITH(ndmp9_scsi_open)
+        (void) reply;
 	error = scsi_open_ok (sess);
 	if (error != NDMP9_NO_ERR) {
 		NDMADR_RAISE(error, "!scsi_open_ok");
@@ -933,6 +936,7 @@ ndmp_sxa_scsi_close (struct ndm_session *sess,
 	ndmp9_error		error;
 
       NDMS_WITH_VOID_REQUEST(ndmp9_scsi_close)
+        (void) reply;
 	error = scsi_op_ok (sess);
 	if (error != NDMP9_NO_ERR) {
 		NDMADR_RAISE(error, "!scsi_op_ok");
@@ -981,6 +985,8 @@ ndmp_sxa_scsi_set_target (struct ndm_session *sess,
 	ndmp9_error		error;
 
       NDMS_WITH(ndmp9_scsi_set_target)
+        (void) request;
+        (void) reply;
 	error = scsi_op_ok (sess);
 	if (error != NDMP9_NO_ERR) {
 		NDMADR_RAISE(error, "!scsi_op_ok");
@@ -1008,6 +1014,7 @@ ndmp_sxa_scsi_reset_device (struct ndm_session *sess,
 	ndmp9_error		error;
 
       NDMS_WITH_VOID_REQUEST(ndmp9_scsi_reset_device)
+        (void) reply;
 	error = scsi_op_ok (sess);
 	if (error != NDMP9_NO_ERR) {
 		NDMADR_RAISE(error, "!scsi_op_ok");
@@ -1035,6 +1042,7 @@ ndmp_sxa_scsi_reset_bus (struct ndm_session *sess,
 	ndmp9_error		error;
 
       NDMS_WITH_VOID_REQUEST(ndmp9_scsi_reset_bus)
+        (void) reply;
 	error = scsi_op_ok (sess);
 	if (error != NDMP9_NO_ERR) {
 		NDMADR_RAISE(error, "!scsi_op_ok");
@@ -1143,6 +1151,7 @@ ndmp_sxa_tape_open (struct ndm_session *sess,
 	int			will_write;
 
       NDMS_WITH(ndmp9_tape_open)
+        (void) reply;
 	switch (request->mode) {
 	default:
 		NDMADR_RAISE_ILLEGAL_ARGS("tape_mode");
@@ -1184,6 +1193,7 @@ ndmp_sxa_tape_close (struct ndm_session *sess,
 	ndmp9_error		error;
 
       NDMS_WITH_VOID_REQUEST(ndmp9_tape_close)
+        (void) reply;
 	error = tape_op_ok (sess, 0);
 	if (error != NDMP9_NO_ERR) {
 		NDMADR_RAISE(error, "!tape_op_ok");
@@ -1388,6 +1398,8 @@ ndmp_sxa_tape_execute_cdb (struct ndm_session *sess,
   struct ndmp_xa_buf *xa, struct ndmconn *ref_conn)
 {
       NDMS_WITH(ndmp9_tape_execute_cdb)
+        (void) request;
+        (void) reply;
 	return NDMADR_UNIMPLEMENTED_MESSAGE;
       NDMS_ENDWITH
 }
@@ -1523,6 +1535,7 @@ ndmp_sxa_data_start_backup (struct ndm_session *sess,
 	ndmp9_error		error;
 
       NDMS_WITH(ndmp9_data_start_backup)
+        (void) reply;
 	rc = data_ok_bu_type (sess, xa, ref_conn, request->bu_type);
 	if (rc) {
 		return rc;
@@ -1581,6 +1594,7 @@ ndmp_sxa_data_start_recover (struct ndm_session *sess,
 	int			rc;
 
       NDMS_WITH(ndmp9_data_start_recover)
+        (void) reply;
 	rc = data_ok_bu_type (sess, xa, ref_conn, request->bu_type);
 	if (rc) {
 		return rc;
@@ -1646,6 +1660,7 @@ ndmp_sxa_data_abort (struct ndm_session *sess,
 	struct ndm_data_agent *	da = &sess->data_acb;
 
       NDMS_WITH_VOID_REQUEST(ndmp9_data_abort)
+        (void) reply;
 	if (da->data_state.state != NDMP9_DATA_STATE_ACTIVE)
 		NDMADR_RAISE_ILLEGAL_STATE("data_state !ACTIVE");
 
@@ -1703,6 +1718,7 @@ ndmp_sxa_data_stop (struct ndm_session *sess,
 	struct ndm_data_agent *	da = &sess->data_acb;
 
       NDMS_WITH_VOID_REQUEST(ndmp9_data_stop)
+        (void) reply;
 	if (da->data_state.state != NDMP9_DATA_STATE_HALTED) {
 		NDMADR_RAISE_ILLEGAL_STATE("data_state !HALTED");
 	}
@@ -1729,6 +1745,7 @@ ndmp_sxa_data_start_recover_filehist (struct ndm_session *sess,
 	int			rc;
 
       NDMS_WITH(ndmp9_data_start_recover)
+        (void) reply;
 	rc = data_ok_bu_type (sess, xa, ref_conn, request->bu_type);
 	if (rc) {
 		return rc;
@@ -1792,6 +1809,7 @@ ndmp_sxa_data_connect (struct ndm_session *sess,
 {
 
       NDMS_WITH(ndmp9_data_connect)
+        (void) reply;
 	return data_connect (sess, xa, ref_conn, &request->addr);
       NDMS_ENDWITH
 }
@@ -2147,9 +2165,6 @@ data_copy_environment (struct ndm_session *sess,
 {
 	int			rc;
 
-	if (n_env > NDM_MAX_ENV)
-		return NDMP9_ILLEGAL_ARGS_ERR;
-
 	rc = ndmda_copy_environment (sess, env, n_env);
 	if (rc != 0)
 		return NDMP9_NO_MEM_ERR;
@@ -2162,9 +2177,6 @@ data_copy_nlist (struct ndm_session *sess,
   ndmp9_name *nlist, unsigned n_nlist)
 {
 	int			rc;
-
-	if (n_nlist >= NDM_MAX_NLIST)
-		return NDMP9_ILLEGAL_ARGS_ERR;
 
 	rc = ndmda_copy_nlist (sess, nlist, n_nlist);
 	if (rc != 0)
@@ -2322,6 +2334,7 @@ ndmp_sxa_mover_continue (struct ndm_session *sess,
 	int			will_write;
 
       NDMS_WITH_VOID_REQUEST(ndmp9_mover_continue)
+        (void) reply;
 	if (ta->mover_state.state != NDMP9_MOVER_STATE_PAUSED) {
 		NDMADR_RAISE_ILLEGAL_STATE("mover_state !PAUSED");
 	}
@@ -2352,6 +2365,7 @@ ndmp_sxa_mover_abort (struct ndm_session *sess,
 	struct ndm_tape_agent *	ta = &sess->tape_acb;
 
       NDMS_WITH_VOID_REQUEST(ndmp9_mover_abort)
+        (void) reply;
 	if (ta->mover_state.state != NDMP9_MOVER_STATE_LISTEN
 	 && ta->mover_state.state != NDMP9_MOVER_STATE_ACTIVE
 	 && ta->mover_state.state != NDMP9_MOVER_STATE_PAUSED) {
@@ -2377,6 +2391,7 @@ ndmp_sxa_mover_stop (struct ndm_session *sess,
 	struct ndm_tape_agent *	ta = &sess->tape_acb;
 
       NDMS_WITH_VOID_REQUEST(ndmp9_mover_stop)
+        (void) reply;
 	if (ta->mover_state.state != NDMP9_MOVER_STATE_HALTED) {
 		NDMADR_RAISE_ILLEGAL_STATE("mover_state !HALTED");
 	}
@@ -2403,6 +2418,7 @@ ndmp_sxa_mover_set_window (struct ndm_session *sess,
 	unsigned long long	end_win;
 
       NDMS_WITH(ndmp9_mover_set_window)
+        (void) reply;
 	ndmta_mover_sync_state (sess);
 
 	if (ref_conn->protocol_version < NDMP4VER) {
@@ -2484,6 +2500,7 @@ ndmp_sxa_mover_read (struct ndm_session *sess,
 	struct ndmp9_mover_get_state_reply *ms = &ta->mover_state;
 
       NDMS_WITH(ndmp9_mover_read)
+        (void) reply;
 	ndmta_mover_sync_state (sess);
 
 	if (ms->state != NDMP9_MOVER_STATE_ACTIVE) {
@@ -2521,6 +2538,7 @@ ndmp_sxa_mover_close (struct ndm_session *sess,
 	struct ndm_tape_agent *	ta = &sess->tape_acb;
 
       NDMS_WITH_VOID_REQUEST(ndmp9_mover_close) {
+        (void) reply;
 	if (ta->mover_state.state == NDMP9_MOVER_STATE_IDLE)
 		NDMADR_RAISE_ILLEGAL_STATE("mover_state !IDLE");
 	}
@@ -2545,6 +2563,7 @@ ndmp_sxa_mover_set_record_size (struct ndm_session *sess,
 	struct ndmp9_mover_get_state_reply *ms = &ta->mover_state;
 
       NDMS_WITH(ndmp9_mover_set_record_size)
+        (void) reply;
 	ndmta_mover_sync_state (sess);
 
 	if (ms->state != NDMP9_MOVER_STATE_IDLE
@@ -2564,11 +2583,13 @@ ndmp_sxa_mover_set_record_size (struct ndm_session *sess,
 
 #ifndef NDMOS_EFFECT_NO_NDMP3_NOR_NDMP4	/* Surrounds NDMPv[34] MOVER intfs */
 
+#ifdef notyet
 static int		mover_connect_common34 (struct ndm_session *sess,
 				struct ndmp_xa_buf *xa,
 				struct ndmconn *ref_conn,
 				ndmp9_addr *addr,
 				ndmp9_mover_mode mover_mode);
+#endif
 
 /*
  * NDMP[34]_MOVER_CONNECT
@@ -2586,6 +2607,7 @@ ndmp_sxa_mover_connect (struct ndm_session *sess,
 	char			reason[100];
 
       NDMS_WITH(ndmp9_mover_connect)
+        (void) reply;
 
 	/* Check args */
 	switch (request->mode) {
@@ -2709,6 +2731,7 @@ ndmp_sxa_notify_data_halted (struct ndm_session *sess,
 	struct ndm_control_agent *ca = &sess->control_acb;
 
       NDMS_WITH_NO_REPLY(ndmp9_notify_data_halted)
+        (void) request;
 	xa->reply.flags |= NDMNMB_FLAG_NO_SEND;
 
 	ca->pending_notify_data_halted++;
@@ -2728,6 +2751,7 @@ ndmp_sxa_notify_connected (struct ndm_session *sess,
   struct ndmp_xa_buf *xa, struct ndmconn *ref_conn)
 {
       NDMS_WITH_NO_REPLY(ndmp9_notify_connected)
+        (void) request;
 	xa->reply.flags |= NDMNMB_FLAG_NO_SEND;
 	/* Just ignore? */
 	return 0;
@@ -2747,6 +2771,7 @@ ndmp_sxa_notify_mover_halted (struct ndm_session *sess,
 	struct ndm_control_agent *	ca = &sess->control_acb;
 
       NDMS_WITH_NO_REPLY(ndmp9_notify_mover_halted)
+        (void) request;
 	xa->reply.flags |= NDMNMB_FLAG_NO_SEND;
 
 	ca->pending_notify_mover_halted++;
@@ -2982,7 +3007,7 @@ ndmp_sxa_log_message (struct ndm_session *sess,
 		sprintf (prefix, "%cLM%s", ref_conn->chan.name[1], tag);
 
 		//ndmalogf (sess, prefix, lev, "LOG_MESSAGE: '%s'", request->entry);
-		ndmalogf (sess, prefix, 0, "%s", request->entry);
+		ndmalogf (sess, prefix, lev, "%s", request->entry);
 	NDMS_ENDWITH
 
 	return 0;
@@ -3011,7 +3036,7 @@ ndmp_sxa_fh_add_file (struct ndm_session *sess,
   struct ndmp_xa_buf *xa, struct ndmconn *ref_conn)
 {
 	struct ndm_control_agent *ca = &sess->control_acb;
-	struct ndmlog *		ixlog = &ca->job.index_log;
+	struct ndmlog *		ixlog = &ca->pjob->index_log;
 	int			tagc = ref_conn->chan.name[1];
 	unsigned int		i;
 	ndmp9_file *		file;
@@ -3042,7 +3067,7 @@ ndmp_sxa_fh_add_dir (struct ndm_session *sess,
   struct ndmp_xa_buf *xa, struct ndmconn *ref_conn)
 {
 	struct ndm_control_agent *ca = &sess->control_acb;
-	struct ndmlog *		ixlog = &ca->job.index_log;
+	struct ndmlog *		ixlog = &ca->pjob->index_log;
 	int			tagc = ref_conn->chan.name[1];
 	char *			raw_name;
 	unsigned int		i;
@@ -3056,13 +3081,13 @@ ndmp_sxa_fh_add_dir (struct ndm_session *sess,
 
 			raw_name = dir->unix_name;
 
-			switch (ca->job.n_dir_entry) {
+			switch (ca->pjob->n_dir_entry) {
 			case 0:
 				if (strcmp (raw_name, ".") == 0) {
 					/* goodness */
 					ndmfhdb_add_dirnode_root (ixlog,
 						tagc, dir->node);
-					ca->job.root_node = dir->node;
+					ca->pjob->root_node = dir->node;
 				} else {
 					/* ungoodness */
 					ndmalogf (sess, 0, 0,
@@ -3074,7 +3099,7 @@ ndmp_sxa_fh_add_dir (struct ndm_session *sess,
 			case 1:
 				if (strcmp (raw_name, "..") == 0
 				 && dir->parent == dir->node
-				 && dir->node == ca->job.root_node) {
+				 && dir->node == ca->pjob->root_node) {
 					/* goodness */
 				} else {
 					/* ungoodness */
@@ -3092,7 +3117,7 @@ ndmp_sxa_fh_add_dir (struct ndm_session *sess,
 			ndmfhdb_add_dir (ixlog, tagc,
 				dir->unix_name, dir->parent, dir->node);
 
-			ca->job.n_dir_entry++;
+			ca->pjob->n_dir_entry++;
 		}
 	NDMS_ENDWITH
 
@@ -3111,7 +3136,7 @@ ndmp_sxa_fh_add_node (struct ndm_session *sess,
   struct ndmp_xa_buf *xa, struct ndmconn *ref_conn)
 {
 	struct ndm_control_agent *ca = &sess->control_acb;
-	struct ndmlog *		ixlog = &ca->job.index_log;
+	struct ndmlog *		ixlog = &ca->pjob->index_log;
 	int			tagc = ref_conn->chan.name[1];
 	unsigned int		i;
 	ndmp9_node *		node;

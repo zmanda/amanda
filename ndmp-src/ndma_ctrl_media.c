@@ -1,5 +1,5 @@
-/*
- * Copyright (c) 1998,1999,2000
+    /*
+     * Copyright (c) 1998,1999,2000
  *	Traakan, Inc., Los Altos, CA
  *	All rights reserved.
  *
@@ -59,7 +59,7 @@ ndmca_media_load_first (struct ndm_session *sess)
 int
 ndmca_media_load_next (struct ndm_session *sess)
 {
-	int		n_media =  sess->control_acb.job.media_tab.n_media;
+	int		n_media =  sess->control_acb.pjob->media_tab.n_media;
 
 	if (sess->control_acb.cur_media_ix+1 >= n_media) {
 		ndmalogf (sess, 0, 0, "Out of tapes");
@@ -93,7 +93,7 @@ int
 ndmca_media_load_seek (struct ndm_session *sess, unsigned long long pos)
 {
 	struct ndm_control_agent *ca = &sess->control_acb;
-	struct ndm_job_param *	job = &ca->job;
+	ref_ndm_job_param_t	job = ca->pjob;
 	int			n_media =  job->media_tab.n_media;
 	struct ndmmedia *	me;
 	int			i;
@@ -122,7 +122,7 @@ int
 ndmca_media_load_current (struct ndm_session *sess)
 {
 	struct ndm_control_agent *ca = &sess->control_acb;
-	struct ndm_job_param *	job = &ca->job;
+	ref_ndm_job_param_t	job = ca->pjob;
 	struct ndmmedia *	me = &job->media_tab.media[ca->cur_media_ix];
 	int			rc;
 	unsigned		count;
@@ -219,7 +219,7 @@ int
 ndmca_media_unload_current (struct ndm_session *sess)
 {
 	struct ndm_control_agent *ca = &sess->control_acb;
-	struct ndm_job_param *	job = &ca->job;
+	ref_ndm_job_param_t	job = ca->pjob;
 	struct ndmmedia *	me = &job->media_tab.media[ca->cur_media_ix];
 	int			rc;
 
@@ -229,7 +229,7 @@ ndmca_media_unload_current (struct ndm_session *sess)
 	rc = ndmca_media_mtio_tape (sess, NDMP9_MTIO_REW, 1, 0);
 	if (rc) return rc;
 
-	if (ca->job.use_eject) {
+	if (ca->pjob->use_eject) {
 		rc = ndmca_media_mtio_tape (sess, NDMP9_MTIO_OFF, 1, 0);
 		if (rc) return rc;
 	}
@@ -251,7 +251,7 @@ int
 ndmca_media_unload_best_effort (struct ndm_session *sess)
 {
 	struct ndm_control_agent *ca = &sess->control_acb;
-	struct ndm_job_param *	job = &ca->job;
+	ref_ndm_job_param_t	job = ca->pjob;
 	struct ndmmedia *	me = &job->media_tab.media[ca->cur_media_ix];
 	int			errors = 0;
 	int			rc;
@@ -262,7 +262,7 @@ ndmca_media_unload_best_effort (struct ndm_session *sess)
 	rc = ndmca_media_mtio_tape (sess, NDMP9_MTIO_REW, 1, 0);
 	if (rc) errors++;
 
-	if (ca->job.use_eject) {
+	if (ca->pjob->use_eject) {
 		rc = ndmca_media_mtio_tape (sess, NDMP9_MTIO_OFF, 1, 0);
 		if (rc) errors++;
 	}
@@ -293,16 +293,16 @@ ndmca_media_open_tape (struct ndm_session *sess)
 	unsigned int		t;
 
 	ndmalogf (sess, 0, 1, "Opening tape drive %s %s",
-			ca->job.tape_device,
+			ca->pjob->tape_device,
 			(ca->tape_mode == NDMP9_TAPE_RDWR_MODE)
 				? "read/write" : "read-only");
 
 	rc = -1;
-	for (t = 0; t <= ca->job.tape_timeout; t += 10) {
+	for (t = 0; t <= ca->pjob->tape_timeout; t += 10) {
 		if (t > 0) {
 			ndmalogf (sess, 0, 1,
 				"Pausing ten seconds before retry (%d/%d)",
-				t, ca->job.tape_timeout);
+				t, ca->pjob->tape_timeout);
 			sleep (10);
 		}
 		rc = ndmca_tape_open(sess);
@@ -312,7 +312,7 @@ ndmca_media_open_tape (struct ndm_session *sess)
 	if (rc) {
 		/* should interpret the error */
 		ndmalogf (sess, 0, 0, "failed open tape drive %s %s",
-			ca->job.tape_device,
+			ca->pjob->tape_device,
 			(ca->tape_mode == NDMP9_TAPE_RDWR_MODE)
 				? "read/write" : "read-only");
 	}
@@ -326,10 +326,11 @@ ndmca_media_close_tape (struct ndm_session *sess)
 	struct ndm_control_agent *ca = &sess->control_acb;
 	int			rc;
 
-	ndmalogf (sess, 0, 2, "Closing tape drive %s", ca->job.tape_device);
+	ndmalogf (sess, 0, 2, "Closing tape drive %s", ca->pjob->tape_device);
 
 	rc = ndmca_tape_close (sess);
 
+        (void) rc;
 	return 0;
 }
 
@@ -480,7 +481,7 @@ int
 ndmca_media_verify (struct ndm_session *sess)
 {
 	struct ndm_control_agent *ca = &sess->control_acb;
-	struct ndm_job_param *	job = &ca->job;
+	ref_ndm_job_param_t	job = ca->pjob;
 	int			rc;
 
 	if (job->have_robot)
@@ -499,7 +500,7 @@ int
 ndmca_media_tattle (struct ndm_session *sess)
 {
 	struct ndm_control_agent *ca = &sess->control_acb;
-	struct ndm_job_param *	job = &ca->job;
+	ref_ndm_job_param_t	job = ca->pjob;
 	int			i, line, nline;
 
 	for (i = 0; i < job->media_tab.n_media; i++) {
@@ -527,7 +528,7 @@ unsigned long long
 ndmca_media_capture_tape_offset (struct ndm_session *sess)
 {
 	struct ndm_control_agent *ca = &sess->control_acb;
-	struct ndm_job_param *	job = &ca->job;
+	ref_ndm_job_param_t	job = ca->pjob;
 	int			rc;
 	unsigned long long	off;
 
@@ -547,8 +548,8 @@ int
 ndmca_media_capture_mover_window (struct ndm_session *sess)
 {
 	struct ndm_control_agent *ca = &sess->control_acb;
-	struct ndmlog *		ixlog = &ca->job.index_log;
-	struct ndm_job_param *	job = &ca->job;
+	struct ndmlog *		ixlog = &ca->pjob->index_log;
+	ref_ndm_job_param_t	job = ca->pjob;
 	struct ndmmedia *	me = &job->media_tab.media[ca->cur_media_ix];
 	ndmp9_mover_state	ms = ca->mover_state.state;
 	ndmp9_mover_pause_reason pr = ca->mover_state.pause_reason;
@@ -599,7 +600,7 @@ int
 ndmca_media_calculate_offsets (struct ndm_session *sess)
 {
 	struct ndm_control_agent *ca = &sess->control_acb;
-	struct ndm_job_param *	job = &ca->job;
+	ref_ndm_job_param_t	job = ca->pjob;
 	int			n_media =  job->media_tab.n_media;
 	struct ndmmedia *	me;
 	int			i;
@@ -626,7 +627,7 @@ int
 ndmca_media_set_window_current (struct ndm_session *sess)
 {
 	struct ndm_control_agent *ca = &sess->control_acb;
-	struct ndm_job_param *	job = &ca->job;
+	ref_ndm_job_param_t	job = ca->pjob;
 	struct ndmmedia *	me = &job->media_tab.media[ca->cur_media_ix];
 	int			rc;
 
