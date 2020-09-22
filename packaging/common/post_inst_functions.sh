@@ -115,7 +115,7 @@ create_amkey() {
     logger "Creating encryption key for amcrypt"
     if [ ! -f ${AMANDAHOMEDIR}/.gnupg/am_key.gpg ]; then
         # TODO: don't write this stuff to disk!
-        get_random_lines 50 >${AMANDAHOMEDIR}/.gnupg/am_key || return 1
+        get_random_lines 65 >${AMANDAHOMEDIR}/.gnupg/am_key || return 1
 
         GPG2=`command -v gpg2 2>/dev/null`
         if [ "$?" != "0" ]; then
