@@ -1,5 +1,5 @@
 /* Substitute for and wrapper around <langinfo.h>.
-   Copyright (C) 2009-2016 Free Software Foundation, Inc.
+   Copyright (C) 2009-2020 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -12,11 +12,11 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program; if not, see <http://www.gnu.org/licenses/>.  */
+   along with this program; if not, see <https://www.gnu.org/licenses/>.  */
 
 /*
  * POSIX <langinfo.h> for platforms that lack it or have an incomplete one.
- * <http://www.opengroup.org/onlinepubs/9699919799/basedefs/langinfo.h.html>
+ * <https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/langinfo.h.html>
  */
 
 #ifndef _@GUARD_PREFIX@_LANGINFO_H
@@ -86,6 +86,18 @@ typedef int nl_item;
 # define MON_10      (MON_1 + 9)
 # define MON_11      (MON_1 + 10)
 # define MON_12      (MON_1 + 11)
+# define ALTMON_1    10200
+# define ALTMON_2    (ALTMON_1 + 1)
+# define ALTMON_3    (ALTMON_1 + 2)
+# define ALTMON_4    (ALTMON_1 + 3)
+# define ALTMON_5    (ALTMON_1 + 4)
+# define ALTMON_6    (ALTMON_1 + 5)
+# define ALTMON_7    (ALTMON_1 + 6)
+# define ALTMON_8    (ALTMON_1 + 7)
+# define ALTMON_9    (ALTMON_1 + 8)
+# define ALTMON_10   (ALTMON_1 + 9)
+# define ALTMON_11   (ALTMON_1 + 10)
+# define ALTMON_12   (ALTMON_1 + 11)
 # define ABMON_1     10035
 # define ABMON_2     (ABMON_1 + 1)
 # define ABMON_3     (ABMON_1 + 2)
@@ -136,6 +148,22 @@ typedef int nl_item;
 # if !@HAVE_LANGINFO_T_FMT_AMPM@
 #  define T_FMT_AMPM  10006
 #  define GNULIB_defined_T_FMT_AMPM 1
+# endif
+
+# if !@HAVE_LANGINFO_ALTMON@
+#  define ALTMON_1    10200
+#  define ALTMON_2    (ALTMON_1 + 1)
+#  define ALTMON_3    (ALTMON_1 + 2)
+#  define ALTMON_4    (ALTMON_1 + 3)
+#  define ALTMON_5    (ALTMON_1 + 4)
+#  define ALTMON_6    (ALTMON_1 + 5)
+#  define ALTMON_7    (ALTMON_1 + 6)
+#  define ALTMON_8    (ALTMON_1 + 7)
+#  define ALTMON_9    (ALTMON_1 + 8)
+#  define ALTMON_10   (ALTMON_1 + 9)
+#  define ALTMON_11   (ALTMON_1 + 10)
+#  define ALTMON_12   (ALTMON_1 + 11)
+#  define GNULIB_defined_ALTMON 1
 # endif
 
 # if !@HAVE_LANGINFO_ERA@

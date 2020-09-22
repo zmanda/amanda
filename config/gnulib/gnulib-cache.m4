@@ -1,4 +1,4 @@
-# Copyright (C) 2002-2016 Free Software Foundation, Inc.
+# Copyright (C) 2002-2020 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -11,7 +11,7 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this file.  If not, see <http://www.gnu.org/licenses/>.
+# along with this file.  If not, see <https://www.gnu.org/licenses/>.
 #
 # As a special exception to the GNU General Public License,
 # this file may be distributed as part of a program that
@@ -27,7 +27,33 @@
 
 
 # Specification in the form of a command-line invocation:
-#   gnulib-tool --import --lib=libgnu --source-base=gnulib --m4-base=config/gnulib --doc-base=doc --tests-base=tests --aux-dir=config --no-conditional-dependencies --libtool --macro-prefix=gl base64 environ euidaccess fseeko fsusage ftello full-read full-write getaddrinfo getopt-gnu inet_pton lock lseek mkdtemp nanosleep physmem regex
+# gnulib-tool --import \
+#  --lib=libgnu \
+#  --source-base=gnulib \
+#  --m4-base=config/gnulib \
+#  --doc-base=doc \
+#  --tests-base=tests \
+#  --aux-dir=config \
+#  --no-conditional-dependencies \
+#  --libtool \
+#  --macro-prefix=gl \
+#  base64 \
+#  environ \
+#  euidaccess \
+#  fseeko \
+#  fsusage \
+#  ftello \
+#  full-read \
+#  full-write \
+#  getaddrinfo \
+#  getopt-gnu \
+#  inet_pton \
+#  lock \
+#  lseek \
+#  mkdtemp \
+#  nanosleep \
+#  physmem \
+#  regex
 
 # Specification in the form of a few gnulib-tool.m4 macro invocations:
 gl_LOCAL_DIR([])
