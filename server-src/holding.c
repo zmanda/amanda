@@ -63,8 +63,6 @@ static int is_emptyfile(char *fname);
  */
 static int is_datestr(char *fname);
 
-gboolean take_holding_pid(char *diskdir, int pid);
-static int can_take_holding(char *pid_file, int remove);
 /*
  * Static functions */
 
@@ -436,6 +434,122 @@ typedef struct {
     int take_pid_lock;
 } holding_get_datap_t;
 
+
+static long 
+try_new_pid_file(const char *diskdir, pid_t mypid, const char *log_label) 
+{
+    FILE *pid_FILE;
+    struct stat stbuf;
+    char *mypid_file_base = alloca(strlen(diskdir) + 20);
+    char *pid_file;
+    char pidline[20],*valid_pid;
+    int err;
+    int r;
+
+    sprintf(mypid_file_base, "%s/pid.%d",diskdir,mypid);
+    pid_file = strdupa(mypid_file_base);
+    *strrchr(pid_file,'.') = '\0';
+
+    // create but without truncate ...
+    pid_FILE = fopen(mypid_file_base,"a");
+    if (!pid_FILE) {
+        log_add(L_WARNING, _("%s: [%d] WARNING: Can't create base link for '%s': %s"), 
+              log_label, mypid, mypid_file_base, strerror(errno));
+        return -1;
+    }
+
+    // presume a non-empty file has a correct pid in it..
+    if (ftell(pid_FILE) > 0) {
+        fstat(fileno(pid_FILE), &stbuf);
+        if ( stbuf.st_nlink > 1 )
+            return mypid; // already created, written and active ...
+    }
+
+    // file can be ready but not active yet
+    rewind(pid_FILE);
+    fprintf(pid_FILE, "%d", mypid);
+    fclose(pid_FILE);
+
+    if (link(mypid_file_base, pid_file) == 0) 
+        return 0;
+
+    err = errno;
+
+    pid_FILE = fopen(pid_file,"r");
+    if (!pid_FILE) {
+        errno = err;
+        return -1;
+    }
+
+    pidline[0] = '\0';
+    valid_pid = fgets(pidline, sizeof(pidline), pid_FILE);
+    fclose(pid_FILE);
+
+    r = atoi(valid_pid ? valid_pid : "");
+    if ( ! r ) {
+        errno = ENODATA;
+        return -1;
+    }
+
+    return r;
+}
+
+/* 
+ * attempt a race-proof cleanup of our own lock-pid 
+ *    or clean up any dead lock-pids if possible
+ * return 0 if lock-pid is gone now
+ * return pid if lock-pid is locked by another
+ * return -1 with ENOENT if another cleaned dead lock-pid
+ */
+static long
+clean_old_pid_file(const char *diskdir, pid_t mypid, const char *log_label) 
+{
+    int pid = try_new_pid_file(diskdir, mypid, log_label);
+    char *mypid_file_base = alloca(strlen(diskdir) + 20);
+    char *deadpid_file_base;
+    char *pid_file;
+    int r;
+
+    // act as if successful if pid is this process itself...
+    if (mypid != getpid() && pid == getpid()) {
+        mypid = getpid();
+    }
+
+    // clean up my own pid-base first... [no matter what]
+    sprintf(mypid_file_base, "%s/pid.%d",diskdir,mypid);
+    pid_file = strdupa(mypid_file_base);
+    *strrchr(pid_file,'.') = '\0';
+
+    unlink(mypid_file_base);
+
+    // found that I own it?   unlink it safely...
+    if ( !pid || pid == mypid ) {
+        unlink(pid_file);
+        return 0;
+    }
+
+    // found another owns it?  return blocked result
+    if ( kill(pid,0) == 0 ) {
+        return pid; 
+    }
+
+    // dead process held it on last read...
+
+    deadpid_file_base = alloca(strlen(diskdir) + 20);
+    sprintf(deadpid_file_base, "%s/pid.%d",diskdir,pid);
+
+    // *must* be first to clean dead owner base
+    r = unlink(mypid_file_base);
+
+    // not first? depend on another to clean it up
+    if (r < 0) {
+        return -1; // blocked by unknown cleaner
+    }
+
+    // return final pid-remove success or something else wrong
+    return unlink(pid_file);
+}
+
 /* Functor for holding_get_*; Stop if pid fileexists and is still alive
  * the result.
  */
@@ -447,18 +561,41 @@ holding_dir_stop_if_pid_fn(
     char *hdir,
     int is_cruft)
 {
+    int mypid = getppid();
     holding_get_datap_t *data = (holding_get_datap_t *)datap;
+    int r;
 
     if (is_cruft) {
 	return 0;
     }
 
-    if (data->take_pid_lock) {
-	return take_holding_pid(hdir, getppid());
-    } else {
-	char *pid_file = g_strconcat(hdir, "/pid", NULL);
-	return can_take_holding(pid_file, 0);
+    // clean up and get live pid or 0 or -1
+    r = clean_old_pid_file(hdir,mypid,"holding_dir_stop_if_pid_fn(1)");
+    // dead pid cleanup-race occurred.. try again
+    if (r < 0) {
+        r = clean_old_pid_file(hdir,mypid,"holding_dir_stop_if_pid_fn(2)");
     }
+
+    // either another owns the lockfile or cleanup was blocked twice
+    if (r < 0) {
+        log_add(L_WARNING, _("%s: [%d] WARNING: Can't clean base pid [2x] for '%s/pid': %s"), 
+              "holding_dir_stop_if_pid_fn(3)", mypid, hdir, strerror(errno));
+        return 0; // false == failed to clear outside valid-lock
+    }
+
+    if (r > 0) {
+        // log_add(L_WARNING, _("%s: [%d] WARNING: Can't lock [2x] for '%s/pid': %s"), 
+        //       log_label, mypid, hdir, strerror(errno));
+        return 0; // false == failed to clear outside valid-lock
+    }
+
+    // files are cleared now... but dont need to take the lock
+    if (!data->take_pid_lock)
+        return 1; // true == can acquire if wanted
+
+    // do acquire it...
+    r  = try_new_pid_file(hdir,mypid,"holding_dir_stop_if_pid_fn(4)");
+    return ( !r || mypid == r );  // true if acquired, false if not...
 }
 
 
@@ -758,7 +895,7 @@ holding_cleanup_dir(
     int is_cruft)
 {
     holding_cleanup_datap_t *data = (holding_cleanup_datap_t *)datap;
-    char *pid_file;
+    int mypid = getppid();
 
     if (is_cruft) {
 	if (data->verbose_output)
@@ -767,12 +904,10 @@ holding_cleanup_dir(
 	return 0;
     }
 
-    /* Do not cleanup if not from us and their amdump is still running */
-    pid_file = g_strconcat(fqpath, "/pid", NULL);
-    if (!can_take_holding(pid_file, 1)) {
+    // other lock prevented a simple cleanup?
+    if (clean_old_pid_file(fqpath, mypid, "holding_cleanup_dir")) {
 	return 0;
     }
-    g_free(pid_file);
 
     /* try removing it */
     if (rmdir(fqpath) == 0) {
@@ -1022,126 +1157,36 @@ mkholdingdir(
     char *	diskdir)
 {
     struct stat stat_hdp;
-    int   success = 1;
-    char *pid_file;
-    FILE *pid_FILE;
+    int r;
 
     if (mkpdir(diskdir, 0770, (uid_t)-1, (gid_t)-1) != 0 && errno != EEXIST) {
 	log_add(L_WARNING, _("WARNING: could not create parents of %s: %s"),
 		diskdir, strerror(errno));
-	success = 0;
+        return 0;
     }
-    else if (mkdir(diskdir, 0770) != 0 && errno != EEXIST) {
+    if (mkdir(diskdir, 0770) != 0 && errno != EEXIST) {
 	log_add(L_WARNING, _("WARNING: could not create %s: %s"),
 		diskdir, strerror(errno));
-	success = 0;
+        return 0;
     }
-    else if (stat(diskdir, &stat_hdp) == -1) {
+    if (stat(diskdir, &stat_hdp) == -1) {
 	log_add(L_WARNING, _("WARNING: could not stat %s: %s"),
 		diskdir, strerror(errno));
-	success = 0;
+        return 0;
     }
-    else {
-	if (!S_ISDIR((stat_hdp.st_mode))) {
+
+    if (!S_ISDIR((stat_hdp.st_mode))) {
 	    log_add(L_WARNING, _("WARNING: %s is not a directory"),
 		    diskdir);
-	    success = 0;
-	}
-	else if (access(diskdir,W_OK) != 0) {
+        return 0;
+    }
+    if (access(diskdir,W_OK) != 0) {
 	    log_add(L_WARNING, _("WARNING: directory %s is not writable"),
 		    diskdir);
-	    success = 0;
-	}
+        return 0;
     }
 
-    /* create a 'pid' file */
-    pid_file = g_strconcat(diskdir, "/pid", NULL);
-    pid_FILE = fopen(pid_file, "wx");
-    if (!pid_FILE) {
-	log_add(L_WARNING, _("WARNING: Can't create '%s': %s"),
-		pid_file, strerror(errno));
-	success = 0;
-    } else {
-	fprintf(pid_FILE, "%d", (int)getpid());
-	fclose(pid_FILE);
-    }
-    g_free(pid_file);
+    r = try_new_pid_file(diskdir, getpid(),"mkholdingdir");
 
-    return success;
+    return (!r || r == getpid() || r == getppid());
 }
-
-/*
- * return  0 - can't take
- *         1 - can take
- *         2 - already own
- */
-static int can_take_holding(
-    char *pid_file,
-    int   remove)
-{
-    FILE *pid_FILE;
-    int result = 1;
-
-    pid_FILE = fopen(pid_file, "r");
-    if (pid_FILE) {
-	char line[1000];
-	int  pid;
-	if (fgets(line, 1000, pid_FILE) != NULL) {
-	    pid = atoi(line);
-	    if (pid != getpid() && pid != getppid()) {
-		/* check if pid is alive */
-		if (kill(pid, 0) != -1) {
-		    result = 0;
-		}
-		// remove pid file of dead process
-		unlink(pid_file);
-	    } else {
-		if (remove) {
-		    // remove my own pid file
-		    unlink(pid_file);
-		} else {
-		    result = 2;
-		}
-	    }
-	}
-	fclose(pid_FILE);
-    }
-
-    return result;
-}
-
-gboolean take_holding_pid(char *diskdir, int pid);
-gboolean
-take_holding_pid(
-    char *	diskdir,
-    int		pid)
-{
-    char *pid_file;
-    FILE *pid_FILE;
-    int   result;
-
-    pid_file = g_strconcat(diskdir, "/pid", NULL);
-
-    result = can_take_holding(pid_file, 0);
-    if (result == 0) {
-	g_free(pid_file);
-	return 0;
-    } else if (result == 2) {
-	return 1;
-    }
-
-    /* create a 'pid' file */
-    pid_FILE = fopen(pid_file, "wx");
-    if (!pid_FILE) {
-	log_add(L_WARNING, _("WARNING: Can't create '%s': %s"),
-		pid_file, strerror(errno));
-	result = 0;
-    } else {
-	fprintf(pid_FILE, "%d", pid);
-	fclose(pid_FILE);
-    }
-    g_free(pid_file);
-
-    return result;
-}
-
