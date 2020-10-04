@@ -89,7 +89,9 @@ static gboolean opt_long = 0;
 static gboolean opt_outdated = 0;
 static int argc_orig;
 static char **argv_orig;
-
+ic gboolean opt_outdated = 0;
+static int argc_orig;
+static char **argv_orig;
 
 static const struct {
     const char *name;
