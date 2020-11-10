@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"
+[
+  <!-- entities files to use -->
+  <!ENTITY % global_entities SYSTEM '../entities/global.entities'>
+  %global_entities;
+]>
+
+<refentry id='amgrowingfile.8'>
+
+<refmeta>
+<refentrytitle>amgrowingfile</refentrytitle>
+<manvolnum>8</manvolnum>
+&rmi.source;
+&rmi.version;
+&rmi.manual.8;
+</refmeta>
+<refnamediv>
+<refname>amgrowingfile</refname>
+<refpurpose>Amanda Application for backup of single append-only file</refpurpose>
+</refnamediv>
+<refentryinfo>
+<author><personname>Chapman Flack</personname></author>
+</refentryinfo>
+<!-- body begins here -->
+
+<refsect1><title>DESCRIPTION</title>
+
+<para>Amgrowingfile is an Amanda Application API script.  It should not be run
+by users directly.  It can backup and restore a single file that is known
+to change only by appending.</para>
+
+<para>Such a file may represent audit or logging data, a stream of data
+being acquired from instrumentation, etc. Backup levels are supported, where
+a backup level greater than zero simply consists of all data written to the
+file beyond its length in the prior-level backup.</para>
+
+<note><para>For correctness, this strategy requires that the file be known
+to grow only at the end. On some operating systems (see the
+<command>chattr</command> command in Linux, for example), an
+<emphasis>append-only</emphasis> flag can be set on the file to enforce this.
+If the file is ever rewritten from the start (such as in log rotation), the
+next <command>amgrowingfile</command> backup must be forced to level 0.
+</para></note>
+
+<para>The <emphasis remap='B'>diskdevice</emphasis> in the disklist (DLE)
+is the filename <command>amgrowingfile</command> will read, unless overridden
+by an explicit TARGET property. When restoring,
+the TARGET property (which can be set with the
+<emphasis remap='B'>setproperty</emphasis> command in
+<manref name="amrecover" vol="8"/>) will be used, or, if it is not set,
+<filename>amgrowingfile-restored</filename> in the current directory.
+In other words, <command>amgrowingfile</command> will not default to
+restoring data directly to the original location named by
+<emphasis remap='B'>diskdevice</emphasis>, but the TARGET property
+can be set to that name, if that is what's desired.
+</para>
+
+<para>When restoring, the file named with the TARGET property (or
+<filename>amgrowingfile-restored</filename>) is truncated and rewritten
+in place if it exists, or created with mode 0600 if it does not.</para>
+</refsect1>
+
+<refsect1><title>PROPERTIES</title>
+
+<para>This section lists the properties that control amgrowingfile's
+functionality.
+See <manref name="amanda-applications" vol="7"/>
+for information on application properties and how they are configured.</para>
+
+<!-- PLEASE KEEP THIS LIST IN ALPHABETICAL ORDER -->
+<variablelist>
+ <!-- ==== -->
+ <varlistentry><term>TARGET</term><listitem>
+For a restore command, the file name under which the data will
+be restored, instead of <filename>amgrowingfile-restored</filename>.
+Otherwise, names the file to be backed up, overriding DEVICE.
+</listitem></varlistentry>
+</variablelist>
+
+</refsect1>
+
+<refsect1><title>EXAMPLE</title>
+<para>
+<programlisting>
+  define application-tool app_amgrowingfile {
+    plugin "amgrowingfile"
+  }
+</programlisting>
+A dumptype using this application might look like:
+<programlisting>
+  define dumptype amgrowingfile {
+    global
+    program "APPLICATION"
+    application "app_amgrowingfile"
+  }
+</programlisting>
+Note that the <emphasis>program</emphasis> parameter must be set to
+<emphasis>"APPLICATION"</emphasis> to use the <emphasis>application</emphasis>
+parameter.
+</para>
+</refsect1>
+
+<seealso>
+<manref name="amanda.conf" vol="5"/>,
+<manref name="amanda-applications" vol="7"/>
+<manref name="amrecover" vol="8"/>
+</seealso>
+
+</refentry>

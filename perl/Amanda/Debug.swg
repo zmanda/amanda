@@ -64,7 +64,7 @@ sub _my_die {
 	my ($msg) = @_;
 	chomp $msg;
 	suppress_error_traceback();
-	critical(@_);
+	critical($msg . ''); # Equal rights for exception objects!
     }
 };
 $SIG{__DIE__} = \&_my_die;
@@ -73,7 +73,7 @@ sub _my_warn {
     foreach my $msg (@_) {
 	my $msg1 = $msg;
 	chomp $msg1;
-	warning($msg1);
+	warning($msg1 . ''); # Equal rights for exception objects!
     }
 };
 $SIG{__WARN__} = \&_my_warn;

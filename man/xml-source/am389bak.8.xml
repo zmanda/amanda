@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"
+[
+  <!-- entities files to use -->
+  <!ENTITY % global_entities SYSTEM 'global.entities'>
+  %global_entities;
+]>
+
+<refentry id='am389bak.8'>
+
+<refmeta>
+<refentrytitle>am389bak</refentrytitle>
+<manvolnum>8</manvolnum>
+&rmi.source;
+&rmi.version;
+&rmi.manual.8;
+</refmeta>
+<refnamediv>
+<refname>am389bak</refname>
+<refpurpose>Amanda script for online copy of a 389 Directory Server</refpurpose>
+</refnamediv>
+<refentryinfo>
+<author><personname>Chapman Flack</personname></author>
+</refentryinfo>
+<!-- body begins here -->
+
+<refsect1><title>DESCRIPTION</title>
+
+<para>am389bak is an Amanda script implementing the Script API.
+It should not be run by users directly.  It uses the
+<command>db2bak</command> command to make a consistent copy
+of a 389 Directory Server instance.</para>
+
+<para>The name of the directory server instance (the <emphasis>foo</emphasis>
+part, if <literal>slapd-foo</literal> is the directory where its files
+are found) is given in the INSTANCE property, and the consistent copy will be
+made into the directory named by <emphasis remap='B'>diskdevice</emphasis> in
+the disklist (DLE). This is the directory where the estimate and backup
+application (<manref name='amopaquetree' vol='8'/> could be appropriate) will
+expect to find the data for backup.</para>
+
+<para>The copy is made after <emphasis>removing all existing
+content under the directory named as the
+<emphasis remap='B'>diskdevice</emphasis></emphasis>, all of
+which happens during PRE-DLE-ESTIMATE, which must be set to be executed
+on the client:
+<programlisting>
+    execute-on  pre-dle-estimate
+    execute-where client
+</programlisting></para>
+
+<para>The script is run as the amanda user, and must be able to run the
+<command>db2bak</command> command as the user running 389. This can be done
+by setting the DB2BAKEXECUTABLE property not to the path of
+<command>db2bak</command> itself, but to a set-uid
+<emphasis>and set-gid</emphasis> wrapper that obtains the effective user
+<emphasis>and group</emphasis> IDs of the 389 user, copies those to the
+real IDs (<command>db2bak</command> is quite finicky), and finally spawns
+<command>db2bak</command> with the same arguments. The wrapper should
+take all appropriate precautions to avoid being misused, such as checking
+the arguments to verify that they match a backup request of an expected
+389 instance.</para>
+
+<note><para>If the wrapper is made both set-uid and set-gid to the user
+that runs 389, there is no way left (in traditional Unix permissions) to
+leave the wrapper executable by the Amanda user (except by making it
+executable to everyone, which misses the point). However, modern filesystems
+typically support access control lists, so the wrapper can be given an ACL
+with execute permission granted to the Amanda user specifically.</para></note>
+</refsect1>
+
+<refsect1><title>PROPERTIES</title>
+
+<para>This section lists the properties that control am389bak's
+functionality.
+See <manref name="amanda-scripts" vol="7"/>
+for information on the Script API, script configuration.</para>
+
+<!-- PLEASE KEEP THIS LIST IN ALPHABETICAL ORDER -->
+<variablelist>
+ <!-- ==== -->
+ <varlistentry><term>DB2BAKEXECUTABLE</term><listitem>
+Path to the <command>db2bak</command> executable, search in $PATH by default.
+In realistic settings, this will point instead to a set-uid and set-gid wrapper
+that (after appropriate checks) will execute <command>db2bak</command> with
+the same arguments.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>INSTANCE</term><listitem>
+Name of the 389 Directory Server instance (the <emphasis>foo</emphasis>
+part, if <literal>slapd-foo</literal> is the directory where its files
+are found) to be backed up.
+</listitem></varlistentry>
+ <!-- ==== -->
+</variablelist>
+
+</refsect1>
+
+<refsect1><title>EXAMPLE</title>
+
+<para>This example defines a script <literal>make389bak</literal>,
+using it with an (assumed defined) <literal>app_amopaquetree</literal>
+application (see <manref name='amopaquetree' vol='8'/>) to do
+incremental backup of the directory data for instance
+<literal>myinst</literal>.</para>
+
+<para>In <manref name='amanda.conf' vol='5'/>:
+<programlisting>
+ define script "make389bak" {
+   plugin "am389bak"
+   execute-where client
+   execute-on pre-dle-estimate
+   property "db2bakexecutable" "/path/to/db2bak-wrapper"
+ }
+</programlisting></para>
+
+<para>In <manref name='disklist' vol='5'/>:
+<programlisting>
+ ldaphost myinst /tmp/389bak {
+   global
+   estimate client
+   program "APPLICATION"
+   application "app_amopaquetree"
+   script {
+     "make389bak"
+     property "instance" "myinst"
+   }
+ } 1 enet100
+</programlisting></para>
+</refsect1>
+
+<refsect1><title>BUGS</title>
+<para>This script does not (yet) make any effort to detect failures.</para>
+
+<para>The <command>db2bak</command> utility does so many inconvenient things
+that there is extra cleanup work needed when it is done. As that work also needs
+to be done as the 389 user, it is most easily done in the set-uid wrapper,
+which therefore cannot simply execute <command>db2bak</command> after some
+setup, but must execute it in a subprocess, wait for it, and then do further
+work.
+<itemizedlist>
+<listitem>
+<para>If the directory into which the backup is to be made already exists,
+<command>db2bak</command> first renames it to the same name with
+<literal>.bak</literal> tacked on. There is no documented option to turn off
+that behavior. Harmless enough, unless <emphasis>that</emphasis> directory
+also already exists, in which case <command>db2bak</command> simply fails.
+So the wrapper may need to remove any such directory so that situation is
+avoided.</para>
+</listitem>
+<listitem>
+<para>When <command>db2bak</command> creates files in the destination directory,
+it sets their modes explicitly to disallow any group access, which complicates
+making the files readable to the Amanda user after the script completes and
+the backup application needs to read them. A POSIX default ACL on the
+destination directory will not suffice, because even though the files inherit
+it, the later explicit denial of group permission masks it off. So the wrapper
+may need to change permissions or alter ACLs on the files after
+<command>db2bak</command> completes.</para>
+</listitem>
+</itemizedlist></para>
+
+<para>The number of tasks that have to be done under an ID other than Amanda's
+makes a case for adding some general, secure, easily configured way for Amanda
+applications and scripts to run specific operations with privilege, but that
+remains future work.</para>
+</refsect1>
+
+<seealso>
+<manref name="amanda.conf" vol="5"/>,
+<manref name="amanda-client.conf" vol="5"/>,
+<manref name="amanda-scripts" vol="7"/>
+</seealso>
+
+
+</refentry>

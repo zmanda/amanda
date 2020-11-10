@@ -37,8 +37,27 @@
 
 <itemizedlist>
 <listitem>
+<manref name="amgrowingfile" vol="8"/>,
+- incremental backup of a single large file known to be only appended.
+</listitem>
+<listitem>
+<manref name="amgrowingzip" vol="8"/>,
+- incremental backup of a single large ZIP known to only have new members
+appended.
+</listitem>
+<listitem>
 <manref name="amgtar" vol="8"/>,
 - use GNU Tar to backup and restore data.
+</listitem>
+<listitem>
+<manref name="amooraw" vol="8"/>,
+- use open and read to read the data. Like <manref name="amraw" vol="8"/>,
+but in simpler, OO style.
+</listitem>
+<listitem>
+<manref name="amopaquetree" vol="8"/>,
+- use rsync to make increments only from differing regions, not whole changed
+files.
 </listitem>
 <listitem>
 <manref name="ampgsql" vol="8"/>,
@@ -61,12 +80,13 @@
 - use native tar on Solaris to backup and restore data.
 </listitem>
 <listitem>
-<manref name="amzfs-sendrecv" vol="8"/>,
-- use zfs to create a snapshot and use 'zfs send' to generate the backup.
+<manref name="amzfs-holdsend" vol="8"/>,
+- use 'zfs send' to generate a backup as a replication stream of existing
+snapshots.
 </listitem>
 <listitem>
-<manref name="amzfs-snapshot" vol="8"/>,
-- use zfs to create a snapshot and for use with other applications (e.g. amgtar)
+<manref name="amzfs-sendrecv" vol="8"/>,
+- use zfs to create a snapshot and use 'zfs send' to generate the backup.
 </listitem>
 </itemizedlist>
 

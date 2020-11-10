@@ -88,7 +88,7 @@ sub new {
 
 
 #$_[0] message
-#$_[1] status: GOOD or ERROR
+#$_[1] status: GOOD, ERROR, or FAILURE
 sub print_to_server {
     my $self = shift;
     my($msg, $status) = @_;
@@ -127,7 +127,7 @@ sub print_to_server {
 }
 
 #$_[0] message
-#$_[1] status: GOOD or ERROR
+#$_[1] status: GOOD, ERROR, or FAILURE (coerced to FAILURE anyway since 3.3.8)
 sub print_to_server_and_die {
     my $self = shift;
     my($msg, $status) = @_;

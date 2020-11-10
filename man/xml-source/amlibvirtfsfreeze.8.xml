@@ -1,0 +1,290 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"
+[
+  <!-- entities files to use -->
+  <!ENTITY % global_entities SYSTEM 'global.entities'>
+  %global_entities;
+]>
+
+<refentry id='amlibvirtfsfreeze.8'>
+
+<refmeta>
+<refentrytitle>amlibvirtfsfreeze</refentrytitle>
+<manvolnum>8</manvolnum>
+&rmi.source;
+&rmi.version;
+&rmi.manual.8;
+</refmeta>
+<refnamediv>
+<refname>amlibvirtfsfreeze</refname>
+<refpurpose>Amanda script to freeze/thaw filesystems in VMs</refpurpose>
+</refnamediv>
+<refentryinfo>
+<author><personname>Chapman Flack</personname></author>
+</refentryinfo>
+<!-- body begins here -->
+
+<refsect1><title>DESCRIPTION</title>
+
+<para>amlibvirtfsfreeze is an Amanda script implementing the Script API.
+It should not be run by users directly.  On a machine that hosts
+virtual machines, it uses <package>libvirt</package> to instruct
+a virtual machine to freeze one or more filesystems, and then to thaw
+them after their image files on the host have been backed up.</para>
+
+<para>Freeze and thaw support in libvirt requires that a "guest agent"
+(for example, <manref name="qemu-ga" vol="8"/> for a Linux guest) be installed
+in the guest OS.</para>
+
+<para>When a filesystem is frozen, any buffered changes are forced to storage
+so the image can be backed up while consistent at the filesystem level.
+Activity in the guest that modifies the filesystem may block until the
+filesystem is thawed, so this technique is best combined with a script (such as
+<manref name="amlvmsnapshot" vol="8"/>) to snapshot the host filesystem,
+so the VM guest filesystems need only be frozen long enough to create
+the snapshot on the host.</para>
+
+<para>While a frozen filesystem will not be 'dirty' at the filesystem level,
+freezing alone does not ensure that any files in that filesystem represent
+consistent states of running applications. A guest agent may provide the
+option to run a freeze-hook script in the guest OS just before freezing and
+after thawing, and such a script can take application-specific actions to
+ensure important applications have reached a consistent state and forced it
+to storage as well. More on freeze hooks will be found in the documentation
+for the guest agent being used.</para>
+
+<para>The guest virtual machine ("domain" in libvirt parlance) is specified
+by name in the DOMAIN property, and the MOUNTPOINT property (which can be
+multivalued) specifies which of that domain's filesystems to act on.
+The FREEZEORTHAW property specifies the action.
+</para>
+
+<para>For a thaw action, no MOUNTPOINT is specified, and all filesystems
+frozen in the guest domain are thawed. For a freeze action, MOUNTPOINT may
+need to be omitted if the virtualization software or guest OS are too old
+to support per-filesystem freezing, and in that case, every filesystem mounted
+on the guest is frozen.</para>
+
+<para>This script can be run in PRE-DLE-ESTIMATE, in the case where one
+snapshot will be made before estimating and removed after backup. If limited
+free space in the volume group forces a small snapshot size, or changes to the
+origin filesystem accumulate quickly, or the Amanda installation in total has
+a long delay in planning/dumping between the estimate and backup phases, it is
+possible to execute this script twice, on PRE-DLE-ESTIMATE and PRE-DLE-BACKUP,
+in conjunction with a snapshot script that removes the snapshot used for
+estimating and creates another one for backup. In that case, it would also
+be possible to run this script only for PRE-DLE-BACKUP, as the estimate phase
+can get the size of the image file accurately enough without needing it
+frozen.</para>
+
+<para>The phase (or both phases) must be set to be executed on the client:
+<programlisting>
+    execute-on  pre-dle-estimate
+    #execute-on  pre-dle-estimate, pre-dle-backup
+    execute-where client
+</programlisting></para>
+
+<para>The script is run as the amanda user, and must be able to run the
+necessary <command>virsh</command> command. One approach is to set the
+VIRSHEXECUTABLE property not to the actual path of the command, but to
+a set-uid wrapper that takes the same arguments, checks that they represent
+allowed operations, domains, and filesystems, and then executes the actual
+command with the same arguments.</para>
+
+<note><para>A set-uid wrapper obtains its owner's <emphasis>effective</emphasis>
+ID, but may need to set the <emphasis>real</emphasis> ID to match it before
+the <command>virsh</command> command will permit the operations.</para></note>
+</refsect1>
+
+<refsect2 id='trim'><title>Trimming before freezing</title>
+
+<para>Another operation libvirt can request through the guest agent is to
+<emphasis>trim</emphasis> filesystems (any specified with MOUNTPOINT, or all
+filesystems if no mountpoint is given). The trim operation identifies all
+blocks regarded as free by the filesystem, and reports them to the filesystem's
+underlying block device as reclaimable. If the block device in the guest
+presents an image file from the host, this may reduce the space taken by
+the image on the host, by returning blocks to the host OS. Regular trimming
+can counteract the steady growth of image files due to file creation and
+deletion in the guest, especially if the guest filesystem is not mounted with
+a <code>discard</code> option to report freed blocks to the device layer as they
+are freed. A simple way to do regular trimming is to configure a DLE to trim
+with this script, just before freezing the filesystem for regular backups, as
+shown in the example below.</para>
+
+<para>Whether trimming is possible, or has any effect, depends on support
+in the virtualization system, guest OS and filesystem, and the image file
+format used on the host. For Linux guests and qemu-kvm, an image file must
+be presented via the <code>virtio-scsi</code> driver, not by the earlier
+<code>virtio-blk</code>.</para>
+
+</refsect2>
+
+<refsect1><title>PROPERTIES</title>
+
+<para>This section lists the properties that control amlibvirtfsfreeze's
+functionality.
+See <manref name="amanda-scripts" vol="7"/>
+for information on the Script API, script configuration.</para>
+
+<!-- PLEASE KEEP THIS LIST IN ALPHABETICAL ORDER -->
+<variablelist>
+ <!-- ==== -->
+ <varlistentry><term>DOMAIN</term><listitem>
+The name of the libvirt domain, or guest VM, whose filesystems should be
+frozen or thawed.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>FREEZEORTHAW</term><listitem>
+One of the values <literal>freeze</literal> or <literal>thaw</literal>.
+A third value, <literal>trim</literal>, is also allowed, to request trimming
+filesystems as described in <xref linkend='trim'/>.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>MOUNTPOINT</term><listitem>
+Filesystems in the named domain to be frozen or trimmed, identified by their
+mountpoints. This property can have multiple values. It is ignored in a
+<literal>thaw</literal> operation; all frozen filesystems will be thawed.
+For some old versions of virtualization infrastructure, the guest agent, or
+guest OS, it must not be used for <literal>freeze</literal> or
+<literal>trim</literal> either, in which case all mounted filesystems will be
+acted on.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>VIRSHEXECUTABLE</term><listitem>
+Path to the <command>virsh</command> executable, search in $PATH by default.
+If necessary for authorization, this can be set
+instead to a set-uid wrapper that (after appropriate checks) will
+execute <command>virsh</command> with the same arguments.
+</listitem></varlistentry>
+ <!-- ==== -->
+</variablelist>
+
+</refsect1>
+
+<refsect1><title>EXAMPLE</title>
+
+<para>This example sets up three script definitions,
+<literal>domfstrim</literal>, <literal>domfsfreeze</literal>,
+and <literal>domfsthaw</literal>, all based on
+this plugin, and a DLE that uses them, along with
+<manref name="amlvmsnapshot" vol="8"/> and an assumed
+<literal>remote-gtar</literal> dumptype, to first trim, and then freeze,
+the root filesystems of several guest VMs running on a host, then snapshot
+the host's filesystem (containing the consistent, frozen image files of the
+guests), thaw the guest filesystems, and finally back up the host from the
+snapshot.</para>
+
+<para>Note the use of the ORDER option in script definitions. The default
+(applied to the <literal>lvmsnapshot</literal> script, which leaves it
+unspecified) is 5000. The explicit 3000 in the <literal>domfstrim</literal>
+definition, 4000 for <literal>domfsfreeze</literal>, and 6000 for
+<literal>domfsthaw</literal> ensure that,
+when all four scripts are run in a single phase such as PRE-DLE-ESTIMATE,
+the trims occur first, then freezes, then the snapshot, then the thaws.</para>
+
+<para>In a realistic application where <command>amandad</command> does not
+run as the superuser, a privileged wrapper may need to be written and named
+in the VIRSHEXECUTABLE property as discussed above.</para>
+
+<para>In <manref name='amanda.conf' vol='5'/>:
+<programlisting>
+ define script domfstrim {
+   plugin "amlibvirtfsfreeze"
+   execute-where client
+   execute-on pre-dle-estimate
+   property "freezeorthaw" "trim"
+   property "virshexecutable" "/path/to/virsh-wrapper"
+   order 3000 # must execute before libvirtfsfreeze 'freeze'
+ }
+
+ define script domfsfreeze {
+   plugin "amlibvirtfsfreeze"
+   execute-where client
+   execute-on pre-dle-estimate
+   property "freezeorthaw" "freeze"
+   property "virshexecutable" "/path/to/virsh-wrapper"
+   order 4000 # must execute before lvmsnapshot
+ }
+
+ define script domfsthaw {
+   plugin "amlibvirtfsfreeze"
+   execute-where client
+   execute-on pre-dle-estimate
+   property "freezeorthaw" "thaw"
+   property "virshexecutable" "/path/to/virsh-wrapper"
+   order 6000 # must execute after lvmsnapshot
+ }
+
+ define script "lvmsnapshot" {
+   plugin "amlvmsnapshot"
+   execute-where client
+   execute-on pre-dle-estimate, post-dle-backup
+   # ... see amlvmsnapshot.8
+ }
+
+ define dumptype remote-gtar # ...
+</programlisting></para>
+
+<para>And in <manref name='disklist' vol='5'/>:
+<programlisting>
+ example / /tmp/rootsnap {
+   remote-gtar
+   script {
+     "domfstrim"
+     property "domain" "vm1"
+     property "mountpoint" "/"
+   }
+   script {
+     "domfsfreeze"
+     property "domain" "vm1"
+     property "mountpoint" "/"
+   }
+   script {
+     "domfsthaw"
+     property "domain" "vm1"
+   }
+   script {
+     "domfstrim"
+     property "domain" "vm2"
+     property "mountpoint" "/"
+   }
+   script {
+     "domfsfreeze"
+     property "domain" "vm2"
+     property "mountpoint" "/"
+   }
+   script {
+     "domfsthaw"
+     property "domain" "vm2"
+   }
+   script {
+     "lvmsnapshot"
+     property "volumegroup"   "vg_example"
+     property "logicalvolume" "lv_root"
+     property "snapshotname"  "snap_root"
+     property "extents"       "10%ORIGIN"
+   }
+ } 1 enet100
+</programlisting></para>
+</refsect1>
+
+<refsect1><title>BUGS</title>
+<para>This script does not (yet) make any effort to detect failures, or to
+capture and interpret standard output from the <command>virsh</command>, which
+normally produces some. Uncaptured, such output mixes with Amanda's
+client/server messaging, leading to backup failures. A cheap workaround is to
+include <code>dup2(2,1)</code> in the wrapper that executes
+<command>virsh</command>, so such output goes to standard error and ends up
+in the client <command>amandad</command> log file.</para>
+</refsect1>
+
+<seealso>
+<manref name="amanda.conf" vol="5"/>,
+<manref name="amanda-client.conf" vol="5"/>,
+<manref name="amanda-scripts" vol="7"/>
+</seealso>
+
+
+</refentry>
