@@ -5,7 +5,7 @@
 #
 # The 3-Clause BSD License
 
-# Copyright 2017 Purdue University
+# Copyright 2017-2020 Purdue University
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -114,6 +114,12 @@ sub command_pre_dle_estimate {
         @args = ( 'virsh', 'domfsthaw', $domain );
     }
 
+    unless ( $self->domain_is_running() ) {
+        warn Amanda::Script::Message->transitionalGood(
+	    message=>"$domain not running, $self->{'freezeorthaw'} skipped\n");
+	return;
+    }
+
     my $rslt = system {$self->{'virshexecutable'}} (@args);
 
     unless ( 0 == $rslt ) {
@@ -131,6 +137,46 @@ sub command_pre_dle_estimate {
 sub command_pre_dle_backup {
     my ( $self ) = @_;
     $self->command_pre_dle_estimate();
+}
+
+sub domain_is_running {
+    # Perl's 'system' is adequate for most of the work of this script, where
+    # only a command's exit status is needed, but domain_is_running needs to
+    # execute a command, capture its output, and compare to what's expected, and
+    # has to do that while possibly invoking a wrapper program with an argv[0]
+    # reflecting the real target, which is something Perl's exec and system can
+    # do but other 'simple' approaches like open/open2/open3 can't. Hence this
+    # simple task quickly gets grotty. Cribbed from the similar get_data_percent
+    # in amlvmsnapshot.
+    #
+    # Having to write subprocess manipulations at this low level is kind of
+    # a drag on easy script development, and think it would be preferable for
+    # Amanda to provide common facilities for them, or bless a widely-known
+    # existing module like IPC::Run and consider it an expected dependency
+    # so it could be used without hesitation.
+    my ( $self ) = @_;
+    my @args = ( 'virsh', 'domstate', $self->{'domain'} );
+
+    unless ( defined (my $pid = open my $pipefh, '-|') ) {
+	die Amanda::Script::EnvironmentError->transitionalError(
+	    item => 'spawning', value => 'virsh domstate', errno => $!);
+    } else {
+	unless ( $pid ) {
+	    unless ( exec {$self->{'virshexecutable'}} @args ) {
+		print STDERR $!."\n";
+		exit 1;
+	    }
+	}
+	my $got = <$pipefh>;
+	unless ( close $pipefh ) {
+	    die Amanda::Script::CalledProcessError->transitionalError(
+		cmd => @args, returncode => $?)
+		if 0 == $!;
+	    die Amanda::Script::EnvironmentError->transitionalError(
+		item => 'spawning', value => 'virsh domstate', errno => $!);
+	}
+	return "running\n" eq $got;
+    }
 }
 
 package main;
