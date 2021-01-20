@@ -1,5 +1,5 @@
-# physmem.m4 serial 11
-dnl Copyright (C) 2002-2003, 2005-2006, 2008-2016 Free Software Foundation,
+# physmem.m4 serial 12
+dnl Copyright (C) 2002-2003, 2005-2006, 2008-2020 Free Software Foundation,
 dnl Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
@@ -9,7 +9,7 @@ dnl with or without modifications, as long as this notice is preserved.
 # a struct with member 'physmem'.
 AC_DEFUN([gl_SYS__SYSTEM_CONFIGURATION],
   [AC_CACHE_CHECK([for external symbol _system_configuration],
-                  gl_cv_var__system_configuration,
+                  [gl_cv_var__system_configuration],
     [AC_LINK_IFELSE([AC_LANG_PROGRAM(
                       [[#include <sys/systemcfg.h>
                       ]],
