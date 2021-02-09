@@ -192,6 +192,7 @@ AC_DEFUN([AMANDA_PROG_GNUPLOT],
     if test "x$GNUPLOT" = "xno"; then
 	GNUPLOT=
     else
+        dnl prefer /usr/bin
 	AC_PATH_PROG(GNUPLOT,gnuplot,,$LOCSYSPATH)
     fi
 
@@ -204,7 +205,7 @@ AC_DEFUN([AMANDA_PROG_GNUPLOT],
 AC_DEFUN([AMANDA_PROG_GREP],
 [
     AC_REQUIRE([AMANDA_INIT_PROGS])
-    AC_PATH_PROG(GREP,grep,grep,$LOCSYSPATH)
+    AC_PATH_PROG(GREP,grep,grep,$SYSLOCPATH)
     AC_DEFINE_UNQUOTED(GREP,"$GREP",
 	    [Define the location of the grep program. ])
 ])
@@ -212,19 +213,19 @@ AC_DEFUN([AMANDA_PROG_GREP],
 AC_DEFUN([AMANDA_PROG_CAT],
 [
     AC_REQUIRE([AMANDA_INIT_PROGS])
-    AC_PATH_PROG(CAT,cat,cat,$LOCSYSPATH)
+    AC_PATH_PROG(CAT,cat,cat,$SYSLOCPATH)
 ])
 
 AC_DEFUN([AMANDA_PROG_COMPRESS],
 [
     AC_REQUIRE([AMANDA_INIT_PROGS])
-    AC_PATH_PROG(COMPRESS,compress,,$LOCSYSPATH)
+    AC_PATH_PROG(COMPRESS,compress,,$SYSLOCPATH)
 ])
 
 AC_DEFUN([AMANDA_PROG_DD],
 [
     AC_REQUIRE([AMANDA_INIT_PROGS])
-    AC_PATH_PROG(DD,dd,,$LOCSYSPATH)
+    AC_PATH_PROG(DD,dd,,$SYSLOCPATH)
 ])
 
 AC_DEFUN([AMANDA_PROG_GETCONF],
@@ -236,7 +237,13 @@ AC_DEFUN([AMANDA_PROG_GETCONF],
 AC_DEFUN([AMANDA_PROG_GZIP],
 [
     AC_REQUIRE([AMANDA_INIT_PROGS])
-    AC_PATH_PROG(GZIP,gzip,,$LOCSYSPATH)
+    AC_PATH_PROG(GZIP,gzip,,$SYSLOCPATH)
+])
+
+AC_DEFUN([AMANDA_PROG_BZIP2],
+[
+    AC_REQUIRE([AMANDA_INIT_PROGS])
+    AC_PATH_PROG(GZIP,bzip2,,$SYSLOCPATH)
 ])
 
 AC_DEFUN([AMANDA_PROG_SORT],
@@ -244,6 +251,7 @@ AC_DEFUN([AMANDA_PROG_SORT],
     AC_REQUIRE([AMANDA_INIT_PROGS])
     AC_REQUIRE([AMANDA_CHECK_COMPONENTS])
 
+    dnl prefer /usr/bin
     AC_PATH_PROG(SORT,sort,NONE,$LOCSYSPATH)
 
     # sort is only needed in the server build
@@ -260,7 +268,7 @@ AC_DEFUN([AMANDA_PROG_SORT],
 AC_DEFUN([AMANDA_PROG_MAILER],
 [
     AC_REQUIRE([AMANDA_INIT_PROGS])
-    AC_PATH_PROGS(MAILER,Mail mailx mail,NONE)
+    AC_PATH_PROGS(MAILER,mailx Mail mail,NONE)
     if test x"$MAILER" = x"NONE"; then
         AMANDA_MSG_WARN([WARNING: Amanda cannot send mail reports without a mailer.])
 	DEFAULT_MAILER=""
@@ -302,6 +310,7 @@ AC_DEFUN([AMANDA_PROG_MT],
 AC_DEFUN([AMANDA_PROG_MTX],
 [
     AC_REQUIRE([AMANDA_INIT_PROGS])
+    dnl prefer /usr/bin /usr/sbin
     AC_PATH_PROG(MTX,mtx,mtx,$LOCSYSPATH)
     AC_ARG_VAR([MTX], [Path to the 'mtx' binary])
 ])
@@ -309,21 +318,21 @@ AC_DEFUN([AMANDA_PROG_MTX],
 AC_DEFUN([AMANDA_PROG_MOUNT],
 [
     AC_REQUIRE([AMANDA_INIT_PROGS])
-    AC_PATH_PROG(MOUNT,mount,mount,$LOCSYSPATH)
+    AC_PATH_PROG(MOUNT,mount,mount,$SYSLOCPATH)
     AC_ARG_VAR([MOUNT], [Path to the 'mount' binary])
 ])
 
 AC_DEFUN([AMANDA_PROG_UMOUNT],
 [
     AC_REQUIRE([AMANDA_INIT_PROGS])
-    AC_PATH_PROG(UMOUNT,umount,umount,$LOCSYSPATH)
+    AC_PATH_PROG(UMOUNT,umount,umount,$SYSLOCPATH)
     AC_ARG_VAR([UMOUNT], [Path to the 'umount' binary])
 ])
 
 AC_DEFUN([AMANDA_PROG_UNAME],
 [
     AC_REQUIRE([AMANDA_INIT_PROGS])
-    AC_PATH_PROG(UNAME,uname,,$LOCSYSPATH)
+    AC_PATH_PROG(UNAME,uname,,$SYSLOCPATH)
     AC_DEFINE_UNQUOTED(UNAME_PATH,"$UNAME",
 	    [Define the location of the uname program. ])
 ])
@@ -331,12 +340,13 @@ AC_DEFUN([AMANDA_PROG_UNAME],
 AC_DEFUN([AMANDA_PROG_PCAT],
 [
     AC_REQUIRE([AMANDA_INIT_PROGS])
-    AC_PATH_PROG(PCAT,pcat,,$LOCSYSPATH)
+    AC_PATH_PROG(PCAT,pcat,,$SYSLOCPATH)
 ])
 
 AC_DEFUN([AMANDA_PROG_PERL],
 [
     AC_REQUIRE([AMANDA_INIT_PROGS])
+    dnl prefer /usr/bin /usr/sbin
     AC_PATH_PROGS(PERL,perl5 perl,,$LOCSYSPATH)
     AC_ARG_VAR([PERL], [Path to the 'perl' binary])
     AC_PROG_PERL_VERSION([5.6.0], [], [
@@ -347,6 +357,7 @@ AC_DEFUN([AMANDA_PROG_PERL],
 AC_DEFUN([AMANDA_PROG_SWIG],
 [
     AC_REQUIRE([AMANDA_INIT_PROGS])
+    dnl prefer /usr/bin /usr/sbin
     AC_PATH_PROGS(SWIG,swig,,$LOCSYSPATH)
     AC_ARG_VAR([SWIG], [Path to the 'swig' binary (developers only)])
     # 1.3.32 introduces a change in the way empty strings are handled (old versions
@@ -358,7 +369,7 @@ AC_DEFUN([AMANDA_PROG_SWIG],
 AC_DEFUN([AMANDA_PROG_AR],
 [
     AC_REQUIRE([AMANDA_INIT_PROGS])
-    AC_PATH_PROG(AR,ar,,$LOCSYSPATH)
+    AC_PATH_PROG(AR,ar,,$SYSLOCPATH)
 ])
 
 AC_DEFUN([AMANDA_PROG_BASH],
@@ -370,6 +381,7 @@ AC_DEFUN([AMANDA_PROG_BASH],
 AC_DEFUN([AMANDA_PROG_SSH],
 [
     AC_REQUIRE([AMANDA_INIT_PROGS])
+    dnl prefer /usr/bin /usr/sbin
     AC_PATH_PROGS(SSH, ssh, , $LOCSYSPATH)
     if test x"$SSH" = x""; then
 	SSH='/usr/bin/ssh'
@@ -380,12 +392,14 @@ AC_DEFUN([AMANDA_PROG_SSH],
 AC_DEFUN([AMANDA_PROG_GETTEXT],
 [
     AC_REQUIRE([AMANDA_INIT_PROGS])
+    dnl prefer /usr/bin /usr/sbin
     AC_PATH_PROG(GETTEXT,gettext,,$LOCSYSPATH)
 ])
 
 AC_DEFUN([AMANDA_PROG_RPCGEN],
 [
     AC_REQUIRE([AMANDA_INIT_PROGS])
+    dnl prefer /usr/bin /usr/sbin
     AC_PATH_PROG(RPCGEN,rpcgen,,$LOCSYSPATH)
 ])
 
@@ -408,24 +422,24 @@ AC_DEFUN([AMANDA_PROG_LEX],
 
 AC_DEFUN([AMANDA_PROG_NC],
 [
-    AC_PATH_PROG(NC,nc,,$LOCSYSPATH)
-    AC_PATH_PROG(NC6,nc6,,$LOCSYSPATH)
-    AC_PATH_PROG(NETCAT,netcat,,$LOCSYSPATH)
+    AC_PATH_PROG(NC,nc,,$SYSLOCPATH)
+    AC_PATH_PROG(NC6,nc6,,$SYSLOCPATH)
+    AC_PATH_PROG(NETCAT,netcat,,$SYSLOCPATH)
 ])
 
 AC_DEFUN([AMANDA_PROG_REALPATH],
 [
+    dnl prefer /usr/bin /usr/sbin
     AC_PATH_PROG(REALPATH,realpath,,$LOCSYSPATH)
 ])
 
 AC_DEFUN([AMANDA_PROG_READLINK],
 [
-    AC_PATH_PROG(READLINK,readlink,,$LOCSYSPATH)
+    AC_PATH_PROG(READLINK,readlink,,$SYSLOCPATH)
     AM_READLINK=
     # Check the readlink is the one we want
     if test x"$READLINK" != x""; then
-	READLINK=`$READLINK -e $READLINK`
-	if test x"$READLINK" != x""; then
+	if test x"`$READLINK -e $READLINK`" != x""; then
 	    AM_READLINK=$READLINK
 	    AC_DEFINE_UNQUOTED(AM_READLINK, "$AM_READLINK", [Location of the readlink binary])
 	fi
