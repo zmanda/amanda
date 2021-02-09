@@ -19,16 +19,12 @@
 #  Contact information: Carbonite Inc., 756 N Pastoria Ave
 #  Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 #
+%define rpmbuild_version  %(rpmbuild --version | tr -dc 0-9. | tr . ' ' | xargs -l printf "%03d.%03d.%03d")
 
 
-%define build_srpm 0
+%global build_srpm 0
 %{?srpm_only: %define build_srpm 1}
 
-# Pkg-config sometimes needs its own path set, and we need to allow users to
-# override our guess during detection.  This macro takes care of that.
-# If no --define PKG_CONFIG_PATH was passed and env var $PKG_CONFIG_PATH is
-# set then use the env var.
-%{!?PKG_CONFIG_PATH: %{expand:%(echo ${PKG_CONFIG_PATH:+"%%define PKG_CONFIG_PATH $PKG_CONFIG_PATH"})}}
 
 # LDFLAGS: newer gnu linkers can use "-Wl,--as-needed", while older ones,
 # like rhel3 and sles9 can't.
@@ -42,18 +38,18 @@
 
 # Define which Distribution we are building:
 # Try to detect the distribution we are building:
-%if %{_vendor} == amazon
+%if "%{_vendor}" == "amazon"
     %define dist amazon
     %define distver 1
     %define disttag  amzn
 %endif
 
 # Set options per distribution
-%if %{dist} == redhat || %{dist} == centos || %{dist} == fedora
+%if "%{dist}" == "redhat" || "%{dist}" == "centos" || "%{dist}" == "fedora"
     %define rpm_group Applications/Archiving
     %define requires_initscripts Requires: initscripts
 %endif
-%if %{dist} == SuSE
+%if "%{dist}" == "suse"
     %define rpm_group Productivity/Archiving/Backup
 %endif
 
@@ -72,7 +68,7 @@
 
 # Define amanda_version using the value determined by
 # packaging/common/substitute.pl.
-%{!?amanda_version: %define amanda_version %%VERSION%% }
+%{!?amanda_version: %define amanda_version %%VERSION%%}
 %{!?amanda_release: %define amanda_release 1}
 
 %define amanda_version_info "Amanda Community Edition - version %{amanda_version}"
@@ -83,11 +79,11 @@ Summary: The Amanda Backup and Archiving System
 Name: amanda
 Version: %{amanda_version}
 %define rpm_release %{amanda_release}.%{disttag}
-%if %{build_srpm}
+%if %{build_srpm} > 0
 %define rpm_release %{amanda_release}
 %endif
 Release: %{rpm_release}
-Source: %{name}-%{version}.tar.gz
+Source: %{name}-%{amanda_version}.tar.gz
 License: http://wiki.zmanda.com/index.php/Amanda_Copyright
 Vendor: Zmanda, Inc.
 Packager: www.zmanda.com
@@ -296,6 +292,10 @@ find-req-script
 
 %build
 
+# Since optflags varies by distro, we don't want to remove their flags,
+# just to adjust any -march= flags, and add our extra flags here with no
+# duplicates.
+
 [ -x ./configure ] || ./autogen
 
 # Set PKG_CONFIG_PATH=some/path if some/path was set on the command line, or by
@@ -304,11 +304,19 @@ find-req-script
 # LDFLAGS macro is defined except on rhel3.
 # --enable-as-needed must be conditional until configure tests whether
 # ld can accept --as-needed.
+
 ./configure \
-        %{?PKG_CONFIG_PATH: PKG_CONFIG_PATH=%PKG_CONFIG_PATH} \
-        CFLAGS="%{optflags} -g -pipe" CXXFLAGS="%{optflags}" \
-        %{?LDFLAGS:LDFLAGS="${LDFLAGS} %{?LDFLAGS:%LDFLAGS}"} \
-	%{?enable_as_needed:%{enable_as_needed}} \
+        CFLAGS="%{optflags}" \
+        CXXFLAGS="%{optflags}" \
+        CPPFLAGS="$CPPFLAGS" \
+        LDFLAGS="$LDFLAGS" \
+        LD_LIBRARY_PATH="${CONFIG_LDPATH}" \
+        PERL="${PERL}" \
+        AMPERL="${AMPERL}" \
+        GNUTAR=/bin/tar \
+        PKG_CONFIG_PATH="$PKG_CONFIG_PATH" \
+        --enable-as-needed \
+        --enable-shared \
         --quiet \
         --prefix=%{PREFIX} \
         --libdir=%{LIBDIR} \
@@ -316,11 +324,12 @@ find-req-script
         --sharedstatedir=%{LOCALSTATEDIR} \
         --localstatedir=%{LOCALSTATEDIR} \
         --includedir=%{INCLUDEDIR} \
-	--mandir=%{MANDIR} \
-	--with-amdatadir=%{AMDATADIR} \
-	--with-amperldir=%{AMPERLDIR} \
-	--with-amlibdir=%{AMLIBDIR} \
+        --mandir=%{MANDIR} \
+        --with-amdatadir=%{AMDATADIR} \
+        --with-amperldir=%{AMPERLDIR} \
+        --with-amlibdir=%{AMLIBDIR} \
         --with-gnuplot=/usr/bin/gnuplot \
+        --with-amlibexecdir=%{AMLIBEXECDIR} \
         --with-gnutar-listdir=%{AMANDAHOMEDIR}/gnutar-lists \
         --with-index-server=localhost \
         --with-tape-server=localhost \
