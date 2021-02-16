@@ -274,7 +274,7 @@ EXTRA_DIST += $(catalogs)
 noinst_SCRIPTS = \
 	run-ndmp
 
-PERL = $(shell type -p perl)
+PERL = $(shell command -v perl)
 
 BUILT_SOURCES = installcheck-build
 
