@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # This script is run by extension's autogen and amanda enterprise's builddist
 # to create the FULL_VERSION and PKG_REV files.  Amanda Enterprise ignores the
@@ -16,24 +16,23 @@
 
 : ${pkg_name:=amanda}
 
-if [ "$(type -t save_version)" != "function" ]; then
+# only if called externally ...
+[ $0 -ef ${BASH_SOURCE[0]} ] && ref=${1:-HEAD}
+
+if [ "$(type -t do_package)" != "function" ]; then
     . packaging/common/build_functions.sh
 fi
 
-[ -n "$(type -p gsed)" ] && eval "sed() { command gsed \"\$@\"; }"
-[ -n "$(type -p gmake)" ] && eval "make() { command gmake \"\$@\"; }"
-[ -n "$(type -p ggrep)" ] && eval "grep() { command ggrep \"\$@\"; }"
+[ -x "$(command -v gsed)" ] && eval "sed() { command gsed \"\$@\"; }"
+[ -x "$(command -v gmake)" ] && eval "make() { command gmake \"\$@\"; }"
+[ -x "$(command -v ggrep)" ] && eval "grep() { command ggrep \"\$@\"; }"
 
 sed --version | grep -i 'GNU sed' >/dev/null || exit 1;
 
-# regex strings for grep and sed
-flavors="deb..\|mac..\|nexenta..\|rpm..\|sun.."
-qa_rc="qa..\|rc.."
 
 # Fall back to previous build (or dist build?)?
-[ ! -d .git -a -f FULL_VERSION -a -f PKG_REV ] && exit 0
-
 if ! [ -d .git ]; then
+    [ -f FULL_VERSION -a -f PKG_REV ] && exit 0
     echo "Error: No subversion or git info available!"   #### ERROR
     exit 1
 fi
@@ -41,7 +40,12 @@ fi
 git remote -v show > vcs_repo.info
 git --no-pager log --max-count=1 >> vcs_repo.info
 
-get_git_info $(git rev-parse HEAD)
+eval "$(get_version_evalstr $ref)"
+
+if [[ "$VERSION_TAR" == /tmp/*/*.tar ]] && [ -f "$VERSION_TAR" ]; then
+    rm -rf ${VERSION_TAR%/*}
+fi
+
 echo "git_rev : $REV"
 echo "git_branch : $BRANCH"
 echo "git_long_branch : $LONG_BRANCH"
@@ -53,19 +57,18 @@ if [ -z "${BRANCH}${REV}" ]; then
     exit 1
 fi
 
-set_pkg_rev
-set_version
-
 # Amanda makes it easy to "force" a version string: just set FULL_VERSION
 # *after* running autogen
 echo "..version substitution"
 echo "set version : $VERSION"
-printf "$VERSION" > FULL_VERSION
 
 # Write out LONG_VERSION for installer build script.
 echo "set branch (long) : $LONG_BRANCH"
-printf "$LONG_BRANCH" > LONG_BRANCH
 
 # Write out REV for installer build script.
 echo "set rev : $REV"
+
+printf "$VERSION" > FULL_VERSION
+printf "$LONG_BRANCH" > LONG_BRANCH
 printf "$REV" > REV
+printf "$PKG_REV" > PKG_REV

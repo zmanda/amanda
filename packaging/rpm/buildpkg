@@ -26,17 +26,17 @@ pkg_name=amanda
 # Until we get package revisioning in community.
 [ -f "PKG_REV" ] || echo "1" > PKG_REV
 
-#[ -f "./configure" ] || \
-#    { echo "./configure does not exist, please run ./autogen"; exit 1; }
+do_rpm_package() {
+    gen_pkg_build_config $buildpkg_dir
+    # take the spec/spec.src files and make a tarfile
+    gen_pkg_environ
+    [ -s rpmbuild/SOURCES/${PKG_NAME_VER}.tar.gz ] || {
+            echo >&2 "missing rpmbuild/SOURCES/${PKG_NAME_VER}.tar.gz file version=$PKG_NAME_VER in ${PWD}"
+            exit 1
+          }
+    do_package "$@"
+}
 
-gen_pkg_build_config $pkg_root
+set -e
 
-# take the spec/spec.src files and make a tarfile
-gen_pkg_environ
-
-[ -f ${PKG_DIR}/rpmbuild/SOURCES/${PKG_NAME_VER}.tar.gz ] || {
-	echo >&2 "missing ${PKG_DIR}/rpmbuild/SOURCES/${PKG_NAME_VER}.tar.gz file version=$PKG_NAME_VER in $PKG_DIR"
-	exit 1
-      }
-
-do_package "amanda.spec"
+do_rpm_package "amanda.spec"

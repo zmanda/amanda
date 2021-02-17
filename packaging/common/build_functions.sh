@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Common Functions
 
 # Required variables:
@@ -6,150 +6,296 @@
 # SYSCONFDIR
 # os
 
-command -v realpath >/dev/null || eval 'realpath() { [ $1 = -e ] && shift; ( cd $1; builtin pwd -P; ); }'
+rpmbuild_opts='--rpmfcdebug '
 
-if command -v die 2>/dev/null >&2; then
-    :
-else
+unset CDPATH
+unset git
+setopt=$-
+# set +xv
+set +o posix
+
 die() {
    echo "$@" 1>&2
-   exit -1
+   exit 255
 }
-fi
+
+alias perl=/usr/bin/perl
+alias xargs="$(command -v xargs) -r"
+alias realpath="$(command -v readlink) -e"
+alias tar="$(command -v gtar)"
 
 # find abs top-dir path
-src_root="$(realpath .)"
+[ -d "$src_root" ]      || src_root="$(realpath .)"
+[[ "$src_root" == /* ]] || src_root="$(realpath .)"
 
-set_script_pkg_root() {
-    # compute pkg_root relative path.. (if not set)
-    pkg_root_rel=$1
-    [ -e "$pkg_root_rel" ] || pkg_root_rel="."
+# normally $src_root/packaging/.
+#    - pkgdirs_top
+#    - buildpkg_dir
 
-    rel_readlink="$(readlink $pkg_root_rel)"
+# determined by build machine, OS and architecture
+#    - pkg_suffix
+#    - pkg_type
 
-    # change to full-path or absolute *first*
-    if [ -L "$pkg_root_rel" -a $rel_readlink = ${rel_readlink#/} ]; then
-       [ -f $pkg_root_rel ] && pkg_root_rel="$(dirname $pkg_root_rel)"
-       pkg_root_rel=$pkg_root_rel/$rel_readlink
-    elif [ -L "$pkg_root_rel" ]; then
-       pkg_root_rel=$rel_readlink
-    fi
+get_yearly_tag() {
+    local top_of_year
+    local yr
+    local t=$(( ${1:-$pkg_name_pkgtime} + 0 ))
 
-    # change from file-based symlink to dir based now
-    [ -f $pkg_root_rel ] && pkg_root_rel="$(dirname $pkg_root_rel)"
+    # use external pkg_name_pkgtime
+    t=${t#0}
+    t=${t:-$(TZ=GMT date +%s)}
 
-    # don't use full-abs ... as it may be symlinked-submodule!
-    pkg_root_rel="$(realpath $pkg_root_rel)"
-    pkg_root_rel="${pkg_root_rel#${src_root}/}"
-    pkg_root_rel="${pkg_root_rel#${PWD}/}"
+    yr=$(date -d "@$t" +%Y)
 
-    if [ "${pkg_root_rel##*/}" = common -a -d packaging/rpm/. ]; then
-        pkg_root_rel=packaging/.
-        [ -s /etc/redhat-release ] && pkg_root_rel=packaging/rpm
-        [ -s /etc/debian_version ] && pkg_root_rel=packaging/deb
-    	pkg_type=${pkg_type:-${pkg_root_rel##*/}}
-    elif [ -z "$pkg_type" -a "${pkg_root_rel##*/}" = "$pkg_root_rel" ]; then
-        [ -s /etc/redhat-release ] && pkg_type=rpm
-        [ -s /etc/debian_version ] && pkg_type=deb
-    else
-    	pkg_type=${pkg_type:-${pkg_root_rel##*/}}
-    fi
+    echo -n "$(( yr % 100 ))+"
 
-    # remove all-but-last for type-of-package
-    declare -g pkg_type=$pkg_type
-    declare -g pkg_root=$pkg_root_rel
+    top_of_year=$(date -d "Jan 1 $yr" +%s)
+
+    # change base64 to match ASCII in ordering
+    perl -e '
+	$n=int( ($ARGV[0] - $ARGV[1])/70 );
+        $all = "AEIOUbcdfghjklmnpqrstvwxyz";  # ascii ordering..
+        $s .= substr($all,($n % 26),1); $n = int($n/26);
+        $s .= substr($all,($n % 26),1); $n = int($n/26);
+        $s .= substr($all,($n % 26),1); $n = int($n/26);
+        $s .= substr($all,($n % 26),1); $n = int($n/26);
+	print (scalar reverse "$s");' $t $top_of_year
 }
 
-detect_root_pkgtime() {
 
-    if ! git rev-parse --git-dir 2>/dev/null | grep -q .; then 
-        declare -g pkg_name_pkgtime="$(date +%s)"
-	return
+# look up to find the packaging/* root-dir (may be symlink)
+detect_pkgdirs_top() {
+    local selfdir=$(realpath ${BASH_SOURCE[0]})
+    local d="$selfdir"
+
+    local caller="$(realpath ${0%/*})"
+    local dd="$caller"
+
+    selfdir="${selfdir%/*}"
+
+    # find the packaging-dir top 
+    d="${d%/common/*}"
+    d="${d%/common_z/*}"
+
+    # narrow choices with calling script.s path, if possible
+    dd="${dd%/rpm}"
+    dd="${dd%/deb}"
+    dd="${dd%/sun-pkg}"
+    dd="${dd%/whl}"
+
+    # calling-script is in a neighboring dir?
+    if [[ "$dd/" == $d/* ]]; then
+        # try from higher to lower...
+        [ "${selfdir}/." -ef "$dd/../${selfdir##*/}/." ] && d="$(realpath $dd/..)"
+        [ "${selfdir}/." -ef "$dd/${selfdir##*/}/." ] && d="$(realpath $dd)"
     fi
 
-    a=0
-    b=0
+    [ "${selfdir}/." -ef "$d/${selfdir##*/}/." ] || die "could not find common containing directory"
 
-    pkg_name_pkgtime="$(cd $src_root; [ -d .git ] && git log --author-date-order --pretty='%ad' --date=raw -1)"
-    pkg_name_pkgtime="$(( ${pkg_name_pkgtime% *} + 0 ))"
-    src_root_pkgtime=$pkg_name_pkgtime;
+    [[ "$d/" == $src_root/* ]] && d=".${d#$src_root}"  # make relative
+    declare -g pkgdirs_top="$d"
+}
 
-    declare -g pkg_name_pkgtime=$pkg_name_pkgtime
+# set pre-defined dirs for three (four) of various builds
+detect_platform_pkg_type() {
+    local presets
+
+    [ -n "$pkg_name" ] && presets+="declare -g pkg_name=\"$pkg_name\";"
+    [ -n "$repo_name" ] && presets+="declare -g repo_name=\"$repo_name\";"
+    [ -n "$pkg_type" ] && presets+="declare -g pkg_type=\"$pkg_type\";"
+
+    if [ -z "$pkg_type" -a -x $src_root/$pkgdirs_top/common/substitute.pl ]; then
+        declare -g pkg_suffix=$(cd $src_root; ./$pkgdirs_top/common/substitute.pl <(echo %%PKG_SUFFIX%%) /dev/stdout); 
+        declare -g pkg_type=${pkg_suffix##*.}
+    fi
+
+    case $pkg_type in
+       (rpm) declare -g pkgconf_dir=SPECS   \
+                       buildpkg_dir=$pkgdirs_top/rpm \
+                       pkg_bldroot=rpmbuild
+            ;;
+       (deb) declare -g pkgconf_dir=debian  \
+                       buildpkg_dir=$pkgdirs_top/deb \
+                       pkg_bldroot=debbuild
+            ;;
+       (pkg) declare -g pkgconf_dir=sun-pkg \
+                       buildpkg_dir=$pkgdirs_top/sun-pkg \
+                       pkg_bldroot=pkgbuild
+            ;;
+       (whl) declare -g pkgconf_dir=.       \
+                       buildpkg_dir=$pkgdirs_top/whl \
+                       pkg_bldroot=build
+            ;;
+    esac
+
+    declare -g pkg_name=${pkg_name}
+    declare -g repo_name=${repo_name}
+    declare -g pkg_type=${pkg_type}
+
+    [ -d $src_root/$buildpkg_dir ] || { unset buildpkg_dir; set +a; return 0; }
+
+    
+    [ -r $src_root/$buildpkg_dir/0_vars.sh ] && { . $src_root/$buildpkg_dir/0_vars.sh; }
+
+    declare -g pkg_name=${pkg_name}
+    declare -g repo_name=${repo_name}
+    declare -g pkg_type=${pkg_type}
+
+    eval "$presets"
+
+    declare -g buildpkg_dir_abs=$(realpath $buildpkg_dir)
+}
+
+# set the detected "time" stamp for this build.. from the logs
+detect_root_pkgtime() {
+    local a=0
+    local b=0
+    local t="$(date +%s)"
+    local src_root_t=$t
+    local buildpkg_dir_t=$t
+    local pkg_common_t=$t
+    local d
+
+    # default for any failure
+    t="$(date +%s)"
+
+    git rev-parse --git-dir 2>/dev/null | grep -q . || return 0
+
+    if git $git_srcroot_args diff --quiet --ignore-submodules=all $src_root; then
+        src_root_t=$(git $git_srcroot_args log --pretty='%at' -1 $src_root)
+        src_root_t=$(( src_root_t + 0 ))
+    fi
+
+    d=$(realpath $src_root/$buildpkg_dir)
+    if ! [ -d "$buildpkg_dir" ]; then
+        buildpkg_dir_t=0
+    elif git $git_pkgdirs_args diff --quiet --ignore-submodules=all $d; then
+        buildpkg_dir_t=$(git $git_pkgdirs_args log --pretty='%at' -1 $d)
+        buildpkg_dir_t=$(( buildpkg_dir_t + 0 ))
+    fi
+
+    d=$(realpath "$src_root/$pkgdirs_top/common/.")
+    if git $git_pkgdirs_args diff --quiet --ignore-submodules=all $d; then
+        pkg_common_t=$(git $git_pkgdirs_args log --pretty='%at' -1 $d) 
+        pkg_common_t=$(( pkg_common_t + 0 ))
+    fi
+
+    {
+    printf -- "#--------------- %-14s: %s\n" top-dir $(get_yearly_tag $src_root_t)
+    printf -- "#--------------- %-14s: %s\n" pkg-scripts $(get_yearly_tag $buildpkg_dir_t)
+    printf -- "#--------------- %-14s: %s\n" pkg-common $(get_yearly_tag $pkg_common_t)
+    } | LANG=C sort -t: -b -k2
+
+    t=${src_root_t}
+    [ $buildpkg_dir_t -gt $t ] && t=$buildpkg_dir_t
+    [ $pkg_common_t -gt $t ] && t=$pkg_common_t
+
+    declare -g pkg_name_pkgtime=$t
+}
+get_remote_branch_repo() {
+    local ref=$1
+    local remote_repo
+
+    ref="${ref:-HEAD}"
+
+    # can ignore trailing info for branch or tag
+    remote_repo=$(git describe --all --match '*/*' --exclude '*/HEAD' $ref )
+
+    [[ "$remote_repo" == */* ]] || die "cannot find branch leading to ref=$ref in remote system"
+
+    remote_repo=${remote_repo#tags/*}   # disallow a non-repo tags refs
+    remote_repo=${remote_repo#refs/}
+    remote_repo=${remote_repo#remotes/}
+
+    [[ "$remote_repo" == */* ]] || die "cannot find branch leading to ref=$ref in remote system"
+
+    remote_repo=${remote_repo%%/*}
+    remote_repo=$(git ls-remote --get-url $remote_repo)
+    echo $remote_repo
+}
+
+get_version_evalstr() {
+    local f=$(realpath ${BASH_SOURCE[0]})
+    ${f%/*}/version_setup.sh $1
 }
 
 logger() {
-	# A non-annoying way to log stuff
-	# ${@} is all the parameters, also known as the message.  Quoting the input
-	# preserves whitespace.
-	msg="`date +'%b %d %Y %T'`: ${@}"
-	echo "${msg}" >> ${LOGFILE}
+    local msg
+
+    # A non-annoying way to log stuff
+    # ${@} is all the parameters, also known as the message.  Quoting the input
+    # preserves whitespace.
+    msg="`date +'%b %d %Y %T'`: ${@}"
+    echo "${msg}" >> ${LOGFILE}
 }
 
 log_output_of() {
-	# A non-annoying way to log output of commands
-	# ${@} is all the parameters supplied to the function.  just execute it,
-	# and capture the output in a variable.  then log that.
-	output=`"${@}" 2>&1`
-	ret=$?
-	if [ -n "${output}" ] ; then
-		logger "${1}: ${output}"
-	fi
-	return ${ret}
+    local output
+    local ret
+
+    # A non-annoying way to log output of commands
+    # ${@} is all the parameters supplied to the function.  just execute it,
+    # and capture the output in a variable.  then log that.
+    output=`"${@}" 2>&1`
+    ret=$?
+    if [ -n "${output}" ] ; then
+            logger "${1}: ${output}"
+    fi
+    return ${ret}
 }
 
 do_file_subst() {
+    local file
+    local target
+
     # get dir-name-above-script
     # Do substitutions..
     for file; do
-	[ -r "${file}" ] ||
-		{ echo "substitution source file not found: $file"; return -1; }
-	target="$(dirname "${file}")/$(basename ${file} .src)"
+	target="${file%.src}"
+	[ -r "${file}" ] || die "substitution source file not found: $file"
 	[ "$file" != "$target" ] ||
-		{ echo "substitution \"$file\" was not intended for substitution ["$target"]"; return -1; }
-	pkg_type=${pkg_type} perl $src_root/$pkg_root/../common/substitute.pl \
-		${file} ${target} ||
-		{ echo "substitution of \"$file\" -> \"$target\" failed somehow"; return -1; }
+           die "substitution \"$file\" was not intended for substitution [${target}]";
+
+        (
+            exec <$file >$target
+            cd $src_root;
+	    export pkg_name=${pkg_name};
+            export pkg_type=${pkg_type};
+            ./$pkgdirs_top/common/substitute.pl /dev/stdin /dev/stdout;
+        ) || { echo "substitution of \"$file\" -> \"$target\" failed somehow"; exit 255; }
     done
     return 0
 }
 
 get_version() {
-    t=$(mktemp)
-    echo "%%VERSION%%" > $t.src
-    do_file_subst $t.src ||
-	die "substitution of $t.src failed";
-    VERSION=`cat $t`
-    PKG_NAME_VER="$pkg_name-$VERSION"
-    rm -f $t.src $t
-}
-
-branch_version_name() {
-    v="$1"
-    v=$(echo "${v##*/}"| sed -r -e 's/-[0-9]+-g[a-f0-9]+$//')
-    v=$(echo "$v"| sed -r -e 's/[_.]+/^/g')
-    # remove text before version numbers found
-    v=$(echo "${v}"| sed -r -e 's/^[^0-9]*([0-9]+\^)/\1/')
-    # apply ^ removal repeatedly until none more found
-    v=$(echo "${v}"| sed -r -e ':start; s/([0-9])+\^([0-9])+/\1.\2/; tstart' | sed -e 'y,^,.,')
-    echo $v
+    # requires FULL_VERSION file is in place already
+    declare -g VERSION=$(cd $src_root; ./$pkgdirs_top/common/substitute.pl <(echo %%VERSION%%) /dev/stdout); 
+    [ -n "$pkg_name" ] && 
+       declare -g PKG_NAME_VER="$pkg_name-$VERSION"
 }
 
 gen_pkg_build_config() {
+    local setup_dir
+    local setup_cwd_dir
+    local pkg_typedir
+
     setup_dir=$1
+    pkg_typedir=${pkg_type}
+    [ $pkg_typedir = pkg ] && pkg_typedir=sun-pkg
 
     [ -d $setup_dir ] ||
 	die "ERROR: gen_pkg_build_config() \"$setup_dir\" bad setup directory to "
-    [ $pkg_root/../$pkg_type -ef $pkg_root ] ||
-	die "ERROR: gen_pkg_build_config() invoked by script [$0] --> [$pkg_root] outside of $pkg_type dir"
+    [ $buildpkg_dir/../$pkg_typedir -ef $buildpkg_dir ] ||
+	die "ERROR: gen_pkg_build_config() invoked by script [$0] --> [$buildpkg_dir] outside of $pkg_type dir"
 
-    setup_cwd_dir=${pkg_root}
+    setup_cwd_dir=${buildpkg_dir}
 
     # detect if setup-dir is absolute.. and convert back
-    [[ $setup_dir == /* ]] || setup_dir="${setup_dir#${src_root}}"
+    [[ $setup_dir == /* ]] && setup_dir="${setup_dir#${src_root}}"
+    [[ $setup_dir == /* ]] && die "pkg setup dir is outside of src_root";
 
-    # detect if setup-dir is at or below same as pkg_root or not
-    [ "${setup_dir#${pkg_root}/}" = "$setup_dir" ] && setup_cwd_dir="$pkg_root"
-    [ "${setup_dir}" = "${pkg_root}" ] && setup_cwd_dir=""
+    # detect if setup-dir is at or below same as buildpkg_dir or not
+    [ "${setup_dir}" = "${buildpkg_dir}" ] && setup_cwd_dir=""
 
     # Check for the packaging dirs.
     if [ -z "$PKG_DIR" ]; then
@@ -160,141 +306,142 @@ gen_pkg_build_config() {
 	   die "top directory for build PKG_DIR=${PKG_DIR} cannot be created"
     fi
     # ---------------------------------------------------
-    cd ${PKG_DIR}
+    (
+    cd ${PKG_DIR} || exit 100
 
-    mkdir -p $build_dir
+    mkdir -p $pkg_bldroot
+    cd $pkg_bldroot || exit 100
+    setup_dir=../$setup_dir
+    setup_cwd_dir=${setup_cwd_dir:+../}$setup_cwd_dir
 
-    case $build_dir in
+    case $pkg_bldroot in
 	(rpmbuild)
 	    echo "Config rpm package from $setup_dir =============================================="
-	    mkdir -p $build_dir/{SOURCES,SRPMS,SPECS,BUILD,RPMS,BUILDROOT} ||
-		   die "top directories for build under $(realpath .)/$build_dir cannot be created."
+	    mkdir -p {SOURCES,SRPMS,SPECS,BUILD,RPMS,BUILDROOT} ||
+		   die "top directories for build under $(realpath .) cannot be created."
 	    # Copy files into rpmbuild locations
-	    [ -z "$(ls 2>/dev/null $setup_dir/*.spec.src)" ] || cp -vf $setup_dir/*.spec.src $build_dir/SPECS ||
-		die "failed to copy spec files ($setup_dir/*.spec.src) to $build_dir/SPECS";
-	    [ -z "$(ls 2>/dev/null $setup_dir/*.spec)" ] || cp -vf $setup_dir/*.spec $build_dir/SPECS ||
-		die "failed to copy spec files ($setup_dir/*.spec) to $build_dir/SPECS";
+            rm -rf $pkgconf_dir
+	    cp -av $setup_dir $pkgconf_dir ||
+		die "failed to copy spec files ($setup_dir/*.src) to $pkgconf_dir";
+            # remove spurious vars files..
+            rm -f $pkgconf_dir/[0-9]*
 	    ;;
-	(debbuild)
-	    echo "Config deb package from $setup_dir ${setup_cwd:+and $setup_cwd }=============================================="
-	    rm -rf $build_dir/debian
-	    cp -av $setup_dir $build_dir/debian ||
-		die "failed to copy all files from $setup_dir to $build_dir/debian";
-	    [ -d "$setup_cwd_dir" ] &&
-		    { find $setup_cwd_dir/* -type d -prune -o -print | xargs cp -v -t $build_dir/debian ||
-			die "failed to copy all files from $setup_cwd_dir to $build_dir/debian"; }
+	(debbuild|pkgbuild)
+	    echo "Config $pkg_type package from $setup_dir ${setup_cwd:+and $setup_cwd }=============================================="
+	    rm -rf $pkgconf_dir
+            mkdir -p $pkgconf_dir 
+            # first the upper level ... then the pkg-specific files will overwrite
+            if [ -d "$setup_cwd_dir" ]; then
+                find $setup_cwd_dir/* -type d -prune -o -print | 
+                  xargs -l cp -fv -t $pkgconf_dir ||
+                die "failed to copy all files from $setup_cwd_dir to $pkgconf_dir"
+            fi
+	    cp -fav $setup_dir/* $pkgconf_dir/ ||
+		die "failed to copy all files from $setup_dir to $pkgconf_dir";
 
-	    [ -r $build_dir/debian/control ] ||
-		die "debian control file was not present in $setup_dir nor selected automatically";
+	    [ $pkg_type = deb -a ! -r $pkgconf_dir/control -a ! -r $pkgconf_dir/control ] &&
+		die "$pkgconf_dir control file was not present in $setup_dir nor selected automatically";
 	    ;;
-	(sun-pkgbuild)
-	    echo "Config sun-pkg from $setup_dir =============================================="
-            export INSTALL_DEST=$src_root/sun-pkgbuild/install
-            export PKG_DEST=$src_root/sun-pkgbuild/pkg
-            mkdir -p $build_dir $build_dir/install $build_dir/pkg ||
-		die "failed to create $build_dir and other directories.";
-            ;;
-
 	 (*) die 'Unknown packaging for resources';;
     esac
-
+    true
+    ) || exit $?
     # ---------------------------------------------------
-    cd $src_root
 }
 
 gen_top_environ() {
     # simulate the top directory as the build one...
     cd ${PKG_DIR}
 
-    eval "$(save_version HEAD)"
+    set_zmanda_version HEAD
 
-    [ -d $build_dir ] ||
-	die "missing call to gen_pkg_build_config() or missing ${PKG_DIR:-\"<missing>\"}/$build_dir directory"
+    [ -d $pkg_bldroot ] ||
+	die "missing call to gen_pkg_build_config() or missing ${PKG_DIR:-\"<missing>\"}/$pkg_bldroot directory"
 
-    case $build_dir in
+    (
+    cd $pkg_bldroot || exit 100
+
+    case $pkg_bldroot in
 	(rpmbuild)
-	    ln -sf $(realpath .) $build_dir/BUILD/$PKG_NAME_VER
-            gzip -c < $VERSION_TAR > $build_dir/SOURCES/${PKG_NAME_VER}.tar.gz
+	    ln -sf $(realpath ..) BUILD/$PKG_NAME_VER
+            gzip -c < $VERSION_TAR > SOURCES/${PKG_NAME_VER}.tar.gz
 	    ;;
-	(debbuild)
+	(debbuild|pkgbuild)
 	    # simulate the top directory as the build one...
-	    ln -sf $(realpath .) $build_dir/$PKG_NAME_VER
+	    ln -sf $(realpath ..) $PKG_NAME_VER
 	    ;;
-	(sun-pkgbuild)
-	    #
-	    # same as gen pkg environ
-            ln -sf $(realpath .) $build_dir/build
-            [ -f Makefile ] && make distclean
-            bash autogen
-	    ;;
-  	(*) die "Unknown packaging for resources in $PKG_DIR/$build_dir"
+  	(*) die "Unknown packaging for resources in $PKG_DIR/$pkg_bldroot"
 	    ;;
     esac
-    cd $src_root
+    true
+    ) || exit $?
 }
 
 gen_pkg_environ() {
+    local tmp
+
     cd ${PKG_DIR}
 
-    eval "$(save_version HEAD)"
+    set_zmanda_version HEAD
 
     tmp=$(mktemp -d)
     rm -f $tmp/${PKG_NAME_VER}
     ln -sf ${PKG_DIR} $tmp/${PKG_NAME_VER}
 
-    [ -d $build_dir ] ||
-    	die "missing call to gen_pkg_build_config() or missing ${PKG_DIR:-\"<missing>\"}/$build_dir directory"
+    [ -d $pkg_bldroot ] ||
+    	die "missing call to gen_pkg_build_config() or missing ${PKG_DIR:-\"<missing>\"}/$pkg_bldroot directory"
+    (
+    cd $pkg_bldroot || exit 100
 
-    case $build_dir in
+    case $pkg_bldroot in
 	(rpmbuild)
-            rm -f $build_dir/SOURCES/${PKG_NAME_VER}.tar
-	    tar -cf $build_dir/SOURCES/${PKG_NAME_VER}.tar \
+            rm -f SOURCES/${PKG_NAME_VER}.tar
+	    tar -cf SOURCES/${PKG_NAME_VER}.tar \
 		   --exclude=*.rpm \
 		   --exclude=*.deb \
 		   --exclude=.git \
 		   --exclude=*.tar.gz \
 		   --exclude=*.tar \
-		   --exclude=${build_dir} \
+		   --exclude=${pkg_bldroot} \
 		    -C $tmp ${PKG_NAME_VER}/. ||
 			die "tar creation from $(readlink ${PKG_NAME_VER} || echo "<missing symlink>") failed"
             #
 	    # ready for the spec file to untar it
-            gzip -f $build_dir/SOURCES/${PKG_NAME_VER}.tar
+            gzip -f SOURCES/${PKG_NAME_VER}.tar
 	    ;;
-	(debbuild)
-            rm -rf $build_dir/$PKG_NAME_VER
+	(debbuild|pkgbuild)
+            rm -rf $PKG_NAME_VER
 	    tar -cf - \
 		   --exclude=*.rpm \
 		   --exclude=*.deb \
+		   --exclude=*.pkg \
 		   --exclude=.git \
 		   --exclude=*.tar \
 		   --exclude=*.tar.gz \
-		   --exclude=$build_dir \
+		   --exclude=$pkg_bldroot \
 		    -C $tmp $PKG_NAME_VER/. |
-		tar -xf - -C $build_dir ||
-		    die "tar-based copy from $(readlink ${PKG_NAME_VER} || echo "<missing symlink>") to $PKG_DIR/$build_dir failed"
+		tar -xf - ||
+		    die "tar-based copy from $(readlink ${PKG_NAME_VER} || echo "<missing symlink>") to $PKG_DIR/$pkg_bldroot failed"
             #
 	    # ready for the build system to use it
             #
 	    ;;
-	(sun-pkgbuild)
-	    #
-	    # same as top build
-            ln -sf $(realpath .) $build_dir/build
-            [ -f Makefile ] && make distclean
-            bash autogen
-            ;;
-
-	 (*) die "Unknown packaging for resources in $PKG_DIR/$build_dir"
+	 (*) die "Unknown packaging for resources in $PKG_DIR/$pkg_bldroot"
 	    ;;
     esac
-
+    true
+    ) || exit $?
     # ---------------------------------------------------
-    cd $src_root
+
     rm -f $tmp/${PKG_NAME_VER}
 }
 
 gen_repo_pkg_environ() {
+    local repo_name
+    local repo_ref
+    local vars
+    local repo_tar
+
     repo_name=$1
     repo_ref=$2
 
@@ -303,233 +450,290 @@ gen_repo_pkg_environ() {
     [ -n "$repo_ref" ] ||
 	die "ERROR: usage: <repo-name> <git-ref>, w/second missing";
 
-    remote=$(get_repo_remote $repo_name)
-
-    [ -n "$remote" ] || die "ERROR: could not use $repo_name to create a remote repo name"
-
-    # halt things now if there was an error in the output
-    git ls-remote --get-url "$remote" || die "ERROR: could not use $repo_name to create a remote repo name"
-
-    # in case we had a full-path name for our branch
-    repo_ref=${repo_ref#remotes/}
-    repo_ref=${repo_ref#$remote/}
+    if git 2>/dev/null >&2 rev-parse --verify "tags/$repo_ref^{commit}"; then
+        remote=tags
+    elif [[ "$repo_ref" == __temp_merge-* ]] && 
+            git 2>/dev/null >&2 rev-parse --verify "$repo_ref^{commit}"; then
+        # define the remote with "self" if needed
+        git remote add __self__ $(realpath $(git rev-parse --show-toplevel))
+        git fetch __self__
+        remote=__self__
+    else
+        remote=$repo_name
+        [ -n "$remote" ] || 
+            die "ERROR: could not use $repo_name to create a remote repo name"
+        git ls-remote --get-url "$remote" >&/dev/null || 
+            die "ERROR: could not use $repo_name to create a remote repo name"
+        repo_ref=${repo_ref#remotes/}
+        repo_ref=${repo_ref#$remote/}
+    fi
 
     echo "setup attempt: $remote/$repo_ref"
 
-    eval "set -xv; $(save_version $remote/$repo_ref); set +xv"
+    set_zmanda_version $remote/$repo_ref
 
-    cd ${PKG_DIR}/$build_dir
+    (
+    cd ${PKG_DIR}/$pkg_bldroot
 
     set -e
-    case $build_dir in
+    case $pkg_bldroot in
 	(rpmbuild)
             repo_tar=SOURCES/${PKG_NAME_VER}.tar
-            repo_targz=SOURCES/${PKG_NAME_VER}.tar.gz
-            rm -f $repo_tar $repo_targz
-            git archive --remote=file://$(realpath .)/.. --format=tar.gz --prefix="$PKG_NAME_VER/./" -o $repo_targz $remote/$repo_ref ||
-		die "ERROR: failed: git archive --format=tar.gz --prefix=\"$PKG_NAME_VER/./\" -o $repo_targz $remote/$repo_ref"
-            gunzip $repo_targz ||
-		die "ERROR: failed: decompress of $build_dir/$repo_targz"
+            rm -f $repo_tar
+            
+            git archive --remote=file://$(realpath ..) --format=tar --prefix="$PKG_NAME_VER/./" -o $repo_tar $remote/$repo_ref ||
+		die "ERROR: failed: git archive --format=tar --prefix=\"$PKG_NAME_VER/./\" -o $repo_tar $remote/$repo_ref"
 	    # not needed because another overwrites previous one?
-            tar --delete -vf $repo_tar ${PKG_NAME_VER}/./000-external || true
 
             # append versioning files...
             tar -Avf $repo_tar $VERSION_TAR ||
-		die "ERROR: failed to append extra files to $build_dir/$repo_tar"
+		die "ERROR: failed to append extra files to $pkg_bldroot/$repo_tar"
 
-	    mkdir -p ${PKG_NAME_VER}
-            ln -sf ../../../000-external $PKG_NAME_VER/000-external
-            tar -rf $repo_tar $PKG_NAME_VER/./000-external
-	    rm -rf ${PKG_NAME_VER}
-
-            gzip $repo_tar
+            gzip -f $repo_tar
 	    ;;
-	(debbuild)
+	(debbuild|pkgbuild)
             rm -rf $PKG_NAME_VER
-            git archive --remote=file://$(realpath .)/.. --format=tar --prefix="$PKG_NAME_VER/" $remote/$repo_ref |
+            git archive --remote=file://$(realpath ..) --format=tar --prefix="$PKG_NAME_VER/" $remote/$repo_ref |
 		tar -xf - --exclude 000-external ||
-		die "ERROR: failed: git archive --format=tar $remote/$repo_ref to tar -xf in $build_dir"
-	    ln -sf ../../000-external "$PKG_NAME_VER/000-external"
+		die "ERROR: failed: git archive --format=tar $remote/$repo_ref to tar -xf in $pkg_bldroot"
 
             tar -xvf $VERSION_TAR ||
-		die "ERROR: failed: tar extract of $VERSION_TAR into $build_dir/$PKG_NAME_VER"
+		die "ERROR: failed: tar extract of $VERSION_TAR into $pkg_bldroot/$PKG_NAME_VER"
 	    ;;
-	(sun-pkgbuild)
-            rm -rf build
-            git archive --remote=file://$(realpath .)/.. --format=tar --prefix="build/" $remote/$repo_ref |
-		tar -xf - --exclude 000-external ||
-		die "ERROR: failed: git archive --format=tar.gz -o $targz $remote/$repo_ref to tar -xf"
-	    ln -sf ../000-external build
-
-            tar -xvf $VERSION_TAR --strip-components=1 -C build ||
-		die "ERROR: failed: tar extract of $VERSION_TAR into $build_dir/build"
-
-            ( cd build; bash autogen; ) ||
-		die "ERROR: failed autogen for $build_dir/build"
-            ;;
-
-	 (*) die "Unknown packaging for resources of $build_dir"
+	 (*) die "Unknown packaging for resources of $pkg_bldroot"
 	    ;;
     esac
-
-    cd $src_root
     rm -f $VERSION_TAR
+    ) || exit $?
+
     set +e
 }
 
+#
+# XXX: NEARLY THE SAME AS do_package ...
+#
 do_top_package() {
-    cd ${PKG_DIR}/$build_dir ||
-	die "missing call to gen_pkg_build_config() or missing ${PKG_DIR:-\"<missing>\"}/$build_dir directory"
+    local ctxt=$1
+    local build_srcdir
+    local hooks
+    local repo_targz
+    shift
 
-    case $build_dir in
+    [ -d ${PKG_DIR}/$pkg_bldroot ] || 
+	die "missing call to gen_pkg_build_config() or missing ${PKG_DIR:-\"<missing>\"}/$pkg_bldroot directory"
+
+    (
+    cd ${PKG_DIR}/$pkg_bldroot 
+
+    case $pkg_bldroot in
 	(rpmbuild)
-            echo "Fake-Building via $1 =============================================="
-            spec_file=$1
-            shift
-            targz=SOURCES/${PKG_NAME_VER}.tar.gz
+            echo "Fake-Building via $ctxt =============================================="
+            spec_file=$ctxt
+            repo_targz=SOURCES/${PKG_NAME_VER}.tar.gz
 
-            # pre-extract version info to do subst (must have /./ as if top was symlink)
-            if [ -s SPECS/${spec_file}.src ]; then
-               (
-                 cd BUILD/${PKG_NAME_VER} ||
-		 	die "directory or symlink BUILD/${PKG_NAME_VER} missing"
-                 src_root=$(realpath .);
-                 pkg_root=packaging/$pkg_type
-                 do_file_subst ${PKG_DIR}/$build_dir/SPECS/${spec_file}.src && rm -f ${PKG_DIR}/$build_dir/SPECS/${spec_file}.src
-               )
-            fi
+            # dont need to untar subst-files... 
+            # NOTE: must be in the BUILD/xxx dir to subsitute anything correctly
 
-            [ -s SPECS/$spec_file ] ||
-		die "ERROR: SPECS/$spec_file is not present for packaging step"
-            [ -n "$(type rpmbuild)" ] ||
+            ( cd ..; find $pkg_bldroot/$pkgconf_dir/*.src | while read i; do do_file_subst $i; done; ) ||
+                    die "missing call to gen_pkg_environ() or failed substitutions"
+            rm -f $pkgconf_dir/*.src $pkgconf_dir/build*
+
+            # move files to BUILD only when ready to...
+
+            [ -s $pkgconf_dir/$spec_file ] ||
+		die "ERROR: $pkgconf_dir/$spec_file is not present for packaging step"
+            [ -n "$(command -v rpmbuild)" ] ||
 		die "ERROR: rpmbuild command was not found.  Cannot build without package \"rpm-build\" installed."
-	    [ -f $targz ] ||
+	    [ -f $repo_targz ] ||
 		die "ERROR: missing call to gen_top_environ()"
 
-	    sed -i -e '/^ *%setup/d' SPECS/${spec_file}
+            # %setup lines are useless for top-build.. and would erase everything!
+	    sed -i -e '/^ *%setup/s/$/ -T -D/' $pkgconf_dir/${spec_file}
 
-	    rpmbuild -ba --define "_topdir $(realpath .)" SPECS/$spec_file "$@" ||
+            # repo_targz is the version-only one...
+	    ( set -x; rpmbuild -ba $rpmbuild_opts --define "_topdir $(realpath .)" $pkgconf_dir/$spec_file "$@" || true; )
+            echo "RPM binary package(s) from $spec_file ------------------------------------"
+            ( find RPMS/*/*.rpm | grep -v '[-]debug' | xargs mv -fv -t ${PKG_DIR}; ) || 
 		die "ERROR: rpmbuild compile command failed"
 	    ;;
 
 	(debbuild)
-            echo "Fake building debian package in $1 =============================================="
-            deb_control=debian/control
-            deb_build="$1"
-            shift
+            echo "Fake building $pkg_type package in $ctxt =============================================="
+            build_srcdir="$ctxt"
 
-            [ -d debian ] || die "missing call to gen_pkg_build_config"
-            mv debian $deb_build/. || die "directory $deb_build under ${PKG_DIR}/$build_dir is missing or a broken link"
-            cd $deb_build/. || die "directory $deb_build under ${PKG_DIR}/$build_dir is missing or a broken link"
+            [ -d $pkgconf_dir ] || die "missing call to gen_pkg_build_config"
+            mv $pkgconf_dir $build_srcdir/. || 
+               die "directory $build_srcdir under ${PKG_DIR}/$pkg_bldroot is missing or a broken link"
+            cd $build_srcdir/. || 
+               die "directory $build_srcdir under ${PKG_DIR}/$pkg_bldroot is missing or a broken link"
 
-            set -- $(ls debian/*.src)
-            if [ $# -gt 0 ]; then
-                do_file_subst "$@"
-            fi
+            find $pkgconf_dir/*.src | while read i; do do_file_subst $i; done ||
+                    die "missing call to gen_pkg_environ() or failed substitutions"
+            rm -f $pkgconf_dir/*.src $pkgconf_dir/build*
 
-            chmod ug+x debian/rules || die "chmod of ${PKG_DIR}/$build_dir/$deb_build/debian/rules failed"
+            chmod ug+x $pkgconf_dir/rules || 
+               die "could not chmod $pkgconf_dir/rules"
 
-            [ -n "$(type dpkg-buildpackage)" ] ||
+            [ -n "$(command -v dpkg-buildpackage)" ] ||
 		die "ERROR: dpkg-buildpackage command was not found.  Cannot build without package \"dpkg-dev\" installed."
-            [ -s debian/control ] ||
-		die "ERROR: no debian/control file is ready in ${PKG_DIR}/$build_dir/$deb_build/debian"
+            [ -s $pkgconf_dir/control ] ||
+                die "ERROR: no $pkgconf_dir/control file is ready in ${PKG_DIR}/$pkg_bldroot/$build_srcdir/$pkgconf_dir"
                 
-            # 
-            # no hooks currently needed...
-            dpkg-buildpackage -rfakeroot -Tbuild ||
-		die "ERROR: dpkg-buildpackage compile command failed"
-	    ;;
-
-	(sun-pkgbuild)
-	    make
-	    ;;
-	 (*) die "Unknown packaging for resources for $build_dir"
-	    ;;
-    esac
-    cd ${PKG_DIR}
-}
-
-do_package() {
-    ctxt=$1
-    cd ${PKG_DIR}/$build_dir ||
-	die "missing call to gen_pkg_build_config() or missing ${PKG_DIR:-\"<missing>\"}/$build_dir directory"
-
-    case $build_dir in
-	(rpmbuild)
-            echo "Building rpm package from $ctxt =============================================="
-            spec_file=$ctxt
-            targz=SOURCES/${PKG_NAME_VER}.tar.gz
-
-            # pre-extract version info to do subst (must have /./ as if top was symlink)
-            if [ -s SPECS/${spec_file}.src ]; then
-               (
-                 rm -rf BUILD/${PKG_NAME_VER}
-                 tar -xzvf $targz -C BUILD \
-                   ${PKG_NAME_VER}/./{FULL_VERSION,PKG_REV,REV,LONG_BRANCH,VERSION,packaging} ||
-		 	die "missing call to gen_pkg_environ() or malformed $targz file"
-
-                 cd BUILD/${PKG_NAME_VER} ||
-		 	die "missing call to gen_pkg_environ() or malformed $targz file"
-                 src_root=$(realpath .);
-                 pkg_root=packaging/$pkg_type
-                 do_file_subst ${PKG_DIR}/$build_dir/SPECS/${spec_file}.src && rm -f ${PKG_DIR}/$build_dir/SPECS/${spec_file}.src
-               )
-            fi
-
-            [ -s SPECS/$spec_file ] ||
-		die "ERROR: SPECS/$spec_file is not present for packaging step"
-            [ -n "$(type rpmbuild)" ] ||
-		die "ERROR: rpmbuild command was not found.  Cannot build without package \"rpm-build\" installed."
-	    [ -s $targz ] ||
-		die "ERROR: missing call to gen_pkg_environ()"
-
-            shift
-            rpmbuild -ba --define "_topdir $(realpath .)" SPECS/$spec_file "$@" ||
-		die "ERROR: rpmbuild compile command failed"
-            echo "RPM package(s) from $spec_file ------------------------------------"
-            mv -fv RPMS/*/*.rpm SRPMS/*rpm ${PKG_DIR}
-	    ;;
-
-	(debbuild)
-            echo "Building debian package in $ctxt =============================================="
-            deb_control=debian/control
-            deb_build="$ctxt"
-	    shift
-
-            [ -d debian ] || die "missing call to gen_pkg_build_config"
-            mv debian $deb_build/. || die "directory $deb_build under ${PKG_DIR}/$build_dir is missing or a broken link"
-            cd $deb_build/. || die "directory $deb_build under ${PKG_DIR}/$build_dir is missing or a broken link"
-
-            set -- $(ls debian/*.src)
-            if [ $# -gt 0 ]; then
-                do_file_subst "$@"
-            fi
-
-            chmod ug+x debian/rules || die "chmod of ${PKG_DIR}/$build_dir/$deb_build/debian/rules failed"
-
-            [ -n "$(type dpkg-buildpackage)" ] ||
-		die "ERROR: dpkg-buildpackage command was not found.  Cannot build without package \"dpkg-dev\" installed."
-            [ -s debian/control ] ||
-		die "ERROR: no debian/control file is ready in ${PKG_DIR}/$build_dir/$deb_build/debian"
-
-            #
-            # set up hooks if needed... none currently
             dpkg-buildpackage -rfakeroot -uc -b ||
 		die "ERROR: dpkg-buildpackage compile command failed"
             # Create unsigned packages
-
             mv -fv ../*deb ${PKG_DIR}
-            echo "Debian package(s) from $deb_build ---------------------------------------";
+            echo "$pkgconf_dir package(s) from $build_srcdir ---------------------------------------";
 	    ;;
 
-#	(sun-pkgbuild)
-	 (*) die "Unknown packaging for resources for $build_dir"
+	(pkgbuild)
+            echo "Fake building $pkg_type package in $ctxt =============================================="
+            build_srcdir="$ctxt"
+
+            [ -d $pkgconf_dir ] || die "missing call to gen_pkg_build_config"
+            mv $pkgconf_dir $build_srcdir/. || die "directory $build_srcdir under ${PKG_DIR}/$pkg_bldroot is missing or a broken link"
+            cd $build_srcdir/. || die "directory $build_srcdir under ${PKG_DIR}/$pkg_bldroot is missing or a broken link"
+
+            find $pkgconf_dir/*.src | while read i; do do_file_subst $i; done ||
+                    die "missing call to gen_pkg_environ() or failed substitutions"
+            rm -f $pkgconf_dir/*.src $pkgconf_dir/build*
+
+            chmod $pkgconf_dir/makefile.build | die "could not chmod $pkgconf_dir/rules"
+            [ -n "$(command -v pkgproto)" -a -n "$(command -v pkgmk)" -a -n "$(command -v pkgtrans)" ] ||
+                die "ERROR: dpkg-buildpackage command was not found.  Cannot build without package \"dpkg-dev\" installed."
+            [ -s $pkgconf_dir/makefile.build ] ||
+                die "ERROR: no $pkgconf_dir/control file is ready in ${PKG_DIR}/$pkg_bldroot/$build_srcdir/$pkgconf_dir"
+
+            [ -z "$MAKE" -a -n "$(command -v gmake)" ] && MAKE=gmake
+            [ -z "$MAKE" -a -n "$(command -v make)" ] && MAKE=make
+            declare -g MAKE=$MAKE
+
+            $MAKE -f $pkgconf_dir/makefile.build clean || die "failed during $pkgconf_dir/makefile.build clean"
+            $MAKE -f $pkgconf_dir/makefile.build build || die "failed during $pkgconf_dir/makefile.build build"
+            $MAKE -f $pkgconf_dir/makefile.build binary || die "failed during $pkgconf_dir/makefile.build build"
+            mv -fv *.pkg ${PKG_DIR}
+            echo "$pkgconf_dir package(s) from $build_srcdir ---------------------------------------";
+	    ;;
+
+	 (*) die "Unknown packaging for resources for $pkg_bldroot"
 	    ;;
     esac
-    cd ${PKG_DIR}
+    true
+    )  || exit $?
+}
+
+do_package() {
+    local ctxt=$1
+    local spec_file
+    local build_srcdir
+    local hooks
+    local repo_targz
+    shift
+
+    [ -d ${PKG_DIR}/$pkg_bldroot ] || 
+	die "missing call to gen_pkg_build_config() or missing ${PKG_DIR:-\"<missing>\"}/$pkg_bldroot directory"
+    (
+    cd ${PKG_DIR}/$pkg_bldroot 
+
+    case $pkg_bldroot in
+	(rpmbuild)
+            echo "Building rpm package from $ctxt =============================================="
+            spec_file=$ctxt
+            repo_targz=SOURCES/${PKG_NAME_VER}.tar.gz
+
+            rm -rf BUILD/${PKG_NAME_VER}
+            tar -xzvf $repo_targz -C BUILD \
+               ${PKG_NAME_VER}/./{FULL_VERSION,PKG_REV,REV,LONG_BRANCH,packaging} ||
+                    die "missing call to gen_pkg_environ() or malformed $repo_targz file"
+
+            # NOTE: must be in the BUILD/xxxx dir to subsitute anything correctly
+            ( cd BUILD/${PKG_NAME_VER}; find ../../$pkgconf_dir/*.src | while read i; do do_file_subst $i; done; ) ||
+                    die "missing call to gen_pkg_environ() or failed substitutions"
+            rm -f $pkgconf_dir/*.src $pkgconf_dir/build*
+
+            # move files to BUILD only when needed
+
+            [ -s $pkgconf_dir/$spec_file ] ||
+		die "ERROR: $pkgconf_dir/$spec_file is not present for packaging step"
+            [ -n "$(command -v rpmbuild)" ] ||
+		die "ERROR: rpmbuild command was not found.  Cannot build without package \"rpm-build\" installed."
+	    [ -s $repo_targz ] ||
+		die "ERROR: missing call to gen_pkg_environ()"
+
+            # NOTE: all files above are erased as old BUILD file is erased in rpmbuild
+
+	    ( set -x; rpmbuild -ba $rpmbuild_opts --define "_topdir $(realpath .)" $pkgconf_dir/$spec_file "$@"; )
+            echo "RPM binary package(s) from $spec_file ------------------------------------"
+            ( ls RPMS/*/*.rpm | grep -v '[-]debug' | xargs mv -fv -t ${PKG_DIR}; ) || 
+		die "ERROR: rpmbuild compile command failed"
+	    ;;
+
+	(debbuild)
+            echo "Building $pkgconf_dir package in $ctxt =============================================="
+            build_srcdir="$ctxt"
+
+            [ -d $pkgconf_dir ] || die "missing call to gen_pkg_build_config"
+            mv $pkgconf_dir $build_srcdir/. || die "directory $build_srcdir under ${PKG_DIR}/$pkg_bldroot is missing or a broken link"
+            cd $build_srcdir/. || die "directory $build_srcdir under ${PKG_DIR}/$pkg_bldroot is missing or a broken link"
+
+            find $pkgconf_dir/*.src | while read i; do do_file_subst $i; done ||
+                    die "missing call to gen_pkg_environ() or failed substitutions"
+            rm -f $pkgconf_dir/*.src $pkgconf_dir/build*
+
+            chmod ug+x $pkgconf_dir/rules || 
+               die "could not chmod $pkgconf_dir/rules"
+
+            [ -n "$(command -v dpkg-buildpackage)" ] ||
+		die "ERROR: dpkg-buildpackage command was not found.  Cannot build without package \"dpkg-dev\" installed."
+            [ -s $pkgconf_dir/control ] ||
+                die "ERROR: no $pkgconf_dir/control file is ready in ${PKG_DIR}/$pkg_bldroot/$build_srcdir/$pkgconf_dir"
+
+            dpkg-buildpackage -rfakeroot -uc -b ||
+		die "ERROR: dpkg-buildpackage compile command failed"
+            # Create unsigned packages
+            mv -fv ../*deb ${PKG_DIR}
+            echo "$pkgconf_dir package(s) from $build_srcdir ---------------------------------------";
+	    ;;
+
+	(pkgbuild)
+            echo "Building $pkgconf_dir package in $ctxt =============================================="
+            build_srcdir="$ctxt"
+
+            [ -d $pkgconf_dir ] || die "missing call to gen_pkg_build_config"
+            mv $pkgconf_dir $build_srcdir/. || die "directory $build_srcdir under ${PKG_DIR}/$pkg_bldroot is missing or a broken link"
+            cd $build_srcdir/. || die "directory $build_srcdir under ${PKG_DIR}/$pkg_bldroot is missing or a broken link"
+
+            find $pkgconf_dir/*.src | while read i; do do_file_subst $i; done ||
+                    die "missing call to gen_pkg_environ() or failed substitutions"
+            rm -f $pkgconf_dir/*.src $pkgconf_dir/build*
+
+            chmod $pkgconf_dir/makefile.build | die "could not chmod $pkgconf_dir/rules"
+            [ -n "$(command -v pkgproto)" -a -n "$(command -v pkgmk)" -a -n "$(command -v pkgtrans)" ] ||
+                die "ERROR: dpkg-buildpackage command was not found.  Cannot build without package \"dpkg-dev\" installed."
+            [ -s $pkgconf_dir/makefile.build ] ||
+                die "ERROR: no $pkgconf_dir/control file is ready in ${PKG_DIR}/$pkg_bldroot/$build_srcdir/$pkgconf_dir"
+
+            [ -z "$MAKE" -a -n "$(command -v gmake)" ] && MAKE=gmake
+            [ -z "$MAKE" -a -n "$(command -v make)" ] && MAKE=make
+            declare -g MAKE=$MAKE
+
+            $MAKE -f $pkgconf_dir/makefile.build clean || die "failed during $pkgconf_dir/makefile.build clean"
+            $MAKE -f $pkgconf_dir/makefile.build build || die "failed during $pkgconf_dir/makefile.build build"
+            $MAKE -f $pkgconf_dir/makefile.build binary || die "failed during $pkgconf_dir/makefile.build build"
+            mv -fv *.pkg ${PKG_DIR}
+            echo "$pkgconf_dir package(s) from $build_srcdir ---------------------------------------";
+	    ;;
+
+	 (*) die "Unknown packaging for resources for $pkg_bldroot"
+	    ;;
+    esac
+    true
+    ) || exit $?
 }
 
 get_svn_info() {
+    local branch_field
+
     # The field to cut changes per repository.
     if grep "svn.zmanda.com" vcs_repo.info >/dev/null; then
         branch_field=5
@@ -561,233 +765,46 @@ get_svn_info() {
     fi
 }
 
-get_yearly_tag() {
-    pkg_name_pkgtime=$(($pkg_name_pkgtime + 0))
-
-    [ $pkg_name_pkgtime -gt 1 ] || pkg_name_pkgtime=$(TZ=GMT date +%s)
-
-    top_of_year=$(date -d "Jan 1 $(date -d "@$pkg_name_pkgtime" +%Y)" +%s)
-
-    # change base64 to match ASCII in ordering
-    perl -e '
-	use MIME::Base64 qw(encode_base64);
-	$n=($ARGV[0] - $ARGV[1])/121;
-	$n = encode_base64(pack("N",$n<<14));
-	$n =~ y{A-Za-z0-9+/}{+0-9A-Za-z~};
-	$n =~ s{\+\+\+=*$}{};
-	print "$n";' $pkg_name_pkgtime $top_of_year
+set_zmanda_version() {
+    eval "$(get_version_evalstr "$1")"
+    [ -f "$VERSION_TAR" ] || die "failed to create VERSION_TAR file"
+    echo "$VERSION" > $src_root/FULL_VERSION
+    echo "$LONG_BRANCH" > $src_root/LONG_BRANCH
+    echo "$REV" > $src_root/REV
+    echo "$PKG_REV" > $src_root/PKG_REV
 }
 
-get_git_info() {
-    ref=$1
-    git --no-pager log $ref --max-count=1 > vcs_repo.info
+# need to find the root for packaging/*
+[ -n "$pkgdirs_top" ] || detect_pkgdirs_top
 
-    # reduce the unix date of pkging dir to Jan 1st
-    # ... and give a base64 code to each 2 minutes (or so) [range is 0:261342]
-    pkgtime_name=$(get_yearly_tag)
+# detect missing variables ...
+declare 2>/dev/null >/dev/null -p \
+         pkg_suffix \
+         pkg_name \
+         pkg_type \
+         pkgconf_dir \
+         buildpkg_dir \
+         pkg_bldroot \
+         repo_name ||
+   detect_platform_pkg_type
 
-    #default branch name
-
-    # must be able to describe this... (using remote name!)
-    rmtref="$(git describe --all --always --match '*/*' --exclude '*/HEAD' $ref 2>/dev/null)"
-    rmtref="${rmtref:-$(git describe --all --always --match '*/*' $ref)}"
-
-    # can't use HEAD so try to salvage it...
-    [[ $rmtref == */HEAD ]] && rmtref="${rmtref%/*}/${ref##*/}"
-
-    if [[ $rmtref == */* ]]; then
-        # lose the exact branch name but get remote name
-        rmtref=${rmtref#refs/}
-        rmtref=${rmtref#remotes/}
-        repo=$(git ls-remote --get-url "${rmtref%/*}");
-    else
-	repo=$(git ls-remote --get-url origin);
-        rmtref=  # signal that nothing is a remote ref
-    fi
-
-    oref=
-    if [ -n "$rmtref" ]; then
-        oref="$rmtref"
-    elif [ -z "$oref" ]; then
-        oref=$ref
-    fi
-
-    [ $oref = "origin/HEAD" ] && oref=$ref
-
-    if [ -s $(git rev-parse --git-dir)/shallow ]; then
-        ( set -xv; git fetch --unshallow; )  # must be done.. even if slow
-    fi
-
-    # keep the package-time in front to alphabetize-over-time
-    REV="+${pkgtime_name}.git.$(git rev-parse --short $oref)"   # get short hash-version
-
-    # get name-rev version of tag-based names.. but snip any '^0' at end...
-    REV_TAGPOS=$(git name-rev --name-only --exclude=HEAD --tags $oref 2>/dev/null)
-    REV_TAGPOS="${REV_TAGPOS#undefined}"
-    REV_TAGPOS=${REV_TAGPOS:-$(git name-rev --name-only --tags $oref)}
-    REV_TAGPOS="${REV_TAGPOS#undefined}"
-    REV_TAGPOS="${REV_TAGPOS%^[0-9]*}"
-
-    # get describe-based forward-aimed tag-name (root) and distance (dist) if that works
-    REV_TAGROOT=$(git describe --tags $oref 2>/dev/null)
-    REV_TAGDIST="$(echo "$REV_TAGROOT" | sed -r -e 's/^.*-([0-9]+)-g[a-f0-9]+$/\1/' -e '/[^0-9]/d')"
-    [ -n "$REV_TAGDIST" ] && REV_TAGROOT="${REV_TAGROOT%-$REV_TAGDIST-g[a-f0-9]*}"
-
-    # get name-rev branch-based name and distance (and prefer certain branches if possible)
-    REF_IDEAL=
-    REF_IDEAL="${REF_IDEAL#undefined}"
-    REF_IDEAL="${REF_IDEAL:-$(git name-rev --name-only --exclude=HEAD --refs='origin/*' $oref 2>/dev/null)}"
-    REF_IDEAL="${REF_IDEAL:-$(git name-rev --name-only --refs='origin/*' $oref)}"
-    REF_IDEAL="${REF_IDEAL#undefined}"
-    REF_IDEAL="${REF_IDEAL%^0}"
-
-    # get branch name separated out and get distance-back from branch (or zero)
-    REV_REFBR=$(echo $REF_IDEAL | sed -e 's/\~[0-9]*$//')
-    REV_REFDIST=$(echo $REF_IDEAL | sed -r -e 's/.*\~([0-9]*)$/\1/' -e '/[^0-9]/s/.*/0/')
-
-    # classify the place found... either a concrete
-    REV_PLACE="$(git rev-parse --short --symbolic-full-name "$REV_TAGPOS" 2>/dev/null)"   # get short hash-version
-    REV_PLACE=${REV_PLACE:-"$(git rev-parse --short --symbolic-full-name "$REV_REFBR" 2>/dev/null)"}
-    REV_PLACE=${REV_PLACE:-"$REV"}
-
-
-    # build is tagged precisely..
-    if [ -n "$REV_TAGPOS" -a -z "$REV_TAGDIST" ]; then
-        BRANCH="$REV_TAGPOS"
-        REV=""  # precise name for it.. use no hash
-        LONG_BRANCH="tags/$BRANCH"
-
-    # build is simply from master
-    elif [ "$REV_PLACE" = "refs/heads/master" ]; then
-        BRANCH="trunk"
-        LONG_BRANCH="$REV.trunk"
-
-    # build is the tip of a branch.. so name it with tag-distance if needed
-    elif [ -n "$REV_REFBR" -a x$REV_REFDIST = x0 ]; then
-        BRANCH="${REV_REFBR##*/}"
-        LONG_BRANCH="branches/$BRANCH"
-	[ -n "$REV_TAGDIST" ] && REV="${REV}+$REV_TAGDIST"
-
-    # build is not on a branch, so name it with tag and tag-distance 
-    elif [ -n "$REV_TAGROOT" ] && [ 0$REV_TAGDIST -gt 0 ]; then
-        BRANCH="$REV_TAGROOT"
-        REV="${REV/.git./.tag.}+$REV_TAGDIST"
-        LONG_BRANCH="tags/$BRANCH"
-    fi
-
-    [ -z "$BRANCH" ] && { echo "ref is unclassifiable: $ref"; exit -1; }
-
-    # check if not using same location as head? 
-    if [ "$(git rev-parse $ref)" != "$(git rev-parse HEAD)" ]; then
-        :
-    # check if zero diff found in files anywhere?
-    elif GIT_WORKING_DIR=${src_root} git diff --ignore-submodules=all --quiet &&
-	  GIT_WORKING_DIR=${src_root} git diff --cached --ignore-submodules=all --quiet; then
-	:
-    # else .. this working dir is not committed as is...
-    else
-        REV="${REV}.edit" # unversioned changes should be noted
-        REV="${REV#.}" # remove a leading .
-    fi
-
-    # default branch name
-    BRANCH="${BRANCH:-git}"
-
-    BRANCH="${BRANCH//-/.}"  # remove - for branch name (not allowed)
-    BRANCH="${BRANCH//_/.}"  # remove _ for branch name (not allowed)
-}
-
-set_pkg_rev() {
-    # Check if any known package flavors are found in the variable $BRANCH.
-    # If found, remove from $VERSION and set $PKG_REV
-    PKG_REV=
-    rev=`echo $BRANCH|grep "$flavors"`
-    if [ -n "$rev" ]; then
-	PKG_REV=`echo $BRANCH|sed -e "s/.*\($flavors\)/\1/"`
-    fi
-
-    # Also check for qa## or rc## and set PKG_REV, but don't strip.
-    rev=`echo $BRANCH| grep "$qa_rc"`
-    if [ -n "$rev" ]; then
-	PKG_REV=`echo $BRANCH|sed -e "s/.*\($qa_rc\)/\1/"`
-    fi
-    # Finally set a default.
-    [ -z "$PKG_REV" ] && PKG_REV=1
-
-    echo "Final PKG_REV value: $PKG_REV"
-    # Write the file.
-    echo "SET_PKG_REV : $PKG_REV"
-    printf $PKG_REV > PKG_REV
-}
-
-set_version() {
-    declare -g VERSION
-    if [ "${BRANCH}" = "trunk" ]; then
-        # Debian requires a digit in version identifiers.
-	[ -n "${REV}" -a -n "${VERSION}" ] && VERSION="${VERSION}.${REV}";
-	[ -n "${REV}" -a -z "${VERSION}" ] && VERSION="0.$REV";
-    else
-        # VERSION should never contain package revision info, so strip any
-        # flavors
-        VERSION=`echo "${BRANCH}"| sed -e "s/\(.*\)$flavors/\1/"`
-        # use _ or . as divisions
-	VERSION=$(branch_version_name "$VERSION")
-        # append .$REV if present (to show it's unofficial)
-	VERSION="${VERSION}${REV:+.${REV}}";
-    fi
-
-    PKG_NAME_VER="${pkg_name}-$VERSION"
-}
-
-save_version() {
-    ref=$1
-    # quiet!  no output until end
-    get_git_info $ref >/dev/null
-    set_version >/dev/null
-
-    tmp=$(mktemp -d)
-
-    PKG_NAME_VER="${pkg_name}-$VERSION"
-    repo_vers_dir="$tmp/${PKG_NAME_VER}"
-    VERSION_TAR="$tmp/${PKG_NAME_VER}-versioning.tar"
-
-    if [ -n "$pkg_name" -a -n "$PKG_NAME_VER" ]; then
-        rm -rf $repo_vers_dir
-
-        mkdir -p $repo_vers_dir
-
-        echo -n $VERSION > $repo_vers_dir/FULL_VERSION
-        echo -n 1 > $repo_vers_dir/PKG_REV
-	echo -n $LONG_BRANCH > $repo_vers_dir/LONG_BRANCH
-	echo -n $REV > $repo_vers_dir/REV
-        tar -cf $VERSION_TAR -C $tmp ${PKG_NAME_VER}/.   # *keep* the /.
-        rm -rf $repo_vers_dir
-    fi
-
-    # NOTE: using {} as a sub-scope is broken in earlier bash
-    declare -p VERSION PKG_REV PKG_NAME_VER VERSION_TAR | 
-	sed -e 's,^declare --,declare -g,';
-    declare -p LONG_BRANCH BRANCH REV | 
-	sed -e 's,^declare --,declare -g,';
-    echo -n 'echo "setup version: '
-    echo -n "$VERSION --- $PKG_NAME_VER"
-    echo '"'
-}
-
-
-# get script-context path as pkg_root
-[ -z "$pkg_root" ] &&
-    set_script_pkg_root $0
-
-pkg_root_abs="$(realpath $pkg_root)"
-
-build_dir=${pkg_type}build
+git_srcroot_args="--git-dir=$(cd $src_root; git rev-parse --git-dir | xargs readlink -e ) --work-tree=$(cd $src_root; git rev-parse --show-toplevel) "
+git_pkgdirs_args="--git-dir=$(cd $pkgdirs_top; git rev-parse --git-dir | xargs readlink -e ) --work-tree=$(cd $pkgdirs_top; git rev-parse --show-toplevel)"
 
 # detect time stamp from areas touched by this script
-detect_root_pkgtime
+[ -n "$pkg_name_pkgtime" ] || detect_root_pkgtime
 
 [ -n "$pkg_name" ] || die "pkg_name could not be found"
 [ -n "$pkg_type" ] || die "pkg_type could not be found"
 
+export pkg_suffix \
+      pkg_name \
+      pkg_type \
+      pkgconf_dir \
+      buildpkg_dir \
+      pkg_bldroot \
+      pkg_name_pkgtime \
+      pkgdirs_top
 
+set -${setopt/s}
 # End Common functions

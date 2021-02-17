@@ -15,7 +15,7 @@
 #set -x
 
 if [ "$(type -t get_yearly_tag)" != "function" ]; then
-    . packaging/common_z/build_functions.sh
+    . packaging/common/build_functions.sh
 fi
 
 [ -x "$(command -v gsed)" ] && eval "sed() { command gsed \"\$@\"; }"
@@ -281,17 +281,6 @@ branch_version_name() {
     echo $v
 }
 
-set_build_version() {
-    declare -g BUILD_VERSION
-
-    read pkgbr < <(git config --blob ${SHA}:.gitmodules --get submodule.packaging.branch)
-    read toolbr < <(git config --blob ${SHA}:.gitmodules --get submodule.tools-archives.branch)
-
-    read pkgbr < <(git --git-dir=${src_root}/.git/modules/packaging rev-parse --verify --short origin/$pkgbr)
-    read toolbr < <(git --git-dir=${src_root}/.git/modules/tools-archives rev-parse --verify --short origin/$toolbr)
-    BUILD_VERSION="${pkgbr}.${toolbr}"
-}
-
 old_set_pkg_rev() {
 ###########################################
     # special branches used to exist for each variant
@@ -325,7 +314,6 @@ save_version() {
     ref=$1
     # quiet!  no output until end
     get_git_info $ref >/dev/null
-    set_build_version >/dev/null
 
     VERSION=$(branch_version_name "$BRANCH")
     [ "${BRANCH}" = "trunk" ] && VERSION="trunk"
@@ -345,7 +333,6 @@ save_version() {
         mkdir -p $repo_vers_dir
 
         echo -n $VERSION > $repo_vers_dir/FULL_VERSION
-        echo -n $BUILD_VERSION > $repo_vers_dir/BUILD_VERSION
         echo -n "${PKG_REV:-1}" > $repo_vers_dir/PKG_REV
         echo -n $LONG_BRANCH > $repo_vers_dir/LONG_BRANCH
         echo -n $REV > $repo_vers_dir/REV
@@ -354,7 +341,7 @@ save_version() {
     fi
 
     # NOTE: using {} as a sub-scope is broken in earlier bash
-    declare -p VERSION BUILD_VERSION PKG_REV PKG_NAME_VER VERSION_TAR | 
+    declare -p VERSION PKG_REV PKG_NAME_VER VERSION_TAR | 
 	sed -e 's,^declare --,declare -g,';
     declare -p LONG_BRANCH BRANCH REV | 
 	sed -e 's,^declare --,declare -g,';

@@ -24,27 +24,23 @@
 # easy, unfortunately.  Look at the %build section, and the %define xxxx 
 # statements immediately above it. good luck.
 
-rm -f FULL_VERSION PKG_REV
-
-./config/set_full_version
-
 pkg_name=amanda
 . packaging/common/build_functions.sh
 
+set_zmanda_version HEAD
 
-# get the final one...
-export VERSION=$(get_version)
 
-[ -f "PKG_REV" ] || echo "1" > PKG_REV
+do_rpm_package() {
+    gen_pkg_build_config $buildpkg_dir
+    # take the spec/spec.src files and make a tarfile
+    gen_top_environ
+    touch rpmbuild/SOURCES/${PKG_NAME_VER}.tar.gz 
+    #
+    #
+    #
+    do_top_package "$@"
+}
 
-[ -f "./configure" ] || \
-    { echo "./configure does not exist, please run ./autogen"; exit 1; }
+set -e
 
-gen_pkg_build_config $pkg_root
-
-export VERSION=$(get_version)
-
-# take the spec/spec.src files and make a tarfile
-gen_top_environ
-
-do_top_package "amanda.spec"
+do_rpm_package "amanda.spec"
