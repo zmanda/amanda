@@ -2635,18 +2635,23 @@ perform_request(S3Handle *hdl,
         if (!chunked && size_func && curlopt_setsizeopt) 
         {   
             guint64 buffsize;
-            buffsize = max(hdl->max_send_speed*5,CURL_MAX_READ_SIZE);
-            buffsize = min(request_body_size,buffsize);
-            buffsize = (buffsize |(0x1000-1)) + 1;
 
             if ((curl_code=curl_easy_setopt(hdl->curl, 
                                             curlopt_setsizeopt,
                                             (curl_off_t)request_body_size)))
                 goto curl_error;
+
+#if LIBCURL_VERSION_NUM >= 0x073e00
+            buffsize = max(hdl->max_send_speed*5,CURL_MAX_READ_SIZE);
+            buffsize = min(request_body_size,buffsize);
+            buffsize = (buffsize |(0x1000-1)) + 1;
+
             if ((curl_code=curl_easy_setopt(hdl->curl, CURLOPT_UPLOAD_BUFFERSIZE, buffsize)))
                 goto curl_error;
+#endif
         }
 
+#if LIBCURL_VERSION_NUM >= 0x073e00
 	if (chunked) 
         {
             guint64 buffsize;
@@ -2657,6 +2662,7 @@ perform_request(S3Handle *hdl,
             if ((curl_code=curl_easy_setopt(hdl->curl, CURLOPT_UPLOAD_BUFFERSIZE, buffsize)))
                 goto curl_error;
         }
+#endif
 
 /* CURLOPT_MAX_{RECV,SEND}_SPEED_LARGE added in 7.15.5 */
 #if LIBCURL_VERSION_NUM >= 0x070f05
