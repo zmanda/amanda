@@ -10,8 +10,12 @@ AC_SUBST(PACKAGE)
 
 AMANDA_VERSION
 
+dnl left empty when it neds a default
+AC_SUBST([GNULIB_OVERRIDES_WINT_T],0)
+
 gl_EARLY
 gl_INIT
+LT_INIT
 
 AMANDA_CONFIGURE
 
