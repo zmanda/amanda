@@ -1031,6 +1031,7 @@ main(
 	}
     } else {
 	if (shm_ring) {
+	    g_debug("exit status error (cancelling pipeline)\n");
 	    shm_ring->mc->cancelled = TRUE;
 	    sem_post(shm_ring->sem_ready);
 	    sem_post(shm_ring->sem_start);
@@ -1789,7 +1790,8 @@ stderr_thread(
     char *buf;
 
     while ((buf = areads(fsp->fd)) != NULL) {
-	if (shm_ring) {
+	if (shm_ring && !shm_ring->mc->cancelled) {
+	    g_debug("error (cancelling pipeline)\n");
 	    shm_ring->mc->cancelled = TRUE;
 	    sem_post(shm_ring->sem_ready);
 	    sem_post(shm_ring->sem_start);
