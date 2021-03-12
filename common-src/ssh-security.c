@@ -237,7 +237,7 @@ ssh_accept(
 
     /* ---- everything from here on is just a warning, leaving hostname at "" */
 
-    SU_INIT(&addr, AF_INET);
+    SU_INIT(&addr, 0); // gets init from str_to_sockaddr()
 
     /* turn the string address into a sockaddr */
     if ((result = str_to_sockaddr(ssh_connection, &addr)) != 1) {

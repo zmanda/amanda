@@ -196,32 +196,57 @@ str_to_sockaddr(
  * to the unmapped address.
  */
 #if defined(WORKING_IPV6) && defined(IN6_IS_ADDR_V4MAPPED)
-static sockaddr_union *
+static const sockaddr_union *
 unmap_v4mapped(
-    sockaddr_union *sa,
+    const sockaddr_union *sa,
     sockaddr_union *tmp)
 {
-    if (SU_GET_FAMILY(sa) == AF_INET6 && IN6_IS_ADDR_V4MAPPED(&sa->sin6.sin6_addr)) {
-	SU_INIT(tmp, AF_INET);
-	SU_SET_PORT(tmp, SU_GET_PORT(sa));
-	/* extract the v4 address from byte 12 of the v6 address */
-	memcpy(&tmp->sin.sin_addr.s_addr,
-	       &sa->sin6.sin6_addr.s6_addr[12],
-	       sizeof(struct in_addr));
-	return tmp;
+    if ( SU_GET_FAMILY(sa) != AF_INET6 ) {
+        return sa;
     }
 
-    return sa;
+    if ( !IN6_IS_ADDR_V4MAPPED(&sa->sin6.sin6_addr) && !IN6_IS_ADDR_V4COMPAT(&sa->sin6.sin6_addr) ) {
+        return sa;
+    }
+
+    SU_INIT(tmp, AF_INET);
+    SU_SET_PORT(tmp, SU_GET_PORT(sa));
+    /* extract the v4 address from byte 12 of the v6 address */
+    memcpy(&tmp->sin.sin_addr.s_addr,
+           &sa->sin6.sin6_addr.s6_addr[12],
+           sizeof(struct in_addr));
+    return tmp;
+}
+
+static const sockaddr_union *
+normalize_lo(const sockaddr_union *sa, sockaddr_union *tmp)
+{
+    // only one case to change...
+    if (SU_GET_FAMILY(sa) != AF_INET) 
+        return sa;
+    if (sa->sin.sin_addr.s_addr != htonl(INADDR_LOOPBACK))
+        return sa;
+
+    {
+        int port = SU_GET_PORT(sa);
+        // normalize to IPV6 loopback address to prevent ambiguity
+        SU_INIT(tmp, AF_INET6);
+        SU_SET_PORT(tmp, port);
+    }
+
+    tmp->sin6.sin6_addr = in6addr_loopback;
+    return tmp;
 }
 #else
 /* nothing to do if no IPv6 */
 #define unmap_v4mapped(sa, tmp) ((void)tmp, sa)
+#define normalize_lo(sa, tmp) ((void)tmp, (void)sa)
 #endif
 
 int
 cmp_sockaddr(
-    sockaddr_union *ss1,
-    sockaddr_union *ss2,
+    const sockaddr_union *ss1,
+    const sockaddr_union *ss2,
     int addr_only)
 {
     sockaddr_union tmp1, tmp2;
@@ -229,6 +254,9 @@ cmp_sockaddr(
     /* if addresses are v4mapped, "unmap" them */
     ss1 = unmap_v4mapped(ss1, &tmp1);
     ss2 = unmap_v4mapped(ss2, &tmp2);
+
+    ss1 = normalize_lo(ss1,&tmp1);  // substitute directly
+    ss2 = normalize_lo(ss2,&tmp2);  // substitute directly
 
     if (SU_GET_FAMILY(ss1) == SU_GET_FAMILY(ss2)) {
         if (addr_only) {
@@ -255,4 +283,3 @@ cmp_sockaddr(
             return 1;
     }
 }
-

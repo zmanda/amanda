@@ -3329,11 +3329,9 @@ check_name_give_sockaddr(
 	}
     }
 
-    g_debug("%s doesn't resolve to %s",
-	    hostname, str_sockaddr((sockaddr_union *)addr));
-			   g_free(*errstr);
-			   *errstr = g_strdup_printf("%s doesn't resolve to %s",
-                                                     hostname, str_sockaddr((sockaddr_union *)addr));
+    g_debug("%s doesn't resolve to %s", hostname, str_sockaddr((sockaddr_union *)addr));
+    g_free(*errstr);
+    *errstr = g_strdup_printf("%s doesn't resolve to %s", hostname, str_sockaddr((sockaddr_union *)addr));
 error:
     if (res) freeaddrinfo(res);
     amfree(canonname);

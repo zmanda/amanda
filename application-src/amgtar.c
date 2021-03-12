@@ -364,7 +364,7 @@ main(
     gnutar_listdir = NULL;
     gnutar_target = NULL;
     gnutar_onefilesystem = 1;
-    gnutar_atimepreserve = 1;
+    gnutar_atimepreserve = 0;
     gnutar_acls = 0;
     gnutar_selinux = 0;
     gnutar_xattrs = 0;
@@ -2120,7 +2120,7 @@ amgtar_get_incrname(
     ssize_t   nb;
     char *inputname = NULL;
     char *errmsg = NULL;
-    char *buf;
+    char buf[32768];
 
     if (gnutar_listdir) {
 	char number[NUM_STR_SIZE];
