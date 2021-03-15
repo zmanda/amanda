@@ -173,13 +173,13 @@ genversion.$(OBJEXT): $(genversion_SOURCES) genversion.h
 genversion.h ../perl/Amanda/Constants.pm.in: $(top_builddir)/config.status
 	-rm -f genversion.h genversion.h.new
 	echo '#define CC "$(CC)"' > genversion.h.new
-	echo '#define BUILT_DATE "'$$GENDATE'"' >> genversion.h.new; \
-	echo '#define BUILT_MACH "$(target)"' >> genversion.h.new; \
-	mv genversion.h.new genversion.h; \
+	echo '#define BUILT_DATE "$(GENDATE)"' >> genversion.h.new
+	echo '#define BUILT_MACH "@build@"' >> genversion.h.new
+	mv genversion.h.new genversion.h
 	if test ! -e ../perl/Amanda; then \
 		mkdir ../perl/Amanda; \
-	fi; \
-	sed "s/^\$$BUILT_DATE.*$$/\$$BUILT_DATE = \"$$GENDATE\";/" $(srcdir)/../perl/Amanda/Constants.pm.in.src > ../perl/Amanda/Constants.pm.in;
+	fi
+	sed 's/^\$$BUILT_DATE.*$$/\$$BUILT_DATE = "$(GENDATE)";/' $(srcdir)/../perl/Amanda/Constants.pm.in.src > ../perl/Amanda/Constants.pm.in
 
 version.c: genversion$(EXEEXT)
 	-rm -f version.c
@@ -284,7 +284,6 @@ match_test_LDADD = libamanda.la libtestutils.la
 # divide scripts up both by language and destination directory
 sbin_SCRIPTS_PERL = \
 	    amgpgcrypt \
-	    amcryptsimple \
 	    amgetconf \
 	    amssl
 
@@ -293,6 +292,7 @@ amlibexec_SCRIPTS_PERL =
 sbin_SCRIPTS_SHELL = \
 	    amcrypt \
 	    amaespipe \
+	    amcryptsimple \
 	    amcrypt-ossl \
 	    amcrypt-ossl-asym
 
