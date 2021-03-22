@@ -28,6 +28,12 @@ sub get_arch {
 };
 
 sub get_debian_arch {
+    my @u = POSIX::uname();
+    $u[4] =~ s{i686}{i386};
+    return $u[4];
+};
+
+sub get_debian_pkg_arch {
     my $arch = qx{command -v dpkg-architecture>/dev/null && dpkg-architecture | eval "\$(cat); echo \\\$DEB_TARGET_ARCH_CPU"};
     chomp $arch;
     return $arch;
@@ -62,10 +68,11 @@ sub fix_pkg_rev {
 }
 
 sub find_platform_info {
-    my $arch = get_arch();
+    my $rpmarch = get_arch();
+    my $debarch = get_debian_pkg_arch();
 
-    if ( $arch !~ m{x86_64|amd64|i686|i386} ) { 
-        print STDERR "ERROR: get_platform_info(): did not find arch \"$arch\"\n"; 
+    if ( $rpmarch !~ m{x86_64|amd64|i686|i386} || $debarch !~ m{x86_64|amd64|i686|i386} ) {
+        print STDERR "ERROR: get_platform_info(): did not find arch \"$rpmarch\" or \"$debarch\"\n"; 
         return [];
     }
 
@@ -114,27 +121,27 @@ sub find_platform_info {
     return [ ".$RELVER.pkg", "SunOS", $RELVER ]
        if ( $RELTYPES eq "/etc/release" );
 
-    return [ ".fc${RELVER1}.${arch}.rpm", "Fedora", $RELVER1 ]
+    return [ ".fc${RELVER1}.${rpmarch}.rpm", "Fedora", $RELVER1 ]
        if ( $RELTYPES =~ m/fedora/ );
 
-    return [ ".rhel${RELVER1}.${arch}.rpm", "Centos", $RELVER1 ]
+    return [ ".rhel${RELVER1}.${rpmarch}.rpm", "Centos", $RELVER1 ]
        if ( $RELTYPES =~ m/centos/ );
 
     # mention redhat only last
-    return [ ".rhel${RELVER1}.${arch}.rpm", "RHEL", $RELVER1 ]
+    return [ ".rhel${RELVER1}.${rpmarch}.rpm", "RHEL", $RELVER1 ]
        if ( $RELTYPES =~ m/redhat/ );
 
-    return [ ".sles${RELVER2}.${arch}.rpm", "SLES", $RELVER2 ]
+    return [ ".sles${RELVER2}.${rpmarch}.rpm", "SLES", $RELVER2 ]
        if ( $RELTYPES =~ m/\bsuse\b/ && $RELTYPES =~ m/\benterprise\b/ );
 
-    return [ ".suse${RELVER2}.${arch}.rpm", "SuSE", $RELVER2 ]
+    return [ ".suse${RELVER2}.${rpmarch}.rpm", "SuSE", $RELVER2 ]
        if ( $RELTYPES =~ m/opensuse/ );
 
-    return [ "Ubuntu${RELVER2}_${arch}.deb", "Ubuntu", $RELVER2 ]
+    return [ "Ubuntu${RELVER2}_${debarch}.deb", "Ubuntu", $RELVER2 ]
        if ( $RELTYPES =~ m/ubuntu/ );
 
     # mention debian after ubuntu
-    return [ "Debian${RELVER1}_${arch}.deb", "Debian", $RELVER1 ]
+    return [ "Debian${RELVER1}_${debarch}.deb", "Debian", $RELVER1 ]
        if ( $RELTYPES =~ m/debian/ );
 
     return [ ];
@@ -241,6 +248,7 @@ my %replacement_strings_common = (
 	"%%PKG_DIST%%" => lc(get_pkg_dist()),
 	"%%PKG_DISTVER%%" => get_pkg_distver(),
         "%%ARCH%%" => get_arch(),
+        "%%PKG_ARCH%%" => get_arch(),
 	"%%DISTRO%%" => get_pkg_dist(),
         "%%DATE%%" => "'+%a, %d %b %Y %T %z'"
 );
@@ -249,6 +257,7 @@ my %replacement_strings_common = (
 my %replacement_strings_deb = (
 	# Used in changelog
 	"%%DEB_REL%%" => get_pkg_distver(),
+        "%%PKG_ARCH%%" => get_debian_pkg_arch(),
         "%%ARCH%%" => get_debian_arch(),
 	# Used in server rules
 	"%%PERL%%" => $^X
