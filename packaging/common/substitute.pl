@@ -111,11 +111,6 @@ sub find_platform_info {
     $RELVER2 =~ s/\D(\d+)/$1/; 
     $RELVER2 =~ s/\D.*$//;
 
-    $arch="amd64" 
-       if ( $RELTYPES =~ m/debian|ubuntu/i && $arch eq "x86_64" );
-    $arch="i386" 
-       if ( $RELTYPES =~ m/debian|ubuntu/i && $arch eq "i686" );
-
     return [ ".$RELVER.pkg", "SunOS", $RELVER ]
        if ( $RELTYPES eq "/etc/release" );
 
