@@ -27,6 +27,12 @@ sub get_arch {
     return $u[4];
 };
 
+sub get_debian_arch {
+    my $arch = qx{command -v dpkg-architecture>/dev/null && dpkg-architecture | eval "\$(cat); echo \\\$DEB_TARGET_ARCH_CPU"};
+    chomp $arch;
+    return $arch;
+};
+
 sub read_file {
 	# $1 is the file name and must exist.
 	my $contents;
@@ -239,62 +245,45 @@ my %replacement_strings_common = (
 	"%%PKG_SUFFIX%%" => get_pkg_suffix(),
 	"%%PKG_DIST%%" => lc(get_pkg_dist()),
 	"%%PKG_DISTVER%%" => get_pkg_distver(),
-	"%%DISTRO%%" => get_pkg_dist()
+        "%%ARCH%%" => get_arch(),
+	"%%DISTRO%%" => get_pkg_dist(),
+        "%%DATE%%" => "'+%a, %d %b %Y %T %z'"
 );
 
+# add special variables
 my %replacement_strings_deb = (
 	# Used in changelog
 	"%%DEB_REL%%" => get_pkg_distver(),
-	"%%DATE%%" => "'+%a, %d %b %Y %T %z'",
+        "%%ARCH%%" => get_debian_arch(),
 	# Used in server rules
 	"%%PERL%%" => $^X
 );
 
+# override date
 my %replacement_strings_rpm = (
 	"%%DATE%%" => "'+%a %b %d %Y'",
 );
 
+# use all defaults
 my %replacement_strings_sun = (
-    "%%ARCH%%" => "",
-    "%%DATE%%" => "'+%a, %d %b %Y %T %z'",
 );
 
-my %replacement_strings;
-if ( $pkg_type eq "deb" ) {
-	%replacement_strings = ( %replacement_strings_deb,
-				 %replacement_strings_common );
-        $replacement_strings{"%%PKG_REV%%"} =
-            fix_pkg_rev($replacement_strings{"%%PKG_REV%%"}, "deb");
-	# Let's determine the distro:
-	$replacement_strings{"%%DATE%%"} = get_date($replacement_strings{"%%DATE%%"});
-	if ( get_arch() eq "x86_64" ) {
-		$replacement_strings{"%%PERL%%"} = "/opt/zmanda/amanda/perl/bin/perl";
-	}
-}
+my $ref;
+eval '$ref = \%replacement_strings_'."$pkg_type;";
 
-if ( $pkg_type eq "rpm" ){
-	%replacement_strings = ( %replacement_strings_rpm,
-				 %replacement_strings_common );
-        $replacement_strings{"%%PKG_REV%%"} =
-            fix_pkg_rev($replacement_strings{"%%PKG_REV%%"}, "rpm");
-	$replacement_strings{"%%DATE%%"} = get_date($replacement_strings{"%%DATE%%"});
-}
+# override values with the later of the two...
+my %replacement_strings = ( %replacement_strings_common, %{$ref} );
 
-if ( $pkg_type eq "sun" ){
-	%replacement_strings = ( %replacement_strings_sun,
-				 %replacement_strings_common );
-        $replacement_strings{"%%PKG_REV%%"} =
-            fix_pkg_rev($replacement_strings{"%%PKG_REV%%"}, "sun");
-	$replacement_strings{"%%DATE%%"} = get_date($replacement_strings{"%%DATE%%"});
+$replacement_strings{"%%ARCH%%"} =~ s/sparc/sun4u/
+    if ( $pkg_type eq "sun" );
+$replacement_strings{"%%ARCH%%"} =~ s/intel/i86pc/
+    if ( $pkg_type eq "sun" );
 
-	my $arch = get_arch();
-        $replacement_strings{"%%ARCH%%"} = "sparc"
-            if ( $arch eq "sun4u" );
-        $replacement_strings{"%%ARCH%%"} = "intel"
-            if ( $arch eq "i86pc" );
-        die "Unknown solaris platform!"
-            if ( ! $replacement_strings{"%%ARCH%%"} );
-}
+die "Unknown platform!"
+    if ( ! $replacement_strings{"%%ARCH%%"} );
+
+$replacement_strings{"%%PKG_REV%%"} = fix_pkg_rev($replacement_strings{"%%PKG_REV%%"}, $pkg_type);
+$replacement_strings{"%%DATE%%"} = get_date($replacement_strings{"%%DATE%%"});
 
 # Make a hash of tags and the contents of replacement files
 my %replacement_data;
