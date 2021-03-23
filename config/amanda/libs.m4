@@ -104,7 +104,7 @@ AC_DEFUN([AMANDA_CHECK_NET_LIBS], [
 	*sgi-irix*)
 			    AC_CHECK_LIB(socket,main)
 			    ;;
-	*)
+	*solaris*)
 			    AC_CHECK_LIB(resolv,main)
 			    AC_CHECK_LIB(nsl,main)
 			    AC_CHECK_LIB(socket,main)
@@ -159,7 +159,7 @@ AC_DEFUN([AMANDA_CHECK_GLIB], [
 
 	AM_PATH_GLIB_2_0(2.2.0,,[
 	    AC_MSG_ERROR(glib not found or too old; See http://wiki.zmanda.com/index.php/Installation for help)
-	], gmodule gobject gthread)
+	], gobject gthread)
     else
         # Confirm that all GLIB_ variables are set
         if test ! x"$GLIB_CFLAGS" = x"" && \

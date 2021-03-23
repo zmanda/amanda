@@ -73,6 +73,14 @@
 # files.  The substitution works even though the files are not listed in
 # configure.in
 
+$(top_builddir)/%:
+	echo --------------------------------- jumping to dependency $(patsubst $(top_builddir)/%,%,$@)
+	$(MAKE) -C .. $(patsubst $(top_builddir)/%,%,$@)
+
+../%:
+	echo --------------------------------- jumping to dependency $(patsubst ../%,%,$@)
+	$(MAKE) -C .. $(patsubst ../%,%,$@)
+
 # Perl
 %: %.pl $(top_builddir)/config.status
 	$(top_builddir)/config.status --file=$@:$<
