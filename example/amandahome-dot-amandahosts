@@ -1,0 +1,4 @@
+localhost root amindexd amidxtaped
+localhost amandabackup amdump senddiscover
+localhost.localdomain root amindexd amidxtaped
+localhost.localdomain amandabackup amdump senddiscover

@@ -1,0 +1,2 @@
+PATH="$PATH:/usr/sbin"
+export PATH

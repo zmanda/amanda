@@ -33,6 +33,9 @@ server_example_in_FILE = \
 		xinetd.amandaserver.in \
 		amandaserver.xml.in
 server_example_FILE = \
+		amandahome-dot-amandahosts \
+                amandahome-dot-profile \
+		global-amanda.conf \
 		chg-multi.conf \
 		chg-scsi.conf \
 		disklist
@@ -47,7 +50,10 @@ client_example_in_FILE = \
 		inetd.conf.amandaclient.in \
 		xinetd.amandaclient.in \
 		amandaclient.xml.in
-client_example_FILE = 
+client_example_FILE = \
+		amandahome-dot-amandahosts \
+                amandahome-dot-profile \
+		global-amanda.conf
 client_example_generated_FILE = $(client_example_in_FILE:%.in=%)
 client_example_DATA = $(client_example_FILE) $(client_example_generated_FILE)
 EXTRA_DIST += $(client_example_FILE) $(client_example_in_FILE)

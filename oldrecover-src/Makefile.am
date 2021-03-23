@@ -23,9 +23,9 @@ sbin_PROGRAMS =		amoldrecover
 # need to list libamanda twice here, first to override the system library
 # routines, and second to pick up any references in the other libraries.
 ###
+#	@LEXLIB@
 
 LDADD = ../common-src/libamanda.la \
-	@LEXLIB@ \
 	$(READLINE_LIBS) \
 	../client-src/libamclient.la \
 	../common-src/libamanda.la

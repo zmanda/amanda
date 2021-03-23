@@ -29,7 +29,7 @@ libamglue_la_SOURCES = \
 	objwrap.c \
 	xferwrap.c \
 	amglue.h
-libamglue_la_LDFLAGS = $(PERL_EXT_LDFLAGS) -release $(VERSION)
+libamglue_la_LDFLAGS = $(PERL_EXT_LDFLAGS) -release $(SO_VERSION)
 libamglue_la_LIBADD = \
 	$(top_builddir)/xfer-src/libamxfer.la
 EXTRA_DIST += $(libamglue_la_SOURCES)

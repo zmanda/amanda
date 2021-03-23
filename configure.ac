@@ -10,10 +10,17 @@ AC_SUBST(PACKAGE)
 
 AMANDA_VERSION
 
+dnl left empty when it neds a default
+AC_SUBST([GNULIB_OVERRIDES_WINT_T],0)
+
 gl_EARLY
 gl_INIT
+LT_INIT
+
 
 AMANDA_CONFIGURE
+
+# reset paths after check of live-local versions
 
 AC_DEFINE([USE_GETTEXT], 1, [Define to 1 if files will be processed with gettextize])
 
@@ -25,8 +32,6 @@ dnl These lines *must* be in configure.in, and not indented
 AM_GNU_GETTEXT_VERSION([0.15])
 AM_GNU_GETTEXT([external])
 AMANDA_PROG_GETTEXT
-
-LT_INIT
 
 
 dnl
@@ -57,6 +62,7 @@ AC_CONFIG_FILES([
     rest-server/Makefile
     server-src/Makefile
     xfer-src/Makefile
+    systemd-startup/Makefile
 ])
 
 AC_OUTPUT

@@ -116,7 +116,7 @@ AMANDA_CHECK_USE_RUNDUMP
 
 #
 # Look for other programs Amanda will use
-# 
+#
 AMANDA_PROG_GREP
 AC_PROG_EGREP
 AMANDA_PROG_LINT
@@ -141,6 +141,7 @@ AMANDA_PROG_SWIG
 AMANDA_PS_ARGUMENT
 AMANDA_PROG_RPCGEN
 AMANDA_PROG_NC
+AMANDA_PROG_BZIP2
 
 dnl -------------------------------------------------------------------------
 
@@ -224,13 +225,13 @@ AC_DEFINE([HAVE_UTIL_H], 1, [Define to 1 if you have the "util.h" header file.])
 AC_DEFINE([USE_GETTEXT], 1, [Define to 1 if files will be processed with gettextize])
 
 # okay if not found.. if not needed
-AC_CHECK_HEADERS(rpc/rpc.h, 
+AC_CHECK_HEADERS(rpc/rpc.h,
     [
 	dnl header was found
     ],[
-	PKG_CHECK_MODULES([TIRPC],[libtirpc],[ 
-	   AC_DEFINE([HAVE_RPC_RPC_H], 1) 
-    ],[]) 
+	PKG_CHECK_MODULES([TIRPC],[libtirpc],[
+	   AC_DEFINE([HAVE_RPC_RPC_H], 1)
+    ],[])
 ])
 
 #

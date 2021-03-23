@@ -104,6 +104,9 @@ endif
 %.pm: %.pm.in $(top_builddir)/config.status
 	$(top_builddir)/config.status --file=$@:$<
 
+%.py: %.py.in $(top_builddir)/config.status
+	$(top_builddir)/config.status --file=$@:$<
+
 # Shell
 %: %.sh $(top_builddir)/config.status
 	$(top_builddir)/config.status --file=$@:$<

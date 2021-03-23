@@ -6,13 +6,18 @@ cd `dirname $0`
 # if you change this, please also change it in the root Makefile.am
 includes="-I . -I config -I config/gettext-macros -I config/gnulib -I config/amanda -I config/macro-archive -I /usr/share/aclocal"
 
+[ -d /opt/csw/gnu ] && export PATH=/opt/csw/gnu:${PATH}
+
+# remove any symlinks in local paths
+cd $(pwd -P)
+
 # clean up
 rm -f aclocal.m4
 rm -rf autom4te*.cache
 rm -f configure
 
 die() {
-    echo x"${@}" | sed 's/^x//'
+    echo "${@}"
     exit 1
 }
 
@@ -65,7 +70,6 @@ sed -e  \
 
 echo "..autoconf with version $AC_VERSION_SFX"
 autoconf${AC_VERSION_SFX} || die "autoconf failed"
-
 echo "..autoheader with version $AC_VERSION_SFX"
 autoheader${AC_VERSION_SFX} || die "autoheader failed"
 touch config/config.h.in

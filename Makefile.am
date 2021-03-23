@@ -7,7 +7,7 @@ include $(top_srcdir)/config/automake/installperms.am
 ACLOCAL_AMFLAGS = --force -I config -I . -I config/gettext-macros -I config/gnulib -I config/amanda -I config/macro-archive -I /usr/share/aclocal
 
 if WANT_CLIENT
-CLIENT_SUBDIRS = client-src application-src
+CLIENT_SUBDIRS = client-src application-src device-src server-src
 endif
 if WANT_SERVER
 SERVER_SUBDIRS = device-src server-src
@@ -78,7 +78,8 @@ EXTRA_DIST += $(SNAPSHOT_STAMP) \
 	UPGRADING			\
 	DEVELOPING			\
 	VERSION				\
-	FULL_VERSION
+	FULL_VERSION			\
+	PKG_REV
 
 FULL_VERSION: VERSION
 	$(srcdir)/config/set_full_version $(top_srcdir)
@@ -87,6 +88,22 @@ config.status: FULL_VERSION
 
 libtool: $(LIBTOOL_DEPS)
 	$(SHELL) ./config.status --recheck
+
+SUBDIR_TARGETS = \
+   amandad-src/libamandad.la \
+   amar-src/libamar.la \
+   client-src/libamclient.la \
+   common-src/libamanda.la \
+   common-src/libtestutils.la \
+   config/config.h \
+   device-src/libamdevice.la \
+   gnulib/libgnu.la \
+   ndmp-src/libndmlib.la \
+   server-src/libamserver.la \
+   xfer-src/libamxfer.la
+
+$(SUBDIR_TARGETS):
+	$(MAKE) -C $(dir $@)
 
 # empty out the installperms manifest file when we start
 install-exec-local: installperms-init

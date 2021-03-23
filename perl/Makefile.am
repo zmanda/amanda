@@ -5,6 +5,8 @@
 include $(top_srcdir)/config/automake/vars.am
 include $(top_srcdir)/config/automake/scripts.am
 
+GENDATE = $(shell date --utc --date="@${SOURCE_DATE_EPOCH:-$(shell date +%s)}")
+
 # build amglue *first*
 SUBDIRS = amglue .
 
@@ -26,10 +28,9 @@ AM_CPPFLAGS =  \
             -I$(top_srcdir)/ndmp-src \
             $(PERL_INC)
 
-if WANT_SERVER
+# needed for client too
 AM_CPPFLAGS += -I$(top_srcdir)/device-src \
 	    -I$(top_srcdir)/server-src
-endif
 
 if WANT_CLIENT
 AM_CPPFLAGS += -I$(top_srcdir)/client-src
@@ -130,7 +131,6 @@ MAINTAINERCLEANFILES += Amanda/Archive.c Amanda/Archive.pm
 Amanda_DATA += Amanda/Process.pm
 EXTRA_DIST += Amanda/Process.pm
 
-if WANT_SERVER
 # PACKAGE: Amanda::Device
 libDevicedir = $(amperldir)/auto/Amanda/Device
 libDevice_LTLIBRARIES = libDevice.la
@@ -143,10 +143,8 @@ libDevice_la_LIBADD = amglue/libamglue.la \
 	$(top_builddir)/common-src/libamanda.la
 Amanda_DATA += Amanda/Device.pm
 MAINTAINERCLEANFILES += Amanda/Device.c Amanda/Device.pm
-endif
 EXTRA_DIST += Amanda/Device.swg Amanda/Device.pm Amanda/Device.pod
 
-if WANT_SERVER
 # PACKAGE: Amanda::Logfile
 libLogfiledir = $(amperldir)/auto/Amanda/Logfile
 libLogfile_LTLIBRARIES = libLogfile.la
@@ -157,10 +155,8 @@ libLogfile_la_LIBADD = amglue/libamglue.la \
 	$(top_builddir)/common-src/libamanda.la
 Amanda_DATA += Amanda/Logfile.pm
 MAINTAINERCLEANFILES += Amanda/Logfile.c Amanda/Logfile.pm
-endif
 EXTRA_DIST += Amanda/Logfile.swg Amanda/Logfile.pm Amanda/Logfile.pod
 
-if WANT_SERVER
 # PACKAGE: Amanda::Cmdline
 libCmdlinedir = $(amperldir)/auto/Amanda/Cmdline
 libCmdline_LTLIBRARIES = libCmdline.la
@@ -171,7 +167,6 @@ libCmdline_la_LIBADD = amglue/libamglue.la \
 	$(top_builddir)/common-src/libamanda.la
 Amanda_DATA += Amanda/Cmdline.pm
 MAINTAINERCLEANFILES += Amanda/Cmdline.c Amanda/Cmdline.pm
-endif
 EXTRA_DIST += Amanda/Cmdline.swg Amanda/Cmdline.pm Amanda/Cmdline.pod
 
 if WANT_SERVER
@@ -188,7 +183,6 @@ MAINTAINERCLEANFILES += Amanda/Tapelist.c Amanda/Tapelist.pm
 endif
 EXTRA_DIST += Amanda/Tapelist.swg Amanda/Tapelist.pm Amanda/Tapelist.pod
 
-if WANT_SERVER
 # PACKAGE: Amanda::Disklist
 libDisklistdir = $(amperldir)/auto/Amanda/Disklist
 libDisklist_LTLIBRARIES = libDisklist.la
@@ -199,10 +193,8 @@ libDisklist_la_LIBADD = amglue/libamglue.la \
 	$(top_builddir)/common-src/libamanda.la
 Amanda_DATA += Amanda/Disklist.pm
 MAINTAINERCLEANFILES += Amanda/Disklist.c Amanda/Disklist.pm
-endif
 EXTRA_DIST += Amanda/Disklist.swg Amanda/Disklist.pm Amanda/Disklist.pod
 
-if WANT_SERVER
 # PACKAGE: Amanda::Cmdfile
 libCmdfiledir = $(amperldir)/auto/Amanda/Cmdfile
 libCmdfile_LTLIBRARIES = libCmdfile.la
@@ -213,7 +205,6 @@ libCmdfile_la_LIBADD = amglue/libamglue.la \
 	$(top_builddir)/common-src/libamanda.la
 Amanda_DATA += Amanda/Cmdfile.pm
 MAINTAINERCLEANFILES += Amanda/Cmdfile.c Amanda/Cmdfile.pm
-endif
 EXTRA_DIST += Amanda/Cmdfile.swg Amanda/Cmdfile.pm Amanda/Cmdfile.pod
 
 # PACKAGE: Amanda::Feature
@@ -261,25 +252,18 @@ EXTRA_DIST +=  \
 	Amanda/Interactivity/tty.pm \
 	Amanda/Interactivity/tty_email.pm
 
-if WANT_SERVER
 # PACKAGE: Amanda::Changer
 Amanda_DATA += Amanda/Changer.pm
-endif
 EXTRA_DIST += Amanda/Changer.pm
 
-if WANT_SERVER
 # PACKAGE: Amanda::Storage
 Amanda_DATA += Amanda/Storage.pm
-endif
 EXTRA_DIST += Amanda/Storage.pm
 
-if WANT_SERVER
 # PACKAGE: Amanda::Policy
 Amanda_DATA += Amanda/Policy.pm
-endif
 EXTRA_DIST += Amanda/Policy.pm
 
-if WANT_SERVER
 # PACKAGE: Amanda::Changer::*
 AmandaChangerdir = $(amperldir)/Amanda/Changer
 AmandaChanger_DATA = \
@@ -296,7 +280,6 @@ if WANT_NDMP
 AmandaChanger_DATA += Amanda/Changer/ndmp.pm
 endif
 PM_FILES += $(AmandaChanger_DATA)
-endif
 EXTRA_DIST += \
 	Amanda/Changer/aggregate.pm \
 	Amanda/Changer/disk.pm \
@@ -308,10 +291,8 @@ EXTRA_DIST += \
 	Amanda/Changer/single.pm \
 	Amanda/Changer/ndmp.pm
 
-if WANT_SERVER
 # PACKAGE: Amanda::Status
 Amanda_DATA += Amanda/Status.pm
-endif
 EXTRA_DIST += Amanda/Status.pm
 
 if WANT_SERVER
@@ -338,10 +319,8 @@ Amanda_DATA += Amanda/Vault.pm
 endif
 EXTRA_DIST += Amanda/Vault.pm
 
-if WANT_SERVER
 # PACKAGE: Amanda::CheckDump
 Amanda_DATA += Amanda/CheckDump.pm
-endif
 EXTRA_DIST += Amanda/CheckDump.pm
 
 Amanda_DATA += Amanda/Restore.pm
@@ -374,10 +353,8 @@ EXTRA_DIST += \
 	Amanda/Curinfo/Info.pm
 
 
-if WANT_SERVER
 # PACKAGE: Amanda::Index
 Amanda_DATA += Amanda/Index.pm
-endif
 EXTRA_DIST += Amanda/Index.pm
 
 if WANT_SERVER
@@ -729,12 +706,11 @@ EXTRA_DIST += Amanda/Application/Zfs.pm
 ../genversion.h Amanda/Constants.pm.in: $(top_builddir)/config.status Amanda/Constants.pm.in.src
 	-rm -f ../common-src/genversion.h ../common-src/genversion.h.new
 	echo '#define CC "$(CC)"' > ../common-src/genversion.h.new
-	GENDATE=`date`; \
-	echo '#define BUILT_DATE "'$$GENDATE'"' >> ../common-src/genversion.h.new; \
-	echo '#define BUILT_MACH "$(target)"' >> ../common-src/genversion.h.new; \
-	mv ../common-src/genversion.h.new ../common-src/genversion.h; \
-	mkdir ../perl/Amanda; \
-	sed "s/^\$$BUILT_DATE.*$$/\$$BUILT_DATE = \"$$GENDATE\";/" $(srcdir)/Amanda/Constants.pm.in.src > Amanda/Constants.pm.in;
+	echo '#define BUILT_DATE "$(GENDATE)"' >> ../common-src/genversion.h.new
+	echo '#define BUILT_MACH "@build@"' >> ../common-src/genversion.h.new
+	mv ../common-src/genversion.h.new ../common-src/genversion.h
+	mkdir ../perl/Amanda
+	sed 's/^\$$BUILT_DATE.*$$/\$$BUILT_DATE = "$(GENDATE)";/' $(srcdir)/Amanda/Constants.pm.in.src > Amanda/Constants.pm.in
 
 # perl doesn't use the cyg prefix and it doesn't search in the bin
 # directory, dll must be copied to their modules directories.

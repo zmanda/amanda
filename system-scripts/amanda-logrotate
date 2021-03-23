@@ -1,0 +1,54 @@
+@@AMANDA_LOGDIR@@/*.[0-9]*.debug
+@@AMANDA_LOGDIR@@/*.[0-9]*.error
+@@AMANDA_LOGDIR@@/*.[0-9]*.stderr
+@@AMANDA_LOGDIR@@/*.[0-9]*.log
+@@AMANDA_LOGDIR@@/client/*.[0-9]*.debug
+@@AMANDA_LOGDIR@@/client/*.[0-9]*.error
+@@AMANDA_LOGDIR@@/client/*.[0-9]*.stderr
+@@AMANDA_LOGDIR@@/client/*.[0-9]*.log
+@@AMANDA_LOGDIR@@/client/*/*.[0-9]*.debug
+@@AMANDA_LOGDIR@@/client/*/*.[0-9]*.error
+@@AMANDA_LOGDIR@@/client/*/*.[0-9]*.stderr
+@@AMANDA_LOGDIR@@/client/*/*.[0-9]*.log
+@@AMANDA_LOGDIR@@/server/*.[0-9]*.debug
+@@AMANDA_LOGDIR@@/server/*.[0-9]*.error
+@@AMANDA_LOGDIR@@/server/*.[0-9]*.stderr
+@@AMANDA_LOGDIR@@/server/*.[0-9]*.log
+@@AMANDA_LOGDIR@@/server/*/*.[0-9]*.debug
+@@AMANDA_LOGDIR@@/server/*/*.[0-9]*.error
+@@AMANDA_LOGDIR@@/server/*/*.[0-9]*.stderr
+@@AMANDA_LOGDIR@@/server/*/*.[0-9]*.log
+@@AMANDA_LOGDIR@@/amandad/*.[0-9]*.debug
+@@AMANDA_LOGDIR@@/amandad/*.[0-9]*.error
+@@AMANDA_LOGDIR@@/amandad/*.[0-9]*.stderr
+@@AMANDA_LOGDIR@@/amandad/*.[0-9]*.log {
+    weekly
+    su amandabackup amandabackup
+    maxage 365
+    rotate 1
+    nomail
+    nocreate
+    compress
+    missingok
+    minsize 1k
+    start 0
+    dateyesterday
+}
+
+@@AMANDA_LOGDIR@@/server/amanda-rest-server.error { 
+    daily
+    rotate 5
+    nomail
+    minsize 100k
+    copytruncate
+    sharedscripts
+    dateext
+    dateyesterday
+    preremove
+       true
+    endscript
+    prerotate
+       exec 2>/dev/null
+       kill -HUP $(cat @@AMANDA_HOMEDIR@@/tmp/rest-api-pid) || true
+    endscript
+}
