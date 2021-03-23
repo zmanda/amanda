@@ -26,8 +26,6 @@ AM_GNU_GETTEXT_VERSION([0.15])
 AM_GNU_GETTEXT([external])
 AMANDA_PROG_GETTEXT
 
-LT_INIT
-
 
 dnl
 dnl Set up files for autoconf substitution.  All files are listed here, in
@@ -49,7 +47,6 @@ AC_CONFIG_FILES([
     man/Makefile
     ndmp-src/Makefile
     oldrecover-src/Makefile
-    packaging/Makefile
     perl/amglue/Makefile
     perl/Makefile
     po/Makefile
