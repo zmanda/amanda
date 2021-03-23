@@ -243,7 +243,7 @@ Amanda Documentation is available at: http://wiki.zmanda.com/
 %define LIBDIR          %{EPREFIX}/lib
 %endif
 
-%define AMLIBDIR        %{LIBDIR}/amanda
+%define AMLIBDIR        %{LIBDIR}
 %define INCLUDEDIR      %{PREFIX}/include
 %define LIBEXECDIR      %{LIBDIR}
 %define AMLIBEXECDIR    %{LIBDIR}/amanda
@@ -718,7 +718,16 @@ fi
 # uninstall of the software will attempt to delete whatever matches here.
 %defattr(0755,%{amanda_user},%{amanda_group},0755)
 %{AMLIBEXECDIR}
-%{AMLIBDIR}
+%{AMLIBDIR}/libamanda-4.0.so
+%{AMLIBDIR}/libamandad-4.0.so
+%{AMLIBDIR}/libamar-4.0.so
+%{AMLIBDIR}/libamclient-4.0.so
+%{AMLIBDIR}/libamdevice-4.0.so
+%{AMLIBDIR}/libamglue-4.0.so
+%{AMLIBDIR}/libamserver-4.0.so
+%{AMLIBDIR}/libamxfer-4.0.so
+%{AMLIBDIR}/libndmjob-4.0.so
+%{AMLIBDIR}/libndmlib-4.0.so
 %{AMPERLDIR}/auto/Amanda
 %defattr(4750,root,disk)
 %{AMLIBEXECDIR}/application/amgtar
@@ -731,10 +740,20 @@ fi
 %defattr(0750,%{amanda_user},%{amanda_group},0750)
 %{LOGDIR}
 %{SBINDIR}/amaespipe
-%{SBINDIR}/amcryp*
+%{SBINDIR}/amarchiver
+%{SBINDIR}/ambackup
+%{SBINDIR}/amcrypt*
+%{SBINDIR}/amcrypt-ossl
+%{SBINDIR}/amcrypt-ossl-asym
+%{SBINDIR}/amcryptsimple
+%{SBINDIR}/amdump_client
+%{SBINDIR}/amgetconf
 %{SBINDIR}/amgpgcrypt
 %{SBINDIR}/amoldrecover
+%{SBINDIR}/amplot
 %{SBINDIR}/amrecover
+%{SBINDIR}/amservice
+%{SBINDIR}/amssl
 %{SYSCONFDIR}/amanda
 %defattr(0644,%{amanda_user},%{amanda_group},0755)
 %{LOCALSTATEDIR}/amanda
@@ -766,12 +785,11 @@ fi
 %files backup_server
 %defattr(0755,%{amanda_user},%{amanda_group})
 %{AMLIBEXECDIR}
-%{AMLIBDIR}
+%{AMLIBDIR}/lib*
 %{AMPERLDIR}/Amanda
 %{AMPERLDIR}/auto/Amanda
 %{AMANDAHOMEDIR}
 %{LOCALSTATEDIR}/amanda
-%{SBINDIR}/am*
 %defattr(4750,root,disk)
 %{AMLIBEXECDIR}/application/amgtar
 %{AMLIBEXECDIR}/application/amstar
@@ -783,16 +801,8 @@ fi
 %defattr(0750,%{amanda_user},%{amanda_group},0750)
 %{LOGDIR}
 %{SYSCONFDIR}/amanda
-# Files in standard dirs must be listed explicitly
-%{SBINDIR}/activate-devpay
-%{SBINDIR}/amaespipe
-%{SBINDIR}/amcrypt
-%{SBINDIR}/amcrypt-ossl
-%{SBINDIR}/amcrypt-ossl-asym
-%{SBINDIR}/amcryptsimple
-%{SBINDIR}/amgpgcrypt
-%{SBINDIR}/amoldrecover
-%{SBINDIR}/amrecover
+%{AMLIBDIR}/lib*.so
+%{SBINDIR}/*
 %defattr(0644,%{amanda_user},%{amanda_group})
 %{AMLIBEXECDIR}/amcat.awk
 %{AMLIBEXECDIR}/amplot.awk

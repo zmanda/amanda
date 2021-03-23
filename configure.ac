@@ -49,6 +49,7 @@ AC_CONFIG_FILES([
     config/Makefile
     device-src/Makefile
     example/Makefile
+    example/systemd/Makefile
     gnulib/Makefile
     installcheck/Makefile
     man/Makefile
@@ -62,7 +63,6 @@ AC_CONFIG_FILES([
     rest-server/Makefile
     server-src/Makefile
     xfer-src/Makefile
-    systemd-startup/Makefile
 ])
 
 AC_OUTPUT
