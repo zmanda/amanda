@@ -6,9 +6,9 @@
 # SYSCONFDIR
 # os
 
-type -p realpath >/dev/null || eval 'realpath() { [ $1 = -e ] && shift; ( cd $1; builtin pwd -P; ); }'
+command -v realpath >/dev/null || eval 'realpath() { [ $1 = -e ] && shift; ( cd $1; builtin pwd -P; ); }'
 
-if type die 2>/dev/null >&2; then
+if command -v die 2>/dev/null >&2; then
     :
 else
 die() {
@@ -70,7 +70,7 @@ detect_root_pkgtime() {
     a=0
     b=0
 
-    pkg_name_pkgtime="$(cd $src_root; git log --author-date-order --pretty='%ad' --date=raw -1)"
+    pkg_name_pkgtime="$(cd $src_root; [ -d .git ] && git log --author-date-order --pretty='%ad' --date=raw -1)"
     pkg_name_pkgtime="$(( ${pkg_name_pkgtime% *} + 0 ))"
     src_root_pkgtime=$pkg_name_pkgtime;
 
@@ -433,6 +433,9 @@ do_top_package() {
 		die "ERROR: dpkg-buildpackage command was not found.  Cannot build without package \"dpkg-dev\" installed."
             [ -s debian/control ] ||
 		die "ERROR: no debian/control file is ready in ${PKG_DIR}/$build_dir/$deb_build/debian"
+                
+            # 
+            # no hooks currently needed...
             dpkg-buildpackage -rfakeroot -Tbuild ||
 		die "ERROR: dpkg-buildpackage compile command failed"
 	    ;;
@@ -508,6 +511,9 @@ do_package() {
 		die "ERROR: dpkg-buildpackage command was not found.  Cannot build without package \"dpkg-dev\" installed."
             [ -s debian/control ] ||
 		die "ERROR: no debian/control file is ready in ${PKG_DIR}/$build_dir/$deb_build/debian"
+
+            #
+            # set up hooks if needed... none currently
             dpkg-buildpackage -rfakeroot -uc -b ||
 		die "ERROR: dpkg-buildpackage compile command failed"
             # Create unsigned packages
@@ -741,9 +747,11 @@ save_version() {
 
     tmp=$(mktemp -d)
 
+    PKG_NAME_VER="${pkg_name}-$VERSION"
+    repo_vers_dir="$tmp/${PKG_NAME_VER}"
+    VERSION_TAR="$tmp/${PKG_NAME_VER}-versioning.tar"
+
     if [ -n "$pkg_name" -a -n "$PKG_NAME_VER" ]; then
-        repo_vers_dir=$tmp/${PKG_NAME_VER}
-        repo_vers_tar=$tmp/${PKG_NAME_VER}-versioning.tar
         rm -rf $repo_vers_dir
 
         mkdir -p $repo_vers_dir
@@ -755,9 +763,6 @@ save_version() {
         tar -cf $VERSION_TAR -C $tmp ${PKG_NAME_VER}/.   # *keep* the /.
         rm -rf $repo_vers_dir
     fi
-
-    PKG_NAME_VER="${pkg_name}-$VERSION"
-    VERSION_TAR="$repo_vers_tar"
 
     # NOTE: using {} as a sub-scope is broken in earlier bash
     declare -p VERSION PKG_REV PKG_NAME_VER VERSION_TAR | 
