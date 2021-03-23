@@ -6,6 +6,10 @@
 # SYSCONFDIR
 # os
 
+setopt=$-
+set +xv
+set +o posix
+
 logger() {
 	# A non-annoying way to log stuff
 	# ${@} is all the parameters, also known as the message.  Quoting the input
@@ -37,24 +41,24 @@ check_superserver() {
 }
 
 check_xinetd() {
-	# Checks for an xinetd install and a config name passed as the first
-	# parameter.
-	# Returns:
-	#	 0 if the file exists,
-	#	 1 if it does not,
-	#	 2 if xinetd.d/ does not exist or is a file
+    # Checks for an xinetd install and a config name passed as the first
+    # parameter.
+    # Returns:
+    #	 0 if the file exists,
+    #	 1 if it does not,
+    #	 2 if xinetd.d/ does not exist or is a file
 
-	if [ -d ${SYSCONFDIR}/xinetd.d ] ; then
-		if [ -f ${SYSCONFDIR}/xinetd.d/${1} ] ; then
-			logger "Found existing xinetd config: ${1}"
-			return 0
-		else
-			return 1
-		fi
-	else
-		# No xinetd installation.
-		return 2
-	fi
+    if [ -d ${SYSCONFDIR}/xinetd.d ] ; then
+	    if [ -f ${SYSCONFDIR}/xinetd.d/${1} ] ; then
+		    logger "Found existing xinetd config: ${1}"
+		    return 0
+	    else
+		    return 1
+	    fi
+    else
+	    # No xinetd installation.
+	    return 2
+    fi
 }
 
 check_inetd() {
@@ -62,17 +66,12 @@ check_inetd() {
         SunOS) inetd_conf=${SYSCONFDIR}/inet/inetd.conf ;;
         *) inetd_conf=${SYSCONFDIR}/inetd.conf ;;
     esac
-    if [ -e ${inetd_conf} ] ; then
-        if grep "${1}" ${inetd_conf} > /dev/null ; then
-            logger "Found existing inetd config: ${1}"
-            return 0
-        else
-            return 1
-        fi
-    else
-        # No inetd installation.
-            return 2
-    fi
+    [ -e ${inetd_conf} ] || return 2
+
+    grep -q "${1}" ${inetd_conf} || return 1
+
+    logger "Found existing inetd config: ${1}"
+    return 0
 }
 
 check_launchd() {
@@ -81,7 +80,7 @@ check_launchd() {
 }
 
 check_smf() {
-    # Only for solaris! This check only notices if an amanda service is active,
+    # Only for solaris! Check if the given service is active
     # it does not notice server vs client entries.
     log_output_of svcs -H "*amanda*" || { \
         logger "No amanda service found."; return 1; }
@@ -111,7 +110,7 @@ check_superserver_running() {
         echo "Solaris 10 does not use xinetd."
         return 2
     fi
-    # Search for $1, 
+    # Search for $1,
     PROC=`ps ${ps_flags} | grep -v 'grep'| grep "${1}"`
     if [ x"${PROC}" != x ]; then
 	return 0
@@ -163,7 +162,7 @@ backup_smf() {
 
 install_xinetd() {
     log_output_of install -m 0644 ${AMANDAHOMEDIR}/example/xinetd.${1} ${SYSCONFDIR}/xinetd.d/${1} || \
-	{ logger "WARNING:  Could not install xinetd configuration '${1}'" ; return 1; }		
+       { logger "WARNING:  Could not install xinetd configuration '${1}'" ; return 1; }
     logger "Installed xinetd config for ${1}."
 }
 
@@ -199,7 +198,7 @@ install_smf() {
         logger "Solaris 8 and 9 use inetd, not SMF tools."
         return 1
       ;;
-      
+
       *)
         # I don't know what to do...
         logger "ERROR: Unsupported and untested version of Solaris: $ver"
@@ -223,11 +222,11 @@ reload_xinetd() {
 
     if [ -f ${RCDIR}/xinetd ]; then
         if [ "$action" = "reload" ] ; then
-	    logger "Reloading xinetd configuration..." 
+            logger "Reloading xinetd configuration..."
 	    log_output_of ${RCDIR}/xinetd $action # Don't exit!
 	    if [ $? -ne 0 ] ; then
-	        logger "xinetd reload failed.  Attempting restart..."
-                action=restart
+		logger "xinetd reload failed.  Attempting restart..."
+		    action=restart
 	    fi
         fi
         if [ "$action" = "restart" ] || [ "$action" = "start" ]; then
@@ -237,22 +236,22 @@ reload_xinetd() {
         fi
     elif systemctl status xinetd.service | grep -q .; then
         if [ "$action" = "reload" ] ; then
-	    logger "Reloading xinetd configuration..." 
+	    logger "Reloading xinetd configuration..."
             if ! log_output_of systemctl $action xinetd.service; then
-	        logger "xinetd reload failed.  Attempting restart..."
-                action=restart
+		logger "xinetd reload failed.  Attempting restart..."
+		action=restart
 	    fi
-        fi
+	fi
         if [ "$action" = "restart" ] || [ "$action" = "start" ]; then
             logger "${action}ing xinetd."
 	    log_output_of systemctl $action xinetd.service || \
-	        { logger "WARNING:  $action failed." ; return 1; }
-        fi
+                { logger "WARNING:  $action failed." ; return 1; }
+	fi
     elif [ ! -x /usr/sbin/xinetd ]; then
-       logger "WARNING:  $action xinetd not found." ; 
+       logger "WARNING:  $action xinetd not found." ;
        return 1;
     elif [ / -ef /proc/1/root/. ]; then
-       logger "WARNING:  $action not in chroot and systemctl failed." ; 
+       logger "WARNING:  $action not in chroot and systemctl failed." ;
        return 1;
     fi
     # if in chroot.. go and start manually...
@@ -285,3 +284,4 @@ reload_inetd() {
     fi
 }
 # End Common functions
+set -${setopt/s}

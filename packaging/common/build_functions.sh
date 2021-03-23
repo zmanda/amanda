@@ -455,7 +455,8 @@ gen_repo_pkg_environ() {
     elif [[ "$repo_ref" == __temp_merge-* ]] && 
             git 2>/dev/null >&2 rev-parse --verify "$repo_ref^{commit}"; then
         # define the remote with "self" if needed
-        git remote add __self__ $(realpath $(git rev-parse --show-toplevel))
+        git 2>/dev/null >&2 remote remove __self__ || true
+        git remote add __self__ $(realpath $(git rev-parse --show-toplevel)) || true
         git fetch __self__
         remote=__self__
     else
@@ -794,8 +795,8 @@ git_pkgdirs_args="--git-dir=$(cd $pkgdirs_top; git rev-parse --git-dir | xargs r
 # detect time stamp from areas touched by this script
 [ -n "$pkg_name_pkgtime" ] || detect_root_pkgtime
 
-[ -n "$pkg_name" ] || die "pkg_name could not be found"
-[ -n "$pkg_type" ] || die "pkg_type could not be found"
+[ -n "$pkg_name" ] && export pkg_name
+[ -n "$pkg_type" ] && export pkg_type
 
 export pkg_suffix \
       pkg_name \

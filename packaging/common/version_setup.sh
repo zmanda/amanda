@@ -15,7 +15,7 @@
 #set -x
 
 if [ "$(type -t get_yearly_tag)" != "function" ]; then
-    . packaging/common/build_functions.sh
+    . $(dirname ${BASH_SOURCE[0]})/build_functions.sh
 fi
 
 [ -x "$(command -v gsed)" ] && eval "sed() { command gsed \"\$@\"; }"
@@ -80,60 +80,84 @@ get_git_info() {
     local cache_repo
     local pkgtime_name
 
+    local year_code
+    local tmpbranch
+    local tmpsubject
+    local newsha
+
     ref=$1
-    git --no-pager log $ref --max-count=1 > vcs_repo.info
+    while true; do
+        git --no-pager log $ref --max-count=1 > vcs_repo.info
 
-    # reduce the unix date of pkging dir to Jan 1st
-    # ... and give an alpha code [<VOWELS>consonants>] to encode the minute
-    pkgtime_name=$(get_yearly_tag $pkg_name_pkgtime)
+        # reduce the unix date of pkging dir to Jan 1st
+        # ... and give an alpha code [<VOWELS>consonants>] to encode the minute
+        pkgtime_name=$(get_yearly_tag $pkg_name_pkgtime)
 
-    #default branch name
+        #default branch name
 
-    # must be able to describe this... (using remote name!)
-    rmtref="$(git describe --all --match '*/*' --always --exclude '*/HEAD' $ref 2>/dev/null)"
-    rmtref="${rmtref:-$(git describe --all --match '*/*' --always $ref)}"
+        # must be able to describe this... (using remote name!)
+        rmtref="$(git describe --all --match '*/*' --always --exclude '*/HEAD' $ref 2>/dev/null)"
+        rmtref="${rmtref:-$(git describe --all --match '*/*' --always $ref)}"
 
-    # can't use HEAD so try to salvage it...
-    [[ $rmtref == */HEAD ]] && rmtref="${rmtref%/*}/${ref##*/}"
+        # can't use HEAD so try to salvage it...
+        [[ $rmtref == */HEAD ]] && rmtref="${rmtref%/*}/${ref##*/}"
 
-    if [[ $rmtref == */* ]]; then
-	# lose the exact branch name but get remote name
-	rmtref=${rmtref#refs/}
-	rmtref=${rmtref#remotes/}
-	repo=$(git ls-remote --get-url "${rmtref%/*}");
-    else
-	repo=$(git ls-remote --get-url origin);
-        rmtref=  # signal that nothing is a remote ref
-    fi
+        if [[ $rmtref == */* ]]; then
+            # lose the exact branch name but get remote name
+            rmtref=${rmtref#refs/}
+            rmtref=${rmtref#remotes/}
+            repo=$(git ls-remote --get-url "${rmtref%/*}");
+        else
+            repo=$(git ls-remote --get-url origin);
+            rmtref=  # signal that nothing is a remote ref
+        fi
 
-    oref=
-    cache_repo=
-    [ -n "$repo" ] && cache_repo=$(detect_git_cache $repo) || true
+        oref=
+        cache_repo=
+        [ -n "$repo" ] && cache_repo=$(detect_git_cache $repo) || true
 
-    ############################################################
-    #### MAY USE GIT_DIR ENVIRONMENT OVERRIDE #####
-    if [ -d "$cache_repo" -a -n "$rmtref" ]; then
-       oref="origin/${rmtref##*/}" || true
-       rmtref="$oref"
-       export GIT_DIR=$cache_repo
-    fi
+        ############################################################
+        #### MAY USE GIT_DIR ENVIRONMENT OVERRIDE #####
+        if [ -d "$cache_repo" -a -n "$rmtref" ]; then
+            if command git --git-dir=$cache_repo rev-parse --verify --quiet "origin/${rmtref##*/}"; then
+               oref="origin/${rmtref##*/}"
+               rmtref="$oref"
+               export GIT_DIR=$cache_repo
+            fi
+        fi
 
-    if [ -z "$oref" -a -n "$rmtref" ]; then
-        oref="$rmtref"
-    elif [ -z "$oref" ]; then
-        oref=$ref
-    fi
+        if [ -z "$oref" -a -n "$rmtref" ]; then
+            oref="$rmtref"
+        elif [ -z "$oref" ]; then
+            oref=$ref
+        fi
 
-    [ $oref = "origin/HEAD" ] && oref=$ref
+        [ $oref = "origin/HEAD" ] && oref=$ref
 
-    if [ -s $(git rev-parse --git-dir)/shallow ]; then
-        ( set -xv; git fetch --unshallow; )  # must be done.. even if slow
-    fi
+        if [ -s $(git rev-parse --git-dir)/shallow ]; then
+            ( set -xv; git fetch --unshallow; )  # must be done.. even if slow
+        fi
 
-    # keep the package-time in front to alphabetize-over-time
-    local year_code=$(printf %02d $(( ${pkgtime_name:0:2} + 0 )) )
-    year_code=${year_code:-$(date +%y)}
+        # keep the package-time in front to alphabetize-over-time
+        year_code=$(printf %02d $(( ${pkgtime_name:0:2} + 0 )) )
+        year_code=${year_code:-$(date +%y)}
+
+        # get name-rev version of tag-based names.. but snip any '^0' at end...
+        ####### find tag-based [forward-relative] info for version
+        tmpbranch="$(git name-rev --name-only --refs='__temp_merge-*' $oref)"
+        [[ "$tmpbranch" != __temp_merge-* ]] && break
+
+        tmpsubject="$(git log -1 --pretty=%s $oref)"
+        [[ "$tmpsubject" != Merge\ remote-tracking\ branch*into\ $tmpbranch ]] && break
+
+        newsha="$(git rev-parse 2>/dev/null --verify --short ${oref}^2)"
+        [ -z "$newsha" ] && break
+
+        ref=$newsha
+    done
+
     declare -g SHA=$(git rev-parse --short $oref)
+
     local year_break
 
     local REF_IDEAL
@@ -146,29 +170,8 @@ get_git_info() {
     local REV_REFBR
     local REV_REFDIST
 
-    # get name-rev version of tag-based names.. but snip any '^0' at end...
-    ####### find tag-based [forward-relative] info for version
-    local tmpbranch="$(git name-rev --name-only --refs='__temp_merge-*' $oref)"
-    local tmpsubject="$(git log -1 --pretty=%s $oref)"
-    local newsha="$(git rev-parse --verify --short ${oref}^2)"
-    if [ -n "$newsha" ] && 
-        [[ "$tmpbranch" == __temp_merge-* ]] && 
-        [[ "$tmpsubject" == Merge\ remote-tracking\ branch*into\ $tmpbranch ]]; 
-    then
-        SHA="$newsha"
-        t=$(git log --pretty='%at' -1 $SHA)
-        t=$(( t + 0 ))
-        [ $t -gt $pkg_name_pkgtime ] && pkg_name_pkgtime=$t
-        pkgtime_name=$(get_yearly_tag $pkg_name_pkgtime)
-        # get describe-based forward-aimed tag-name (root) and distance (dist) if that works
-        REV_TAGPOS=${REV_TAGPOS:-$(get_latest_git_tag ${oref}^)}
-        REV_TAGROOT=$(git describe --tags ${oref}^ 2>/dev/null)
-    else
-        REV_TAGPOS=${REV_TAGPOS:-$(get_latest_git_tag $oref)}
-        REV_TAGROOT=$(git describe --tags $oref 2>/dev/null)
-        # get describe-based forward-aimed tag-name (root) and distance (dist) if that works
-    fi
-
+    REV_TAGPOS=${REV_TAGPOS:-$(get_latest_git_tag $oref)}
+    REV_TAGROOT=$(git describe --tags $oref 2>/dev/null)
     REV_TAGPOS="${REV_TAGPOS%^[0-9]*}"
     REV_TAGDIST="$(sed <<<"$REV_TAGROOT" -r -e 's/^.*-([0-9]+)-g[a-f0-9]+$/\1/' -e '/[^0-9]/d')"
     # trim off tag-dist
@@ -185,6 +188,8 @@ get_git_info() {
     REF_IDEAL="${REF_IDEAL#undefined}"
     REF_IDEAL="${REF_IDEAL:-$(git name-rev --name-only --exclude=HEAD --refs='origin/*[0-9].[0-9]*' $oref 2>/dev/null)}"
     REF_IDEAL="${REF_IDEAL:-$(git name-rev --name-only --refs='origin/*[0-9].[0-9]*' $oref)}"
+    REF_IDEAL="${REF_IDEAL#undefined}"
+    REF_IDEAL="${REF_IDEAL:-$(git name-rev --name-only --refs='origin/*[0-9][0-9][0-9]*' $oref)}"
     REF_IDEAL="${REF_IDEAL#undefined}"
 
     REF_IDEAL="${REF_IDEAL%^0}"
@@ -215,6 +220,19 @@ get_git_info() {
     unset GIT_DIR
     #### END OF GIT_DIR ENVIRONMENT OVERRIDE (IF PRESENT) #####
     ############################################################
+    # check if not using same location as head?
+    REV_SUFFIX=
+    if [ "$(git rev-parse $ref)" != "$(git rev-parse HEAD)" ]; then
+	:
+    # check if zero diff found in files anywhere?
+    elif GIT_WORKING_DIR=${src_root} git diff --ignore-submodules=all --quiet &&
+	  GIT_WORKING_DIR=${src_root} git diff --cached --ignore-submodules=all --quiet; then
+        :
+    # else .. this working dir is not committed as is...
+    else
+        pkgtime_name=$(get_yearly_tag $(date +%s))
+        REV_SUFFIX=".edit" # unversioned changes should be noted
+    fi
 
     # build is tagged precisely..
     if [ -n "$REV_TAGPOS" -a -z "$REV_TAGDIST" ]; then
@@ -245,20 +263,9 @@ get_git_info() {
         PKG_REV="${pkgtime_name:3}.tag.$SHA"
     fi
 
-    [ -z "$BRANCH" ] && die "ref is unclassifiable: $ref with GIT_DIR=$GIT_DIR";
+    REV+=$REV_SUFFIX
 
-    # check if not using same location as head? 
-    if [ "$(git rev-parse $ref)" != "$(git rev-parse HEAD)" ]; then
-	:
-    # check if zero diff found in files anywhere?
-    elif GIT_WORKING_DIR=${src_root} git diff --ignore-submodules=all --quiet &&
-	  GIT_WORKING_DIR=${src_root} git diff --cached --ignore-submodules=all --quiet; then
-	:
-    # else .. this working dir is not committed as is...
-    else
-        REV="${REV}.edit" # unversioned changes should be noted
-        REV="${REV#.}" # remove a leading .
-    fi
+    [ -z "$BRANCH" ] && die "ref is unclassifiable: $ref with GIT_DIR=$GIT_DIR";
 
     # default branch name
     BRANCH="${BRANCH:-git}"
@@ -269,16 +276,17 @@ get_git_info() {
 
 branch_version_name() {
     local v="$1"
+    local vv
 
     # strip any path and remove trailing text from 'git describe'
     v=$(sed <<<"${v##*/}" -r -e 's,-[0-9]+-g[a-f0-9]+$,,')
     # change _ or . to an unused char '^' 
-    v=$(sed <<<"$v" -r -e 's|[_.]+|^|g')
+    v="${v//[_-]/^}"
     # remove text before version number (numerals before a ^ char)
-    v=$(sed <<<"$v" -r -e 's/^[^0-9]*([0-9]+\^)/\1/')
+    vv=${v%%[0-9]*}
+    v=${v:${#vv}}
     # apply ^ replacement with . [numbers on both sides] repeatedly until none more found
-    v=$(sed <<<"$v" -r -e ':start; s/([0-9])+\^([0-9])+/\1.\2/; tstart' | sed -e 'y,^,.,')
-    echo $v
+    echo "${v//^/.}"
 }
 
 old_set_pkg_rev() {
@@ -341,15 +349,19 @@ save_version() {
     fi
 
     # NOTE: using {} as a sub-scope is broken in earlier bash
-    declare -p VERSION PKG_REV PKG_NAME_VER VERSION_TAR | 
+    [ -n "$VERSION_TAR" ] && declare -p VERSION_TAR |
 	sed -e 's,^declare --,declare -g,';
-    declare -p LONG_BRANCH BRANCH REV | 
+    [ -n "$PKG_NAME_VER" ] && declare -p PKG_NAME_VER |
+	sed -e 's,^declare --,declare -g,';
+    declare -p VERSION PKG_REV |
+	sed -e 's,^declare --,declare -g,';
+    declare -p LONG_BRANCH BRANCH REV |
 	sed -e 's,^declare --,declare -g,';
     echo "echo \"setup version: $PKG_NAME_VER --- $PKG_REV\" "
 }
 
 # Fall back to previous build (or dist build?)?
-if ! [ -d .git ]; then
+if ! [ -e .git ]; then
     [ -f FULL_VERSION -a -f PKG_REV ] && exit 0
     echo "Error: No subversion or git info available!"   #### ERROR
     exit 1
