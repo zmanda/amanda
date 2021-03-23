@@ -718,16 +718,16 @@ fi
 # uninstall of the software will attempt to delete whatever matches here.
 %defattr(0755,%{amanda_user},%{amanda_group},0755)
 %{AMLIBEXECDIR}
-%{AMLIBDIR}/libamanda-4.0.so
-%{AMLIBDIR}/libamandad-4.0.so
-%{AMLIBDIR}/libamar-4.0.so
-%{AMLIBDIR}/libamclient-4.0.so
-%{AMLIBDIR}/libamdevice-4.0.so
-%{AMLIBDIR}/libamglue-4.0.so
-%{AMLIBDIR}/libamserver-4.0.so
-%{AMLIBDIR}/libamxfer-4.0.so
-%{AMLIBDIR}/libndmjob-4.0.so
-%{AMLIBDIR}/libndmlib-4.0.so
+%{AMLIBDIR}/libamanda*
+%{AMLIBDIR}/libamandad*
+%{AMLIBDIR}/libamar*
+%{AMLIBDIR}/libamclient*
+%{AMLIBDIR}/libamdevice*
+%{AMLIBDIR}/libamglue*
+%{AMLIBDIR}/libamserver*
+%{AMLIBDIR}/libamxfer*
+%{AMLIBDIR}/libndmjob*
+%{AMLIBDIR}/libndmlib*
 %{AMPERLDIR}/auto/Amanda
 %defattr(4750,root,disk)
 %{AMLIBEXECDIR}/application/amgtar
@@ -755,6 +755,7 @@ fi
 %{SBINDIR}/amservice
 %{SBINDIR}/amssl
 %{SYSCONFDIR}/amanda
+/lib/systemd/system/*
 %defattr(0644,%{amanda_user},%{amanda_group},0755)
 %{LOCALSTATEDIR}/amanda
 %{AMPERLDIR}/Amanda
@@ -801,6 +802,7 @@ fi
 %defattr(0750,%{amanda_user},%{amanda_group},0750)
 %{LOGDIR}
 %{SYSCONFDIR}/amanda
+/lib/systemd/system/*
 %{AMLIBDIR}/lib*.so
 %{SBINDIR}/*
 %defattr(0644,%{amanda_user},%{amanda_group})
