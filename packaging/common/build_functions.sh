@@ -759,7 +759,7 @@ save_version() {
     VERSION_TAR="$repo_vers_tar"
 
     # NOTE: using {} as a sub-scope is broken in earlier bash
-    declare -p VERSION BUILD_VERSION PKG_REV PKG_NAME_VER VERSION_TAR | 
+    declare -p VERSION PKG_REV PKG_NAME_VER VERSION_TAR | 
 	sed -e 's,^declare --,declare -g,';
     declare -p LONG_BRANCH BRANCH REV | 
 	sed -e 's,^declare --,declare -g,';
