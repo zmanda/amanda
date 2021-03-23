@@ -88,6 +88,7 @@ build-stamp: /sbin/dump /usr/bin/smbclient
 		--with-debugging=$(LOGDIR) \
 		--with-ssh-security \
 		--with-assertions \
+		--with-failure-code \
 		--enable-s3-device \
 		--disable-installperms
 	touch missing
@@ -188,8 +189,10 @@ binary-arch: build
 		$(server)/$(AMLIBEXECDIR)/runtar \
 		$(server)/$(AMLIBEXECDIR)/calcsize \
 		$(server)/$(AMLIBEXECDIR)/ambind
-	echo "Amanda version $(AMVER)" >  $(server)/$(AMANDAHOMEDIR)/amanda-release
-	echo "Amanda version $(AMVER)" >  $(client)/$(AMANDAHOMEDIR)/amanda-release
+	echo "Amanda version $(AMVER)" > $(server)/$(AMANDAHOMEDIR)/amanda-release
+	echo "Amanda version $(AMVER)" > $(client)/$(AMANDAHOMEDIR)/amanda-release
+	[ -s LONG_BRANCH ] && echo "ref=$(cat LONG_BRANCH)" >> $(server)/$(AMANDAHOMEDIR)/amanda-release
+	[ -s LONG_BRANCH ] && echo "ref=$(cat LONG_BRANCH)" >> $(client)/$(AMANDAHOMEDIR)/amanda-release
 	install -o root -g root -m 0644 debian/amanda-backup-client.lintian \
 		$(client)/usr/share/lintian/overrides/amanda-backup-client
 	install -o root -g root -m 0644 debian/amanda-backup-server.lintian \
