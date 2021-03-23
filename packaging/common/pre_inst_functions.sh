@@ -31,16 +31,13 @@ create_user() {
             # we want the output of id, but if the user doesn't exist,
             # sterr output just confuses things
             ID=`id ${amanda_user} 2> /dev/null | sed 's/uid=\([0-9]*\).*/\1/'`
-            if [ "x${ID}" = "x" ] ; then
-                # Groups must already exist on user creation in solaris
-                log_output_of groupadd --system ${amanda_group}
+            if [ "${ID}x" = "x" ] ; then
                 logger "Adding ${amanda_user}."
-                # dont make the home dir.. as it was installed already
                 log_output_of useradd -c "Amanda" \
                             -g ${amanda_group} \
                             ${uid_flag} \
                             -d ${AMANDAHOMEDIR} \
-                            -s ${wanted_shell} -M ${amanda_user}  || \
+                            -s ${wanted_shell} -m ${amanda_user}  || \
                 { logger "WARNING:  Could not create user ${amanda_user}. Installation will fail." ; return 1 ; }
                 logger "Created ${amanda_user} with blank password."
 
@@ -129,7 +126,7 @@ check_user_group() {
     [ "x" = "x$1" ] && { logger "check_user_group: no group given"; return 1; }
     logger "Verify ${amanda_user}'s primary group = $1 "
     # Check if the group exists, disregarding membership.
-    group_entry=`grep "^${1}" ${SYSCONFDIR}/group 2> /dev/null`
+    group_entry=`grep "^${2}" ${SYSCONFDIR}/group 2> /dev/null`
     if [ ! "x" = "x${group_entry}" ]; then
         # Assume the user exists, and check the user's primary group.
         GROUP=`id ${amanda_user} 2> /dev/null |\
@@ -235,17 +232,18 @@ create_homedir() {
 }
 
 create_logdir() {
-    if [ -e ${LOGDIR} -a ! -d ${LOGDIR} ]; then
-        logger "Warning: Found ${LOGDIR}, but it is not a directory"
-	return 1
+    if [ -d ${LOGDIR} ] || [ -f ${LOGDIR} ] ; then
+        logger "Found existing ${LOGDIR}"
+        log_output_of mv ${LOGDIR} ${LOGDIR}.save || \
+            { logger "WARNING:  Could not backup existing log directory: ${LOGDIR}" ; return 1 ; }
     fi
-
-    if [ ! -d ${LOGDIR} ] ; then
-        logger "Creating ${LOGDIR}."
-        log_output_of mkdir -p -m 0750 ${LOGDIR} || \
-            { logger "WARNING:  Could not create ${LOGDIR}" ; return 1 ; }
+    logger "Creating ${LOGDIR}."
+    log_output_of mkdir -p -m 0750 ${LOGDIR} || \
+        { logger "WARNING:  Could not create ${LOGDIR}" ; return 1 ; }
+    if [ -d ${LOGDIR}.save ] || [ -f ${LOGDIR}.save ] ; then
+        # Move the saved log into the logdir.
+        log_output_of mv ${LOGDIR}.save ${LOGDIR}
     fi
-
     log_output_of chown -R ${amanda_user}:${amanda_group} ${LOGDIR} || \
         { logger "WARNING:  Could not chown ${LOGDIR}" ; return 1 ; }
 }

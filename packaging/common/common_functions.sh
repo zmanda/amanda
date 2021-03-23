@@ -217,11 +217,14 @@ reload_xinetd() {
            return 1
         ;;
     esac
+    RCDIR=/dev/null
+    [ -d ${SYSCONFDIR}/init.d ] && RCDIR=${SYSCONFDIR}/init.d || true
+    [ -d ${SYSCONFDIR}/rc.d/init.d ] && RCDIR=${SYSCONFDIR}/rc.d/init.d || true
 
-    if [ -f ${SYSCONFDIR}/init.d/xinetd ]; then
+    if [ -f ${RCDIR}/xinetd ]; then
         if [ "$action" = "reload" ] ; then
 	    logger "Reloading xinetd configuration..." 
-	    log_output_of ${SYSCONFDIR}/init.d/xinetd $action # Don't exit!
+	    log_output_of ${RCDIR}/xinetd $action # Don't exit!
 	    if [ $? -ne 0 ] ; then
 	        logger "xinetd reload failed.  Attempting restart..."
                 action=restart
@@ -229,14 +232,13 @@ reload_xinetd() {
         fi
         if [ "$action" = "restart" ] || [ "$action" = "start" ]; then
             logger "${action}ing xinetd."
-	    log_output_of ${SYSCONFDIR}/init.d/xinetd $action || \
+	    log_output_of ${RCDIR}/xinetd $action || \
 	        { logger "WARNING:  $action failed." ; return 1; }
         fi
-    else
+    elif systemctl status xinetd.service | grep -q .; then
         if [ "$action" = "reload" ] ; then
 	    logger "Reloading xinetd configuration..." 
-	    log_output_of systemctl $action xinetd.service # Don't exit!
-	    if [ $? -ne 0 ] ; then
+            if ! log_output_of systemctl $action xinetd.service; then
 	        logger "xinetd reload failed.  Attempting restart..."
                 action=restart
 	    fi
@@ -246,7 +248,15 @@ reload_xinetd() {
 	    log_output_of systemctl $action xinetd.service || \
 	        { logger "WARNING:  $action failed." ; return 1; }
         fi
+    elif [ ! -x /usr/sbin/xinetd ]; then
+       logger "WARNING:  $action xinetd not found." ; 
+       return 1;
+    elif [ / -ef /proc/1/root/. ]; then
+       logger "WARNING:  $action not in chroot and systemctl failed." ; 
+       return 1;
     fi
+    # if in chroot.. go and start manually...
+    ( /usr/sbin/xinetd & )
 }
 
 reload_inetd() {
