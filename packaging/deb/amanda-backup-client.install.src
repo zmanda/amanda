@@ -1,6 +1,6 @@
 etc/amanda/*
-usr/lib/x86_64-linux-gnu/amanda/*
-usr/lib/x86_64-linux-gnu/amanda/application/*
+usr/lib/%%ARCH%%-linux-gnu/*
+usr/lib/amanda/*
 usr/sbin/amaespipe
 usr/sbin/amcryp*
 usr/sbin/amgpgcrypt

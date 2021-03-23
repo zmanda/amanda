@@ -19,7 +19,7 @@
 # set -x
 
 # set pkg_root also
-pkg_name=amanda-$buildtype
+pkg_name=amanda
 . ./packaging/common/build_functions.sh
 
 # create version files from top ...

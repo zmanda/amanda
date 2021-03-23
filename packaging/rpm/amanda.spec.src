@@ -6,16 +6,16 @@
 #  modify it under the terms of the GNU General Public License
 #  as published by the Free Software Foundation; either version 2
 #  of the License, or (at your option) any later version.
-# 
+#
 #  This program is distributed in the hope that it will be useful, but
 #  WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
 #  or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 #  for more details.
-# 
+#
 #  You should have received a copy of the GNU General Public License along
 #  with this program; if not, write to the Free Software Foundation, Inc.,
 #  59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
-# 
+#
 #  Contact information: Carbonite Inc., 756 N Pastoria Ave
 #  Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 #
@@ -26,7 +26,7 @@
 
 # Pkg-config sometimes needs its own path set, and we need to allow users to
 # override our guess during detection.  This macro takes care of that.
-# If no --define PKG_CONFIG_PATH was passed and env var $PKG_CONFIG_PATH is 
+# If no --define PKG_CONFIG_PATH was passed and env var $PKG_CONFIG_PATH is
 # set then use the env var.
 %{!?PKG_CONFIG_PATH: %{expand:%(echo ${PKG_CONFIG_PATH:+"%%define PKG_CONFIG_PATH $PKG_CONFIG_PATH"})}}
 
@@ -34,127 +34,22 @@
 # like rhel3 and sles9 can't.
 %define enable_as_needed --enable-as-needed
 
+%define curl libcurl
+
+%define dist       %%PKG_DIST%%
+%define distver    %%PKG_DISTVER%%
+%define disttag    %(A="%%PKG_SUFFIX%%"; A="${A#.}"; echo ${A%%%%.*})
+
 # Define which Distribution we are building:
 # Try to detect the distribution we are building:
 %if %{_vendor} == amazon
     %define dist amazon
-    %define disttag amzn
     %define distver 1
-    %define curl libcurl
-%endif
-%if %{_vendor} == redhat
-    # Fedora symlinks /etc/fedora-release to /etc/redhat-release for at least
-    # fc3-8.  So RHEL and Fedora look at the same file.  Different versions have
-    # different numbers of spaces; hence the use of $3 vs. $4..
-    %if %(awk '$1 == "Fedora" { exit 1; }' /etc/redhat-release; echo $?)
-        %define dist fedora
-        %define disttag fc
-        %define distver %(awk '{print $4}' /etc/redhat-release)
-    %endif
-    # if macro cannot have an empty test and we're just testing the existance
-    %if %{?fedora:yes}%{!?fedora:no} == yes
-        # In theory this should be more reliable than awking for distver.
-        %define distver %{fedora}
-    %endif
-    %if "%{dist}" == "fedora"
-	%if %{distver} <= 8
-	    %define requires_libtermcap Requires: libtermcap.so.2
-	    %define curl curl
-	%endif
-	%if %{distver} >= 9
-	    %define curl libcurl
-	%endif
-        %if %{_host_cpu} == x86_64 && %{_target_cpu} == i686
-                # Do nothing if PKG_CONFIG_PATH was set by the user above.
-                %{!?PKG_CONFIG_PATH: %define PKG_CONFIG_PATH /usr/lib/pkgconfig}
-        %endif
-    %endif
-    %if %(awk '$1 == "Red" && $7 ~ /3.*/ { exit 1; }' /etc/redhat-release; echo $?)
-        %define dist redhat
-        %define disttag rhel
-        %define distver 3
-        %define tarver 1.14
-	%define requires_libtermcap Requires: libtermcap.so.2
-	%define curl curl
-	%define without_ipv6 --without-ipv6
-	%undefine enable_as_needed
-        %define prereq_sharutils PreReq: sharutils
-    %endif
-    %if %(awk '$1 == "Red" && $7 ~ /4.*/ { exit 1; }' /etc/redhat-release; echo $?)
-        %define dist redhat
-        %define disttag rhel
-        %define distver 4
-        %define tarver 1.14
-	%define requires_libtermcap Requires: libtermcap.so.2
-	%define curl curl
-        %define prereq_sharutils PreReq: sharutils
-    %endif
-    %if %(awk '$1 == "CentOS" && $3 ~ /4.*/ { exit 1; }' /etc/redhat-release; echo $?)
-	%define dist redhat
-	%define disttag rhel
-	%define distver 4
-	%define tarver 1.14
-	%define requires_libtermcap Requires: libtermcap.so.2
-	%define curl curl
-        %define prereq_sharutils PreReq: sharutils
-    %endif
-    %if %(awk '$1 == "Red" && $7 ~ /5.*/ { exit 1; }' /etc/redhat-release; echo $?)
-        %define dist redhat
-        %define disttag rhel
-        %define distver 5
-	%define curl curl
-    %endif
-    %if %(awk '$1 == "CentOS" && $3 ~ /5.*/ { exit 1; }' /etc/redhat-release; echo $?)
-        %define dist redhat
-        %define disttag rhel
-        %define distver 5
-	%define curl curl
-    %endif
-    %if %(awk '$1 == "Red" && $7 ~ /6.*/ { exit 1; }' /etc/redhat-release; echo $?)
-        %define dist redhat
-        %define disttag rhel
-        %define distver 6
-	%define curl libcurl
-    %endif
-    %if %(awk '$1 == "CentOS" && $4 ~ /6.*/ { exit 1; }' /etc/redhat-release; echo $?)
-        %define dist redhat
-        %define disttag rhel
-        %define distver 6
-	%define curl curl
-    %endif
-    %if %(awk '$1 == "CentOS" && $4 ~ /7.*/ { exit 1; }' /etc/redhat-release; echo $?)
-        %define dist redhat
-        %define disttag rhel
-        %define distver 7
-	%define curl libcurl
-    %endif
-    %if %(awk '$1 == "Red" && $7 ~ /7.*/ { exit 1; }' /etc/redhat-release; echo $?)
-        %define dist redhat
-        %define disttag rhel
-        %define distver 7
-	%define curl libcurl
-    %endif
-   
-    # If dist is undefined, we didn't detect.
-    %{!?dist:%define dist unknown}
-%endif
-# Detect Suse variants.
-%if %{_vendor} == "suse"
-    %define dist SuSE
-    %define disttag %(awk '$1=="openSUSE" { print "suse"; } $1=="SUSE" {$3=="Enterprise" ? TAG="sles" : TAG="suse" ; print TAG}' /etc/SuSE-release)
-    # use printf to be sure rpm gets a number type
-    %define distver %(awk '$1=="openSUSE" { printf("%d", $2); } $1=="SUSE" {$3=="Enterprise" ? VER=$5 : VER=$3 ; printf("%d", VER)}' /etc/SuSE-release)
-    %define curl curl
-    %if %{distver} == 9
-        %undefine enable_as_needed
-    %endif
-    %if %{distver} < 11
-        %define prereq_sharutils PreReq: sharutils
-    %endif
+    %define disttag  amzn
 %endif
 
 # Set options per distribution
-%if %{dist} == redhat || %{dist} == fedora
+%if %{dist} == redhat || %{dist} == centos || %{dist} == fedora
     %define rpm_group Applications/Archiving
     %define requires_initscripts Requires: initscripts
 %endif
@@ -163,7 +58,7 @@
 %endif
 
 # Let's die if we haven't detected the distro. This might save some frustration.
-# RPM does not provide a way to  exit gracefully, hence the tag_to_cause_exit. 
+# RPM does not provide a way to  exit gracefully, hence the tag_to_cause_exit.
 %{!?distver: %{error:"Your distribution and its version were not detected."}; %tag_to_cause_exit }
 # Set minimum tar version if it wasn't set in the per-distro section
 %{!?tarver: %define tarver 1.15}
@@ -186,7 +81,7 @@
 Summary: The Amanda Backup and Archiving System
 Name: amanda
 Version: %{amanda_version}
-%define rpm_release %{amanda_release}.%{disttag}%{distver}
+%define rpm_release %{amanda_release}.%{disttag}
 %if %{build_srpm}
 %define rpm_release %{amanda_release}
 %endif
@@ -195,6 +90,7 @@ Source: %{name}-%{version}.tar.gz
 License: http://wiki.zmanda.com/index.php/Amanda_Copyright
 Vendor: Zmanda, Inc.
 Packager: www.zmanda.com
+Url: http://www.zmanda.com/
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-%{packer}-buildroot
 Group: %{rpm_group}
 # TODO - Need required versions for these:
@@ -209,6 +105,12 @@ BuildRequires: glib2-devel
 BuildRequires: gettext
 BuildRequires: readline
 BuildRequires: docbook-style-xsl
+# xsltproc for manpages
+BuildRequires: libxslt
+# libtoolize for later autotools
+BuildRequires: libtool
+# rpcgen for libndmp
+BuildRequires: /usr/bin/rpcgen
 BuildRequires: swig
 # Note: newer distros have changed most *-devel to lib*-devel, and added a
 # provides tag for backwards compat.
@@ -218,10 +120,19 @@ BuildRequires: %{curl}-devel >= 7.10.0
 BuildRequires: openssl
 BuildRequires: openssl-devel
 BuildRequires: perl(ExtUtils::Embed)
-BuildRequires: mailx
-%{?prereq_sharutils}
+BuildRequires: ncurses-devel
+# BuildRequires: perl(CPAN) perl(Scalar::List::Utils) perl(IO::Socket::SSL)
+# BuildRequires: perl(Carp) perl(Data::Dumper) perl(YAML)
+# BuildRequires: dump
+# BuildRequires: samba-client
+
+%package backup_client
+Summary: The Amanda Backup and Archiving Client
+Group: %{rpm_group}
+#
+# NOTE: Requires are separated out to final packages only...
+#
 Requires: /bin/awk
-Requires: /bin/date
 Requires: /usr/bin/id
 Requires: /sbin/ldconfig
 Requires: /bin/sh
@@ -231,28 +142,16 @@ Requires: coreutils
 Requires: gettext
 Requires: grep
 Requires: gnuplot
+Requires: xinetd
 Requires: %{curl} >= 7.10.0
 Requires: openssl
-Requires: xinetd
 Requires: perl >= 5.6.0
 Requires: tar >= %{tarver}
 Requires: readline
 Requires: mailx
 %{?requires_libtermcap}
 %{?requires_initscripts}
-
-%package backup_client
-Summary: The Amanda Backup and Archiving Client
-Group: %{rpm_group}
-Requires: /bin/awk
-Requires: coreutils
-Requires: grep
-%{?requires_libtermcap}
-%{?requires_initscripts}
-Requires: xinetd
-Requires: perl >= 5.6.0
-Requires: tar >= %{tarver}
-Requires: readline
+Requires: glib2 >= 2.2.0
 Provides: amanda-backup_client = %{amanda_version}
 Provides: libamclient-%{version}.so = %{amanda_version}
 Provides: libamanda-%{version}.so = %{amanda_version}
@@ -264,13 +163,23 @@ Obsoletes: amanda, amanda-client, amanda-server
 Summary: The Amanda Backup and Archiving Server
 Group: %{rpm_group}
 Requires: /bin/awk
+Requires: /usr/bin/id
+Requires: /sbin/ldconfig
+Requires: /bin/sh
+Requires: gettext
 Requires: coreutils
 Requires: grep
+Requires: gnuplot
+Requires: xinetd
+Requires: %{curl} >= 7.10.0
+Requires: openssl
+Requires: perl >= 5.6.0
+Requires: mailx
 %{?requires_libtermcap}
 %{?requires_initscripts}
 Requires: xinetd
-Requires: perl >= 5.6.0
 Requires: tar >= %{tarver}
+Requires: readline
 Provides: amanda-backup_server = %{amanda_version}
 Provides: libamclient-%{version}.so = %{amanda_version}
 Provides: libamanda-%{version}.so = %{amanda_version}
@@ -285,10 +194,10 @@ Obsoletes: amanda, amanda-client, amanda-server
 %description
 Amanda is the leading Open-Source Backup and Archiving software.
 
-The amanda-backup_server package should be installed on the Amanda server, i.e. 
-the machine attached to backup media (such as a tape drive or disk 
+The amanda-backup_server package should be installed on the Amanda server, i.e.
+the machine attached to backup media (such as a tape drive or disk
 drives) where backups will be written. The amanda-backup_server package
-includes Amanda client.  The amanda-backup_client package needs 
+includes Amanda client.  The amanda-backup_client package needs
 to be installed on every system that is being backed up.
 
 Amanda Forums is located at: http://forums.zmanda.com/
@@ -299,9 +208,9 @@ Amanda Documentation is available at: http://wiki.zmanda.com/
 %description backup_server
 Amanda is the leading Open-Source Backup and Archiving software.
 
-This package contains the Amanda server.  The amanda-backup_server package 
-should be installed on the Amanda server, i.e. the machine attached 
-to backup media (such as a tape drive or disk drives) where backups 
+This package contains the Amanda server.  The amanda-backup_server package
+should be installed on the Amanda server, i.e. the machine attached
+to backup media (such as a tape drive or disk drives) where backups
 will be written.  The amanda-backup_server package includes Amanda client.
 
 Amanda Forums is located at: http://forums.zmanda.com/
@@ -312,7 +221,7 @@ Amanda Documentation is available at: http://wiki.zmanda.com/
 %description backup_client
 Amanda is the leading Open-Source Backup and Archiving software.
 
-This package contains the Amanda client.  The amanda-backup_client package  
+This package contains the Amanda client.  The amanda-backup_client package
 needs to be installed on every system that is being backed up.
 
 Amanda Forums is located at: http://forums.zmanda.com/
@@ -360,6 +269,8 @@ Amanda Documentation is available at: http://wiki.zmanda.com/
 
 # --- Unpack ---
 
+# %%define _builddir %%{_topdir}/BUILD/%%{name}-%%{amanda_version}
+
 %prep
 %setup -q
 # --- Configure and compile ---
@@ -381,10 +292,10 @@ find-req-script
 %{__chmod} u+x %{__find_requires}
 
 %build
-%define config_user %{amanda_user}
-%define config_group %{amanda_group}
 
-# Set PKG_CONFIG_PATH=some/path if some/path was set on the command line, or by 
+[ -x ./configure ] || ./autogen
+
+# Set PKG_CONFIG_PATH=some/path if some/path was set on the command line, or by
 # the platform detection bits.
 # without_ipv6 should only be defined on rhel3.
 # LDFLAGS macro is defined except on rhel3.
@@ -402,15 +313,16 @@ find-req-script
         --localstatedir=%{LOCALSTATEDIR} \
         --libdir=%{LIBDIR} \
         --includedir=%{INCLUDEDIR} \
-        --mandir=%{MANDIR} \
-        --enable-manpage-build \
-        --with-amdatadir=%{AMDATADIR} \
+	--mandir=%{MANDIR} \
+	--with-amdatadir=%{AMDATADIR} \
+	--with-amlibdir=%{AMLIBDIR} \
+	--with-amperldir=%{PERLLIBDIR} \
         --with-gnuplot=/usr/bin/gnuplot \
         --with-gnutar-listdir=%{AMANDAHOMEDIR}/gnutar-lists \
         --with-index-server=localhost \
         --with-tape-server=localhost \
-        --with-user=%{config_user} \
-        --with-group=%{config_group} \
+        --with-user=%{amanda_user} \
+        --with-group=%{amanda_group} \
         --with-owner=%{packer} \
         --with-fqdn \
         --with-bsd-security \
@@ -420,10 +332,13 @@ find-req-script
         --with-ssl-security \
         --with-debugging=%{LOGDIR} \
         --with-assertions \
+        --with-failure-code \
         --disable-installperms \
+        --enable-manpage-build \
         %{?without_ipv6}
 
-make -s LIBTOOLFLAGS=--silent
+# -s LIBTOOLFLAGS=--silent
+make -j$(nproc)
 
 # --- Install to buildroot ---
 
@@ -437,7 +352,8 @@ else
         exit -1
 fi
 
-make -s -j1 LIBTOOLFLAGS=--silent DESTDIR=%{buildroot} install
+# -s LIBTOOLFLAGS=--silent
+make -j1 DESTDIR=%{buildroot} install
 
 rm -f %{ROOT_AMANDAHOMEDIR}/example/inetd.conf.amandaclient
 mkdir -p %{buildroot}/{etc,var/log}
@@ -447,8 +363,6 @@ mkdir -p %{ROOT_AMANDAHOMEDIR}/gnutar-lists
 mkdir -p %{ROOT_LOGDIR}
 
 echo "%{amanda_version_info}" >%{ROOT_AMANDAHOMEDIR}/amanda-release
-
-install -m 644 %{ROOT_SYSCONFDIR}/amanda/amanda-security.conf %{ROOT_SYSCONFDIR}
 # --- Clean up buildroot ---
 
 %clean
@@ -639,7 +553,7 @@ fi
 %%PRE_INST_FUNCTIONS%%
 
 # -------- End Common functions ----------
-logger "Preparing to install: %{amanda_version_info}" 
+logger "Preparing to install: %{amanda_version_info}"
 create_user
 check_user_group "${amanda_group}" || add_group "${amanda_group}"
 check_user_shell "${wanted_shell}"
@@ -712,8 +626,8 @@ cat $LOGFILE >> $INSTALL_LOG && {
     echo "Amanda postinstall logs can be found in '$LOGFILE'."
 
 echo "`date +'%b %e %Y %T'`: Sending anonymous distribution and version information to Zmanda" >> ${INSTALL_LOG}
-if [ -x /usr/bin/wget ]; then 
-        /usr/bin/wget -q -o /dev/null -O - --timeout=5 http://www.zmanda.com/amanda-tips.php\?version=%{amanda_version}\&os=%{disttag}%{distver}\&type=client 
+if [ -x /usr/bin/wget ]; then
+        /usr/bin/wget -q -o /dev/null -O - --timeout=5 http://www.zmanda.com/amanda-tips.php\?version=%{amanda_version}\&os=%{disttag}%{distver}\&type=client
 fi
 
 %postun backup_client
@@ -819,7 +733,6 @@ fi
 %doc %{AMANDAHOMEDIR}/template.d/README
 %doc %{AMANDAHOMEDIR}/template.d/dumptypes
 %defattr(0644,root,root,0755)
-%config(noreplace) %{SYSCONFDIR}/amanda-security.conf
 %docdir %{MANDIR}
 %{MANDIR}/man5/amanda.conf.5.gz
 %{MANDIR}/man5/amanda-client.conf.5.gz
@@ -873,7 +786,6 @@ fi
 %docdir %{AMANDAHOMEDIR}/example
 %docdir %{AMANDAHOMEDIR}/template.d
 %defattr(0644,root,root,0755)
-%config(noreplace) %{SYSCONFDIR}/amanda-security.conf
 %docdir %{MANDIR}
 %{MANDIR}/man5/am*
 %{MANDIR}/man5/disklist.5.gz
