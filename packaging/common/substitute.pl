@@ -71,8 +71,12 @@ sub find_platform_info {
     my $rpmarch = get_arch();
     my $debarch = get_debian_pkg_arch();
 
-    if ( $rpmarch !~ m{x86_64|amd64|i686|i386} || $debarch !~ m{x86_64|amd64|i686|i386} ) {
-        print STDERR "ERROR: get_platform_info(): did not find arch \"$rpmarch\" or \"$debarch\"\n"; 
+    if ( $rpmarch && $rpmarch !~ m{x86_64|amd64|i686|i386} ) {
+        print STDERR "ERROR: get_platform_info(): did not find rpm arch \"$rpmarch\"\n"; 
+        return [];
+    }
+    if ( $debarch && $debarch !~ m{x86_64|amd64|i686|i386} ) {
+        print STDERR "ERROR: get_platform_info(): did not find deb arch \"$debarch\"\n"; 
         return [];
     }
 
