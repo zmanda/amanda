@@ -47,6 +47,7 @@ AC_CONFIG_FILES([
     man/Makefile
     ndmp-src/Makefile
     oldrecover-src/Makefile
+    packaging/Makefile
     perl/amglue/Makefile
     perl/Makefile
     po/Makefile
