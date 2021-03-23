@@ -44,8 +44,9 @@ SUBDIRS = . \
 	po \
 	man \
 	example \
-	packaging \
-	installcheck
+	systemd-startup
+
+#	installcheck
 
 pkgdata_DATA = \
 	ReleaseNotes	\

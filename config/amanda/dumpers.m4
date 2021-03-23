@@ -49,7 +49,7 @@ AC_DEFUN([AMANDA_PROG_GNUTAR],
         else
 	    OLD_GNUTAR=$GNUTAR
 	    for gnutar_name in gtar gnutar tar; do
-	        AC_PATH_PROGS(GNUTAR, $gnutar_name, , $LOCSYSPATH)
+	        AC_PATH_PROGS(GNUTAR, $gnutar_name, , $SYSLOCPATH)
 	        if test -n "$GNUTAR"; then
 	            case `"$GNUTAR" --version 2>&1` in
 	              *GNU*tar* | *Free*paxutils* )
@@ -69,17 +69,20 @@ AC_DEFUN([AMANDA_PROG_GNUTAR],
         fi
     fi
 
+    if test "x$GNUTAR" = "x" -a "x$BASH_VERSION" != "x"; then
+	GNUTAR=$(PATH="/bin:${PATH}" command -v tar)
+    fi
     if test "x$GNUTAR" = "x"; then
-	GNUTAR='/usr/bin/tar'
+	GNUTAR='/bin/tar'
     fi
     if test "x$GNUTAR" != "x"; then
-	# find the realpath
-	if test "x$REALPATH" != "x"; then
-	    GNUTAR=`$REALPATH $GNUTAR 2>&1`
-	else if test "x$AM_READLINK" != "x"; then
-	    GNUTAR=`$AM_READLINK -e $GNUTAR 2>&1`
-	fi
-	fi
+	# DONT find the realpath
+	#if test "x$REALPATH" != "x"; then
+	#    GNUTAR=`$REALPATH $GNUTAR 2>&1`
+	#else if test "x$AM_READLINK" != "x"; then
+	#    GNUTAR=`$AM_READLINK -e $GNUTAR 2>&1`
+	#fi
+	#fi
 	# define unquoted
 	AC_DEFINE_UNQUOTED(GNUTAR, "$GNUTAR", [Location of the GNU 'tar' binary])
     fi
@@ -123,6 +126,7 @@ AC_DEFUN([AMANDA_PROG_STAR],
 	STAR=
     else
 	OLD_STAR=$STAR
+        # prefer /usr/bin /usr/sbin
 	AC_PATH_PROGS(STAR, star, , $LOCSYSPATH)
 	if test -n "$STAR"; then
 	    case `"$STAR" --version 2>/dev/null` in
@@ -145,17 +149,20 @@ AC_DEFUN([AMANDA_PROG_STAR],
 	fi
     fi
 
+    if test "x$STAR" = "x" -a "x$BASH_VERSION" != "x"; then
+	STAR=$(PATH="/bin:${PATH}" command -v star)
+    fi
     if test "x$STAR" = "x"; then
-	STAR='/usr/bin/star'
+	STAR='/bin/star'
     fi
     if test "x$STAR" != "x"; then
-	# find the realpath
-	if test "x$REALPATH" != "x"; then
-	    STAR=`$REALPATH $STAR 2>&1`
-	else if test "x$AM_READLINK" != "x"; then
-	    GNUTAR=`$AM_READLINK -e $GNUTAR 2>&1`
-	fi
-	fi
+	# DONT find the realpath
+	#if test "x$REALPATH" != "x"; then
+	#    STAR=`$REALPATH $STAR 2>&1`
+	#else if test "x$AM_READLINK" != "x"; then
+	#    GNUTAR=`$AM_READLINK -e $GNUTAR 2>&1`
+	#fi
+	#fi
 	# define unquoted
 	AC_DEFINE_UNQUOTED(STAR, "$STAR", [Location of the 'star' binary])
     fi
@@ -200,6 +207,7 @@ AC_DEFUN([AMANDA_PROG_BSDTAR],
     else
 	OLD_BSDTAR=$BSDTAR
 	if test "x$BSDTAR" = "x"; then
+            # prefer /usr/bin /usr/sbin
 	    AC_PATH_PROGS(BSDTAR, bsdtar, , $LOCSYSPATH)
 	fi
 	if test -n "$BSDTAR"; then
@@ -220,6 +228,7 @@ AC_DEFUN([AMANDA_PROG_BSDTAR],
 	    esac
 	fi
 	if test "x$BSDTAR" = "x"; then
+            # prefer /usr/bin /usr/sbin
 	    AC_PATH_PROGS(BSDTAR, tar, , $LOCSYSPATH)
 	    if test -n "$BSDTAR"; then
 		case `"$BSDTAR" --version 2>/dev/null` in
@@ -234,17 +243,20 @@ AC_DEFUN([AMANDA_PROG_BSDTAR],
 	fi
     fi
 
+    if test "x$BSDTAR" = "x" -a "x$BASH_VERSION" != "x"; then
+	BSDTAR=$(PATH="/bin:${PATH}" command -v bsdtar)
+    fi
     if test "x$BSDTAR" = "x"; then
-	BSDTAR='/usr/bin/bsdtar'
+	BSDTAR='/bin/bsdtar'
     fi
     if test "x$BSDTAR" != "x"; then
-	# find the realpath
-	if test "x$REALPATH" != "x"; then
-	    BSDTAR=`$REALPATH $BSDTAR 2>&1`
-	else if test "x$AM_READLINK" != "x"; then
-	    GNUTAR=`$AM_READLINK -e $GNUTAR 2>&1`
-	fi
-	fi
+	# DONT find the realpath
+	#if test "x$REALPATH" != "x"; then
+	#    BSDTAR=`$REALPATH $BSDTAR 2>&1`
+	#else if test "x$AM_READLINK" != "x"; then
+	#    GNUTAR=`$AM_READLINK -e $GNUTAR 2>&1`
+	#fi
+	#fi
 	# define unquoted
 	AC_DEFINE_UNQUOTED(BSDTAR, "$BSDTAR", [Location of the 'bsdtar' binary])
     fi
@@ -294,13 +306,13 @@ AC_DEFUN([AMANDA_PROG_SUNTAR],
     fi
 
     if test "x$SUNTAR" != "x"; then
-	# find the realpath
-	if test "x$REALPATH" != "x"; then
-	    SUNTAR=`$REALPATH $SUNTAR 2>&1`
-	else if test "x$AM_READLINK" != "x"; then
-	    GNUTAR=`$AM_READLINK -e $GNUTAR 2>&1`
-	fi
-	fi
+	# DONT find the realpath
+	#if test "x$REALPATH" != "x"; then
+	#    SUNTAR=`$REALPATH $SUNTAR 2>&1`
+	#else if test "x$AM_READLINK" != "x"; then
+	#    GNUTAR=`$AM_READLINK -e $GNUTAR 2>&1`
+	#fi
+	#fi
 	# define unquoted
 	AC_DEFINE_UNQUOTED(SUNTAR, "$SUNTAR", [Location of the 'suntar' binary])
     fi
@@ -348,6 +360,7 @@ AC_DEFUN([AMANDA_PROG_SAMBA_CLIENT],
     )
 
     if test "x$SAMBA_CLIENT" != "xno"; then
+      # prefer /usr/bin /usr/sbin
       AC_PATH_PROG(SAMBA_CLIENT,smbclient,,$LOCSYSPATH)
       smbversion=0
       if test ! -z "$SAMBA_CLIENT"; then

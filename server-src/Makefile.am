@@ -20,11 +20,13 @@ LINTFLAGS=$(AMLINTFLAGS)
 
 amlib_LTLIBRARIES = 	libamserver.la
 
+if WANT_SERVER
 sbin_PROGRAMS =		amadmin		amcheck
 
 amlibexec_PROGRAMS =	amindexd	amtrmidx	\
 			amtrmlog	driver		dumper		\
 			planner
+endif
 
 amlibexec_SCRIPTS_PERL = \
 	    amadmin_perl \
@@ -73,11 +75,12 @@ endif
 sbin_SCRIPTS_SHELL = \
 	    amcheckdb
 
-
+if WANT_SERVER
 SCRIPTS_PERL = $(sbin_SCRIPTS_PERL) $(amlibexec_SCRIPTS_PERL)
 SCRIPTS_SHELL = $(sbin_SCRIPTS_SHELL) $(amlibexec_SCRIPTS_SHELL)
 sbin_SCRIPTS = $(sbin_SCRIPTS_PERL) $(sbin_SCRIPTS_SHELL)
 amlibexec_SCRIPTS = $(amlibexec_SCRIPTS_PERL) $(amlibexec_SCRIPTS_SHELL)
+endif
 
 ###
 # Because libamanda includes routines (e.g. regex) provided by some system
@@ -91,7 +94,7 @@ LDADD = \
 	../device-src/libamdevice.la     \
 	../xfer-src/libamxfer.la         \
 	../ndmp-src/libndmlib.la         \
-	../common-src/libamanda.la   \
+	../common-src/libamanda.la       \
 	-lm
 
 libamserver_la_SOURCES=	amindex.c	cmdfile.c \
@@ -100,7 +103,7 @@ libamserver_la_SOURCES=	amindex.c	cmdfile.c \
 			tapefile.c	find.c		server_util.c   \
                         xfer-dest-holding.c		xfer-source-holding.c
 
-libamserver_la_LDFLAGS= -release $(VERSION) $(AS_NEEDED_FLAGS)
+libamserver_la_LDFLAGS= -release $(SO_VERSION) $(AS_NEEDED_FLAGS)
 libamserver_la_LIBADD= ../device-src/libamdevice.la \
 		       ../common-src/libamanda.la
 

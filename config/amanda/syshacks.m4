@@ -72,9 +72,10 @@ AC_DEFUN([AMANDA_SYSHACKS], [
 		    ;;
         *-sgi-irix6*)
 		    ;;
-        *-solaris2.11)
-                    ;;
-        *-solaris2*)
+        *-solaris2.[0-9])
+		    AMANDA_ADD_CFLAGS([-D_XOPEN_SOURCE=1 -D_XOPEN_SOURCE_EXTENDED=1])
+		    ;;
+        *-solaris2.10)
 		    AMANDA_ADD_CFLAGS([-D_XOPEN_SOURCE=1 -D_XOPEN_SOURCE_EXTENDED=1])
 		    ;;
         *-sun-sunos4.1*)

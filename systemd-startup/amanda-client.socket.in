@@ -41,4 +41,3 @@ MaxConnections=3
 [Install]
 # started at boot time
 WantedBy=sockets.target
-Alias=amanda-client.socket

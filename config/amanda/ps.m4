@@ -3,7 +3,7 @@
 #
 AC_DEFUN([AMANDA_PS_ARGUMENT],
 [
-    AC_PATH_PROG(PS, ps)
+    AC_PATH_PROG(PS, ps,,$SYSLOCPATH)
     AC_MSG_CHECKING([ps argument to use])
     PS_ARGUMENT=
 
