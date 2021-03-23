@@ -1,0 +1,52 @@
+[Unit]
+Description=Amanda Backup Server Socket
+# delayed if no network active
+After=network-online.target
+
+[Socket]
+# user/group is not necessary...
+SocketUser=@CLIENT_LOGIN@
+SocketGroup=@SETUID_GROUP@
+SocketMode=0600
+ListenStream=10080
+ListenStream=@amdatadir@/amandad.sock
+##SELinuxContext=system_u:system_r:amanda_data_t:s0
+#
+# chmod is ridiculous ... but it allows init_t:s0 creation of the socket
+ExecStartPre=/bin/chmod 757 /var/lib/amanda
+ExecStartPost=/bin/chmod 750 /var/lib/amanda
+# chmod is ridiculous ... but it allows init_t:s0 removal of the socket
+ExecStopPre=/bin/chmod 757 /var/lib/amanda
+ExecStopPost=/bin/chmod 750 /var/lib/amanda
+Accept=yes
+KeepAlive=true
+RemoveOnStop=yes
+#
+# dont wait two hours
+#
+KeepAliveTimeSec=120
+#KeepAliveIntervalSec=75
+#KeepAliveProbes=9
+#
+# speed up unreplied bursts
+#
+NoDelay=true
+#
+# set TOS for TCP outputs if needed (0-6 only normally allowed)
+#
+#Priority= 
+#
+# keep the daemon asleep until real data arrives
+#
+DeferAcceptSec=5
+#ReceiveBuffer=
+#SendBuffer=
+IPTOS=throughput
+ReusePort=false
+#SELinuxContextFromNet=
+#TCPCongestion=bbr
+MaxConnections=10
+
+[Install]
+Alias=amanda-server.socket
+WantedBy=sockets.target

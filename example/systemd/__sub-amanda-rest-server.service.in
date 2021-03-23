@@ -1,0 +1,33 @@
+[Unit]
+Description=Amanda Backup Rest Service
+ConditionPathExists=/etc/amanda/amanda.conf
+ConditionPathExists=@amdatadir@
+
+[Service]
+Type=forking
+User=@CLIENT_LOGIN@
+Group=@SETUID_GROUP@
+WorkingDirectory=@amdatadir@
+# pretty fast restart time
+RestartSec=20
+Restart=on-failure
+PermissionsStartOnly=yes
+#
+# chmod is ridiculous ... but it allows init_t:s0 creation of the socket
+ExecStartPre=/bin/chmod 757 /var/lib/amanda
+ExecStartPre=/bin/rm -f $PIDFile @amdatadir@/rest.sock
+ExecStartPre=/bin/mkdir -p @amdatadir@
+ExecStart=/usr/sbin/amanda-rest-server start
+#
+# must provide a delay before giving up
+ExecStartPost=/bin/bash -xvc "for i in 1 2 3 4 5; do [ -s @amdatadir@/tmp/rest-api-pid ] && break; sleep 1; done"
+ExecStartPost=/bin/chmod 750 /var/lib/amanda
+
+ExecStop=/bin/su amandabackup -c '/usr/sbin/amanda-rest-server stop'
+PIDFile=@amdatadir@/tmp/rest-api-pid
+PrivateTmp=true
+
+[Install]
+# starts at boot (for all cmdline tools)
+WantedBy=sockets.target
+Alias=amanda-rest-server.service

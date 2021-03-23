@@ -3,6 +3,8 @@
 include $(top_srcdir)/config/automake/vars.am
 include $(top_srcdir)/config/automake/installperms.am
 
+SUBDIRS = systemd
+
 amanda_dir    = $(amdatadir)
 templatedir   = $(amanda_dir)/template.d
 server_exampledir    = $(amanda_dir)/example

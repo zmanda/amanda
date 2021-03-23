@@ -43,8 +43,7 @@ SUBDIRS = . \
 	perl \
 	po \
 	man \
-	example \
-	systemd-startup
+	example
 
 #	installcheck
 
