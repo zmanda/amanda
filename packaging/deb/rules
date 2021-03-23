@@ -15,25 +15,24 @@ AMVER=`cat FULL_VERSION`
 # places during configure, build, and install.
 PREFIX=/usr
 BINDIR=$(PREFIX)/bin
-triplet := $(shell dpkg-architecture -qDEB_HOST_MULTIARCH)
-ifeq ($(triplet),x86_64-linux-gnu)
-LIBDIR=$(PREFIX)/lib/$(triplet)
-else
 LIBDIR=$(PREFIX)/lib
-endif
-AMLIBDIR=$(LIBDIR)/amanda
 LIBEXECDIR=$(LIBDIR)
 AMLIBEXECDIR=$(LIBEXECDIR)/amanda
+# must be architecture-specific ...
+SHLIBDIR=$(PREFIX)/lib/$(shell dpkg-architecture -qDEB_HOST_MULTIARCH)
 MANDIR=$(PREFIX)/share/man
 DOCDIR=$(PREFIX)/share/doc
 SYSCONFDIR=/etc
 LOCALSTATEDIR=/var
 AMANDAHOMEDIR=$(LOCALSTATEDIR)/lib/amanda
 LOGDIR=$(LOCALSTATEDIR)/log/amanda
-# Extract the perl site_lib directory.  This is used to install amanda's perl 
+# Extract the perl directory.  This is used to install amanda's perl 
 # libs. If configure finds a different install or you specify a different path using
-# --with-amperldir= make sure you change this variable as well.
-PERLSITELIB=$(shell perl -V:installsitelib|sed -e"s:installsitelib='/::;s:'\;::")
+# --with-amperldir= make sure you change this variable in the config dirs.m4 as well.
+# NOTE: perl -V:varname emits a final ";".   Don't let it match to make ";;".
+PERLVENDORARCH=$(shell eval "$$(perl -V:installvendorarch)"; echo $$installvendorarch)
+PERLSITEARCH=$(shell eval "$$(perl -V:installsitearch)"; echo $$installsitearch)
+PERLLIBDIR=$(PERLVENDORARCH)
 AMANDAUSER=amandabackup
 AMANDAGROUP=disk
 WITHOUT_SERVER="False"
@@ -67,13 +66,14 @@ build-stamp: /sbin/dump /usr/bin/smbclient
 		--host=$(DEB_HOST_GNU_TYPE) \
 		--build=$(DEB_BUILD_GNU_TYPE) \
 		--prefix=$(PREFIX) \
-		--libdir=$(LIBDIR) \
+		--libdir=$(SHLIBDIR) \
 		--bindir=$(BINDIR) \
 		--mandir=$(MANDIR) \
 		--libexecdir=$(LIBEXECDIR) \
 		--enable-shared \
 		--sysconfdir=$(SYSCONFDIR) \
 		--localstatedir=$(LOCALSTATEDIR) \
+		--with-amperldir=$(PERLLIBDIR) \
 		--with-amdatadir=$(AMANDAHOMEDIR) \
 		--with-gnutar-listdir=$(AMANDAHOMEDIR)/gnutar-lists \
 		--with-index-server=localhost \
