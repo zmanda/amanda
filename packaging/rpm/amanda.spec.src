@@ -295,7 +295,7 @@ find-req-script
 
 [ -x ./configure ] || ./autogen
 
-# Set PKG_CONFIG_PATH=some/path if some/path was set on the command line, or by 
+# Set PKG_CONFIG_PATH=some/path if some/path was set on the command line, or by
 # the platform detection bits.
 # without_ipv6 should only be defined on rhel3.
 # LDFLAGS macro is defined except on rhel3.
@@ -338,7 +338,7 @@ find-req-script
         %{?without_ipv6}
 
 # -s LIBTOOLFLAGS=--silent
-make -j$(nproc) 
+make -j$(nproc)
 
 # --- Install to buildroot ---
 
@@ -352,7 +352,7 @@ else
         exit -1
 fi
 
-# -s LIBTOOLFLAGS=--silent 
+# -s LIBTOOLFLAGS=--silent
 make -j1 DESTDIR=%{buildroot} install
 
 rm -f %{ROOT_AMANDAHOMEDIR}/example/inetd.conf.amandaclient
@@ -363,8 +363,6 @@ mkdir -p %{ROOT_AMANDAHOMEDIR}/gnutar-lists
 mkdir -p %{ROOT_LOGDIR}
 
 echo "%{amanda_version_info}" >%{ROOT_AMANDAHOMEDIR}/amanda-release
-
-install -m 644 %{ROOT_SYSCONFDIR}/amanda/amanda-security.conf %{ROOT_SYSCONFDIR}
 # --- Clean up buildroot ---
 
 %clean
@@ -735,7 +733,6 @@ fi
 %doc %{AMANDAHOMEDIR}/template.d/README
 %doc %{AMANDAHOMEDIR}/template.d/dumptypes
 %defattr(0644,root,root,0755)
-%config(noreplace) %{SYSCONFDIR}/amanda-security.conf
 %docdir %{MANDIR}
 %{MANDIR}/man5/amanda.conf.5.gz
 %{MANDIR}/man5/amanda-client.conf.5.gz
@@ -789,7 +786,6 @@ fi
 %docdir %{AMANDAHOMEDIR}/example
 %docdir %{AMANDAHOMEDIR}/template.d
 %defattr(0644,root,root,0755)
-%config(noreplace) %{SYSCONFDIR}/amanda-security.conf
 %docdir %{MANDIR}
 %{MANDIR}/man5/am*
 %{MANDIR}/man5/disklist.5.gz
