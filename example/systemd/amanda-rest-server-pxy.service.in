@@ -3,11 +3,11 @@ Description=Amanda Rest Server Proxy
 # just fail if missing...
 ConditionPathExists=@amdatadir@/amanda-rest.sock
 # starts up, waits for but can be stopped by ...
-BindsTo=amanda-rest-server-pxy.socket
-BindsTo=amanda-rest-server.service
+BindsTo=__sub-amanda-rest-server-pxy.socket
+BindsTo=__sub-amanda-rest-server.service
 After=network-online.target
-After=amanda-rest-server.service
-After=amanda-rest-server-pxy.socket
+After=__sub-amanda-rest-server.service
+After=__sub-amanda-rest-server-pxy.socket
 
 [Service]
 User=@CLIENT_LOGIN@
@@ -16,3 +16,4 @@ ExecStart=/usr/lib/systemd/systemd-socket-proxyd @amdatadir@/amanda-rest.sock
 PrivateTmp=yes
 
 [Install]
+Alias=amanda-rest-server-pxy.service

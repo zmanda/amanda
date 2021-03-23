@@ -30,3 +30,4 @@ PrivateTmp=true
 [Install]
 # starts at boot (for all cmdline tools)
 WantedBy=sockets.target
+Alias=amanda-rest-server.service

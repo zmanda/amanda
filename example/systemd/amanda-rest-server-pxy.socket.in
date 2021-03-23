@@ -1,7 +1,7 @@
 [Unit]
 Description=Amanda Backup Server Socket
 # sends starts or restarts to
-BindsTo=amanda-rest-server.service
+BindsTo=__sub-amanda-rest-server.service
 # delayed if no network active
 After=network-online.target
 
@@ -13,5 +13,6 @@ Accept=no
 MaxConnections=5
 
 [Install]
+Alias=amanda-rest-server-pxy.socket
 # receives starts from ..
-RequiredBy=amanda-rest-server.service
+RequiredBy=__sub-amanda-rest-server.service

@@ -48,4 +48,5 @@ ReusePort=false
 MaxConnections=10
 
 [Install]
+Alias=amanda-server.socket
 WantedBy=sockets.target
