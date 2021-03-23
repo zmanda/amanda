@@ -55,7 +55,6 @@ WD=$(CWD)
 build: build-stamp
 build-stamp: /sbin/dump /usr/bin/smbclient
 	dh_testdir
-	[ -f ./configure ] || ./autogen
 	./configure \
 		MAKEFLAGS="-j1 " \
 		CFLAGS="-pipe " \
@@ -66,14 +65,13 @@ build-stamp: /sbin/dump /usr/bin/smbclient
 		--host=$(DEB_HOST_GNU_TYPE) \
 		--build=$(DEB_BUILD_GNU_TYPE) \
 		--prefix=$(PREFIX) \
-		--libdir=$(SHLIBDIR) \
+		--libdir=$(LIBDIR) \
 		--bindir=$(BINDIR) \
 		--mandir=$(MANDIR) \
 		--libexecdir=$(LIBEXECDIR) \
 		--enable-shared \
 		--sysconfdir=$(SYSCONFDIR) \
 		--localstatedir=$(LOCALSTATEDIR) \
-		--with-amperldir=$(PERLLIBDIR) \
 		--with-amdatadir=$(AMANDAHOMEDIR) \
 		--with-gnutar-listdir=$(AMANDAHOMEDIR)/gnutar-lists \
 		--with-index-server=localhost \
