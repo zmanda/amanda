@@ -286,7 +286,7 @@ sub _scan {
 	    $action = Amanda::ScanInventory::SCAN_LOAD;
 	    $action_slot = $self->{'use_sl'}->{'slot'};
 	} elsif ($self->{'scan_conf'}->{'ask'}) {
-	    $action = Amanda::ScanInventory::SCAN_ASK_POLL;
+	    $action = Amanda::ScanInventory::SCAN_ASK;
 	} else {
 	    $action = Amanda::ScanInventory::SCAN_FAIL;
 	}
