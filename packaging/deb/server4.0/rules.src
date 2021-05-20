@@ -3,13 +3,17 @@
 SHELL = /bin/bash -x
 #
 #
-SRCDIR			  := $(shell pwd -P)
+THIS_MAKE_ORIG := $(lastword $(MAKEFILE_LIST))
+THIS_MAKE := $(readlink -e $(TOP_MAKE_ORIG))
+TOP_MAKE_DIR := $(dir $(TOP_MAKE))
+
+SRCDIR := $(shell readlink -e $${PWD})
 # Uncomment this to turn on verbose mode.
 export DH_VERBOSE=1
 
 AMVER=%%VERSION%%
 
-BITROCK_DIR=%%INSTALL_TOPDIR%%
+INSTALL_TOPDIR=%%INSTALL_TOPDIR%%
 AMANDAHOMEDIR=$(LOCALSTATEDIR)/lib/amanda
 BUILD_TOPDIR=$(SRCDIR)
 # Comment this to disable silent make.
@@ -19,20 +23,13 @@ CC := $(shell command -v gcc)
 
 GCC_TARGET := $(shell $(CC) -dumpmachine | tr -d '\n')
 
-ifeq ($(findstring x86_64,$(GCC_TARGET)),x86_64)
 LIBARCHDIR=lib/$(GCC_TARGET)
-# 64 bit... no more needed
-# LIBARCHDIR=lib/x86_64-linux-gnu
-else
-LIBARCHDIR=lib/$(GCC_TARGET)
-# 32 bit... no more needed
-# LIBARCHDIR=lib/i586-linux-gnu
-endif
-
 
 HOST_GNU_TYPE   = $(GCC_TARGET)
 BUILD_GNU_TYPE  = $(GCC_TARGET)
 
+# These are used for cross-compiling and for saving the configure script
+# from having to guess our platform (since we know it already)
 DEB_HOST_GNU_TYPE   ?= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
 DEB_BUILD_GNU_TYPE  ?= $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
 
@@ -40,6 +37,7 @@ DEB_BUILD_GNU_TYPE  ?= $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
 # places during configure, build, and install.
 PREFIX=/usr
 BINDIR=$(PREFIX)/bin
+SBINDIR=$(PREFIX)/sbin
 LIBDIR=$(PREFIX)/lib
 LIBEXECDIR=$(LIBDIR)
 AMLIBEXECDIR=$(LIBEXECDIR)/amanda
@@ -49,42 +47,57 @@ AMLIBDIR=$(SHLIBDIR)/amanda
 MANDIR=$(PREFIX)/share/man
 DOCDIR=$(PREFIX)/share/doc
 SYSCONFDIR=/etc
-AMANDATES=$(SYSCONFDIR)/amandates
+AMCONFDIR=$(SYSCONFDIR)/amanda
+AMANDATES=$(AMANDAHOMEDIR)/amandates
 LOCALSTATEDIR=/var
-LOGDIR=$(LOCALSTATEDIR)/log/amanda
+LOGDIR=%%LOGDIR%%
+
+# Extract the perl directory.  This is used to install amanda's perl 
+# libs. If configure finds a different install or you specify a different path using
+# --with-amperldir= make sure you change this variable in the config dirs.m4 as well.
+# NOTE: perl -V:varname emits a final ";".   Don't let it match to make ";;".
+# PERLVENDORARCH=$(shell eval "$$(perl -V:installvendorarch)"; echo $$installvendorarch)
+# PERLSITEARCH=$(shell eval "$$(perl -V:installsitearch)"; echo $$installsitearch)
 AMPERLDIR=$(AMLIBDIR)/perl
-BITROCK_REPO_DIR=$(SRCDIR)/bitrock-stack
+PLATREPO_TOPDIR=$(SRCDIR)/bitrock-stack
+PLATREPO_LIBDIR=$(PLATREPO_TOPDIR)/lib64
+INSTALL_LIBDIR=$(INSTALL_TOPDIR)/lib64
+PLATREPO_LDPATH=
+INSTALL_LDPATH=$(AMLIBDIR):$(INSTALL_TOPDIR)/lib64
 
-BITROCK_REPO_LIBDIR=$(BITROCK_REPO_DIR)/common/lib
-BITROCK_LIBDIR=$(BITROCK_DIR)/common/lib
+# for Debian.. most reliable is this
+SYS_UNITDIR=$(lastword $(filter-out %.late,$(shell systemctl show -p UnitPath)))
+SYS_LDSOCONFDIR=$(SYSCONFDIR)/ld.so.conf.d
+SYS_LOGROTATEDIR=$(SYSCONFDIR)/logrotate.d
 
-SCRIPTS_PATH=$(BITROCK_REPO_DIR)/perl/bin:$(BITROCK_REPO_DIR)/python/bin
-SCRIPTS_LDPATH=$(BITROCK_REPO_DIR)/python/lib
-
-BITROCK_REPO_LDPATH=$(BITROCK_REPO_DIR)/common/lib:$(BITROCK_REPO_DIR)/python/lib
-BITROCK_LDPATH=$(AMLIBDIR):$(BITROCK_DIR)/common/lib
 
 AMANDAUSER=%%AMANDAUSER%%
 AMANDAGROUP=%%AMANDAGROUP%%
+AMANDACLIGROUP=%%AMANDACLIGROUP%%
 
 CERT_BUNDLE_URL="https://curl.haxx.se/ca/cacert.pem"
 
 define CONFIG_FLAGS_COMMON
-MAILER=$(BINDIR)/mail \
+\
+\
+\
 --enable-as-needed \
+--enable-shared \
 --quiet \
 --host=$(HOST_GNU_TYPE) \
 --build=$(BUILD_GNU_TYPE) \
 --prefix=$(PREFIX) \
 --bindir=$(BINDIR) \
+--sbindir=$(SBINDIR) \
 --mandir=$(MANDIR) \
---libexecdir=$(LIBEXECDIR) \
 --libdir=$(LIBDIR) \
---with-amlibdir=$(AMLIBDIR) \
---with-amperldir=$(AMPERLDIR) \
---enable-shared \
+--libexecdir=$(LIBEXECDIR) \
 --sysconfdir=$(SYSCONFDIR) \
+--sharedstatedir=$(LOCALSTATEDIR) \
 --localstatedir=$(LOCALSTATEDIR) \
+--with-amlibdir=$(AMLIBDIR) \
+--with-amlibexecdir=$(AMLIBEXECDIR) \
+--with-amperldir=$(AMPERLDIR) \
 --with-amdatadir=$(AMANDAHOMEDIR) \
 --with-gnutar-listdir=$(AMANDAHOMEDIR)/gnutar-lists \
 --with-index-server=localhost \
@@ -92,91 +105,61 @@ MAILER=$(BINDIR)/mail \
 --with-user=$(AMANDAUSER) \
 --with-group=$(AMANDAGROUP) \
 --with-fqdn \
+--with-tmpdir=$(AMANDAHOMEDIR)/tmp \
+--enable-s3-device \
 --with-bsd-security \
 --with-bsdtcp-security \
 --with-bsdudp-security \
+--with-ssh-security \
 --with-amandahosts \
 --with-amandates=$(AMANDATES) \
---with-debugging=$(LOGDIR) \
 --with-tcpportrange=11000,11040 \
 --with-udpportrange=800,840 \
 --with-low-tcpportrange=800,840 \
---with-ssh-security \
 --with-assertions \
 --with-failure-code \
---without-readline \
---disable-rpath \
---enable-s3-device \
+--with-debugging=$(LOGDIR) \
 --enable-manpage-build \
 --disable-installperms \
---with-xsltproc=$(BITROCK_REPO_DIR)/common/bin/xsltproc \
+--with-xsltproc=$(PLATREPO_TOPDIR)/bin/xsltproc \
 --disable-syntax-checks
 endef
 
-# variables for the makefile
-	
-#   $(BITROCK_REPO_DIR)/apache2/lib/pkgconfig
-PKG_CONFIG_PATH  = \
-   $(BITROCK_REPO_DIR)/common/lib/pkgconfig \
-   $(BITROCK_REPO_DIR)/python/lib64/pkgconfig
-
-export PYTHON=$(BITROCK_REPO_DIR)/bin/python3
-export PERL=$(BITROCK_REPO_DIR)/perl/bin/perl
-
-AMPERL=$(BITROCK_DIR)/perl/bin/perl
-
-######################################################################
-# These are the actual env-vars that we need to compile against bitrock
-######################################################################
-######## START DEFINE MACRO ##############################
-define CONFIG_VARS_BITROCK
-  PATH="$(BITROCK_REPO_DIR)/perl/bin:$(BITROCK_REPO_DIR)/python/bin:$${PATH}" \
-  LD_LIBRARY_PATH="$(BITROCK_REPO_LDPATH):$${LD_LIBRARY_PATH}" \
-  PKG_CONFIG_PATH="$(PKG_CONFIG_PATH):$${PKG_CONFIG_PATH}"
-endef
-######## END DEFINE MACRO ##############################
-
-#	  -I$(BITROCK_REPO_DIR)/mysql/include \
-#	  -I$(BITROCK_REPO_DIR)/php/include \
-######## DEFINE MACRO ##############################
-define CONFIG_FLAGS_BITROCK
-  GNUTAR=/bin/tar \
-  \
-  CPPFLAGS="-I$(BITROCK_REPO_DIR)/common/include \
-	  -I$(BITROCK_REPO_DIR)/python/include" \
-  \
-  LDFLAGS="-Wl,--disable-new-dtags \
-	-Wl,-rpath-link -Wl,$(BITROCK_REPO_LIBDIR) \
-	-Wl,-rpath -Wl,$(BITROCK_LDPATH) \
-	-L$(BITROCK_REPO_LIBDIR)" \
-  \
-  PERL=$(PERL) \
-  AMPERL=$(AMPERL) \
-  PYTHON=$(PYTHON) \
-  --with-libcurl=$(BITROCK_REPO_DIR)/common
-endef
-
-######## DEFINE MACRO ##############################
-define SCRIPT_PATH_VARS
-  PATH="$(SCRIPTS_PATH):$${PATH}" \
-  LD_LIBRARY_PATH="$(SCRIPTS_LDPATH):$${LD_LIBRARY_PATH}"
-endef
 
 #
 # subpackage paths
 #
-r=$(SRCDIR)/debian/tmp
-buildroot=$(SRCDIR)/debian/amanda-enterprise-backup-server
+# used to narrow the dh_ tools focus
+dhpkg          =   --package=amanda-enterprise-backup-server
+# r=$(SRCDIR)/debian/tmp
 # buildroot_client=$(SRCDIR)/debian/amanda-enterprise-backup-client
-platform=$(SRCDIR)/debian/amanda-enterprise-platform
-devel=$(SRCDIR)/debian/amanda-enterprise-backup-server-devel
+buildroot      =   $(SRCDIR)/debian/amanda-enterprise-backup-server
+# platform=$(SRCDIR)/debian/amanda-enterprise-platform
+devel          =   $(SRCDIR)/debian/amanda-enterprise-backup-server-devel
+log            =   $(SRCDIR)/debian/dpkg.log
 
-WD=$(SRCDIR)
+# These are used for cross-compiling and for saving the configure script
+# from having to guess our platform (since we know it already)
+DEB_HOST_GNU_TYPE   ?= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
+DEB_BUILD_GNU_TYPE  ?= $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
 
 build: build-stamp
 build-stamp:
 	dh_testdir
+	echo 'unset CONFIG_LDPATH ' > ./build-env.sh
+	( \
+	    PERL=$(PLATREPO_TOPDIR)/perl/bin/perl
+	    PYTHON=$(PLATREPO_TOPDIR)/bin/python3
+	    PATH="$(PLATREPO_TOPDIR)/bin:$${PATH}" \
+	    CPPFLAGS="-I$(PLATREPO_TOPDIR)/include \
+            LDFLAGS="-Wl,--disable-new-dtags -Wl,-rpath-link -Wl,$(PLATREPO_LIBDIR) -Wl,-rpath -Wl,$(AMLIBDIR)"; \
+	    PKG_CONFIG_PATH=$(PLATREPO_LIBDIR)/pkgconfig \
+	    declare -p PERL PYTHON CPPFLAGS LDFLAGS PKG_CONFIG_PATH >> ./build-env.sh
+	)
 	
+	# annoying.. but it forces inclusion of all the needed perl
+	sed -i -e 's,^if *WANT_CLIENT,if WANT_SERVER,' perl/Makefile.am
+
 	# modify libtool.m4 to *only* perform rpath mods as we need (for install in %%INSTALL_TOPDIR%%)
 	if ! [ -f ./configure ]; then  \
 	    libtoolize -i; \
@@ -188,20 +171,20 @@ build-stamp:
 	[ -f ./configure ] || ./autogen
 	
 	echo -------------------
-	echo "CONFIG_FLAGS_BITROCK set to $(CONFIG_FLAGS_BITROCK)"
-	echo -------------------
-	echo "CONFIG_VARS_BITROCK set to $(CONFIG_VARS_BITROCK)"
+	echo "CONFIG_FLAGS_COMMON set to $(CONFIG_FLAGS_COMMON)"
 	echo -------------------
 	
 	# need LDPATH, PATH (for perl/python)
-	set -x; $(CONFIG_VARS_BITROCK) \
+	set -x; . ./build-env.sh; \
 	    ./configure \
 		$(CONFIG_FLAGS_COMMON) \
-		$(CONFIG_FLAGS_BITROCK)
+		    --without-readline \
+		    --disable-rpath \
+
 	touch missing
 	
-	set -x; $(SCRIPT_PATH_VARS) \
-	    $(MAKE) -j`nproc`
+	set -x; . ./build-env.sh; \
+	    $(MAKE) -j`nproc` VERBOSE=1
 	
 	touch $@
 	echo ------------------- END BUILD
@@ -213,76 +196,116 @@ DEVEL_INCLUDE_FILES =  \
 	s3-util.h am_sl.h amjson.h glib-util.h property.h fileheader.h directtcp.h \
 	directtcp-connection.h
 
+####### dirs file
+# etc/amanda
+# usr/lib/%%ARCH%%-linux-gnu/
+# usr/lib/amanda/application
+# usr/share/lintian/overrides
+# usr/share/man/man5
+# usr/share/man/man8
+# var/amanda
+# var/lib/amanda
+# var/lib/amanda/gnutar-lists
+# var/lib/amanda/example
+# var/lib/amanda/tmp
+# var/log/amanda
+# var/log/amanda/client
+
 # Build architecture-dependent files here.
 binary-install-server: build-stamp
 	dh_testdir
 	rm -rf $(buildroot)
 	mkdir -p $(buildroot)
-	dh_prep --package=amanda-enterprise-backup-server
-	dh_installdirs -v --package=amanda-enterprise-backup-server
+	dh_prep $(dhpkg)
+	dh_installdirs -v $(dhpkg)
 	
 	echo ------------------- START INSTALL
-	set -x; $(SCRIPT_PATH_VARS) \
+	################################################ perform source make-install
+	set -x; . ./build-env.sh; \
 		$(MAKE) -j1 install DESTDIR=$(buildroot)
+	################################################ done with source make-install
 	
-	# substitute a real version of perl as needed
-	find $(buildroot)$(AMLIBEXECDIR)/* \
-	    $(buildroot)$(AMLIBEXECDIR)/application/* \
-	    $(buildroot)$(AMLIBEXECDIR)/rest-server/bin/* \
-	    $(buildroot)/usr/sbin/*  -type f -print -o -type d -prune | \
-	 while read i; do read -N2 j < $$i; [[ "$$j" == '#!' ]] || continue; \
-	    sed -i -e '2,$${p;d}'                                           \
-	      -e '/^#!/!d'                                                 \
-	      -e "s|$(PERL)|$(AMPERL)|" $$i;                          \
-	 done
+	rm -f $(buildroot)$(SYS_UNITDIR)/__sub-amanda-client*
 	
 	##################
 	# needed directories
 	##################
-	# rm -f $(buildroot)$(AMANDAHOMEDIR)/example/inetd.conf.amandaclient
+	install -D -m 644 /dev/null \
+                 $(buildroot)$(SYS_LDSOCONFDIR)/amanda-enterprise.conf
+	install -D -m 644 system-scripts/amanda-logrotate \
+                 $(buildroot)$(SYS_LOGROTATEDIR)/amanda-enterprise
+	
+	rm -f $(buildroot)$(AMANDAHOMEDIR)/example/inetd.conf.amandaserver
 	
 	echo "Amanda Enterprise Edition - version $(AMVER)" > $(buildroot)$(AMANDAHOMEDIR)/amanda-release
+	[ -s $(CWD)/LONG_BRANCH ] && echo "ref=$$(cat $(CWD)/LONG_BRANCH)" >> $(buildroot)/$(AMANDAHOMEDIR)/amanda-release
+	
+	##################
+	# install/shift misc files in place
+	##################
+	
+	# package-placeholders all filled in upon install only
+	umask 027; install -D /dev/null $(buildroot)$(AMANDAHOMEDIR)/.gnupg/{pubring.gpg,random_seed,secring.gpg,am_key.gpg}
+	umask 027; install -D /dev/null $(buildroot)$(AMANDAHOMEDIR)/.ssh/{id_rsa_amrecover,id_rsa_amdump}{,.pub};
+	umask 027; install -D /dev/null $(buildroot)$(AMANDAHOMEDIR)/.am_passphrase
+	
+	mkdir -p $(buildroot)$(LOGDIR)
+	mkdir -p $(buildroot)$(LOGDIR)/client
+	
+	install -m 640 /dev/null $(buildroot)$(AMANDATES)
+	
+	# both are installed by make-install...
+	install -m 644 $(buildroot)$(AMCONFDIR)/amanda-security.conf                   $(buildroot)$(SYSCONFDIR)/amanda-security.conf
+	install -m 644 $(buildroot)$(AMANDAHOMEDIR)/example/amanda-client.conf         $(buildroot)$(AMCONFDIR)/amanda-client.conf
+	install -m 644 $(buildroot)$(AMANDAHOMEDIR)/example/global-amanda.conf         $(buildroot)$(AMCONFDIR)/amanda.conf
+	install -m 600 $(buildroot)$(AMANDAHOMEDIR)/example/amandahome-dot-amandahosts $(buildroot)$(AMANDAHOMEDIR)/.amandahosts
+	install -m 640 $(buildroot)$(AMANDAHOMEDIR)/example/amandahome-dot-profile     $(buildroot)$(AMANDAHOMEDIR)/.profile
+
 
 ##################
 ################################ permissions for backup-server
 ##################
 perm-install-server: binary-install
 	dh_testroot
-	##################
-	# root-setuid executable / private-contents
-	##################
-	[ -s installperms.sh ] && \
-            while read d _chown _chmod path; do \
-                eval "chown $$_chown $(buildroot)$$path && chmod $$_chmod $(buildroot)$$path"; \
-            done < installperms.sh
+	dh_fixperms -v
 	
 	install -o root -g root -m 0644 debian/lintian \
 		$(buildroot)/usr/share/lintian/overrides/amanda-enterprise-backup-server
-	
 	chown -R root:root $(buildroot)$(AMLIBEXECDIR)
-	find $(buildroot)$(AMLIBEXECDIR) -type f | \
-		xargs chmod 0644
-	find $(buildroot)$(AMLIBEXECDIR) -type d | \
-		xargs chmod 0755
 	
-	chmod 0755 $(buildroot)$(AMLIBEXECDIR)/*
-	chmod 0755 $(buildroot)$(AMLIBEXECDIR)/application/*
-	chmod 0755 $(buildroot)$(AMLIBEXECDIR)/rest-server/bin/*
+	chown -R $(AMANDAUSER):$(AMANDAGROUP) \
+	    $(buildroot)$(AMANDAHOMEDIR) \
+	    $(buildroot)$(SYSCONFDIR)/amanda \
+	    $(buildroot)$(LOGDIR) \
+	    $(buildroot)/usr/sbin/*
+	chown root:root \
+	    $(buildroot)$(AMLIBDIR)/lib*.so \
+	    $(buildroot)$(SYSCONFDIR)/amanda-security.conf
 	
-	chown root:%%AMANDACLIGROUP%% $(buildroot)$(AMLIBEXECDIR)/ambind
-	chmod 04750 $(buildroot)$(AMLIBEXECDIR)/ambind
-	chown root:%%AMANDACLIGROUP%% $(buildroot)$(AMLIBEXECDIR)/application/amgtar
-	chmod 04755 $(buildroot)$(AMLIBEXECDIR)/application/amgtar
-	chown root:%%AMANDACLIGROUP%% $(buildroot)$(AMLIBEXECDIR)/application/amstar
-	chmod 04755 $(buildroot)$(AMLIBEXECDIR)/application/amstar
-	chown root:%%AMANDACLIGROUP%% $(buildroot)$(AMLIBEXECDIR)/calcsize
-	chmod 04750 $(buildroot)$(AMLIBEXECDIR)/calcsize
-	chown root:%%AMANDACLIGROUP%% $(buildroot)$(AMLIBEXECDIR)/killpgrp
-	chmod 04750 $(buildroot)$(AMLIBEXECDIR)/killpgrp
-	chown root:%%AMANDACLIGROUP%% $(buildroot)$(AMLIBEXECDIR)/rundump
-	chmod 04750 $(buildroot)$(AMLIBEXECDIR)/rundump
-	chown root:%%AMANDACLIGROUP%% $(buildroot)$(AMLIBEXECDIR)/runtar
-	chmod 04750 $(buildroot)$(AMLIBEXECDIR)/runtar
+	chown root:$(AMANDACLIGROUP) \
+	    $(buildroot)$(AMLIBEXECDIR)/ambind \
+	    $(buildroot)$(AMLIBEXECDIR)/application/amgtar  \
+	    $(buildroot)$(AMLIBEXECDIR)/application/amstar \
+	    $(buildroot)$(AMLIBEXECDIR)/calcsize \
+	    $(buildroot)$(AMLIBEXECDIR)/killpgrp \
+	    $(buildroot)$(AMLIBEXECDIR)/rundump \
+	    $(buildroot)$(AMLIBEXECDIR)/runtar
+
+	chmod -R u=rwX,g=rX,o=rX $(buildroot)$(AMLIBEXECDIR) 
+	chmod 0755 \
+	    $(buildroot)$(AMLIBEXECDIR)/* \
+	    $(buildroot)$(AMLIBEXECDIR)/application/*
+	# chmod 0755 $(buildroot)$(AMLIBEXECDIR)/rest-server/bin/*
+	
+	# touching these afterward removes the critical setuid bit
+	chmod 04755  \
+	    $(buildroot)$(AMLIBEXECDIR)/ambind \
+	    $(buildroot)$(AMLIBEXECDIR)/application/amgtar \
+	    $(buildroot)$(AMLIBEXECDIR)/application/amstar \
+	    $(buildroot)$(AMLIBEXECDIR)/calcsize \
+	    $(buildroot)$(AMLIBEXECDIR)/killpgrp \
+	    $(buildroot)$(AMLIBEXECDIR)/rundump \
+	    $(buildroot)$(AMLIBEXECDIR)/runtar
 	
 	chmod 0444  $(buildroot)$(AMLIBEXECDIR)/amcat.awk
 	
@@ -293,41 +316,33 @@ perm-install-server: binary-install
 	##################
 	# internal executible files
 	##################
-	chown -R $(AMANDAUSER):$(AMANDAGROUP) $(buildroot)/usr/sbin/*
-	chmod 755 $(buildroot)/usr/sbin/*
+	chmod u=rwx,g=rx,o=rx $(buildroot)/usr/sbin/*
 	##################
 	# internal readable / private-contents files
 	##################
-	chown -R $(AMANDAUSER):$(AMANDAGROUP) $(buildroot)$(SYSCONFDIR)/amanda
 	chmod -R u=rwX,g=rX,o= $(buildroot)$(SYSCONFDIR)/amanda
 	
 	# NOTE: non-recursive setup of dirs
-	chown $(AMANDAUSER):$(AMANDAGROUP) $(buildroot)$(LOGDIR)
-	chmod 0770 $(buildroot)$(LOGDIR)
-	chown $(AMANDAUSER):$(AMANDAGROUP) $(buildroot)$(LOGDIR)/client
-	chmod 0755 $(buildroot)$(LOGDIR)/client
+	chmod -R u=rwX,g=rX,o= $(buildroot)$(LOGDIR)
+	chmod    u=rwX,g=rwX,o= $(buildroot)$(LOGDIR)
 	chown $(AMANDAUSER):$(AMANDAGROUP) $(buildroot)$(LOGDIR)/server
 	chmod 0700 $(buildroot)$(LOGDIR)/server
 	chown $(AMANDAUSER):$(AMANDAGROUP) $(buildroot)$(LOGDIR)/amanda-rest-server-log
 	chmod 0700 $(buildroot)$(LOGDIR)/amanda-rest-server-log
 	
 	##################
-	# homedir internal files
+	# config/internal files
 	##################
-	chown -R $(AMANDAUSER):$(AMANDAGROUP) $(buildroot)$(AMANDAHOMEDIR)/example/
-	chmod -R u=rwX,g=rX,o= $(buildroot)$(AMANDAHOMEDIR)/example/
-	chown -R $(AMANDAUSER):$(AMANDAGROUP) $(buildroot)$(AMANDAHOMEDIR)/gnutar-lists/
+	chmod -R u=rwX,g=rX,o= $(buildroot)$(AMANDAHOMEDIR)
 	chmod -R u=rwX,g=rwX,o= $(buildroot)$(AMANDAHOMEDIR)/gnutar-lists/
-	chown -R $(AMANDAUSER):$(AMANDAGROUP) $(buildroot)$(AMANDAHOMEDIR)/template.d/
-	chmod -R u=rwX,g=rX,o= $(buildroot)$(AMANDAHOMEDIR)/template.d/
+	chmod -R u=rwX,g=,o=  $(buildroot)$(AMANDAHOMEDIR)/{.gnupg,.ssh,.amandahosts,.am_passphrase}
 	
 	##################
 	# resource files only
 	##################
-	chown root:root $(buildroot)$(AMLIBDIR)/lib*.so
-	chmod 0444 $(buildroot)$(AMLIBDIR)/lib*.so
-	chown root:root $(buildroot)$(SYSCONFDIR)/amanda-security.conf
-	chmod 0644 $(buildroot)$(SYSCONFDIR)/amanda-security.conf
+	chmod u=rx,g=rx,o=rx $(buildroot)$(AMLIBDIR)/lib*.so
+	chmod u=rw,g=r,o=r $(buildroot)$(SYSCONFDIR)/amanda-security.conf
+	chmod u=r,g=r,o=r $(buildroot)$(SYSCONFDIR)/*.d/*
 	# rely on sanity-check permissions otherwise
 	# ---------------------- ASSESS PERMISSIONS NOW IF NEEDED ----------
 
@@ -339,8 +354,8 @@ binary-install-devel: binary-install-server
 	dh_testdir
 	rm -rf $(devel)
 	mkdir -p $(devel)
-	dh_prep --package=amanda-enterprise-backup-server-devel
-	dh_installdirs -v --package=amanda-enterprise-backup-server-devel
+	dh_prep $(dhpkg)-devel
+	dh_installdirs -v $(dhpkg)-devel
 	
 	# snip off $(buildroot) from start ... to dup the path
 	mkdir -p $(devel)$(AMLIBDIR)
@@ -364,7 +379,7 @@ binary-install-devel: binary-install-server
 	   sed \
 		 -e "s|$$build_topdir_abs|$$build_topdir|g" \
 		 -e "s|$$bitrock_repo_dir_abs|$$bitrock_repo_dir|g" \
-		 -e "s|$$bitrock_repo_dir|%{BITROCK_REPO_DIR}|g" \
+		 -e "s|$$bitrock_repo_dir|%{PLATREPO_TOPDIR}|g" \
 		 -e "s|$$build_topdir|%{BUILD_TOPDIR}|g" \
 		 -e "s| $(AMLIBDIR)/| %{DESTDIR}$(AMLIBDIR)/|g" \
 	     >$(devel)$(AMANDAHOMEDIR)/amanda-config
@@ -390,7 +405,7 @@ binary-install-devel: binary-install-server
 		xargs sed -i \
 		     -e "s|$$build_topdir_abs|$$build_topdir|g" \
 		     -e "s|$$bitrock_repo_dir_abs|$$bitrock_repo_dir|g" \
-		     -e "s|$$bitrock_repo_dir|%{BITROCK_REPO_DIR}|g" \
+		     -e "s|$$bitrock_repo_dir|%{PLATREPO_TOPDIR}|g" \
 		     -e "s|$$build_topdir|%{BUILD_TOPDIR}|g"
 	
 	command -v realpath >/dev/null || realpath() { readlink -e "$@"; }
@@ -402,7 +417,7 @@ binary-install-devel: binary-install-server
 		xargs sed -i \
 		     -e "s|$$build_topdir_abs|$$build_topdir|g" \
 		     -e "s|$$bitrock_repo_dir_abs|$$bitrock_repo_dir|g" \
-		     -e "s|$$bitrock_repo_dir|%{BITROCK_REPO_DIR}|g" \
+		     -e "s|$$bitrock_repo_dir|%{PLATREPO_TOPDIR}|g" \
 		     -e "s|$$build_topdir|%{BUILD_TOPDIR}|g" \
 		     -e "/dependency_libs=/s| $(AMLIBDIR)/| %{DESTDIR}$(AMLIBDIR)/|g"
 	
@@ -429,68 +444,6 @@ perm-install-devel: binary-install
 		xargs chmod 0755
 	# ---------------------- ASSESS PERMISSIONS NOW IF NEEDED ----------
 
-binary-install-platform: binary-install-server
-	dh_prep --package=amanda-enterprise-platform
-	dh_installdirs -v --package=amanda-enterprise-platform
-	
-	rm -rf $(platform)$(BITROCK_DIR)
-	mkdir -p $(platform)$(BITROCK_DIR)
-	
-	stack_path=
-	
-	. packaging/common_z/common_functions.sh;  \
-	   dir=$$(git_submodule_gitdir 000-external/tools-archives); \
-	   ref=$$(git_submodule_ref 000-external/tools-archives); \
-	   set -xv; git --git-dir=$$dir archive $${ref}:stack-output | \
-	         tar -xf - -C $(platform)$(BITROCK_DIR)
-	
-	DESTDIR=$(platform) $(platform)$(BITROCK_DIR)/install-var-subst.sh
-	
-	set -xv; curl $(CERT_BUNDLE_URL).gz | \
-	   gunzip > $(platform)$(BITROCK_DIR)/common/share/curl/curl-ca-bundle.crt
-	
-	#rmdir $(platform)$(BITROCK_DIR)/php/php
-
-perm-install-platform: binary-install
-	dh_testroot
-	chown root:root -R $(platform)
-	#chown mysql:mysql -R $(platform)$(BITROCK_DIR)/mysql/*
-	#chown $(AMANDAUSER):mysql \
-	#	$(platform)$(BITROCK_DIR)/php/data  	\
-	#	$(platform)$(BITROCK_DIR)/php/tmp 	\
-	#	$(platform)$(BITROCK_DIR)/apache2/logs
-	#chmod 0775 \
-	#	$(platform)$(BITROCK_DIR)/php/data  	\
-	#	$(platform)$(BITROCK_DIR)/php/tmp 	\
-	#	$(platform)$(BITROCK_DIR)/apache2/logs
-	
-	find $(platform)$(BITROCK_DIR)/perl/lib -type f | \
-		xargs chmod 0444
-	find $(platform)$(BITROCK_DIR)/perl/lib -type f -name \*.so | \
-		xargs chmod 0555
-	#find $(platform)$(BITROCK_DIR)/apache2/conf \
-	#  $(platform)$(BITROCK_DIR)/apache2/error \
-	#  $(platform)$(BITROCK_DIR)/apache2/htdocs \
-	#  $(platform)$(BITROCK_DIR)/apache2/icons \
-	#  $(platform)$(BITROCK_DIR)/php/etc \
-	#  $(platform)$(BITROCK_DIR)/php/lib \
-	#  $(platform)$(BITROCK_DIR)/licenses -type f | \
-	#	xargs chmod u=rwX,og=rX
-	
-	chmod uog=rx \
-	  $(platform)$(BITROCK_DIR)/perl/bin/* \
-	  $(platform)$(BITROCK_DIR)/python/bin/* \
-	     # nothing more than these
-	#  $(platform)$(BITROCK_DIR)/apache2/bin/* \
-	#  $(platform)$(BITROCK_DIR)/apache2/cgi-bin/* \
-	#  $(platform)$(BITROCK_DIR)/apache2/lib/* \
-	#  $(platform)$(BITROCK_DIR)/apache2/modules/* \
-	#  $(platform)$(BITROCK_DIR)/apache2/scripts/* \
-	#  $(platform)$(BITROCK_DIR)/php/bin/* \
-	#  $(platform)$(BITROCK_DIR)/php/scripts/* 
-	
-	find $(platform) -type d | \
-		xargs chmod uog=rX   # just to be sure
 
 #
 # bottleneck after completed all installation
@@ -499,21 +452,16 @@ binary-install: binary-install-stamp
 binary-install-stamp:
 	LD_PRELOAD= \
 	LD_LIBRARY_PATH= \
-	    $(MAKE) -f $(firstword $(MAKEFILE_LIST)) \
-	        binary-install-server binary-install-platform binary-install-devel 
+	    $(MAKE) -f $(THIS_MAKE) binary-install-server binary-install-devel 
 	#
 	dh_installdocs -v
 	#
-	# One directory of examples does not warrant an "debian/.examples"
-	# file.  These files are repeated in %%AMANDAUSER%%'s home dir.
-	# dh_installexamples -v $(r)$(AMANDAHOMEDIR)/example
-	# Installs both amanda and debian changelogs and
+	#dh_installexamples -v $(buildroot)$(AMANDAHOMEDIR)/example
 	dh_installchangelogs -v ChangeLog
-	dh_strip --dbg-package=amanda-enterprise-backup-server-dbg -X $(BITROCK_DIR)
+	dh_strip --dbg-package=amanda-enterprise-backup-server-dbg -X $(INSTALL_TOPDIR)
 	#
 	dh_compress
 	
-	dh_fixperms -v
 	# need external dependencies
 	LD_PRELOAD= /usr/bin/touch $@
 
@@ -521,17 +469,14 @@ binary-install-stamp:
 # bottleneck after completed all permissions resets
 #
 final-install:
-	# fakeroot can remain entirely within this MAKE only,
+	# (disabled) fakeroot can remain entirely within this MAKE only, 
 	#    if perms were remembered from these chmod/chown calls
-	env -- $(MAKE) -f $(firstword $(MAKEFILE_LIST)) \
-	         perm-install-devel perm-install-server perm-install-platform
+	env -- $(MAKE) -f $(THIS_MAKEFILE) perm-install-devel perm-install-server
+	#
 	dh_makeshlibs -v
-	dh_shlibdeps -pamanda-enterprise-backup-server -v \
+	dh_shlibdeps $(dhpkg) -v \
 		-l"$(SHLIBDIR):$(AMLIBDIR)"
-	dh_shlibdeps -pamanda-enterprise-platform -v \
-		-l"$(BITROCK_LIBDIR):$(BITROCK_DIR)/python/lib"
-	$(SCRIPT_PATH_VARS) \
-	    dh_perl -pamanda-enterprise-backup-server -v $(AMPERLDIR)
+	dh_perl $(dhpkg) -v $(AMPERLDIR)
 	dh_installdeb
 	dh_gencontrol
 	dh_md5sums
@@ -548,8 +493,7 @@ clean:
 	-test -r /usr/share/misc/config.guess && \
 		cp -f /usr/share/misc/config.guess config/config.guess
 	dh_clean -d -v  # build dirs only
-	( cd $(BITROCK_REPO_DIR); git reset --hard; git clean -d -f; )
 
 binary: final-install
 .PHONY: build clean binary-install binary-install-server binary-install-devel binary-install-platform
-.PHONY: final-install perm-install-server perm-install-devel perm-install-platform
+.PHONY: final-install perm-install-server perm-install-devel
