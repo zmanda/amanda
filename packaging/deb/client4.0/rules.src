@@ -13,7 +13,7 @@ export DH_VERBOSE=1
 
 AMVER=%%VERSION%%
 
-BITROCK_DIR=%%INSTALL_TOPDIR%%
+INSTALL_TOPDIR=%%INSTALL_TOPDIR%%
 AMANDAHOMEDIR=$(LOCALSTATEDIR)/lib/amanda
 BUILD_TOPDIR=$(SRCDIR)
 # Comment this to disable silent make.
@@ -65,7 +65,6 @@ SYS_UNITDIR=$(lastword $(filter-out %.late,$(shell systemctl show -p UnitPath)))
 SYS_LDSOCONFDIR=$(SYSCONFDIR)/ld.so.conf.d
 SYS_LOGROTATEDIR=$(SYSCONFDIR)/logrotate.d
 
-BITROCK_REPO_DIR=$(SRCDIR)/bitrock-stack
 AMANDAUSER=%%AMANDAUSER%%
 AMANDAGROUP=%%AMANDAGROUP%%
 AMANDACLIGROUP=%%AMANDACLIGROUP%%
@@ -99,6 +98,7 @@ define CONFIG_FLAGS_COMMON
 --with-group=$(AMANDAGROUP) \
 --with-fqdn \
 --with-tmpdir=$(AMANDAHOMEDIR)/tmp \
+--enable-s3-device \
 --with-bsd-security \
 --with-bsdtcp-security \
 --with-bsdudp-security \
@@ -111,7 +111,6 @@ define CONFIG_FLAGS_COMMON
 --with-assertions \
 --with-failure-code \
 --with-debugging=$(LOGDIR) \
---enable-s3-device \
 --enable-manpage-build \
 --disable-installperms \
 --disable-syntax-checks
@@ -134,13 +133,15 @@ log             =  $(SRCDIR)/debian/dpkg.log
 build: build-stamp
 build-stamp:
 	dh_testdir
-	echo 'unset CONFIG_LDPATH AMPERL' > ./rpm-env.sh
+	echo 'unset CONFIG_LDPATH ' > ./build-env.sh
 	( \
 	    PERL=$$(command -v perl); \
 	    PYTHON=$$(command -v python3); \
+	    \
+	    \
             LDFLAGS="-Wl,--disable-new-dtags -Wl,-rpath -Wl,$(AMLIBDIR)"'; \
 	    PKG_CONFIG_PATH+=""; \
-	    declare -p PERL PYTHON LDFLAGS PKG_CONFIG_PATH >> ./rpm-env.sh
+	    declare -p PERL PYTHON LDFLAGS PKG_CONFIG_PATH >> ./build-env.sh
 	)
 	
 	# annoying.. but it forces inclusion of all the needed perl
@@ -156,14 +157,14 @@ build-stamp:
 	echo -------------------
 	
 	# no need for LDPATH, PATH (for perl/python)
-	set -x; . ./rpm-env.sh ; \
+	set -x; . ./build-env.sh ; \
 	./configure \
 		$(CONFIG_FLAGS_COMMON) \
 		--without-server \
                 --enable-rpath
 	touch missing
 	
-	set -x; \
+	set -x; . ./build-env.sh; \
 	    $(MAKE) -j`nproc` VERBOSE=1
 	
 	touch $@
@@ -201,7 +202,7 @@ binary-install-client: build-stamp
 	
 	echo ------------------- START INSTALL
 	################################################ perform source make-install
-	set -x; . ./rpm-env.sh; \
+	set -x; . ./build-env.sh; \
 		$(MAKE) -j1 install DESTDIR=$(buildroot)
 	################################################ done with source make-install
 	
@@ -210,11 +211,9 @@ binary-install-client: build-stamp
 	##################
 	# needed directories
 	##################
-	install -d $(buildroot)$(SYS_LDSOCONFDIR)
-	install -d $(buildroot)$(SYS_LOGROTATEDIR)
-	install -m 644 /dev/null \
+	install -D -m 644 /dev/null \
                  $(buildroot)$(SYS_LDSOCONFDIR)/amanda-enterprise.conf
-	install -m 644 system-scripts/amanda-logrotate \
+	install -D -m 644 system-scripts/amanda-logrotate \
                  $(buildroot)$(SYS_LOGROTATEDIR)/amanda-enterprise
 	
 	rm -f $(buildroot)$(AMANDAHOMEDIR)/example/inetd.conf.amandaclient
@@ -470,7 +469,7 @@ binary-install-stamp:
 	#
 	#dh_installexamples -v $(buildroot)$(AMANDAHOMEDIR)/example
 	dh_installchangelogs -v ChangeLog
-	dh_strip --dbg-package=amanda-enterprise-backup-client-dbg -X $(BITROCK_DIR)
+	dh_strip --dbg-package=amanda-enterprise-backup-client-dbg -X $(INSTALL_TOPDIR)
 	#
 	dh_compress
 	
