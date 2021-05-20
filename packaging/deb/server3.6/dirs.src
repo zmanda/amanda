@@ -1,4 +1,6 @@
 etc/amanda
+usr/lib/%%ARCH%%-linux-gnu/
+usr/lib/amanda/application
 usr/share/lintian/overrides
 usr/share/man/man5
 usr/share/man/man8
@@ -7,6 +9,3 @@ var/lib/amanda
 var/lib/amanda/gnutar-lists
 var/lib/amanda/example/label-templates
 var/log/amanda
-var/log/amanda/client
-var/log/amanda/server
-var/log/amanda/amanda-rest-server-log
