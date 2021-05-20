@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+
+bashpath="`command -v bash`"
+[ -x "$bashpath" -a -z "$BASH_VERSION" ] && exec "$bashpath" $0 "$@"
+
+LOGFILE=`mktemp /tmp/${PKGINST}_remove_log.XXXXXXXXXXX`
+if [ $? -ne 0 ]; then
+	echo "Unable to create log file!"
+	exit 1
+fi
+amanda_user=%%AMANDAUSER%%
+amanda_group=%%AMANDAGROUP%%
+# BASEDIR is set by either in pkginfo, or if not set, by pkgadd at installtime.
+# Unfortunately, it messes things up to have basedir="/".
+[ "x${BASEDIR}" = "x/" ] && basedir="" || basedir=${BASEDIR}
+AMANDAHOMEDIR=${basedir}%%AMANDAHOMEDIR%%
+os=SunOS
+dist=%%DISTRO%%
+
+LOGDIR=${basedir}%%LOGDIR%%
+SYSCONFDIR=${basedir}/etc
+
+# ---------- Common functions ------------
+# see packaging/common/ in the source tree
+%%COMMON_FUNCTIONS%%
+
+# -------- End Common functions ----------
+
+rel=`uname -r`
+
+case $PKGINST in
+    *server*) net_svc_name=amandaserver ;;
+    *client*) net_svc_name=amandaclient ;;
+esac
+
+if check_smf "$net_svc_name"; then
+    rm_smf "$net_svc_name" || { \
+        logger "Warning: Did not successfully remove $net_svc_name from SMF.";
+        exit 1; }
+fi
+if [ -L /usr/lib64/amanda/amandad ]; then
+    rm_64b_amandad
+fi
+
+
+logger "Amanda Enterprise removed."

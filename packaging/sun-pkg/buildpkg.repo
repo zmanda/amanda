@@ -1,0 +1,59 @@
+#!/usr/bin/env bash
+
+# Path must go before autogen so that svn will be found.
+# PATH=/usr/ccs/bin:/usr/bin:/usr/sbin:/opt/csw/bin;export PATH
+# gnu_triplet=`./config/config.guess`; export gnu_triplet
+# Consider using explicit CC= for configure.
+# case ${gnu_triplet} in
+#     # Solaris 8 sfw is in /usr/local (for gcc)
+#     *-*-solaris2.8) PATH="/usr/local/bin:$PATH";;
+#     # Solaris 10 sfw is /usr/sfw.
+#     *-pc-solaris2.10) PATH="/usr/sfw/bin:$PATH";;
+#    *-sun-solaris2.10) PATH="/usr/sfw/bin:$PATH";;
+#esac
+
+# Buildpkg is designed to be used by both buildbot (to automate deb production)
+# and by J Random User (to build a deb for kicks).
+#
+# VERSION: the identifier for the amanda determined from subversion
+#	information.  
+# PKG_NAME_VER: the full version name of amanda we're working on.  This will
+#	become part of the deb name.  {PKG_NAME_VER} gets substituted into
+#	various package files.  
+#
+
+buildref=$1
+shift
+buildtype=${1:-both}
+shift
+
+[ -n "$buildref" ] || { echo requires a branch/buildref; exit 1; }
+
+# set the var buildpkg_dir as well
+. ./packaging/common_z/build_functions.sh
+
+[ -d /opt/csw/gnu ] && [[ "$PATH" != */opt/csw/gnu* ]] && PATH=/opt/csw/gnu:${PATH}
+[ -d /usr/sfw/bin ] && [[ "$PATH" != */usr/sfw/bin* ]] && PATH=/usr/sfw/bin:${PATH}
+[ -d /usr/ccs/bin ] && [[ "$PATH" != */usr/ccs/bin* ]] && PATH=${PATH}:/usr/ccs/bin
+
+#
+# don't create version files from working tree
+#
+
+mach=`uname -m`
+# build only if not blocked by arch or directive
+if [ "$buildtype" = "server" -o "$buildtype" = both ] && [ $mach = "x86_64" ]; then
+    # debian must be cleared-and-created twice
+    gen_pkg_build_config "$buildpkg_dir/server"
+    gen_repo_pkg_environ $repo_name $buildref
+    do_package "${PKG_NAME_VER}" || exit $?
+fi
+
+if [ "$buildtype" = "client" -o "$buildtype" = both ]; then
+    # debian must be cleared-and-created twice
+    gen_pkg_build_config "$buildpkg_dir/client"
+    gen_repo_pkg_environ $repo_name $buildref
+    do_package "${PKG_NAME_VER}" || exit $?
+fi
+
+exit 0

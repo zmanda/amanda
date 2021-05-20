@@ -1,0 +1,4 @@
+# we want to apply config protection to /var/lib/amanda, but not to
+# the example/, gnutar-lists/, or template.d subdirs
+CONFIG_PROTECT="/var/lib/amanda"
+CONFIG_PROTECT_MASK="/var/lib/amanda/example /var/lib/amanda/gnutar-lists /var/lib/amanda/template.d"

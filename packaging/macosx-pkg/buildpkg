@@ -1,0 +1,618 @@
+#! /bin/bash
+
+## Build a package for the mac.
+# Usage:
+#  packaging/amanda-enterprise/macosx-pkg/buildpkg [configure-args]
+# where configure-args will be passed to ./configure.
+# This script assumes:
+#  -You've copied packaging/* from the amanda-extensions source
+#   tree to the amanda source tree.
+
+#  -The mac prerequisites package (packaging/amanda-enterprise/prereq-macosx-pkg) is already
+#   installed in ${PREREQ_PFX}.
+
+# We want this build process to work without root access, so we can't use
+# PackageBuilder (which assumes root).  Instead, we build a package manually
+# from templates.  Furthermore, much of the work that might be done by pax
+# on install (permissions, subdirectories of /private) is done in the
+# postflight script.
+
+# The final package looks like this:
+#  Contents/Archive.pax.gz -- Pax archive of files to be installed in $PREFIX
+#  Contents/Archive.bom -- Bill of Materials for files in pax archive
+#  Contents/Info.plist -- Bundle information
+#  Contents/PkgInfo -- package information
+#  Contents/Resources/BundleVersions.plist -- mostly empty
+#  Contents/Resources/English.lproj/Description.plist -- Installer strings
+#  Contents/Resources/English.lproj/PACKAGENAME.info -- more package information
+#  Contents/Resources/English.lproj/License.rtf -- displayed in Installer
+#  Contents/Resources/English.lproj/ReadMe.rtf -- displayed in Installer
+#  Contents/Resources/English.lproj/Welcome.rtf -- displayed in Installer
+#  Contents/Resources/PACKAGENAME.pax.gz -- symlink to Archive.pax.gz
+#  Contents/Resources/PACKAGENAME.bom -- symlink to Archive.bom
+#  Contents/Resources/package_version -- version information
+#  Contents/Resources/PACKAGENAME.sizes -- file size information
+#  Contents/Resources/package_overlay.tgz -- extra files outside of $PREFIX
+#  Contents/Resources/InstallationCheck -- shell script to check prerequisites
+#  Contents/Resources/InstallationCheck.strings -- Installer.app likes this
+#  Contents/Resources/org.amanda.amandad.bsd{tcp,udp}.plist, -- launchd scripts
+#  Contents/Resources/amanda-manifest.sh -- list of installed files and their permissions
+#  Contents/Resources/preflight -- create userids, check prerequisites
+#  Contents/Resources/postflight -- apply overlays, installperms, final touch-up
+#  Contents/Resources/build_arch -- architecture for which the package was built (checked by InstallationCheck)
+
+#### Configure variables.  Feel free to change these, but be careful!
+SRCDIR=$(pwd)
+
+# ./configure args from the user
+USERCONF="${@}"
+
+buildpkg_dir=packaging/amanda-enterprise/macosx-pkg
+# the root of all our temporary junk
+TMPDIR="${SRCDIR}/${buildpkg_dir}/tmp"
+
+# This prefix is prepended to all directories during "make install"
+ROOTDIR="${TMPDIR}/root"
+
+# the source for package_overlay.tgz
+OVERLAYDIR="${TMPDIR}/overlay"
+
+# directory in which the Amanda prerequisites are installed
+PREREQ_PFX="/opt/zmanda/prereq"
+
+# add prerequisites directory to our path, so configure can find pkg-config, etc.
+PATH="${PREREQ_PFX}/bin:/bin:/sbin:/usr/bin:/usr/sbin"
+
+# Config variables to mirror those in RPM .spec file
+amanda_user=amandabackup
+amanda_group=admin
+udpportrange="800,840"
+tcpportrange="11000,11040"
+low_tcpportrange="800,840"
+PREFIX="/usr/local"
+EPREFIX="${PREFIX}"
+BINDIR="${EPREFIX}/bin"
+SBINDIR="${EPREFIX}/sbin"
+LIBEXECDIR="${EPREFIX}/lib"	# (so amlibexecdir=/usr/local/lib/amanda)
+DATADIR="${PREFIX}/share"
+SYSCONFDIR="/private/etc"
+LOCALSTATEDIR="/private/var"
+AMANDAHOMEDIR="${LOCALSTATEDIR}/lib/amanda"
+AMDATADIR="${AMANDAHOMEDIR}"
+LIBDIR="${EPREFIX}/lib"
+INCLUDEDIR="${PREFIX}/include"
+INFODIR="${PREFIX}/info"
+MANDIR="${DATADIR}/man"
+LOGDIR="${LOCALSTATEDIR}/log/amanda"
+
+# Packaging values
+DESCRIPTION="Amanda is the leading Open-Source Backup and Archiving software with Enterprise Support.
+
+Please see http://wiki.zmanda.com for additional information on installing and configuring Amanda for Mac OS X."
+
+#### CHECKS
+
+if [ ! -f common-src/amanda.h ]
+then
+    echo "'buildpkg' must be run from the root of an otherwise unused amanda source directory." >&2
+    exit 1
+fi
+
+if ! /usr/bin/dscl . -read  / /users/${amanda_user} >/dev/null 2>&1
+then
+    echo "Please create the user '${amanda_user}' on this system.  See ${buildpkg_dir}/resources/preflight."
+    exit 1
+fi
+
+if [ ! -f configure ]
+then
+    echo "The source directory has not been autogen'd -- please download a source "
+    echo " distribution tarball or run ./autogen.  You will need autoconf, automake,"
+    echo " and libtool to run autogen (but not to compile from a distribution tarball)."
+    exit 1
+fi
+
+if [ ! -f ${PREREQ_PFX}/VERSION ]
+then
+    echo "VERSION is not under ${PREREQ_PFX}; is the prerequisites package installed?"
+    exit 1
+fi
+
+. ${PREREQ_PFX}/VERSION
+if [ $PREREQ_VERSIONMAJ -lt 1 ]
+then
+    echo "The prefix package in ${PREREQ_PFX} (version $PREREQ_VERSIONMAJ.$PREREQ_VERSIONMIN) is too old."
+    echo "Please install at least version 1.0."
+    exit 1
+fi
+
+#### Build functions
+
+# do_build TYPE
+#
+# Build Amanda and install it in $ROOTDIR.  Also sets VERSION to the version from
+# the Amanda sources, and INSTSIZE to the size (in kbytes) of the install.
+do_build() {
+    local BUILDTYPE="${1}"
+
+    echo "Cleaning up"
+
+    rm -rf "${ROOTDIR}" || exit 1
+    mkdir -p "${ROOTDIR}" || exit 1
+
+    echo "Running configure"
+
+    MYCONF=""
+
+    if [ $BUILDTYPE = "client" ]; then
+        MYCONF="$MYCONF --without-server"
+    fi
+
+    # extra options for the mac build, above and beyond the usual Zmanda flags
+    # dependency tracking just slows down the build, has no benefit, and doesn't
+    # work with "fat" builds.
+    MYCONF="$MYCONF --disable-dependency-tracking"
+
+    # Disable installperms so that we don't need root access for the install
+    MYCONF="$MYCONF --disable-installperms"
+
+    # we want to use /private/tmp/amanda instead of /tmp/amanda
+    MYCONF="$MYCONF --with-tmpdir=/private/tmp/amanda"
+
+    # CFLAGS and LDFLAGS below are "fat binary" cflags (for 10.4 only).
+    # Dependency tracking doesn't work with this arrangement. see
+    #  file:///Developer/ADC%20Reference%20Library/documentation/Porting/Conceptual/PortingUnix/index.html
+    # TODO: these don't work with glib, because it's not compiled "fat"
+    #MYCONF="$MYCONF CFLAGS='-isysroot /Developer/SDKs/MacOSX10.4u.sdk -arch ppc -arch i386'"
+    #MYCONF="$MYCONF LDFLAGS='-Wl,-syslibroot,/Developer/SDKs/MacOSX10.4u.sdk -arch ppc -arch i386'"
+
+    # the usual --xxxdir variables
+    MYCONF="$MYCONF --prefix=${PREFIX}"
+    MYCONF="$MYCONF --bindir=${BINDIR}"
+    MYCONF="$MYCONF --sbindir=${SBINDIR}"
+    MYCONF="$MYCONF --libexecdir=${LIBEXECDIR}"
+    MYCONF="$MYCONF --datadir=${DATADIR}"
+    MYCONF="$MYCONF --sysconfdir=${SYSCONFDIR}"
+    MYCONF="$MYCONF --sharedstatedir=${LOCALSTATEDIR}"
+    MYCONF="$MYCONF --localstatedir=${LOCALSTATEDIR}"
+    MYCONF="$MYCONF --libdir=${LIBDIR}"
+    MYCONF="$MYCONF --includedir=${INCLUDEDIR}"
+    MYCONF="$MYCONF --infodir=${INFODIR}"
+    MYCONF="$MYCONF --mandir=${MANDIR}"
+    MYCONF="$MYCONF --with-amperldir=${PREFIX}/lib/amanda/perl" # put perl stuff at /usr/lib/amanda/perl
+    MYCONF="$MYCONF --with-amandates=/etc/amandates"
+
+    # Zmanda config parameters
+    MYCONF="$MYCONF --with-amdatadir=${AMDATADIR}"
+    MYCONF="$MYCONF --with-amlibdir=${LIBDIR}"
+    MYCONF="$MYCONF --with-gnutar-listdir=${AMANDAHOMEDIR}/gnutar-lists"
+    MYCONF="$MYCONF --with-index-server=localhost"
+    MYCONF="$MYCONF --with-tape-server=localhost"
+    MYCONF="$MYCONF --with-user=${amanda_user}"
+    MYCONF="$MYCONF --with-group=${amanda_group}"
+    MYCONF="$MYCONF --with-owner=${amanda_user}"
+    MYCONF="$MYCONF --with-fqdn"
+    MYCONF="$MYCONF --with-bsd-security"
+    MYCONF="$MYCONF --with-bsdtcp-security"
+    MYCONF="$MYCONF --with-bsdudp-security"
+    MYCONF="$MYCONF --with-ssh-security"
+    MYCONF="$MYCONF --with-udpportrange=${udpportrange}"
+    MYCONF="$MYCONF --with-tcpportrange=${tcpportrange}"
+    MYCONF="$MYCONF --with-low-tcpportrange=${low_tcpportrange}"
+    MYCONF="$MYCONF --with-debugging=${LOGDIR}"
+    MYCONF="$MYCONF --with-assertions"
+    MYCONF="$MYCONF --disable-syntax-checks"
+    MYCONF="$MYCONF --without-ndmp"
+    MYCONF="$MYCONF --without-libcurl"
+
+    # Point to our prerequisites
+    MYCONF="$MYCONF PKG_CONFIG=${PREREQ_PFX}/bin/pkg-config"
+    MYCONF="$MYCONF LDFLAGS=-L${PREREQ_PFX}/lib"
+    MYCONF="$MYCONF CFLAGS=-I${PREREQ_PFX}/include"
+
+    # paths to various binaries
+    MYCONF="$MYCONF GNUTAR=/usr/bin/gnutar"
+
+
+    PKG_CONFIG_PATH=/opt/zmanda/prereq/lib/pkgconfig:/usr/lib/pkgconfig ./configure --quiet $MYCONF $USERCONF || exit 1
+
+    echo "Installing"
+
+    # install, targetted to our root directory
+    make DESTDIR="${ROOTDIR}" install || exit 1
+
+    echo "Checking for bad shared object links"
+
+    ok=true
+    for dylib in `find "${ROOTDIR}" -name '*.dylib'`; do
+	baddeps=`otool -L $dylib | sed 1d | grep -v '/usr/lib' | grep -v '/usr/local/lib' | grep -v '/System/Library' | grep -v '/opt/zmanda' | grep -v '/opt/local/lib'`
+	if test -n "$baddeps"; then
+	    echo "$dylib depends on invalid shared objects:"
+	    echo "$baddeps"
+	    ok=false
+	fi
+    done
+    $ok || exit 1
+
+    echo "Fine-tuning install root"
+
+    # set things up appropriately for a client or server, recording permissions
+    # in the installperms.sh log
+    mkdir -p "${ROOTDIR}${LOGDIR}" || exit 1
+    echo "installperm \"${amanda_user}:${amanda_group}\" \"0770\" \"${LOGDIR}\"" >> "${SRCDIR}/installperms.sh"
+
+    mkdir -p "${ROOTDIR}${SYSCONFDIR}" || exit 1
+    mkdir -p "${ROOTDIR}${AMANDAHOMEDIR}" || exit 1
+
+    touch "${ROOTDIR}${SYSCONFDIR}/amandates" || exit 1
+    echo "installperm \"${amanda_user}:${amanda_group}\" \"0660\" \"${SYSCONFDIR}/amandates\"" >> "${SRCDIR}/installperms.sh"
+
+    echo 'export PATH=${PATH}:/usr/local/bin:/usr/local/sbin' >> "${ROOTDIR}${AMANDAHOMEDIR}/.profile" || exit 1
+    echo "installperm \"${amanda_user}:${amanda_group}\" \"0660\" \"${AMANDAHOMEDIR}/.profile\"" >> "${SRCDIR}/installperms.sh"
+
+    mkdir -p "${ROOTDIR}${AMANDAHOMEDIR}/gnutar-lists" || exit 1
+    echo "installperm \"${amanda_user}:${amanda_group}\" \"0770\" \"${AMANDAHOMEDIR}/gnutar-lists\"" >> "${SRCDIR}/installperms.sh"
+    mkdir -p "${ROOTDIR}${AMANDAHOMEDIR}/bsdtar" || exit 1
+    echo "installperm \"${amanda_user}:${amanda_group}\" \"0770\" \"${AMANDAHOMEDIR}/bsdtar\"" >> "${SRCDIR}/installperms.sh"
+
+
+    mkdir -p "${ROOTDIR}${LOGDIR}" || exit 1
+    echo "installperm \"${amanda_user}:${amanda_group}\" \"0770\" \"${LOGDIR}\"" >> "${SRCDIR}/installperms.sh"
+
+    mkdir -p "${ROOTDIR}${SYSCONFDIR}/amanda" || exit 1
+    echo "installperm \"${amanda_user}:${amanda_group}\" \"0770\" \"${SYSCONFDIR}/amanda\"" >> "${SRCDIR}/installperms.sh"
+
+    cp example/amanda-client.conf "${ROOTDIR}${SYSCONFDIR}/amanda/amanda-client.conf" || exit 1
+    echo "installperm \"${amanda_user}:${amanda_group}\" \"0600\" \"${SYSCONFDIR}/amanda/amanda-client.conf\"" >> "${SRCDIR}/installperms.sh"
+
+    # clean up the results a little bit
+    find "${ROOTDIR}" -name ".DS_Store" -exec rm -f {} \;  || exit 1
+
+    echo "Getting Amanda version"
+
+    # get the VERSION for this build.  This is a little sneaky, but avoids including the
+    # version number here.
+    echo '@VERSION@' > version.in
+    ./config.status --file=version:version.in || exit 1
+    VERSION=`cat version`
+    rm version version.in
+
+    # add amanda-release
+    echo "Amanda Enterprise Edition - version $VERSION" > "${ROOTDIR}/${AMANDAHOMEDIR}/amanda-release"
+
+    echo "Making manifest"
+
+    # make a manifest file for use by the package.  Note that the manifest file
+    # itself is not included in the manifest.  It contains lines of the form
+    #  addfile "/usr/sbin/foo"
+    #  installperm "amanda:disk" "04750" "/usr/sbin/bar"
+    # (the latter line comes from the Makefiles via --disable-installperms)
+    find "${ROOTDIR}" -type f | sed "s@${ROOTDIR}/*\(.*\)@addfile \"/\1\"@" > "${SRCDIR}/amanda-manifest.sh" || exit 1
+    cat "${SRCDIR}/installperms.sh" >> "${SRCDIR}/amanda-manifest.sh" || exit 1
+
+    # get an estimate of the installed size
+    INSTSIZE=`du -ks "${ROOTDIR}"|sed 's!\([0-9]*\).*!\1!'`
+}
+
+do_package() {
+    local BUILDTYPE="${1}"
+
+    # figure out the name of the package
+    PKGNAME="amanda_enterprise-backup_${1}"
+    PKGNAMEVERS="${PKGNAME}-${VERSION}"
+    PKG="${SRCDIR}/${PKGNAMEVERS}.pkg"
+
+    echo "Assembling ${PKG}"
+
+    # .pkg files aren't files at all -- they're directories.  Let's
+    # start fresh.
+    rm -rf "${PKG}" || exit 1
+    mkdir -p "${PKG}" || exit 1
+    mkdir "${PKG}/Contents" || exit 1
+    mkdir "${PKG}/Contents/Resources" || exit 1
+    mkdir "${PKG}/Contents/Resources/English.lproj" || exit 1
+
+    # some shorthand macros
+    local RSRCDIR="${PKG}/Contents/Resources"
+    local LPROJDIR="${RSRCDIR}/English.lproj"
+
+    # Put all of the files from the install in the appropriate place
+    make_pax "${ROOTDIR}${PREFIX}" "${PKG}/Contents/Archive.pax.gz" "${PKG}/Contents/Archive.bom" || exit 1
+    make_bom "${ROOTDIR}${PREFIX}" "${PKG}/Contents/Archive.bom" || exit 1
+    make_overlay "${ROOTDIR}" "${PREFIX}" "${RSRCDIR}/package_overlay.tgz" || exit 1
+
+    # Packages expect symlinks from the Resource directory.  Weird.
+    ( cd "${RSRCDIR}" || exit 1
+      ln -s "../Archive.pax.gz" "${PKGNAMEVERS}.pax.gz" || exit 1
+      ln -s "../Archive.bom" "${PKGNAMEVERS}.bom" || exit 1
+    ) || exit 1
+
+    # Write up some informational files
+    make_Info_plist "${PKG}/Contents/Info.plist" "${VERSION}" "com.zmanda.${PKGNAME}" "${PREFIX}" "${INSTSIZE}" \
+        || exit 1
+    make_PkgInfo "${PKG}/Contents/PkgInfo" \
+        || exit 1
+    make_BundleVersions "${RSRCDIR}/BundleVersions.plist" \
+        || exit 1
+    make_package_version "${RSRCDIR}/package_version" "${VERSION}" \
+        || exit 1
+    make_package_sizes "${RSRCDIR}/${PKGNAMEVERS}.sizes" "${INSTSIZE}" \
+        || exit 1
+    make_Description_plist "${LPROJDIR}/Description.plist" "${DESCRIPTION}" \
+        || exit 1
+    make_package_info "${LPROJDIR}/${PKGNAMEVERS}.info" "${DESCRIPTION}" "${PREFIX}" \
+        || exit 1
+
+    # Copy the appropriate Welcome, Readme and License files to English.lproj
+    cp "${SRCDIR}/${buildpkg_dir}/Welcome-${1}.rtf" "${LPROJDIR}/Welcome.rtf" || exit 1
+    cp "${SRCDIR}/${buildpkg_dir}/Readme.rtf" "${LPROJDIR}/ReadMe.rtf" || exit 1
+    cp "${SRCDIR}/${buildpkg_dir}/License.rtf" "${LPROJDIR}/License.rtf" || exit 1
+
+    # set up the build_arch
+    uname -m > "${RSRCDIR}/build_arch" || exit 1
+
+    # install the scripts run by Installer.app
+    cp "${SRCDIR}/${buildpkg_dir}/resources/InstallationCheck" "${RSRCDIR}" || exit 1
+    chmod +x "${RSRCDIR}/InstallationCheck" || exit 1
+    cp "${SRCDIR}/${buildpkg_dir}/resources/InstallationCheck.strings" "${RSRCDIR}" || exit 1
+    cp "${SRCDIR}/${buildpkg_dir}/resources/preflight" "${RSRCDIR}" || exit 1
+    chmod +x "${RSRCDIR}/preflight" || exit 1
+    cp "${SRCDIR}/${buildpkg_dir}/resources/postflight" "${RSRCDIR}" || exit 1
+    chmod +x "${RSRCDIR}/postflight" || exit 1
+
+    # add files needed by those scripts
+    cp "${SRCDIR}/${buildpkg_dir}/resources/org.amanda.amandad.bsdtcp.plist" "${RSRCDIR}" || exit 1
+    cp "${SRCDIR}/${buildpkg_dir}/resources/org.amanda.amandad.bsdudp.plist" "${RSRCDIR}" || exit 1
+    cp "${SRCDIR}/amanda-manifest.sh" "${RSRCDIR}/amanda-manifest.sh" || exit 1
+
+    # (concept copied from amanda.spec)
+    for host in localhost localhost.localdomain
+    do
+        echo "${host} ${amanda_user} amdump" >> "${RSRCDIR}/amandahosts" || exit 1
+        if [ $BUILDTYPE = "server" ]; then
+	    echo "${host} root amindexd amidxtaped" >> "${RSRCDIR}/amandahosts" || exit 1
+	fi
+    done
+
+    echo "Building .dmg file"
+    # So that dmg from different architectures have different names
+    ARCH=`uname -p`
+    rm -f "${SRCDIR}/${PKGNAMEVERS}.${ARCH}.dmg"
+    hdiutil create -srcfolder "${PKG}" "${SRCDIR}/${PKGNAMEVERS}.${ARCH}.dmg" || exit 1
+
+    # make it 'internet-enabled', in other words when you download it it copies the
+    # .pkg out of the .dmg for you
+    hdiutil internet-enable -yes "${SRCDIR}/${PKGNAMEVERS}.${ARCH}.dmg" || exit 1
+}
+
+# getmajor VERSION -> major version number
+getmajor() {
+    echo "$1" | sed 's!^\([0-9]*\).*!\1!' || exit 1
+}
+
+# getminor VERSION -> minor version number
+getminor() {
+    echo "$1" | sed 's!^[0-9]*\.\([0-9]*\).*!\1!' || exit 1
+}
+
+# make_pax BASEDIR PAXGZ
+make_pax() {
+    local BASEDIR="${1}"
+    local PAXGZ="${2}"
+
+    (
+        cd "${BASEDIR}" || exit 1
+        pax -x cpio -z -w -f "${PAXGZ}" . || exit 1
+    ) || exit 1
+}
+
+# make_bom ROOTDIR BOMFILE
+# make the Archive.bom file, containing *all* files, both from the overlay and
+# from the pax archive.  This is a "simple" bom file, without any permissions
+# information in it (since the permissions and ownership on the files in ROOTDIR
+# are not correct for the final installation)
+make_bom() {
+    local ROOTDIR="${1}"
+    local BOMFILE="${2}"
+
+    (
+        cd "${ROOTDIR}" || exit 1
+        mkbom -s . "${BOMFILE}" || exit 1
+    ) || exit 1
+}
+
+# make_overlay ROOTDIR PREFIX OVERLAY_TARBALL
+# move everything but $PREFIX to an "overlay" so that we can install it without
+# worrying about pax adjusting permissions and creating directories.  See
+# http://www.stepwise.com/Articles/Technical/Packages/InstallerWoes.html
+# (specifically, "Pax is a Dictator") for the details on why this is a problem.
+make_overlay() {
+    local ROOTDIR="${1}"
+    local PREFIX="${2}"
+    local OVERLAY_TARBALL="${3}"
+
+    echo "Creating overlay tarball"
+    tar -C "${ROOTDIR}" --exclude ".${PREFIX}" -czf "${OVERLAY_TARBALL}" .
+}
+
+# make_Info_plist INFOPLIST VERSION BUNDLEIDENTIFIER PREFIX INSTSIZE
+make_Info_plist() {
+    local INFOFILE="${1}"
+    local VERSION="${2}"
+    local BUNDLEID="${3}"
+    local PREFIX="${4}"
+    local INSTSIZE="${5}"
+
+    # calculate a short version that's only #.#.#
+    local SHORTVERS=`echo ${VERSION}|sed 's/[^0-9.]//g'`
+    local MAJVERS=`getmajor "${VERSION}"`
+    local MINVERS=`getminor "${VERSION}"`
+
+    cat <<EOF >"${INFOFILE}"
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleGetInfoString</key>
+	<string>${VERSION}</string>
+
+	<key>CFBundleIdentifier</key>
+	<string>${BUNDLEID}</string>
+
+	<key>CFBundleShortVersionString</key>
+	<string>${SHORTVERS}</string>
+
+	<key>IFMajorVersion</key>
+	<integer>${MAJVERS}</integer>
+
+	<key>IFMinorVersion</key>
+	<integer>${MINVERS}</integer>
+
+	<key>IFPkgFlagAllowBackRev</key>
+	<false/>
+
+	<key>IFPkgFlagAuthorizationAction</key>
+	<string>RootAuthorization</string>
+
+	<key>IFPkgFlagBackgroundAlignment</key>
+	<string>topleft</string>
+
+	<key>IFPkgFlagBackgroundScaling</key>
+	<string>none</string>
+
+	<key>IFPkgFlagDefaultLocation</key>
+	<string>${PREFIX}</string>
+
+	<key>IFPkgFlagFollowLinks</key>
+	<true/>
+
+	<key>IFPkgFlagInstallFat</key>
+	<false/>
+
+	<key>IFPkgFlagInstalledSize</key>
+	<integer>${INSTSIZE}</integer>
+
+	<key>IFPkgFlagIsRequired</key>
+	<false/>
+
+	<key>IFPkgFlagOverwritePermissions</key>
+	<false/>
+
+	<key>IFPkgFlagRelocatable</key>
+	<false/>
+
+	<key>IFPkgFlagRestartAction</key>
+	<string>NoRestart</string>
+
+	<key>IFPkgFlagRootVolumeOnly</key>
+	<false/>
+
+	<key>IFPkgFlagUpdateInstalledLanguages</key>
+	<false/>
+
+	<key>IFPkgFormatVersion</key>
+	<real>0.10000000149011612</real>
+</dict>
+</plist>
+EOF
+}
+
+# make_PkgInfo PKGINFO
+# this one's easy.
+make_PkgInfo() {
+    echo 'pmkrpkg1' >"${1}"
+}
+
+# make_BundleVersions BUNDLEVERSIONS_PLIST
+# this one's easy too.
+make_BundleVersions() {
+    cat <<EOF >"${1}"
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict/>
+</plist>
+EOF
+}
+
+# make_package_version PACKAGE_VERSION VERSION
+# Write package_version
+make_package_version() {
+    local PACKAGE_VERSION="${1}"
+    local VERSION="${2}"
+
+    local MAJVERS=`getmajor "${VERSION}"`
+    local MINVERS=`getminor "${VERSION}"`
+    cat <<EOF >"${PACKAGE_VERSION}"
+major: ${MAJVERS}
+minor: ${MINVERS}
+EOF
+}
+
+# make_package_sizes PACKAGE_SIZES
+make_package_sizes() {
+    local PACKAGE_SIZES="${1}"
+
+    # note that NumFiles and CompressedSize are 0 in a PackageMaker-created
+    # .sizes file, so we leave them zero here.
+    cat <<EOF >"${PACKAGE_SIZES}"
+NumFiles 0
+InstalledSize ${INSTSIZE}
+CompressedSize 0
+EOF
+}
+
+# make_Description_plist DESCRIPTION_PLIST DESCRIPTION
+# Set up Description.plist
+make_Description_plist() {
+    local DESCRIPTION_PLIST="${1}"
+    local DESCRIPTION="${2}"
+
+    cat <<EOF >"${DESCRIPTION_PLIST}"
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>IFPkgDescriptionDescription</key>
+	<string>${DESCRIPTION}</string>
+	<key>IFPkgDescriptionTitle</key>
+	<string>Amanda</string>
+</dict>
+</plist>
+EOF
+}
+
+# make_package_info PKGINFO DESCRIPTION PREFIX
+make_package_info() {
+    local PKGINFO="${1}"
+    local DESCRIPTION="${2}"
+    local PREFIX="${3}"
+
+    cat <<EOF >"${PKGINFO}"
+Title Amanda
+Version
+Description ${DESCRIPTION}
+DefaultLocation ${PREFIX}
+DeleteWarning
+
+### Package Flags
+
+NeedsAuthorization YES
+Required NO
+Relocatable NO
+RequiresReboot NO
+UseUserMask NO
+OverwritePermissions NO
+InstallFat NO
+RootVolumeOnly NO
+OnlyUpdateInstalledLanguages NO
+EOF
+}
+
+do_all() {
+    do_build $1
+    do_package $1
+}
+
+do_all client
+#do_all server

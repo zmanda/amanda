@@ -1,0 +1,164 @@
+#! /bin/bash
+
+# postflight runs after both *installs* and *upgrades*
+
+# Collect arguments (see
+#  file:///Developer/ADC%20Reference%20Library/documentation/DeveloperTools/Conceptual/SoftwareDistribution/index.html)
+PACKAGE_PATH="${1}"
+DESTINATION="${2}"
+DESTVOL="${3}"
+SYSROOT="${4}"
+# $SCRIPT_NAME    (only in pre{install,upgrade} and later)
+# $INSTALLER_TEMP (only in pre{install,upgrade} and later)
+# $RECEIPT_PATH   (only in post{install,upgrade} and later)
+
+log() {
+    echo "$SCRIPT_NAME: ${@}"
+}
+
+PACKAGE_OVERLAY="${PACKAGE_PATH}/Contents/Resources/package_overlay.tgz"
+USER_OVERLAY="${PACKAGE_PATH}/Contents/Resources/user_overlay.tgz"
+
+if [ -f "${PACKAGE_OVERLAY}" ]
+then
+    log "Applying ${PACKAGE_OVERLAY}"
+    tar -C / -zvxf "${PACKAGE_OVERLAY}"
+else
+    log "${PACKAGE_OVERLAY} not found; ignoring"
+fi
+
+if [ -f "${USER_OVERLAY}" ]
+then
+    log "Applying ${USER_OVERLAY}"
+    tar -C / -zvxf "${USER_OVERLAY}"
+else
+    log "${USER_OVERLAY} not found; ignoring"
+fi
+
+# add .amandahosts
+USER_AMANDAHOSTS="${PACKAGE_PATH}/Contents/Resources/amandahosts"
+if [ -f "${USER_AMANDAHOSTS}" ]
+then
+    log "Adding custom .amandahosts to /var/lib/amanda/.amandahosts"
+
+    sudo cp "${USER_AMANDAHOSTS}" /var/lib/amanda/.amandahosts
+    sudo chown amandabackup:admin /var/lib/amanda/.amandahosts || exit 1
+    sudo chmod 600 /var/lib/amanda/.amandahosts || exit 1
+else
+    log "'${USER_AMANDAHOSTS}' not found; none installed"
+fi
+
+# install amanda-security.conf
+log "Checking '/private/etc/amanda-security.conf' file."
+if [ ! -f /private/etc/amanda-security.conf ]
+then
+    log "Installing amanda-security.conf."
+    sudo cp /private/etc/amanda/amanda-security.conf /private/etc/
+else
+    log "Note: '/private/etc/amanda-security.conf' exists. Please check '/private/etc/amanda/amanda-security.conf' for updates."
+fi
+
+# install am_passphrase file to server
+log "Checking '/var/lib/amanda/.am_passphrase' file."
+if [ ! -f /var/lib/amanda/.am_passphrase ] ; then
+        log "Creating '/var/lib/amanda/.am_passphrase' file." || exit 1
+        sudo touch /var/lib/amanda/.am_passphrase || exit 1
+        phrase=`echo $RANDOM | md5 | awk '{print $1}'`
+        sudo echo ${phrase} >>/var/lib/amanda/.am_passphrase || exit 1
+
+        sudo chown amandabackup:admin /var/lib/amanda/.am_passphrase || exit 1
+        sudo chmod 0700 /var/lib/amanda/.am_passphrase || exit 1
+fi
+
+# add log directories
+LOG_DIR=/var/log/amanda
+if [ ! -d ${LOG_DIR} ]
+then
+    log "Creating log directory."
+    sudo mkdir -p ${LOG_DIR}
+    sudo chown amandabackup:admin ${LOG_DIR}
+fi
+if [ -x /sbin/launchd ]
+then
+    log "Installing/updating launchd scripts"
+    for svc in org.amanda.amandad.bsdudp org.amanda.amandad.bsdtcp
+    do
+        # unload the old one if necessary
+        if [ -f "${SYSROOT}/Library/LaunchDaemons/${svc}.plist" ]
+        then
+            launchctl unload -w "${SYSROOT}/Library/LaunchDaemons/${svc}.plist" || exit 1
+        fi
+
+        # and load the new one
+        cp "${PACKAGE_PATH}/Contents/Resources/${svc}.plist" "${SYSROOT}/Library/LaunchDaemons/${svc}.plist" || exit 1
+        launchctl load -w "${SYSROOT}/Library/LaunchDaemons/${svc}.plist" || exit 1
+    done
+else
+    log "launchd not installed on this machine -- not adding launchd scripts"
+fi
+
+log "Moving amandates to its new location"
+
+# before 3.1, amandates was at /var/amanda/amandates, and in 3.1 and later
+# it is at /etc/amandates
+if [ -f /var/amanda/amandates ]; then
+    sudo mv /var/amanda/amandates /etc/amandates
+fi
+# apply permissions from the manifest; it's composed of calls to these
+# shell functions:
+
+addfile() {
+    local FILENAME="${1}"
+
+    # by default, files are owned by root
+    sudo chown root:wheel "${FILENAME}" || exit 1
+}
+
+installperm() {
+    local CHOWN="${1}"
+    local CHMOD="${2}"
+    local FILENAME="${3}"
+
+    if [ -n "$CHOWN" ]; then
+        echo "setting ${FILENAME} ownership to ${CHOWN}"
+        sudo chown "${CHOWN}" "${FILENAME}" || exit 1
+    fi
+
+    if [ -n "$CHMOD" ]; then
+        echo "setting ${FILENAME} mode to ${CHMOD}"
+        sudo chmod "${CHMOD}" "${FILENAME}" || exit 1
+    fi
+}
+
+log "Resetting permissions and ownership"
+source "${PACKAGE_PATH}/Contents/Resources/amanda-manifest.sh" || exit 1
+
+# this is largely a hack, because installperms apply only to files, not
+# directories.  This is a list of directories that were most likely created
+# during this installation
+
+# Note that these files are to be owned by root; we arbitrarily pick group
+# id 'wheel' here.  The userid combination amandabackup:admin is used for
+# files that are owned by Amanda.
+log "Setting directory permissions"
+for dir in \
+    /usr/lib/amanda \
+    `find /usr/local/lib/amanda -type d` \
+    /usr/local/share/amanda \
+    /usr/local/lib/amanda/application \
+    /private/etc/ \
+    ; do
+	log 755 root:wheel "$dir"
+	chmod 755 "$dir"
+	chown root:wheel "$dir"
+done
+
+for dir in \
+    /private/var/log/amanda \
+    /private/var/lib \
+    `find /private/var/lib/amanda -type d` \
+    ; do
+	log 755 amandabackup:admin "$dir"
+	chmod 755 "$dir"
+	chown amandabackup:admin "$dir"
+done

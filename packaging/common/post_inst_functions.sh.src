@@ -1,0 +1,433 @@
+#!/bin/sh
+setopt=$-
+set +xv
+# ------------- Begin Post Install Functions -----------------
+# These functions are included by various different installers.
+
+# We assume that the following variables are defined in the main script:
+# amanda_user: the amanda account username
+: ${amanda_user:=%%AMANDAUSER%%}
+
+# amanda_group: the amanda account's group
+: ${amanda_group:=%%AMANDAGROUP%%}
+
+# AMANDAHOMEDIR: a directory to use as amanda's home
+: ${AMANDAHOMEDIR:=%%AMANDAHOMEDIR%%}
+
+# os: Linux, Mac, Solaris, etc...
+: ${os:=Linux}
+
+# SYSCONFDIR: location of system config files (ie, /etc)
+: ${SYSCONFDIR:=/etc}
+
+# LOGDIR: logging directory for amanda
+: ${LOGDIR:=%%LOGDIR%%}
+
+# uncertain if this will stay here
+: ${AMANDATES:=${SYSCONFDIR}/amandates}
+
+: ${SBINDIR:=/usr/sbin}
+
+# INSTALL_LOG: install log location
+: ${INSTALL_LOG=${LOGDIR}/install.log}
+
+# temp directory for some uses
+: ${AMTMP:="%%AMANDAHOMEDIR%%/tmp"}
+
+[ -d ${LOGDIR} ] || mkdir -p ${LOGDIR}
+[ -d ${AMTMP} ] || mkdir -p ${AMTMP}
+
+
+# encoder: either base64 or uuencode depending on the default for this platform
+encoder=`{ command -v base64 2>/dev/null; } || { command -v uuencode 2>/dev/null; }`
+
+#TODO: gnutar-lists dir for solaris??
+
+add_service() {
+    # Only needed on Solaris!
+    entryA="amanda       10080/tcp    # amanda backup services"
+#    entryZ="zmrecover    10081/tcp    # amanda zmrecover service"
+#    entryK="kamanda      10081/tcp    famdc    # amanda backup services (kerberos)"
+    # make sure amanda is in /etc/services
+    if ! grep -q 'amanda.*10080/tcp' ${SYSCONFDIR}/services; then
+        logger "Adding amanda entry to ${SYSCONFDIR}/services."
+        echo "${entryA}" >> ${SYSCONFDIR}/services
+    fi
+
+#    if ! grep -q 'zmrecover.*10081/tcp' ${SYSCONFDIR}/services && [ "$1" == zmrecover ]; then
+#        logger "Adding famdc entry to ${SYSCONFDIR}/services."
+#        echo "${entryZ}" >> ${SYSCONFDIR}/services
+#    fi
+
+#    if ! grep -q 'kamanda.*10081/tcp' ${SYSCONFDIR}/services && [ "$1" != zmrecover ]; then
+#        logger "Adding kamanda entry to ${SYSCONFDIR}/services."
+#        echo "${entryK}" >> ${SYSCONFDIR}/services
+#    fi
+}
+
+create_amandates() {
+	logger "Creating ${AMANDATES}."
+	if [ ! -f ${AMANDATES} ] ; then
+		touch ${AMANDATES} || { logger "WARNING:  Could not create Amandates." ; return 1; }
+	fi
+}
+
+check_amandates() {
+	logger "Ensuring correct permissions for '${AMANDATES}'."
+	log_output_of chown ${amanda_user}:${amanda_group} ${AMANDATES} || \
+		{ logger "WARNING:  Could not chown ${AMANDATES}" ; return 1; }
+	log_output_of chmod 0640 ${AMANDATES} || \
+		{ logger "WARNING:  Could not fix perms on ${AMANDATES}" ; return 1; }
+	if [ -x /sbin/restorecon ] ; then
+		log_output_of /sbin/restorecon ${AMANDATES} || \
+			{ logger "WARNING:  restorecon execution failed." ; return 1; }
+	fi
+}
+
+create_gnupg() {
+	# Install .gnupg directory
+	if [ ! -d ${AMANDAHOMEDIR}/.gnupg ] ; then
+		logger "Creating '${AMANDAHOMEDIR}/.gnupg'"
+		log_output_of mkdir ${AMANDAHOMEDIR}/.gnupg || \
+			{ logger "WARNING:  Could not create .gnupg dir" ; return 1; }
+	fi
+}
+
+get_random_ascii_lines() {
+    # dont quote inside of (( )) or else
+    local bytes="${1:-0}"
+    local prog='
+import sys
+import base64
+bytes=base64.a85encode(sys.stdin.buffer.read(int(sys.argv[1])))
+print(bytes.decode())
+'
+    bytes="$(( bytes * 60 ))"
+    ${PYTHON:-python} -c "$prog" $bytes </dev/urandom
+}
+
+get_random_lines() {
+    # Print $1 lines of random strings to stdout.
+
+    [ "$1" ] && [ $1 -gt 0 ] || \
+        { logger "Error: '$1' not valid number of lines" ; return 1 ; }
+    lines=$1
+    [ -f "${encoder}" ] || \
+        { logger "Warning: Encoder '${encoder}' was not found.  Random passwords cannot be generated." ; return 1; }
+    case ${encoder} in
+        # "foo" is a required parameter that we throw away.
+        *uuencode*) enc_cmd="${encoder} foo" ;;
+        *base64*)   enc_cmd="${encoder}" ;;
+    esac
+    # Uuencode leaves a header (and footer) line, but base64 does not.
+    # So we pad output with an extra line, and strip any trailing lines over
+    # $lines
+    pad_lines=`expr $lines + 1`
+    # Increasing bs= is substantially faster than increasing count=.
+    # The number of bytes needed to start line wrapping is implementation
+    # specific.  base64. 60b > 1 base64 encoded line for all versions tested.
+    block_size=`expr $pad_lines \* 60`
+    # Head -c is not portable.
+    dd bs=${block_size} count=1 if=/dev/urandom 2>/dev/null | \
+            ${enc_cmd} | \
+            head -$pad_lines | \
+            tail -$lines || \
+        { logger "Warning: Error generating random passphrase."; return 1; }
+}
+
+create_ampassphrase() {
+    # install am_passphrase file to server
+    logger "Checking '${AMANDAHOMEDIR}/.am_passphrase' file."
+    if [ ! -f ${AMANDAHOMEDIR}/.am_passphrase -o ! -s ${AMANDAHOMEDIR}/.am_passphrase ] ; then
+        # Separate file creation from password creation to ease debugging.
+        logger "Creating '${AMANDAHOMEDIR}/.am_passphrase' file."
+        log_output_of touch ${AMANDAHOMEDIR}/.am_passphrase || \
+            { logger "WARNING:  Could not create .am_passphrase." ; return 1; }
+        phrase=`get_random_lines 1` || return 1 # Error already logged
+        echo ${phrase} >>${AMANDAHOMEDIR}/.am_passphrase
+    else
+        logger "Info: ${AMANDAHOMEDIR}/.am_passphrase already exists."
+    fi
+    # Fix permissions for both new or existing installations.
+    log_output_of chown ${amanda_user}:${amanda_group} ${AMANDAHOMEDIR}/.am_passphrase || \
+        { logger "WARNING:  Could not chown .am_passphrase" ; return 1; }
+    log_output_of chmod 0600 ${AMANDAHOMEDIR}/.am_passphrase || \
+        { logger "WARNING:  Could not fix permissions on .am_passphrase" ; return 1; }
+}
+
+
+GPG=`command -v gpg2 2>/dev/null || command -v gpg 2>/dev/null`
+GPG_AGENT=`command -v gpg-agent 2>/dev/null`
+if [ -z "$GPG" ]; then
+   logger "Error: no gpg"
+elif [[ $GPG == */gpg2 ]]; then
+   GPG_EXTRA="--no-use-agent"
+elif [ -z "$GPG_AGENT" ]; then
+   logger "Error: no gpg-agent"
+fi
+
+# NOTE: do NOT attempt to read/log stderr from gpg-agent in bgd
+[ -x "${GPG}" -a -x "$GPG_AGENT" ] && 
+    GPG_CMD="${GPG_AGENT} --homedir ${AMANDAHOMEDIR} --quiet --daemon"
+
+[ -x "${GPG}" ] && 
+    GPG_CMD="${GPG_CMD}${GPG} --homedir ${AMANDAHOMEDIR} ${GPG_EXTRA}"
+
+create_amkey() {
+    [ -f ${AMANDAHOMEDIR}/.am_passphrase ] || \
+        { logger "Error: ${AMANDAHOMEDIR}/.am_passphrase is missing, can't create amcrypt key."; return 1; }
+    logger "Creating encryption key for amcrypt"
+    [ -f ${AMANDAHOMEDIR}/.gnupg/am_key.gpg -a -s ${AMANDAHOMEDIR}/.gnupg/am_key.gpg ] && 
+        { logger "Info: Encryption key '${AMANDAHOMEDIR}/.gnupg/am_key.gpg' already exists."; return 0; }
+
+    # am_key is missing or needs replacing
+    rm -f ${AMANDAHOMEDIR}/.gnupg/am_key.gpg   # required to write it out
+
+    (
+        # read from a file and from a pipe...
+        exec 3<${AMANDAHOMEDIR}/.am_passphrase;
+        rand="$$(get_random_ascii_lines 50)";
+
+        log_output_of $GPG \
+            --no-permission-warning \
+            --armor \
+            --batch \
+            --symmetric \
+            --passphrase-fd 3 \
+            --output ${AMANDAHOMEDIR}/.gnupg/am_key.gpg \
+            /dev/stdin <<<"$rand" \
+          || \
+        { logger "WARNING: Error encrypting keys."; return 1; }
+    )
+}
+
+check_gnupg() {
+    logger "Ensuring correct permissions for '${AMANDAHOMEDIR}/.gnupg'."
+    log_output_of chown -R ${amanda_user}:${amanda_group} ${AMANDAHOMEDIR}/.gnupg || \
+        { logger "WARNING:  Could not chown .gnupg dir." ; return 1; }
+    log_output_of chmod -R u=rwX,go= ${AMANDAHOMEDIR}/.gnupg || \
+        { logger "WARNING:  Could not set permissions on .gnupg dir." ; return 1; }
+    # If am_key.gpg and .am_passphrase already existed, we should check
+    # if they match!
+    [ -s ${AMANDAHOMEDIR}/.gnupg/am_key.gpg -a -s ${AMANDAHOMEDIR}/.am_passphrase ] || 
+       return 1
+
+    (
+        exec 3<${AMANDAHOMEDIR}/.am_passphrase
+
+        # Perms warning will persist because we are not running as ${amanda_user}
+        log_output_of $GPG \
+                --no-permission-warning \
+                --batch \
+                --decrypt \
+                --passphrase-fd 3 \
+                --output /dev/null \
+                ${AMANDAHOMEDIR}/.gnupg/am_key.gpg || \
+            { logger "WARNING: .am_passphrase does not decrypt .gnupg/am_key.gpg."; return 1; }
+    )
+}
+
+create_amandahosts() {
+	# Install .amandahosts to server
+	if [ ! -f ${AMANDAHOMEDIR}/.amandahosts ] ; then
+		logger "Creating ${AMANDAHOMEDIR}/.amandahosts"
+        log_output_of touch ${AMANDAHOMEDIR}/.amandahosts || \
+		{ logger "WARNING:  Could not create .amandahosts file." ; return 1; }
+	fi
+}
+
+check_amandahosts_entry() {
+	# Entries for client and server differ slightly
+	# $1 username (root, ${amanda_user})
+	# subsequent parameters are a list of programs to check (amindexd
+	# amidxtaped, or amdump)
+	logger "Checking '${AMANDAHOMEDIR}/.amandahosts' for '${@}' entries."
+	# Generate our grep expression
+	expr=""
+	for prog in ${@} ; do
+		expr=${expr}"[[:blank:]]\+${prog}"
+	done
+	for host in localhost localhost.localdomain ; do
+		logger "Searching .amandahosts for ^${host}${expr}"
+		if `grep "^${host}${expr}" ${AMANDAHOMEDIR}/.amandahosts >> /dev/null` ; then
+			continue
+		else
+			add_amandahosts_entry ${host} ${@}
+		fi
+	done
+}
+
+add_amandahosts_entry() {
+	# Add entries to amandahosts.
+	# $@ is a fully formatted entry for amandahosts
+	logger "Appending '${@}' to amandahosts"
+	echo "${@}" >>${AMANDAHOMEDIR}/.amandahosts || \
+		{ logger "WARNING:  Could not append to .amandahosts" ; return 1; }
+}
+
+check_amandahosts_perms() {
+	logger "Ensuring correct permissions on .amandahosts"
+	log_output_of chown ${amanda_user}:${amanda_group} ${AMANDAHOMEDIR}/.amandahosts || \
+		{ logger "WARNING:  Could not chown .amandahosts." ; return 1; }
+	log_output_of chmod 0600 ${AMANDAHOMEDIR}/.amandahosts || \
+		{ logger "WARNING:  Could not fix permissions on .amandahosts" ; return 1; }
+}
+
+create_ssh_key() {
+	# SSH RSA key generation for amdump and amrecover
+	# $1 must be "server" or "client"
+	KEYDIR="${AMANDAHOMEDIR}/.ssh"
+	if [ $1 = "server" ] ; then
+		KEYFILE="id_rsa_amdump"
+	elif [ $1 = "client" ] ; then
+		KEYFILE="id_rsa_amrecover"
+	else
+		logger "Bad parameter to create_ssh_key" ; return 1
+	fi
+	COMMENT="${amanda_user}@$1"
+	if [ ! -d ${KEYDIR} ] ; then
+		if [ -f ${KEYDIR} ] ; then
+			logger "Directory '${KEYDIR}' exists as a file.  Renaming to '${KEYDIR}.save'."
+			log_output_of mv ${KEYDIR} ${KEYDIR}.save || \
+				{ logger "WARNING:  Could not backup old .ssh directory." ; return 1; }
+		fi
+		logger "Creating directory '${KEYDIR}'."
+		log_output_of mkdir ${KEYDIR} || \
+			{ logger "WARNING:  Could not create .ssh dir." ; return 1; }
+	fi
+	if [ ! -f ${KEYDIR}/${KEYFILE} ] ; then
+		logger "Creating ssh RSA key in '${KEYDIR}/${KEYFILE}'"
+                rm -f ${KEYDIR}/${KEYFILE}  # make sure its gone
+		log_output_of ssh-keygen -q -C $COMMENT -t rsa -f ${KEYDIR}/${KEYFILE} -N '' || \
+			{ logger "WARNING:  Error generating ssh key" ; return 1; }
+	fi
+	logger "Setting ownership and permissions for '${KEYDIR}' and '${KEYDIR}/${KEYFILE}*'"
+	log_output_of chown ${amanda_user}:${amanda_group} ${KEYDIR} ${KEYDIR}/${KEYFILE}* || \
+		{ logger "WARNING:  Could not chown one of ${KEYDIR} or ${KEYFILE}"; return 1; }
+	log_output_of chmod 0750 ${KEYDIR} || \
+		{ logger "WARNING:  Could not fix permissions on ${KEYDIR}"; return 1; }
+	log_output_of chmod 0600 ${KEYDIR}/${KEYFILE}* || \
+		{ logger "WARNING:  Could not fix permissions on ${KEYFILE}"; return 1; }
+}
+
+create_profile() {
+	# environment variables (~${amanda_user}/.profile)
+	logger "Checking for '${AMANDAHOMEDIR}/.profile'."
+	if [ ! -f ${AMANDAHOMEDIR}/.profile ] ; then
+		log_output_of touch ${AMANDAHOMEDIR}/.profile || \
+			{ logger "WARNING:  Could not create .profile" ; return 1; }
+	fi
+}
+
+check_profile(){
+    logger "Checking for ${SBINDIR} in path statement."
+    if [ -z "`grep PATH.*${SBINDIR} ${AMANDAHOMEDIR}/.profile`" ] ; then
+        echo "PATH=\"\$PATH:${SBINDIR}\"" >>${AMANDAHOMEDIR}/.profile || \
+            { logger "WARNING:  Could not append to .profile" ; return 1; }
+        echo "export PATH" >>${AMANDAHOMEDIR}/.profile
+    fi
+    case $os in
+      SunOS)
+	sun_paths=/opt/csw/bin:/usr/ucb:${AMANDAHOMEDIR}/sbin
+        if [ -z "`grep PATH ${AMANDAHOMEDIR}/.profile | grep ${sun_paths}`" ] ; then
+            echo "PATH=\"$PATH:${SBINDIR}:${sun_paths}\"" >>${AMANDAHOMEDIR}/.profile
+        fi
+      ;;
+    esac
+    logger "Setting ownership and permissions for '${AMANDAHOMEDIR}/.profile'"
+    log_output_of chown ${amanda_user}:${amanda_group} ${AMANDAHOMEDIR}/.profile || \
+        { logger "WARNING:  Could not chown .profile." ; return 1; }
+    log_output_of chmod 0640 ${AMANDAHOMEDIR}/.profile || \
+        { logger "WARNING:  Could not fix permissions on .profile" ; return 1; }
+}
+
+install_client_conf() {
+    # Install client config
+    am_confdir=${SYSCONFDIR}/amanda
+    install="install -m 0600 -o ${amanda_user} -g ${amanda_group}"
+    if [ "$os" = "SunOS" ] ; then
+        install="/usr/ucb/install -m 0600 -u ${amanda_user} -g ${amanda_group}"
+        am_confdir=%%INSTALL_TOPDIR%%/etc/amanda
+	log_output_of mkdir -p ${am_confdir} || \
+		{ logger "WARNING:  Could not create ${am_confdir}." ; return 1; }
+    fi
+    logger "Checking '${am_confdir}/amanda-client.conf' file."
+    if [ ! -f ${am_confdir}/amanda-client.conf ] ; then
+        logger "Installing amanda-client.conf."
+        log_output_of ${install} \
+            ${AMANDAHOMEDIR}/example/amanda-client.conf \
+            ${am_confdir}/ || \
+                { logger "WARNING:  Could not install amanda-client.conf" ; return 1; }
+    else
+        logger "Note: ${am_confdir}/amanda-client.conf exists. Please check ${AMANDAHOMEDIR}/example/amanda-client.conf for updates."
+    fi
+}
+
+install_security_conf() {
+    # Install amanda-security config
+    am_confdir=${SYSCONFDIR}/amanda
+    if [ "$os" = "SunOS" ] ; then
+        install="/usr/ucb/install"
+        am_confdir=%%INSTALL_TOPDIR%%/etc/amanda
+        sys_confdir=%%INSTALL_TOPDIR%%/etc
+        log_output_of chown root:root /opt/zmanda %%INSTALL_TOPDIR%% ${sys_confdir} || \
+                { logger "WARNING:  Could not chown ${sys_confdir}" ; return 1; }
+    else
+        install="install"
+        sys_confdir=${SYSCONFDIR}
+    fi
+    logger "Checking '${sys_confdir}/amanda-security.conf' file."
+    if [ ! -f ${sys_confdir}/amanda-security.conf ] ; then
+        logger "Installing amanda-security.conf."
+        log_output_of ${install} -m 0644 -o root -g root \
+            ${am_confdir}/amanda-security.conf \
+            ${sys_confdir}/ || \
+                { logger "WARNING:  Could not install amanda-security.conf" ; return 1; }
+    else
+        logger "Note: ${sys_confdir}/amanda-security.conf exists. Please check ${am_confdir}/amanda-security.conf for updates."
+    fi
+    # for any group... it is wise [and part of most installs] to keep group-write *off*
+    chmod g-w ${sys_confdir}
+}
+
+install_64b_amandad() {
+    # Link 64b amandad to 32b amandad binary on 32b client
+    AMANDAD_32_DIR=/usr/lib/amanda
+    AMANDAD_64_DIR=/usr/lib64/amanda
+    if [ ! -e ${AMANDAD_64_DIR}/amandad ]; then
+        logger "Linking 64b amandad."
+        if [ ! -e ${AMANDAD_64_DIR} ]; then
+            log_output_of mkdir ${AMANDAD_64_DIR} || { logger "WARNING: Could not create ${AMANDAD_64_DIR}"; return 1; }
+        else
+            logger "Note: ${AMANDAD_64_DIR} exists."
+        fi
+        log_output_of ln -s ${AMANDAD_32_DIR}/amandad ${AMANDAD_64_DIR}/amandad || { logger "WARNING: Could not link 64b amandad" ; return 1; }
+    else
+        logger "Note: ${AMANDAD_64_DIR}/amandad exists."
+    fi
+}
+
+create_amtmp() {
+	# Check for existence of and permissions on ${AMTMP}
+	logger "Checking for '${AMTMP}' dir."
+	if [ ! -d ${AMTMP} ]; then
+		logger "Create '${AMTMP}' dir."
+		log_output_of mkdir ${AMTMP} || \
+			{ logger "WARNING:  Could not create ${AMTMP}." ; return 1; }
+		log_output_of chown ${amanda_user}:${amanda_group} ${AMTMP} || \
+			{ logger "WARNING:  Could not chown ${AMTMP}" ; return 1; }
+	fi
+}
+
+install_pyzphere() {
+	if [ -x ${PYTHON} ]; then
+		pyzphere_dir=${AMLIBEXECDIR}/python/pyzphere
+		if [ -d ${pyzphere_dir} ]; then
+			logger "Installing Pyzphere"
+			( cd ${pyzphere_dir}; ${PYTHON} setup.py install )
+		fi
+	fi
+}
+
+# ------------- End Post Install Functions -----------------
+set -${setopt/s}

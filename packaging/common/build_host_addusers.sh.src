@@ -1,0 +1,52 @@
+#!/bin/bash
+
+[ $(uname) = Linux ] && AMANDAHOMEDIR=%%AMANDAHOMEDIR%%
+[ $(uname) = SunOS ] && AMANDAHOMEDIR=%%INSTALL_TOPDIR%%/amanda
+
+amanda_user=%%AMANDAUSER%%
+amanda_group=%%AMANDAGROUP%%
+deb_uid=%%AMANDAUIDNUM%%
+
+# creating zmandb user if he isn't already there
+
+#getent passwd zmandb || 
+#    # Adding system user: zmandb.
+#   { command -v adduser >&- &&
+#        adduser \
+#          --system \
+#          --ingroup zmandb \
+#          --no-create-home \
+#          --home /nonexistent \
+#          --gecos "MySQL Server" \
+#          --shell /sbin/nologin \
+#          zmandb; }
+
+#getent passwd zmandb || 
+#    # Adding system user: zmandb.
+#    { command -v useradd >&- && 
+#         useradd \
+#          -g zmandb \
+#          -d /nonexistent \
+#          -s /bin/false \
+#          zmandb; }
+
+#getent group zmandb || 
+#    { command -v addgroup >&- && addgroup --system zmandb; }
+#
+#getent group zmandb || 
+#    { command -v groupadd >&- && 
+#       groupadd zmandb && 
+#       usermod -a -g zmandb zmandb; }
+
+getent group ${amanda_group} || 
+    { command -v groupadd >&- && groupadd ${amanda_group}; }
+
+# -M is not supported on solaris
+getent passwd ${amanda_user} ||
+    { command -v useradd >&- && 
+        useradd -c "Amanda" \
+                -g ${amanda_group} \
+                -u %%AMANDAUIDNUM%% \
+                -m -d ${AMANDAHOMEDIR} \
+                -s /bin/bash \
+                ${amanda_user}; }

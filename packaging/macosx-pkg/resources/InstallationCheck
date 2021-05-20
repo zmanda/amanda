@@ -1,0 +1,79 @@
+#! /bin/bash
+
+# Collect arguments (see
+#  file:///Developer/ADC%20Reference%20Library/documentation/DeveloperTools/Conceptual/SoftwareDistribution/index.html)
+PACKAGE_PATH="${1}"
+DESTINATION="${2}"
+DESTVOL="${3}"
+SYSROOT="${4}"
+# $SCRIPT_NAME    (only in pre{install,upgrade} and later)
+# $INSTALLER_TEMP (only in pre{install,upgrade} and later)
+# $RECEIPT_PATH   (only in post{install,upgrade} and later)
+
+# hard-code SCRIPT_NAME
+SCRIPT_NAME=InstallationCheck
+
+# note that log messages from this script do not seem to appear in the logfile.
+log() {
+    echo "$SCRIPT_NAME: ${@}"
+}
+
+# an error message is an id in [16,31] with bits 5 and 6 set
+errorid() {
+    echo $(($1+96))
+}
+
+# an error message is an id in [16,31] with bit 5 set
+warningid() {
+    echo $(($1+32))
+}
+
+uname_revision=$(uname -r)
+uname_major_revision=${uname_revision%%.*}
+
+## Check for the presence and correct version of the prerequisites packge
+
+# directory in which the Amanda prerequisites are installed
+PREREQ_PFX="/opt/zmanda/prereq"
+
+if [ ! -f ${PREREQ_PFX}/VERSION ]
+then
+    exit `errorid 18`
+fi
+
+. ${PREREQ_PFX}/VERSION
+if [ $PREREQ_VERSIONMAJ -lt 1 ]
+then
+    exit `errorid 18`
+fi
+
+if [ "${uname_major_revision}" -lt 8 ]
+then
+    log "This package can only be installed on MacOS X 10.4 (Tiger) or later."
+    exit `errorid 16`
+fi
+
+if [ ! -x /sbin/launchd ]
+then
+    log "Launchd is not installed on this machine; consider setting up with xinetd?"
+    exit `warningid 17`
+fi
+
+## check the build arch against the install arch
+build_arch=$(< ${PACKAGE_PATH}/Contents/Resources/build_arch)
+install_arch=`uname -m`
+# install_arch can be i386, x86_64, or Power Macintosh (as of version AE3.3)
+# build_arch can be i386 or Power Macintosh.
+case $build_arch in
+    $install_arch) : ;;
+    i386)
+        if [ x"$install_arch" != x"x86_64" ]; then
+            log "Package is for $build_arch, but this is $install_arch"
+            exit `errorid 19`
+        fi
+    ;;
+    Power Macintosh)
+        log "Package is for $build_arch, but this is $install_arch"
+        exit `errorid 20`
+    ;;
+esac

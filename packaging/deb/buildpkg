@@ -1,34 +1,57 @@
-#! /bin/bash
-# We're assuming that you've copied packaging/* from the 
-# amanda-extensions source tree to the amanda source tree.  
+#!/bin/bash
 
-# Buildpkg is designed to be used by both buildbot (to automate deb production)
-# and by J Random User (to build a deb for kicks).
 #
-# VERSION: the identifier for the amanda determined from subversion
-#	information.  
+# VERSION: the identifier for the amanda determined from git
+#	information.
 # PKG_NAME_VER: the full version name of amanda we're working on.  This will
-#	become part of the deb name.  {PKG_NAME_VER} gets substituted into
-#	various package files.  
+#	become part of the deb name.  {PKG_NAME_VER} gets substituted
 #
-# Other Hints:
-# Not everyone will want to use the ./configure options we provide.  The
-# easiest way to change them is by editing the rules file.  This fairly easy:
-# rules is a Makefile, so follow gnu makefile rules and edit the define 
-# CONFIG_FLAGS_COMMON variable.  Don't forget trailing backslashes.
-# set -x
 
-# set pkg_root also
-pkg_name=amanda
-. ./packaging/common/build_functions.sh
+buildtype=${1:-both}
+shift
 
-# create version files from top ...
-. ./config/set_full_version
+BUILDVER="4.0"
+GIT_DIR=.git/modules/tools-archives \
+   git ls-files stack-output/php | grep -q . &&
+   BUILDVER=""
 
-gen_pkg_build_config $pkg_root
+[ $buildtype = platform ] && pkg_name=zmanda-platforms
 
-gen_pkg_environ
+# set the var buildpkg_dir as well
+. ./packaging/common_z/build_functions.sh
+. ./packaging/common_z/set_zmanda_version
 
-[ -n "$PKG_NAME_VER" ] || { declare -p; die "no version to use"; }
+export PKG_DIR=$(realpath .)
+mach=`uname -m`
 
-do_package ${PKG_NAME_VER}
+do_deb_package() {
+    gen_pkg_build_config "$@"
+    gen_pkg_environ
+    do_package "${PKG_NAME_VER}"
+}
+
+set -e
+
+case "$buildtype,$mach,$BUILDVER" in
+   both,x86_64,*)
+        do_deb_package "$buildpkg_dir/server${BUILDVER}"
+        do_deb_package "$buildpkg_dir/client${BUILDVER}"
+        ;;
+
+   server,x86_64,*)
+        do_deb_package "$buildpkg_dir/server${BUILDVER}"
+        ;;
+
+   client,*,*) ;&
+   both,*,*)
+        do_deb_package "$buildpkg_dir/client${BUILDVER}"
+        ;;
+
+#   platform,x86_64,*)
+#       do_deb_package "$buildpkg_dir/zmanda-platform${BUILDVER}.spec"
+#       ;;
+
+   *) echo "ERROR: cannot build combination of $buildtype-$mach-${BUILDVER:-3.6}" >&2; exit -1 ;;
+esac
+
+true

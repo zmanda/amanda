@@ -1,0 +1,62 @@
+#!/bin/bash
+
+#
+# VERSION: the identifier for the amanda determined from git
+#	information.  
+# PKG_NAME_VER: the full version name of amanda we're working on.  This will
+#	become part of the deb name.  {PKG_NAME_VER} gets substituted
+#
+
+buildref=$1
+shift
+
+buildtype=${1:-both}
+shift
+
+BUILDVER="4.0"
+GIT_DIR=.git/modules/tools-archives \
+   git ls-files stack-output/php | grep -q . &&
+   BUILDVER=""
+
+[ -n "$buildref" ] || { echo requires a branch/buildref; exit 1; }
+
+[ $buildtype = platform ] && pkg_name=zmanda-platforms
+
+# set the var buildpkg_dir as well
+. ./packaging/common_z/build_functions.sh
+# DO NOT SET THE TOP VERSION FILES USING set_zmanda_version
+
+# DO NOT SET PKG_DIR FROM TOP DIR
+mach=`uname -m`
+
+do_deb_package() {
+    gen_pkg_build_config "$@"
+    gen_repo_pkg_environ $repo_name $buildref
+    do_package "${PKG_NAME_VER}"
+}
+
+set -e
+
+case "$buildtype,$mach,$BUILDVER" in
+   both,x86_64,*)
+        do_deb_package "$buildpkg_dir/server${BUILDVER}"
+        do_deb_package "$buildpkg_dir/client${BUILDVER}"
+        ;;
+
+   server,x86_64,*)
+        do_deb_package "$buildpkg_dir/server${BUILDVER}"
+        ;;
+
+   client,*,*) ;&
+   both,*,*)
+        do_deb_package "$buildpkg_dir/client${BUILDVER}"
+        ;;
+
+#   platform,x86_64,*)
+#       do_deb_package "$buildpkg_dir/zmanda-platform${BUILDVER}.spec"
+#       ;;
+
+   *) echo "ERROR: cannot build combination of $buildtype-$mach-${BUILDVER:-3.6}" >&2; exit -1 ;;
+esac
+
+true

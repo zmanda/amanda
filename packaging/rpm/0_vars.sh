@@ -1,0 +1,1 @@
+pkg_name=amanda_enterprise

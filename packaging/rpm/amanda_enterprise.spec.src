@@ -1,0 +1,1493 @@
+#
+#                  Copyright (C) 2019 Zmanda.
+#                  All Rights Reserved.
+#
+#  The software you have just accessed, its contents, output and underlying
+#  programming code are the proprietary and confidential information of Zmanda
+#  Incorporated.  Only specially authorized employees, agents or licensees of
+#  Zmanda may access and use this software.  If you have not been given
+#  specific written permission by Zmanda, any attempt to access, use, decode,
+#  modify or otherwise tamper with this software will subject you to civil
+#  liability and/or criminal prosecution to the fullest extent of the law.
+#
+%{!?subpkg: %define subpkg server}
+
+%define rpmbuild_version  %(rpmbuild --version | tr -dc 0-9. | tr . ' ' | xargs -l printf "%03d.%03d.%03d")
+
+%if "%{subpkg}" == "server"
+%define pkg_variant     backup_server
+%endif
+%if "%{subpkg}" == "client"
+%define pkg_variant     backup_client
+%endif
+%if "%{subpkg}" == "client-combined"
+%define pkg_variant     client
+%undefine subpkg
+%define subpkg client
+%define combined
+%endif
+
+%global build_srpm 0
+%{?srpm_only: %define build_srpm 1}
+
+%global _buildshell /bin/bash
+
+%undefine _python_bytecompile_errors_terminate_build
+%undefine _missing_build_ids_terminate_build
+# %%undefine _debugsource_packages
+# %%undefine _use_internal_dependency_generator
+# Null __perl_requires to prevent perl module auto requires generation.
+# %%define __perl_requires %%{nil}
+
+# use a python byte compiler
+%if "%{rpmbuild_version}" > "004.015.999"
+%undefine __brp_python_bytecompile
+%else
+%global _python_bytecompile_extra 1
+%endif
+
+# NO FILTERING OF REQUIRES OR PROVIDES!
+#
+# must prevent platform build-ids from being bundled with platform rpm
+# or it will conflict with native-installed versions of its files
+%define _build_id_links alldebug
+
+%define dist       %%PKG_DIST%%
+%define distver    %%PKG_DISTVER%%
+%define disttag    %(A="%%PKG_SUFFIX%%"; A="${A#.}"; echo ${A%%%%.*})
+
+%define glib2_build   %%BUILD_GLIB2_VERSION%%
+
+%define glib2_pkg_name glib2
+%define glib2_devel_pkg_name glib2-devel
+
+%if "%{dist}" == "suse"
+%define glib2_pkg_name libglib-2_0-0
+%endif
+
+# Define which Distribution we are building:
+# Try to detect the distribution we are building:
+%if "%{_vendor}" == "amazon"
+    %define dist amazon
+    %define distver 1
+    %define disttag  amzn
+%endif
+
+# Set options per distribution
+%if "%{dist}" == "redhat" || "%{dist}" == "centos" || "%{dist}" == "fedora"
+    %define rpm_group Applications/Archiving
+%endif
+%if "%{dist}" == "suse"
+    %define rpm_group Productivity/Archiving/Backup
+%endif
+
+# Let's die if we haven't detected the distro.  This might save some frustration.
+# RPM does not provide a way to  exit gracefully, hence the tag_to_cause_exit.
+%{!?distver: %{error:"Your distribution and its version were not detected."}; %tag_to_cause_exit }
+# Set minimum tar version if it wasn't set in the per-distro section
+%{!?tarver: %define tarver 1.15}
+
+# Define the native binary data encoder (for create_amkey)
+%define encoder %({ command -v base64 2>/dev/null; } || { command -v uuencode 2>/dev/null; })
+
+%define packer %(%{__id_u} -n)
+
+# --- Definitions ---
+# only has time if not a tagged release..
+%define branch_time_version  %(A="%%VERSION%%"; echo "${A%%.git.*}")
+%define target_version       %(A="%%VERSION%%"; echo "${A%%[^0-9.]*}")
+%define pkgcfg_sha           %(A="%%BUILD_VERSION%%"; echo "${A%%.*}")
+%define platform_sha         %(A="%%BUILD_VERSION%%"; echo "${A#*.}")
+%{!?build_date:%define build_date %(A="%%DATE%%"; echo "${A}")}
+
+# Define amanda_version using the value determined by
+# packaging/common_z/substitute.pl.
+%{!?amanda_version: %define amanda_version %%VERSION%%}
+%if "%{subpkg}" == "server"
+%{!?amanda_release: %define amanda_release %%PKG_REV%%}
+%{!?amanda_platform_version: %define amanda_platform_version %{target_version}.%{branch_time_version}.%{platform_sha}}
+%else
+%{!?amanda_release: %define amanda_release %%PKG_REV%%}
+%endif
+
+%define amanda_version_info "Amanda Enterprise Edition - version %{amanda_version}"
+%define amanda_user %%AMANDAUSER%%
+%define amanda_group %%AMANDAGROUP%%
+%define amanda_cligroup %%AMANDACLIGROUP%%
+
+%define udpportrange "800,840"
+%define tcpportrange "11000,11040"
+%define low_tcpportrange "800,840"
+
+%define devel_include_files \
+    am_sl.h  \
+    amjson.h  \
+    amanda.h  \
+    amflock.h  \
+    amutil.h  \
+    conffile.h  \
+    config.h  \
+    debug.h  \
+    device.h  \
+    directtcp-connection.h \
+    directtcp.h  \
+    file.h  \
+    fileheader.h  \
+    full-read.h  \
+    full-write.h  \
+    glib-util.h  \
+    property.h  \
+    s3-util.h  \
+    safe-read.h  \
+    sockaddr-util.h
+
+%define devel_config_files \
+	config.rpath \
+	amanda \
+	gnulib \
+	macro-archive \
+	config.h
+
+
+#####################################
+################  BUILD PACKAGE DEFINITION
+#####################################
+Name: amanda_enterprise
+Summary: The Amanda Backup and Archiving System - Amanda Enterprise Edition
+Version: %{amanda_version}
+%define rpm_release %{amanda_release}.%{disttag}
+%if %{build_srpm} > 0
+%define rpm_release %{amanda_release}
+%endif
+Release: %{rpm_release}
+Source: %{name}-%{amanda_version}.tar.gz
+License: http://wiki.zmanda.com/index.php/Amanda_Copyright
+Vendor: %{_vendor}
+Packager: Zmanda - A Betsol Company
+Url: http://www.zmanda.com/
+BuildRoot: %{_tmppath}/%{name}-%{amanda_version}-%{rpm_release}-%{packer}-buildroot
+Group: %{rpm_group}
+#NOTE: does not support i686
+ExclusiveArch: x86_64
+ExclusiveOS: linux
+# TODO - Need required versions for these:
+BuildRequires: autoconf
+BuildRequires: automake
+BuildRequires: binutils
+BuildRequires: bison
+BuildRequires: flex
+BuildRequires: gcc
+BuildRequires: %glib2_pkg_name >= 2.2.0
+BuildRequires: %glib2_pkg_name <= %glib2_build
+BuildRequires: %{glib2_devel_pkg_name}
+BuildRequires: gettext
+# BuildRequires: readline
+%if "%{dist}" == "suse"
+BuildRequires: docbook-xsl-stylesheets
+%else
+BuildRequires: docbook-style-xsl
+%endif
+# xsltproc for manpages
+BuildRequires: libxslt
+# libtoolize for later autotools
+BuildRequires: libtool
+# rpcgen for libndmp
+BuildRequires: /usr/bin/rpcgen
+BuildRequires: swig
+# Note: newer distros have changed most *-devel to lib*-devel, and added a
+# provides tag for backwards compat.
+# BuildRequires: readline-devel
+%if "%{subpkg}" == "client"
+# -------- needed without Bitrock platform ---------------
+BuildRequires: curl >= 7.10.0
+BuildRequires: curl-devel >= 7.10.0
+BuildRequires: openssl
+BuildRequires: openssl-devel
+BuildRequires: perl(ExtUtils::Embed)
+BuildRequires: ncurses-devel
+%endif
+
+# --- Build-common Package description ---
+
+%description
+unused build common package
+
+# --- Subpackages ---
+# FIXME: handle client and client-combined both here
+%if "%{pkg_variant}" == "backup_client" || "%{pkg_variant}" == "client"
+
+#####################################
+################  BACKUP-CLIENT ONLY #####################
+#####################################
+%package -n amanda_enterprise-backup_client
+Summary: The Amanda Backup and Archiving Client - Amanda Enterprise Edition [%{disttag}]
+Group: %{rpm_group}
+Requires(pre): /bin/awk
+Requires(pre): /usr/bin/id
+Requires(pre): /bin/bash
+Requires(pre): /bin/sh
+Requires(pre): /usr/sbin/useradd
+Requires(pre): /usr/sbin/usermod
+# Requires(pre): %{_ldsoconfdir}
+Requires: /bin/awk
+Requires: /usr/bin/id
+Requires: /sbin/ldconfig
+Requires: /usr/bin/gpg-agent
+Requires: /usr/bin/gpg2
+Requires: coreutils
+Requires: gawk
+Requires: gettext
+Requires: grep
+# Requires: gnuplot
+Requires: xinetd
+Requires: curl >= 7.10.0
+Requires: openssl
+%if "%{dist}" == "suse"
+Requires: perl(x86-64) >= 5.10.1
+%else
+Requires: perl(x86-64) >= 4:5.10.1
+%endif
+Requires: tar >= %{tarver}
+%if "%{rpmbuild_version}" > "004.011.999"
+Recommends: samba-client
+%endif
+# Requires: readline
+# NOTE: mailx missing will make errors in logs, but 
+#      configuration could override these
+Requires: mailx
+Requires: %glib2_pkg_name >= %glib2_build
+# no need for amanda_enterprise-platform by design
+Provides: amanda_enterprise-backup_client = %{amanda_version}
+Conflicts: amanda_enterprise-backup_server
+Conflicts: amanda-backup_client
+Conflicts: amanda, amanda-server, amanda-client, amanda-backup_server, amanda-backup_client
+
+%description -n amanda_enterprise-backup_client
+Amanda Enterprise Edition is the leading Open-Source Backup and
+Archiving software with Enterprise support.
+
+This package contains the Amanda enterprise client.
+The amanda_enterprise-backup_client package needs to be installed on every
+system that is being backed up.
+
+Documentation: http://network.zmanda.com/
+               Click on "Documentation" -> "Enterprise Edition"
+Support: http://network.zmanda.com/
+%endif
+
+#####################################
+################  BACKUP-SERVER ONLY #####################
+#####################################
+%if "%{subpkg}" == "server"
+
+%package -n amanda_enterprise-backup_server
+Summary: The Amanda Backup and Archiving Server - Amanda Enterprise Edition [%{disttag}]
+Group: %{rpm_group}
+# ------- many handled by BITROCK
+Requires(pre): /bin/awk
+Requires(pre): /usr/bin/id
+Requires(pre): /bin/bash
+Requires(pre): /bin/sh
+Requires(pre): /usr/sbin/useradd
+Requires(pre): /usr/sbin/usermod
+Requires: /sbin/ldconfig
+Requires: /usr/bin/gpg-agent
+Requires: /usr/bin/gpg2
+Requires: gettext
+Requires: coreutils
+Requires: grep
+Requires: gnuplot
+%if "%{rpmbuild_version}" > "004.011.999"
+Recommends: samba-client
+%endif
+# NOTE: mailx missing will make errors in logs, but 
+#      configuration could override these
+Requires: mailx
+%{?requires_libtermcap}
+Requires: xinetd
+# Requires: /usr/bin/systemctl
+Requires: tar >= %{tarver}
+Requires: %glib2_pkg_name >= %glib2_build
+# Requires: readline
+Requires: amanda_enterprise-platform
+Provides: amanda_enterprise-backup_server = %{amanda_version}
+Conflicts: amanda-backup_server
+Conflicts: amanda_enterprise-backup_client
+# Native package names
+Conflicts: amanda, amanda-server, amanda-client, amanda-backup_server, amanda-backup_client
+
+%description -n amanda_enterprise-backup_server
+Amanda Enterprise Edition is the leading Open-Source Backup and
+Archiving software with Enterprise support.
+
+This package contains the Amanda enterprise server.  The
+amanda_enterprise-backup_server package should be installed on the
+Amanda server, i.e. the machine attached to backup media (such as a
+tape drive or disk drives) where backups will be written.  The
+amanda_enterprise-backup_server package includes Amanda enterprise
+client.
+
+Documentation: http://network.zmanda.com/
+               Click on "Documentation" -> "Enterprise Edition"
+Support: http://network.zmanda.com/
+%endif
+
+#####################################
+################  BACKUP-DEVEL #####################
+#####################################
+%package %{pkg_variant}-devel
+Summary: The Amanda Backup and Archiving Server - Amanda Enterprise Edition [%{disttag}]
+Group: %{rpm_group}
+Provides: amanda_enterprise-%{pkg_variant} = %{amanda_version}
+
+%description %{pkg_variant}-devel
+Amanda Enterprise Edition is the leading Open-Source Backup and
+Archiving software with Enterprise support.
+
+This package contains the Amanda enterprise %{pkg_variant} development files.
+
+# --- Directory setup ---
+
+# Configure directories:
+%define PREFIX          /usr
+%define EPREFIX         %{PREFIX}
+%define BINDIR          %{EPREFIX}/bin
+%define SBINDIR         %{EPREFIX}/sbin
+%define AMINCDIR        %{EPREFIX}/include/amanda
+%define SHAREDIR        %{PREFIX}/share
+%define SYSCONFDIR      /etc
+%define LOCALSTATEDIR   /var
+%define SYSLOGDIR       /var/log
+%define AMANDATES       %{AMANDAHOMEDIR}/amandates
+%define AM_CONFDIR      %{SYSCONFDIR}/amanda
+%define ZMANDA_CONFDIR  %{SYSCONFDIR}/zmanda
+%define AMANDAHOMEDIR   %%AMANDAHOMEDIR%%
+%define AMHOMEDIR       %%AMANDAHOMEDIR%%
+%define AMVARDIR        %{LOCALSTATEDIR}/amanda
+
+%ifarch x86_64 s390x
+%define LIBDIR          %{EPREFIX}/lib64
+%else
+%define LIBDIR          %{EPREFIX}/lib
+%if %([ -d %{LIBDIR}64 ]; echo $?) == 0
+%define LIBDIR_COMPAT   %{EPREFIX}/lib64
+%endif
+%endif
+
+%define AMLIBDIR        %{LIBDIR}
+
+%define AMPERLDIR       %{LIBDIR}/amanda/perl
+%define LIBEXECDIR      %{LIBDIR}
+%define AMLIBEXECDIR    %{LIBDIR}/amanda
+%{?LIBDIR_COMPAT: %define AMLIBEXECDIR_COMPAT %{LIBDIR_COMPAT}/amanda}
+%define MANDIR          %{SHAREDIR}/man
+%define LOGDIR          %%LOGDIR%%
+
+%define BUILD_TOPDIR	%{_builddir}/%{name}-%{amanda_version}
+
+%define INSTALL_TOPDIR  %%INSTALL_TOPDIR%%
+%define PLATREPO_TOPDIR	%(readlink -m %(git rev-parse --show-toplevel)/bitrock-stack)
+
+
+################################### server only
+%if "%{subpkg}" == "server"
+%define INSTALL_CONFDIR         %{INSTALL_TOPDIR}/etc
+%define INSTALL_PYTHON_PKGS     %{INSTALL_TOPDIR}/python/lib/python2.7/site-packages
+%define PLATREPO_PYTHON_PKGS    %{PLATREPO_TOPDIR}/python/lib/python2.7/site-packages
+
+# library dirs
+%define PLATREPO_LIBDIR	        %{PLATREPO_TOPDIR}/common/lib
+%define INSTALL_LIBDIR		%{INSTALL_TOPDIR}/common/lib
+
+# misc build dirs
+%define PLATREPO_LDPATH	        %{PLATREPO_TOPDIR}/common/lib
+%define PLATREPO_PYTHON 	%{PLATREPO_TOPDIR}/python/bin/python2
+
+%define INSTALL_LDPATH		%{INSTALL_TOPDIR}/common/lib
+%define INSTALL_PERL 		%{INSTALL_TOPDIR}/perl/bin/perl
+%define INSTALL_PYTHON 		%{INSTALL_TOPDIR}/python/bin/python2
+
+#
+# NOTE: no virtual environment present for python2
+#
+%global __python 	%{PLATREPO_PYTHON}
+%global __python2 	%{PLATREPO_PYTHON}
+
+
+%global __perl 		%{PLATREPO_TOPDIR}/perl/bin/perl
+%global __build_shell   %(command -v bash)
+
+%endif
+################################### server only
+
+%if "%{subpkg}" == "client"
+%global __python 	%(command -v python2)
+%global __python2	%(command -v python2)
+%global __perl 		%(command -v perl)
+%global __build_shell   %(command -v bash)
+# NOTE: poison pill.. dont use in client side..
+%define PLATREPO_LIBDIR	/dev/null
+%define INSTALL_CONFDIR /etc
+# [must usable for ALL Debian paths too]
+%define INSTALL_PYTHON 	%{__python2}
+%define INSTALL_LDPATH	%{AMLIBEXECDIR}
+%endif
+
+%define CERT_BUNDLE_URL https://curl.haxx.se/ca/cacert.pem
+%define CERT_BUNDLE_RESOLVE     curl.haxx.se:443:151.101.2.49
+
+# Installation directories:
+%define ROOT_SBINDIR            %{buildroot}%{SBINDIR}
+%define ROOT_SHAREDIR            %{buildroot}%{SHAREDIR}
+%define ROOT_LOCALSTATEDIR      %{buildroot}%{LOCALSTATEDIR}
+%define ROOT_SYSCONFDIR         %{buildroot}%{SYSCONFDIR}
+%define ROOT_AMCONFDIR          %{buildroot}%{AM_CONFDIR}
+%define ROOT_AMANDAHOMEDIR      %{buildroot}%{AMANDAHOMEDIR}
+%define ROOT_AMLIBDIR           %{buildroot}%{AMLIBDIR}
+%define ROOT_MANDIR             %{buildroot}%{MANDIR}
+%define ROOT_LOGDIR             %{buildroot}%{LOGDIR}
+%define ROOT_AMHOMEDIR          %{buildroot}%{AMHOMEDIR}
+%define ROOT_AMLIBEXECDIR       %{buildroot}%{AMLIBEXECDIR}
+%define ROOT_AMINCDIR           %{buildroot}%{AMINCDIR}
+%define ROOT_INSTALLDIR         %{buildroot}%{INSTALL_TOPDIR}
+%define ROOT_INSTALLLIBDIR      %{buildroot}%{INSTALL_LIBDIR}
+%define ROOT_PYTHON_PKGS        %{buildroot}%{INSTALL_PYTHON_PKGS}
+
+%define __pythondist_path    ^%{INSTALL_PYTHON_PKGS}/[^/]+\\.(dist-info|egg-info|egg-link)$
+
+# --- Definitions for platform package ---
+
+%package -n amanda_enterprise-platform
+Summary: The Amanda Backup and Archiving Server - Amanda Enterprise Edition
+Version: %{amanda_platform_version}
+Release: %{amanda_release}
+Group: %{rpm_group}
+# signal satisfaction of perl reqs 
+Provides: perl(:VERSION) = 5.20.2
+Provides: perl(:MODULE_COMPAT_5.20.0)
+Provides: perl(:MODULE_COMPAT_5.20.1)
+Provides: perl(:MODULE_COMPAT_5.20.2)
+Provides: perl(:WITH_64BIT)
+Provides: perl(:WITH_ITHREADS)
+Provides: perl(:WITH_PERLIO)
+# signal satisfaction of python reqs
+Provides: python(abi) = 2.7
+#
+# FAKE PROVIDES TO SILENCE THE AUTO-DEPENDENCY SYSTEM
+#  (VMS: not used)  (JSON::backportPP is virtual) (Mac: not used)
+Provides: perl(VMS::Filespec)
+Provides: perl(VMS::Stdio)
+Provides: perl(JSON::backportPP)
+Provides: perl(Mac::InternetConfig)
+
+# --- Build-platform description ---
+
+%description platform
+Amanda Enterprise Edition is the leading Open-Source Backup and
+Archiving software with Enterprise support.
+
+This package contains a base set of Linux utilities and libraries that
+provide a base consistent enough for all necessary functionality to be 
+delivered to the end user.
+
+# --- Unpack ---
+# --- Unpack ---
+# --- Unpack ---
+# --- Unpack ---
+# --- Unpack ---
+
+########################################
+%prep
+#!/bin/bash
+########################################
+
+%setup -T -b 0
+cd %{BUILD_TOPDIR}
+
+SHA=$(cat FULL_VERSION)
+SHA=${SHA#*.git.}
+SHA=${SHA#*.tag.}
+SHA=${SHA%.edit}
+SHA=${SHA%%[^a-f0-9]*}
+if [ "$(git rev-parse ${SHA} 2>/dev/null)" = "$(git rev-parse HEAD)" ]; then
+    # scrub this directory if possible
+    (
+    # any big mismatches with top directory.. or we are *in* the top?
+    if GIT_WORK_TREE=. git ls-files -d | grep -q . || [ -d .git ]; then
+        : # cant do anything
+    else
+       # (note: 000-external is a fake/symlink, so must be preserved also)
+       # perform real scrub
+       GIT_WORK_TREE=. git clean -d -f -x  \
+	   -e BUILD_VERSION \
+	   -e FULL_VERSION \
+	   -e PKG_REV \
+	   -e 000-external \
+	   -e LONG_BRANCH \
+	   -e vcs_repo.info
+    fi
+    )
+fi
+
+[ -s Makefile ] && make distclean || true
+[ -s Makefile ] && make clean || true
+
+./autochk || exit -1   # confirm modules are properly set up
+
+cat >./rpm-env.sh /dev/null - <<CLEAR_DEFAULT
+   unset CONFIG_LDPATH
+   unset AMPERL
+   export PKG_CONFIG_PATH=${PKG_CONFIG_PATH}
+   export PATH=${PATH}
+   # find a standard-path as default
+   export PERL=$(command -v perl)
+   export PYTHON=$(command -v python2)
+CLEAR_DEFAULT
+
+#works for dirs only!
+command -v realpath >/dev/null || realpath() { readlink -e "$@"; }
+
+export PYTHON="%{__python}"
+export PERL="%{__perl}"
+export AMPERL="%{__perl}"
+export PKG_CONFIG_PATH="${PKG_CONFIG_PATH}:%{_libdir}/pkgconfig:%{_datadir}/pkgconfig"
+
+# must get standard paths to "exec" target... ignoring symlinks-to-bin-file
+# otherwise paths cannot be easily substituted
+export PYTHON="$(realpath ${PYTHON%/*})/${PYTHON##*/}"
+export PERL="$(realpath ${PERL%/*})/${PERL##*/}"
+
+######################################### server only
+%if "%{subpkg}" == "server"
+
+    #
+    # leave to wrappers .. as some LD_LIBRARY_PATH issues cause problems
+    #
+    export CONFIG_LDPATH="%{PLATREPO_LIBDIR}:${LD_LIBRARY_PATH}"
+    # remove the : from the end if needed
+    export CONFIG_LDPATH="${CONFIG_LDPATH%:}"
+
+    #
+    # NOTE: rpm itself crashes if it uses platform libraries
+    #
+
+    export PATH="${PYTHON%/*}:$PATH"
+    export PATH="${PERL%/*}:$PATH"
+    export PATH="%{PLATREPO_TOPDIR}/common/bin:$PATH"
+
+%{?PKG_CONFIG_PATH: export PKG_CONFIG_PATH=%{PKG_CONFIG_PATH}}
+    export PKG_CONFIG_PATH="%{PLATREPO_LIBDIR}/pkgconfig:${PKG_CONFIG_PATH}"
+    export PKG_CONFIG_PATH="%{PLATREPO_TOPDIR}/python/lib/pkgconfig:${PKG_CONFIG_PATH}"
+    export PKG_CONFIG_PATH="${PKG_CONFIG_PATH%:}"
+    # remove the : from the end if needed
+
+    export AMPERL="%{INSTALL_PERL}"
+    #
+    # define full build settings
+    #
+    eval 'LDFLAGS="$(tr -d "\\n")"' <<'LDFLAGS'
+	-L%{PLATREPO_LIBDIR}
+	-Wl,--disable-new-dtags
+	-Wl,-rpath-link -Wl,%{PLATREPO_LDPATH}
+	-Wl,-rpath -Wl,%{INSTALL_LDPATH}
+	%{?LDFLAGS:%{LDFLAGS}}
+LDFLAGS
+
+    eval 'CPPFLAGS="$(tr -d "\\n")"' <<'CPPFLAGS'
+	-I%{PLATREPO_TOPDIR}/common/include
+	-I%{PLATREPO_TOPDIR}/mysql/include
+	-I%{PLATREPO_TOPDIR}/php/include
+	-I%{PLATREPO_TOPDIR}/python/include
+CPPFLAGS
+
+    # add on 
+    declare -p >>./rpm-env.sh 2>/dev/null \
+        LDFLAGS \
+        CPPFLAGS \
+	CONFIG_LDPATH \
+	AMPERL
+######################################### server only
+%endif
+
+
+%if "%{subpkg}" == "client"
+    eval 'LDFLAGS="$(tr -d "\\n")"' <<==========LDFLAGS
+        -Wl,--disable-new-dtags
+        -Wl,-rpath -Wl,%{INSTALL_LDPATH}
+==========LDFLAGS
+    declare -p >>./rpm-env.sh 2>/dev/null \
+        LDFLAGS
+%endif
+
+
+# override earlier values if changed
+declare -p >>./rpm-env.sh 2>/dev/null \
+   PKG_CONFIG_PATH \
+   PATH \
+   PERL \
+   PYTHON
+
+true
+
+# --- Configure and compile ---
+#########################################
+%build
+#!/bin/bash
+#########################################
+cd %{BUILD_TOPDIR}
+
+git_toplevel=$(git rev-parse --show-toplevel)
+
+# Since optflags varies by distro, we don't want to remove their flags,
+# just to adjust any -march= flags, and add our extra flags here with no
+# duplicates.
+z_flags=`echo "%{optflags}" | sed 's/-march=\(i386\|i486\)/-march=i686/
+				    /-O2/ !{ s/$/ -O2/ }
+				    /-pipe/ !{ s/$/ -pipe/ }
+				    /-g/ !{ s/$/ -g/ }
+				  '`
+
+%if "%{subpkg}" == "server"
+#
+# prepare and then alter libtool to prevent rpath from being used by default
+# 
+libtoolize -i
+
+# modify libtool.m4 for our needs
+sed -i -e '/[ (]hardcode_libdir_flag_spec.*=/s,\${wl}-rpath ,\${wl}--disable-new-dtags ${wl}-rpath-link ,g' config/libtool.m4
+sed -i -e '/[ (]hardcode_libdir_flag_spec.*=/s,\$wl-rpath ,\$wl--disable-new-dtags $wl-rpath-link ,g' config/libtool.m4
+
+%endif
+
+%if "%{subpkg}" == "client"
+#
+# FIXME: grotesque and foul way to force including *all* perl into client
+#
+sed -i -e 's,^if *WANT_SERVER,if WANT_CLIENT,' perl/Makefile.am
+%endif
+
+#
+# install needed environment
+#
+[ -f ./configure ] || ./autogen
+
+. ./rpm-env.sh
+
+%if "%{subpkg}" == "client"
+    # do *NOT* need anything in tools-archives ... so remove it now.
+    ( cd $git_toplevel; git submodule deinit -f 000-external/tools-archives; )
+%endif
+
+export GCC_TARGET=$(gcc -dumpmachine | tr -d '\n')
+
+LD_LIBRARY_PATH="${CONFIG_LDPATH}" \
+./configure \
+        CFLAGS="${z_flags}" CXXFLAGS="${z_flags}" \
+ 	CPPFLAGS="$CPPFLAGS" \
+	LDFLAGS="$LDFLAGS" \
+	LD_LIBRARY_PATH="${CONFIG_LDPATH}" \
+        PERL="${PERL}" \
+        AMPERL="${AMPERL}" \
+        GNUTAR=/bin/tar \
+	--enable-as-needed \
+	--enable-shared \
+        --quiet \
+        --host=${GCC_TARGET} \
+        --build=${GCC_TARGET} \
+        --prefix=%{PREFIX} \
+        --libdir=%{LIBDIR} \
+        --sysconfdir=%{SYSCONFDIR} \
+        --sharedstatedir=%{LOCALSTATEDIR} \
+        --localstatedir=%{LOCALSTATEDIR} \
+        \
+        --sbindir=%{SBINDIR} \
+        --mandir=%{MANDIR} \
+        --libexecdir=%{LIBEXECDIR} \
+        --with-amperldir=%{AMPERLDIR} \
+        --with-configdir=%{AM_CONFDIR} \
+        --with-amlibdir=%{AMLIBDIR} \
+	--with-amdatadir=%{AMHOMEDIR} \
+        --with-amlibexecdir=%{AMLIBEXECDIR} \
+        --with-gnutar-listdir=%{AMANDAHOMEDIR}/gnutar-lists \
+        --with-index-server=localhost \
+        --with-tape-server=localhost \
+        --with-user=%{amanda_user} \
+        --with-group=%{amanda_group} \
+        --with-fqdn \
+        --with-bsd-security \
+        --with-bsdtcp-security \
+        --with-bsdudp-security \
+        --with-ssh-security \
+        --with-amandahosts \
+        --with-amandates=%{AMANDATES} \
+        --with-tcpportrange=%{tcpportrange} \
+        --with-udpportrange=%{udpportrange} \
+        --with-low-tcpportrange=%{low_tcpportrange} \
+        --with-assertions \
+        --with-debugging=%{LOGDIR} \
+        --with-failure-code \
+        --with-gnuplot=%(command -v gnuplot 2>/dev/null) \
+	--with-libcurl=%{PLATREPO_TOPDIR}/common \
+	--without-readline \
+        --enable-s3-device \
+        --disable-installperms \
+	--disable-syntax-checks \
+        --enable-manpage-build \
+	--disable-rpath \
+        --with-xsltproc=%{PLATREPO_TOPDIR}/common/bin/xsltproc \
+        %{?without_ipv6}
+
+make -j`nproc`
+
+# --- Install to buildroot ---
+
+########################################
+%install
+#!/bin/bash
+########################################
+cd %{BUILD_TOPDIR}
+
+git_toplevel=$(git rev-parse --show-toplevel)
+
+command -v realpath >/dev/null || realpath() { readlink -e "$@"; }
+
+. packaging/common_z/common_functions.sh
+
+[ "$(stat -c '%m' %{buildroot})" = "%{buildroot}" ] && 
+   { echo "used mount point %{buildroot}"; exit -1; }
+
+chmod u+r,u+X -R %{buildroot}
+rm -rf %{buildroot}
+
+################################################ perform source make-install
+. ./rpm-env.sh   # last time...
+make -j1 DESTDIR=%{buildroot} install
+################################################ done with source make-install
+
+
+
+
+
+%if "%{subpkg}" == "server"
+
+    # reset correctly here again if needed...
+    PLATREPO_REALDIR="$(realpath "%{PLATREPO_TOPDIR}")"
+
+    # substitute a real version of perl if needed
+    find %{ROOT_AMLIBEXECDIR} %{ROOT_SBINDIR} -type f |
+        grep -e '%{ROOT_AMLIBEXECDIR}/[^/]*$' \
+             -e '%{ROOT_AMLIBEXECDIR}/application/[^/]*$' \
+             -e '%{ROOT_AMLIBEXECDIR}/rest-server/bin/[^/]*$' \
+             -e '%{ROOT_SBINDIR}/[^/]*$' |
+         while read i; do 
+            read -N2 j < $i; 
+            [[ "$j" == '#!' ]] || continue;
+            # definitely a script.. so exchange paths if found
+            sed -i -e "s|%{PLATREPO_TOPDIR}|%{INSTALL_TOPDIR}|" \
+                   -e "s|${PLATREPO_REALDIR}|%{INSTALL_TOPDIR}|" \
+               $i
+         done
+%endif
+
+##################
+# root-setuid executable / private-contents
+##################
+find %{ROOT_AMLIBEXECDIR} -type f | xargs chmod 0644
+find %{ROOT_AMLIBEXECDIR} -type d | xargs chmod 0755
+
+chmod 0755 %{ROOT_AMLIBEXECDIR}/*
+chmod 0755 %{ROOT_AMLIBEXECDIR}/application/*
+chmod 0755 %{ROOT_AMLIBEXECDIR}/rest-server/bin/*
+
+# note chmod'ed even though defattr should retain settings
+chmod 04750 %{ROOT_AMLIBEXECDIR}/ambind
+chmod 04750 %{ROOT_AMLIBEXECDIR}/calcsize
+chmod 04750 %{ROOT_AMLIBEXECDIR}/killpgrp
+chmod 04750 %{ROOT_AMLIBEXECDIR}/rundump
+chmod 04750 %{ROOT_AMLIBEXECDIR}/runtar
+
+chmod 04755 %{ROOT_AMLIBEXECDIR}/application/amgtar
+chmod 04755 %{ROOT_AMLIBEXECDIR}/application/amstar
+
+chmod 0644  %{ROOT_AMLIBEXECDIR}/amcat.awk
+# needed for server install
+chmod 0644  %{ROOT_AMLIBEXECDIR}/amplot.awk
+chmod 0644  %{ROOT_AMLIBEXECDIR}/amplot.g
+chmod 0644  %{ROOT_AMLIBEXECDIR}/amplot.gp
+
+%{?AMLIBEXECDIR_COMPAT: ln -sf %{AMLIBEXECDIR} %{AMLIBEXECDIR_COMPAT}}
+
+%if "%{subpkg}" == "server"
+########################
+# verify libamdevice.so RPATH have the bitrock platform library path before
+# /lib /usr/lib /lib64 /usr/lib64
+########################
+
+RPATH_FOUND="$(objdump -a -x %{ROOT_AMLIBDIR}/libamdevice.so | 
+               sed -r -e '/RPATH|RUNPATH/!d' -e 's,^[^ 	]RPATH[^/]*,,' -e 's,^[^ 	]RUNPATH[^/]*,,')"
+
+echo ":$RPATH_FOUND:" | grep -q -w -e ':/lib:' -e ':/usr/lib:' -e ':/lib64:' -e ':/usr/lib64:' &&
+   echo "$RPATH_FOUND" | grep -q "%{INSTALL_LIBDIR}" &&
+       { echo "ERROR system paths mixed in RPATH: $RPATH_FOUND"; exit -1; }
+%endif
+
+# keep for devel
+# find %{buildroot} -name \*.la -delete -o -name \*.a -delete
+
+##################
+# install/shift misc files in place
+##################
+mkdir -p %{ROOT_AMANDAHOMEDIR}/{gnutar-lists,.gnupg,.ssh,tmp}
+echo "%{amanda_version_info}" > %{ROOT_AMANDAHOMEDIR}/amanda-release
+
+# package-placeholders all filled in upon install only
+( umask 027;
+touch %{ROOT_AMANDAHOMEDIR}/.gnupg/{pubring.gpg,random_seed,secring.gpg,am_key.gpg}
+touch %{ROOT_AMANDAHOMEDIR}/.ssh/{id_rsa_amrecover,id_rsa_amdump}{,.pub}
+touch %{ROOT_AMANDAHOMEDIR}/.am_passphrase
+touch %{ROOT_AMANDAHOMEDIR}/.amandahosts
+touch %{ROOT_AMANDAHOMEDIR}/.profile
+)
+
+mv %{ROOT_SHAREDIR}/amanda %{ROOT_SHAREDIR}/amanda_enterprise-%{amanda_version}
+rm -f %{ROOT_AMANDAHOMEDIR}/example/inetd.conf.amandaclient
+
+mkdir -p %{buildroot}%{AMVARDIR}
+
+mkdir -p %{ROOT_AMCONFDIR}
+
+mkdir -p %{ROOT_LOGDIR}
+mkdir -p %{ROOT_LOGDIR}/client
+# NOTE: not needed for client..
+mkdir -p %{ROOT_LOGDIR}/server
+
+install -D -m 640 /dev/null %{buildroot}%{AMANDATES}
+install -D -m 640 /dev/null %{ROOT_LOGDIR}/amanda-rest-server-log
+
+# both are installed by make-install...
+install -D -m 644 %{ROOT_AMCONFDIR}/amanda-security.conf           %{ROOT_AMCONFDIR}-security.conf
+install -D -m 644 %{ROOT_AMANDAHOMEDIR}/example/amanda-client.conf %{ROOT_AMCONFDIR}/amanda-client.conf
+
+
+
+install <<============ -m 644 /dev/stdin %{ROOT_AMCONFDIR}/amanda.conf
+# Specify Amanda REST API port. By default it is 5000
+REST-API-PORT 5000
+============
+
+############################################################
+%if "%{subpkg}" == "server"
+##################
+# install platform files correctly
+##################
+rm -rf %{ROOT_INSTALLDIR}
+mkdir -p %{ROOT_INSTALLDIR}
+
+stack_path=000-external/tools-archives
+stack_name=tools-archives
+
+tools_topdir=$(cd %{PLATREPO_TOPDIR}; git rev-parse --show-prefix)
+
+GIT_DIR=$(git_submodule_gitdir $stack_path) \
+    git archive $(git_submodule_ref $stack_path):${tools_topdir} | 
+	tar -xf - -C %{ROOT_INSTALLDIR}
+
+DESTDIR=${buildroot} %{ROOT_INSTALLDIR}/install-var-subst.sh
+
+(
+set +e
+{ /usr/bin/curl --help |& grep -qw resolve; } && resolve="--resolve %{CERT_BUNDLE_RESOLVE}"
+if [ -d %{ROOT_INSTALLDIR}/common/share/curl ]; then
+    /usr/bin/curl $resolve %{CERT_BUNDLE_URL}.gz > %{ROOT_INSTALLDIR}/common/share/curl/curl-ca-bundle.crt.gz
+    gunzip -f %{ROOT_INSTALLDIR}/common/share/curl/curl-ca-bundle.crt.gz
+fi
+)
+
+[ -s %{ROOT_INSTALLDIR}/common/share/curl/curl-ca-bundle.crt ];
+
+rmdir %{ROOT_INSTALLDIR}/php/php
+
+chmod -R og=rX %{ROOT_INSTALLDIR}/perl/lib 
+find %{ROOT_INSTALLDIR}/perl/lib -type f -name \*.so | xargs chmod 0755
+
+%endif
+############################################################
+
+##################
+# install all config/devel files correctly
+##################
+# set the top of the build
+build_topdir=%{BUILD_TOPDIR}
+# set the no-softlink build path... 
+build_topdir_abs=$(realpath %{BUILD_TOPDIR})
+# no-op substitutions
+bitrock_repo_dir="$build_topdir/bitrock-stack"
+[ -d $bitrock_repo_dir ] || bitrock_repo_dir='%%\\{PLATREPO_TOPDIR\\}'
+
+# no-op substitutions
+bitrock_repo_dir_abs="$(realpath $build_topdir/bitrock-stack || true)"
+[ -d $bitrock_repo_dir_abs ] || bitrock_repo_dir_abs='%%\\{PLATREPO_TOPDIR\\}'
+
+sed -i -e ':redo' -e '/"\\$/{N;s,"\\\n",,;b redo}' ./config.status 
+
+if ./config.status --config 2>/dev/null | grep -q .; then 
+    CONFIG="$(./config.status --config)"
+else
+    CONFIG="$(./config.status --version | sed -e '/with options/!d' -e 's,with options ",,' -e 's,"$,,')"
+fi
+
+rm -f %{ROOT_AMANDAHOMEDIR}/amanda-config
+echo "$CONFIG" |
+    sed \
+     -e "s|$build_topdir_abs|$build_topdir|g" \
+     -e "s|$bitrock_repo_dir_abs|$bitrock_repo_dir|g" \
+     -e "s|$bitrock_repo_dir|%%{PLATREPO_TOPDIR}|g" \
+     \
+     -e "s|$build_topdir|%%{BUILD_TOPDIR}|g" \
+     -e "s| %{AMLIBDIR}/| %%{DESTDIR}%{AMLIBDIR}/|g" \
+   	>%{ROOT_AMANDAHOMEDIR}/amanda-config
+
+mkdir -p %{ROOT_AMANDAHOMEDIR}/amanda-autoconf
+f=(%{devel_config_files});
+( cd config; cp -a "${f[@]}" %{ROOT_AMANDAHOMEDIR}/amanda-autoconf; )
+
+pkg_root_rev=$(cd $git_toplevel; git submodule status | sed -e 's,^ *\(.........\).*,\1,');
+cp -a ./config.status %{ROOT_AMANDAHOMEDIR}/amanda-autoconf/config.status-$(git_submodule_ref 000-external/packaging)
+
+mkdir -p %{ROOT_AMINCDIR}
+f=(%{devel_include_files});
+for i in "${f[@]}"; do cp */$i %{ROOT_AMINCDIR}; done
+
+#
+# these files can't work with old paths in them anyway
+#
+find %{ROOT_AMINCDIR} %{ROOT_AMANDAHOMEDIR} -type f | \
+    xargs --no-run-if-empty sed -i \
+     -e "s|$build_topdir_abs|$build_topdir|g" \
+     -e "s|$bitrock_repo_dir_abs|$bitrock_repo_dir|g" \
+     -e "s|$bitrock_repo_dir|%%{PLATREPO_TOPDIR}|g" \
+     -e "s|$build_topdir|%%{BUILD_TOPDIR}|g"
+
+find %{ROOT_AMLIBDIR} -type f -name \*.la | \
+    xargs --no-run-if-empty sed -i \
+     -e "s|$build_topdir_abs|$build_topdir|g" \
+     -e "s|$bitrock_repo_dir_abs|$bitrock_repo_dir|g" \
+     -e "s|$bitrock_repo_dir|%%{PLATREPO_TOPDIR}|g" \
+     -e "s|$build_topdir|%%{BUILD_TOPDIR}|g" \
+     -e "/dependency_libs=/s| %{AMLIBDIR}/| %%{DESTDIR}%{AMLIBDIR}/|g"
+
+find %{ROOT_AMLIBDIR} -type f -name \*.la | \
+    xargs --no-run-if-empty chmod uog-x 
+
+# double check that no devel files have the local BUILD_TOPDIR paths in them at all!!
+if find %{ROOT_AMINCDIR} %{ROOT_AMANDAHOMEDIR} -type f -exec grep -q %{_builddir} \{} \; -print | grep -q .; then exit -1; fi
+if find %{ROOT_AMLIBDIR} -type f -name \*.la  -exec grep -q %{_builddir} \{} \; -print | grep -q .; then exit -1; fi
+true
+
+%if "%{rpmbuild_version}" > "004.015.999"
+# don't need for client
+%py_byte_compile %{__python3} %{ROOT_INSTALLDIR}/python
+%endif
+# --- Clean up buildroot ---
+
+#########################################
+%clean
+#########################################
+%if "%{subpkg}" == "server"
+( cd %{PLATREPO_TOPDIR}; git checkout -f; git clean -d -f -x; )
+%endif
+
+[ "$(stat -c '%m' %{buildroot})" = "%{buildroot}" ] && 
+   { echo "used mount point %{buildroot}"; exit -1; }
+
+chmod u+rwX -R %{buildroot}
+# rm -rf @{buildroot}
+
+# Define script variables
+%define script_vars \
+    amanda_user=%{amanda_user}; \
+    amanda_group=%{amanda_group}; \
+    AMANDAHOMEDIR=%{AMANDAHOMEDIR}; \
+    os=Linux; \
+    dist=%{dist}; \
+    LOGDIR=%{LOGDIR}; \
+    INSTALL_LOG=$LOGDIR/install.log; \
+    SYSCONFDIR=%{SYSCONFDIR}; \
+    SBINDIR=%{SBINDIR}; \
+    wanted_shell=/bin/bash; \
+    encoder=%{encoder}; \
+    AMLIBEXECDIR=%{AMLIBEXECDIR}; \
+    export PYTHON=%{INSTALL_PYTHON}; \
+    export PATH="%{INSTALL_TOPDIR}/common/bin:%{INSTALL_TOPDIR}/python/bin:${PATH}"
+
+# --- Pre/post (un)installation scripts ---
+
+##########################################
+%pre -n amanda_enterprise-platform
+#!/bin/bash
+set +o posix
+##########################################
+#
+# pre installation
+# pre installation
+# pre installation
+#
+##########################################
+LOGFILE=`mktemp /tmp/amanda_enterprise_%{pkg_variant}-preinst.log.XXXXXXXXXXX`
+if [ $? -ne 0 ]; then
+    echo "Unable to create log file!"
+    exit 1
+fi
+
+%{script_vars}
+# ---------- Common functions ------------
+%%COMMON_FUNCTIONS%%
+%%PRE_INST_FUNCTIONS%%
+
+# -------- End Common functions ----------
+
+logger "User creation for platform install: %{amanda_version_info}"
+
+create_user
+check_user_group "${amanda_group}" ||
+   add_group "${amanda_group}"
+check_user_supplemental_group "%{amanda_cligroup}" ||
+   add_group "%{amanda_cligroup}"
+check_user_supplemental_group "mysql" || 
+   add_group "mysql"
+check_user_shell "${wanted_shell}"
+check_user_homedir "${AMANDAHOMEDIR}"
+check_homedir || create_homedir
+create_logdir
+
+echo -n > $INSTALL_LOG 
+
+logger "Preinstall done."
+cat $LOGFILE >> $INSTALL_LOG && rm $LOGFILE || \
+    echo "Amanda preinstall logs can be found in '$LOGFILE'."
+
+logger "Preparing to install platform files: %{amanda_version_info}"
+
+# [everything done in platform] %%pre backup_%{pkg_variant}
+
+##########################################
+%post -n amanda_enterprise-backup_server
+#!/bin/bash
+set +o posix
+##########################################
+#
+# post installation
+# post installation
+# post installation
+#
+##########################################
+LOGFILE=`mktemp /tmp/amanda_enterprise_%{pkg_variant}-postinst.log.XXXXXXXXXXX`
+if [ $? -ne 0 ]; then
+    echo "Unable to create log file!"
+    exit 1
+fi
+
+AMANDATES=%{AMANDATES}
+
+%{script_vars}
+# ---------- Common functions ------------
+%%COMMON_FUNCTIONS%%
+%%POST_INST_FUNCTIONS%%
+
+# -------- End Common functions ----------
+
+/sbin/ldconfig
+
+check_xinetd "amandaserver"
+case $? in
+    0) backup_xinetd "amanda%{pkg_variant}"
+       install_xinetd "amanda%{pkg_variant}"
+    ;;
+    1) install_xinetd "amanda%{pkg_variant}" ;;
+    2) logger "Xinetd config not installed: either xinetd config is not present or xinetd.d is a file." ;;
+    *) logger "bad return from check_xinetd"; exit 1 ;;
+esac
+
+# should not have the other type of xinetd installed.
+%if "%{subpkg}" == "server"
+check_xinetd "amandaclient" && backup_xinetd "amandaclient"
+%else
+check_xinetd "amandaserver" && backup_xinetd "amandaserver"
+%endif
+
+check_superserver_running "xinetd"
+[ "$?" = "0" ] && action=restart || action=start
+reload_xinetd $action
+create_amandates
+check_amandates
+create_ampassphrase || \
+    logger "Info: amcryptsimple and amcrpyt will not work until .am_passphrase is created"
+create_gnupg
+create_amkey || \
+    logger "Info: amcrypt will not work until keys are created."
+# Checks permissions, but only tries decrypting if both .am_passphrase
+# and .gnupg/am_key.gpg exist.
+check_gnupg
+create_amandahosts
+check_amandahosts_entry root amindexd amidxtaped
+check_amandahosts_entry ${amanda_user} amdump senddiscover
+check_amandahosts_perms
+create_ssh_key server
+create_ssh_key client
+create_profile
+check_profile
+install_client_conf
+install_security_conf
+
+logger "Amanda installation complete."
+
+cat $LOGFILE >> $INSTALL_LOG && {
+    rm $LOGFILE;
+    echo "Amanda installation log can be found in '${INSTALL_LOG}'.";
+} || \
+    echo "Amanda postinstall logs can be found in '$LOGFILE'."
+
+##########################################
+%preun -n amanda_enterprise-backup_server
+#!/bin/bash
+set +o posix
+##########################################
+#
+# pre un-installation
+# pre un-installation
+# pre un-installation
+#
+##########################################
+LOGFILE=`mktemp /tmp/amanda_enterprise_%{pkg_variant}_remove.log.XXXXXXXXXXX`
+if [ $? -ne 0 ]; then
+    echo "Unable to create log file!"
+    exit 1
+fi
+
+%{script_vars}
+# ---------- Common functions ------------
+%%COMMON_FUNCTIONS%%
+%%POST_RM_FUNCTIONS%%
+
+# -------- End Common functions ----------
+
+/sbin/ldconfig
+# Check for parameter to script (are we upgrading?)
+[ $1 -gt 0 ] && action="upgrade"
+[ $1 -gt 0 ] || action="uninstall"
+
+# See http://fedoraproject.org/wiki/Packaging/ScriptletSnippets for the reason
+# we only remove xinetd on uninstall.
+if [ "$action" = "uninstall" ]; then
+    # Check for and remove existing xinetd configs
+    check_xinetd "amanda%{pkg_variant}"
+    if [ $? -eq 0 ] ; then
+	rm_xinetd amanda%{pkg_variant}
+	check_superserver_running "xinetd" && reload_xinetd
+    fi
+
+    # Remove ${amanda_user} from sensitive groups.
+    if which deluser >/dev/null 2>&1 ; then
+        for group in %{amanda_cligroup}; do
+            # only call deluser when %{amanda_user} is in $group
+            if getent group "$group" |
+                awk -F: '{ print $4 }' |
+                awk -F, '{ for (i=1; i <= NF; i++ ) print $i }' |
+                grep "^${amanda_user}$" > /dev/null; then
+                    deluser ${amanda_user} $group || true
+            fi
+        done
+    fi
+
+    # final message
+    echo "Amanda removal log can be found in '$LOGFILE'."
+fi   # if uninstall
+
+
+# --- Files to install ---
+# System owned directories can not be listed directly, as they will be chowned/chmoded
+
+#############################################################################################
+%files -n amanda_enterprise-backup_server
+#
+# files list
+# files list
+# files list
+#
+######################################################
+##################
+# executable files (use actual perm of files)
+##################
+%defattr(-,root,root,0755)
+%{AMLIBEXECDIR}
+
+# amadmin_perl
+# amanda-sh-lib.sh
+# amandad
+# ambackupd
+# ambind
+# amcat.awk
+# amcheck-device
+# amdumpd
+# amidxtaped
+# amindexd
+# amlogroll
+# amndmjob
+# amplot.awk
+# amplot.g
+# amplot.gp
+# amtrmidx
+# amtrmlog
+# calcsize
+# chunker
+# driver
+# dumper
+# killpgrp
+# ndmjob
+# noop
+# patch-system
+# planner
+# restore
+# rundump
+# runtar
+# selfcheck
+# sendbackup
+# senddiscover
+# sendsize
+# taper
+# teecount
+
+# perl/Amanda/*
+# perl/auto/Amanda/*
+# rest-server/*
+
+# application
+# application/ambsdtar
+# application/amgtar
+# application/amlog-script
+# application/ampgsql
+# application/amrandom
+# application/amraw
+# application/amsamba
+# application/amstar
+# application/amsuntar
+# application/amzfs-sendrecv
+# application/amzfs-snapshot
+# application/script-email
+# application/script-fail
+
+#
+# [NOTE: server blocks r-x access to non-group users]
+# setuid ... (double specified for reliable confusion!)
+# internal executible / private-contents
+# [NOTE: server allows access to non-group users]
+#
+%attr(04750,root,%{amanda_cligroup}) %{AMLIBEXECDIR}/ambind
+%attr(04755,root,root) %{AMLIBEXECDIR}/application/amgtar
+%attr(04755,root,root) %{AMLIBEXECDIR}/application/amstar
+%attr(04750,root,%{amanda_cligroup}) %{AMLIBEXECDIR}/calcsize
+%attr(04750,root,%{amanda_cligroup}) %{AMLIBEXECDIR}/killpgrp
+%attr(04750,root,%{amanda_cligroup}) %{AMLIBEXECDIR}/rundump
+%attr(04750,root,%{amanda_cligroup}) %{AMLIBEXECDIR}/runtar
+
+%{?AMLIBEXECDIR_COMPAT: %{AMLIBEXECDIR_COMPAT}}
+
+##################
+# open to run
+# [NOTE: server grants access to non-group users]
+##################
+%defattr(0755,%{amanda_user},%{amanda_group},0755)
+%{SBINDIR}/*
+
+#/usr/sbin/amaddclient
+#/usr/sbin/amadmin
+#/usr/sbin/amaespipe
+#/usr/sbin/amanda-rest-server
+#/usr/sbin/amarchiver
+#/usr/sbin/ambackup
+#/usr/sbin/amcheck
+#/usr/sbin/amcheckdb
+#/usr/sbin/amcheckdump
+#/usr/sbin/amcleanup
+#/usr/sbin/amcleanupdisk
+#/usr/sbin/amcrypt
+#/usr/sbin/amcrypt-ossl
+#/usr/sbin/amcrypt-ossl-asym
+#/usr/sbin/amcryptsimple
+#/usr/sbin/amdevcheck
+#/usr/sbin/amdump
+#/usr/sbin/amdump_client
+#/usr/sbin/amfetchdump
+#/usr/sbin/amflush
+#/usr/sbin/amgetconf
+#/usr/sbin/amgpgcrypt
+#/usr/sbin/amlabel
+#/usr/sbin/amoldrecover
+#/usr/sbin/amoverview
+#/usr/sbin/amplot
+#/usr/sbin/amrecover
+#/usr/sbin/amreindex
+#/usr/sbin/amreport
+#/usr/sbin/amrestore
+#/usr/sbin/amrmtape
+#/usr/sbin/amserverconfig
+#/usr/sbin/amservice
+#/usr/sbin/amssl
+#/usr/sbin/amstatus
+#/usr/sbin/amtape
+#/usr/sbin/amtapetype
+#/usr/sbin/amtoc
+#/usr/sbin/amvault
+
+%{AMLIBDIR}/lib*.so
+#/usr/lib64/libamanda-4.0.so
+#/usr/lib64/libamandad-4.0.so
+#/usr/lib64/libamar-4.0.so
+#/usr/lib64/libamclient-4.0.so
+#/usr/lib64/libamdevice-4.0.so
+#/usr/lib64/libamglue-4.0.so
+#/usr/lib64/libamserver-4.0.so
+#/usr/lib64/libamxfer-4.0.so
+#/usr/lib64/libndmjob-4.0.so
+#/usr/lib64/libndmlib-4.0.so
+
+#####################
+# internal readable / private-contents
+#####################
+%defattr(0640,%{amanda_user},%{amanda_group},0750)
+# imported from platform
+%dir %{AMANDAHOMEDIR}
+%dir %attr(1750,%{amanda_user},%{amanda_group}) %{AMANDAHOMEDIR}/tmp
+%dir %{AM_CONFDIR}
+# 
+%dir %{AMVARDIR}
+
+# prefer any old file but preserve new update..
+%config(noreplace) /etc/amanda-security.conf
+%config(noreplace) %{AM_CONFDIR}/amanda-client.conf
+%config(noreplace) %{AMANDATES}
+%config(noreplace) %{AMANDAHOMEDIR}/.profile
+
+# prefer any new updated file but preserve edits..
+%config %{AM_CONFDIR}/amanda-security.conf
+%config %{AM_CONFDIR}/amanda.conf
+
+# imported from platform
+%dir %attr(0770,%{amanda_user},%{amanda_group}) %{LOGDIR}
+# locked down tighter
+
+%dir %attr(0700,%{amanda_user},%{amanda_group}) %{LOGDIR}/server
+%dir %attr(0700,%{amanda_user},%{amanda_group}) %{LOGDIR}/amanda-rest-server-log
+
+%dir %attr(0700,%{amanda_user},%{amanda_group}) %{AMANDAHOMEDIR}/.gnupg
+%dir %attr(0750,%{amanda_user},%{amanda_group}) %{AMANDAHOMEDIR}/.ssh
+
+%dir %attr(0770,%{amanda_user},%{amanda_group}) %{AMANDAHOMEDIR}/gnutar-lists/
+
+###############################
+# essential release and config files
+###############################
+%defattr(0644,%{amanda_user},%{amanda_group},0755)
+%{AMANDAHOMEDIR}/example/
+%{AMANDAHOMEDIR}/amanda-release
+%dir %{LOGDIR}/client
+%{AMANDAHOMEDIR}/template.d
+
+%defattr(0600,%{amanda_user},%{amanda_group},0750)
+# prefer any old file but preserve new update..
+%config(noreplace) %{AMANDAHOMEDIR}/.gnupg/*
+#.gnupg/am_key.gpg
+#.gnupg/pubring.gpg
+#.gnupg/random_seed
+#.gnupg/secring.gpg
+
+# prefer any old files but preserve new update..
+%config(noreplace) %{AMANDAHOMEDIR}/.ssh/*
+#.ssh/id_rsa_amdump
+#.ssh/id_rsa_amdump.pub
+#.ssh/id_rsa_amrecover
+#.ssh/id_rsa_amrecover.pub
+#.ssh/client_authorized_keys
+
+# prefer any old file but preserve new update..
+%config(noreplace) %{AMANDAHOMEDIR}/.am_passphrase
+%config(noreplace) %{AMANDAHOMEDIR}/.amandahosts
+
+######################
+# resource files only 
+######################
+%defattr(0444,root,root,0555)
+# manpages
+%{MANDIR}/man5/am*
+%{MANDIR}/man5/disklist.5*
+%{MANDIR}/man5/tapelist.5*
+%{MANDIR}/man7/am*
+%{MANDIR}/man8/am*
+%{MANDIR}/man8/script-email.8*
+
+%{SHAREDIR}/amanda_enterprise-%{amanda_version}
+
+
+
+
+######################################################
+%files -n amanda_enterprise-backup_server-devel
+######################################################
+##################
+# resource files only 
+##################
+%defattr(0644,root,root,0755)
+%{AMINCDIR}
+%{AMLIBDIR}/lib*.so
+%{AMLIBDIR}/lib*.a
+%{AMLIBDIR}/lib*.la
+
+%{AMANDAHOMEDIR}/amanda-autoconf
+%{AMANDAHOMEDIR}/amanda-config
+
+%files -n amanda_enterprise-platform
+## custom chmod per file
+%defattr(-,root,root,0755)
+# NOTE: some scripts and some libs
+%{INSTALL_TOPDIR}/python/lib
+%{INSTALL_TOPDIR}/perl/lib
+%{INSTALL_TOPDIR}/common
+
+%defattr(-,mysql,mysql,0755)
+%{INSTALL_TOPDIR}/mysql/*
+
+%defattr(0444,root,root,0755)
+%{INSTALL_TOPDIR}/apache2/conf
+%{INSTALL_TOPDIR}/apache2/error
+%{INSTALL_TOPDIR}/apache2/htdocs
+%{INSTALL_TOPDIR}/apache2/icons
+%{INSTALL_TOPDIR}/php/etc
+%{INSTALL_TOPDIR}/php/lib  
+%{INSTALL_TOPDIR}/licenses
+
+%defattr(0755,root,root,0755)
+%{INSTALL_TOPDIR}/apache2/bin
+%{INSTALL_TOPDIR}/apache2/cgi-bin
+%{INSTALL_TOPDIR}/apache2/lib
+%{INSTALL_TOPDIR}/apache2/modules
+%{INSTALL_TOPDIR}/apache2/scripts
+%{INSTALL_TOPDIR}/php/bin  
+%{INSTALL_TOPDIR}/php/scripts  
+%{INSTALL_TOPDIR}/perl/bin
+%{INSTALL_TOPDIR}/python/bin
+
+%dir %attr(0775,%{amanda_user},mysql) %{INSTALL_TOPDIR}/php/data  
+%dir %attr(0775,%{amanda_user},mysql) %{INSTALL_TOPDIR}/php/tmp
+%dir %attr(0775,%{amanda_user},mysql) %{INSTALL_TOPDIR}/apache2/logs
+
+%dir %attr(0770,%{amanda_user},%{amanda_group}) %{LOGDIR}
+%dir %attr(0750,%{amanda_user},%{amanda_group}) %{AMANDAHOMEDIR}
+#######
+# writable to user and mysql group
+#######
+%dir %attr(0770,%{amanda_user},mysql) %{INSTALL_TOPDIR}/mysql
+# --- ChangeLog
+
+%changelog
+* %{build_date} Christopher Hassell <chris.hassell at betsol dot com> %{amanda_version} %{amanda_platform_version}
+- Package created.

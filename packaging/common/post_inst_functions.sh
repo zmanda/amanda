@@ -17,18 +17,18 @@
 
 add_service() {
     # Only needed on Solaris!
-    entryA="amanda       10080/tcp    # amanda backup services"
-    entryK="kamanda       10081/tcp    famdc    # amanda backup services (kerberos)"
+    entry="amanda       10080/tcp    # amanda backup services"
     # make sure amanda is in /etc/services
     if ! grep -q 'amanda.*10080/tcp' ${SYSCONFDIR}/services; then
         logger "Adding amanda entry to ${SYSCONFDIR}/services."
-        echo "${entryA}" >> ${SYSCONFDIR}/services
+        echo "${entry}" >> ${SYSCONFDIR}/services
     fi
 
-
+    # make sure kamanda is in /etc/services
+    entry_2="kamanda       10081/tcp    famdc    # amanda backup services (kerberos)"
     if ! grep -q 'kamanda.*10081/tcp' ${SYSCONFDIR}/services; then
         logger "Adding kamanda entry to ${SYSCONFDIR}/services."
-        echo "${entryK}" >> ${SYSCONFDIR}/services
+        echo "${entry_2}" >> ${SYSCONFDIR}/services
     fi
 }
 
@@ -110,9 +110,9 @@ create_ampassphrase() {
 }
 
 
-GPG2=`command -v gpg2 2>/dev/null`
-GPG=`command -v gpg 2>/dev/null`
-GPG_AGENT=`command -v gpg-agent 2>/dev/null`
+GPG2=$(command -v gpg2 2>/dev/null)
+GPG=$(command -v gpg 2>/dev/null)
+GPG_AGENT=$(command -v gpg-agent 2>/dev/null)
 if [ -z "$GPG2" -a -z "$GPG" ]; then
    logger "Error: no gpg"
 elif [ -z "$GPG2" ]; then
@@ -167,7 +167,6 @@ check_gnupg() {
     # if they match!
     if [ -s ${AMANDAHOMEDIR}/.gnupg/am_key.gpg -a -s ${AMANDAHOMEDIR}/.am_passphrase ]; then
         exec 3<${AMANDAHOMEDIR}/.am_passphrase
-
         # Perms warning will persist because we are not running as ${amanda_user}
         log_output_of $GPG --homedir ${AMANDAHOMEDIR}/.gnupg \
                 --no-permission-warning \
@@ -300,20 +299,18 @@ check_profile(){
 
 install_client_conf() {
     # Install client config
-    am_confdir=${SYSCONFDIR}/amanda
     install="install -m 0600 -o ${amanda_user} -g ${amanda_group}"
     if [ "$os" = "SunOS" ] ; then
-        install="install -m 0600 -u ${amanda_user} -g ${amanda_group}"
+        install="${install/ -o / -u }"
     fi
-    logger "Checking '${am_confdir}/amanda-client.conf' file."
-    if [ ! -f ${am_confdir}/amanda-client.conf ] ; then
+    logger "Checking '${SYSCONFDIR}/amanda/amanda-client.conf' file."
+    if [ ! -f ${SYSCONFDIR}/amanda/amanda-client.conf ] ; then
         logger "Installing amanda-client.conf."
-        log_output_of ${install} \
-           ${AMANDAHOMEDIR}/example/amanda-client.conf \
-	   ${am_confdir}/ || \
+        log_output_of ${install} ${AMANDAHOMEDIR}/example/amanda-client.conf \
+            ${SYSCONFDIR}/amanda/ || \
                 { logger "WARNING:  Could not install amanda-client.conf" ; return 1; }
     else
-        logger "Note: ${am_confdir}/amanda-client.conf exists. Please check ${AMANDAHOMEDIR}/example/amanda-client.conf for updates."
+        logger "Note: ${SYSCONFDIR}/amanda/amanda-client.conf exists. Please check ${AMANDAHOMEDIR}/example/amanda-client.conf for updates."
     fi
 }
 

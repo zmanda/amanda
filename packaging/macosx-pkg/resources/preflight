@@ -1,0 +1,41 @@
+#! /bin/bash
+
+# Collect arguments (see
+#  file:///Developer/ADC%20Reference%20Library/documentation/DeveloperTools/Conceptual/SoftwareDistribution/index.html)
+PACKAGE_PATH="${1}"
+DESTINATION="${2}"
+DESTVOL="${3}"
+SYSROOT="${4}"
+# $SCRIPT_NAME    (only in pre{install,upgrade} and later)
+# $INSTALLER_TEMP (only in pre{install,upgrade} and later)
+# $RECEIPT_PATH   (only in post{install,upgrade} and later)
+
+log() {
+    echo "$SCRIPT_NAME: ${@}"
+}
+
+dscl() {
+    echo "Running: dscl $@"
+    /usr/bin/dscl "$@" || exit 1
+}
+
+## Create an 'amanda' user
+if ! /usr/bin/dscl . -read /users/amandabackup >/dev/null 2>&1
+then
+    log "creating new user '/users/amandabackup'"
+
+    dscl . -create /users/amandabackup
+    dscl . -create /users/amandabackup UserShell /bin/bash
+    dscl . -create /users/amandabackup RealName "Backup User"
+    dscl . -create /users/amandabackup UniqueID 5000
+    dscl . -create /users/amandabackup PrimaryGroupID 80 # = admin
+    dscl . -create /users/amandabackup NFSHomeDirectory /var/lib/amanda
+
+    # (not setting a password here leaves that property blank, or effectively locked)
+
+else
+    log "user /users/amandabackup already exists; updating properties"
+
+    dscl . -create /users/amandabackup PrimaryGroupID 80 # = admin
+    dscl . -create /users/amandabackup NFSHomeDirectory /var/lib/amanda
+fi

@@ -1,0 +1,403 @@
+#!/usr/bin/make -f
+
+SHELL = /bin/bash -x
+#
+#
+SRCDIR			  := $(shell pwd -P)
+# Uncomment this to turn on verbose mode.
+export DH_VERBOSE=1
+
+AMVER=%%VERSION%%
+
+BITROCK_DIR=%%INSTALL_TOPDIR%%
+AMANDAHOMEDIR=$(LOCALSTATEDIR)/lib/amanda
+BUILD_TOPDIR=$(SRCDIR)
+# Comment this to disable silent make.
+#MAKEFLAGS+=s LIBTOOLFLAGS=--silent
+
+CC := $(shell command -v gcc)
+
+GCC_TARGET := $(shell $(CC) -dumpmachine | tr -d '\n')
+
+ifeq ($(findstring x86_64,$(GCC_TARGET)),x86_64)
+LIBARCHDIR=lib/$(GCC_TARGET)
+# 64 bit... no more needed
+# LIBARCHDIR=lib/x86_64-linux-gnu
+else
+LIBARCHDIR=lib/$(GCC_TARGET)
+# 32 bit... no more needed
+# LIBARCHDIR=lib/i586-linux-gnu
+endif
+
+
+HOST_GNU_TYPE   = $(GCC_TARGET)
+BUILD_GNU_TYPE  = $(GCC_TARGET)
+
+DEB_HOST_GNU_TYPE   ?= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
+DEB_BUILD_GNU_TYPE  ?= $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
+
+# These are variables that the user can override.  They get used in various
+# places during configure, build, and install.
+PREFIX=/usr
+BINDIR=$(PREFIX)/bin
+LIBDIR=$(PREFIX)/lib
+LIBEXECDIR=$(LIBDIR)
+AMLIBEXECDIR=$(LIBEXECDIR)/amanda
+# must be architecture-specific ...
+SHLIBDIR=$(PREFIX)/$(LIBARCHDIR)
+AMLIBDIR=$(SHLIBDIR)/amanda
+MANDIR=$(PREFIX)/share/man
+DOCDIR=$(PREFIX)/share/doc
+SYSCONFDIR=/etc
+AMANDATES=$(SYSCONFDIR)/amandates
+LOCALSTATEDIR=/var
+LOGDIR=$(LOCALSTATEDIR)/log/amanda
+AMPERLDIR=$(AMLIBDIR)/perl
+
+BITROCK_REPO_DIR=$(SRCDIR)/bitrock-stack
+AMANDAUSER=%%AMANDAUSER%%
+AMANDAGROUP=%%AMANDAGROUP%%
+
+define CONFIG_FLAGS_COMMON
+MAILER=$(BINDIR)/mail \
+--enable-as-needed \
+--quiet \
+--host=$(HOST_GNU_TYPE) \
+--build=$(BUILD_GNU_TYPE) \
+--prefix=$(PREFIX) \
+--bindir=$(BINDIR) \
+--mandir=$(MANDIR) \
+--libexecdir=$(LIBEXECDIR) \
+--libdir=$(LIBDIR) \
+--with-amlibdir=$(AMLIBDIR) \
+--with-amperldir=$(AMPERLDIR) \
+--enable-shared \
+--sysconfdir=$(SYSCONFDIR) \
+--localstatedir=$(LOCALSTATEDIR) \
+--with-amdatadir=$(AMANDAHOMEDIR) \
+--with-gnutar-listdir=$(AMANDAHOMEDIR)/gnutar-lists \
+--with-index-server=localhost \
+--with-tape-server=localhost \
+--with-user=$(AMANDAUSER) \
+--with-group=$(AMANDAGROUP) \
+--with-fqdn \
+--with-bsd-security \
+--with-bsdtcp-security \
+--with-bsdudp-security \
+--with-amandahosts \
+--with-amandates=$(AMANDATES) \
+--with-debugging=$(LOGDIR) \
+--with-tcpportrange=11000,11040 \
+--with-udpportrange=800,840 \
+--with-low-tcpportrange=800,840 \
+--with-ssh-security \
+--with-assertions \
+--with-failure-code \
+--enable-s3-device \
+--enable-manpage-build \
+--disable-installperms \
+--disable-syntax-checks
+endef
+
+
+#
+# subpackage paths
+#
+# used to narrow the dh_ tools focus
+dhpkg=--package=amanda-enterprise-backup-client
+r=$(SRCDIR)/debian/tmp
+# buildroot_server=$(SRCDIR)/debian/amanda-enterprise-backup-server
+buildroot=$(SRCDIR)/debian/amanda-enterprise-backup-client
+platform=$(SRCDIR)/debian/amanda-enterprise-platform
+devel=$(SRCDIR)/debian/amanda-enterprise-backup-client-devel
+
+WD=$(SRCDIR)
+
+build: build-stamp
+build-stamp:
+	dh_testdir
+	
+	# all must be done if configure is not set already
+	[ -f ./configure ] || ./autogen
+	
+	echo -------------------
+	echo "CONFIG_FLAGS_COMMON set to $(CONFIG_FLAGS_COMMON)"
+	echo -------------------
+	
+	# no need for LDPATH, PATH (for perl/python)
+	set -x; \
+	    ./configure \
+		$(CONFIG_FLAGS_COMMON) \
+		--without-server
+	touch missing
+	
+	set -x; \
+        LEX=flex \
+        YACC=bison \
+	    $(MAKE) -j`nproc` VERBOSE=1
+	
+	touch $@
+	echo ------------------- END BUILD
+
+DEVEL_CONFIG_COPIED = config.rpath amanda gnulib macro-archive config.h
+DEVEL_INCLUDE_FILES =  \
+	amanda.h amutil.h amflock.h config.h conffile.h device.h \
+	debug.h file.h sockaddr-util.h safe-read.h full-read.h full-write.h \
+	s3-util.h am_sl.h amjson.h glib-util.h property.h fileheader.h directtcp.h \
+	directtcp-connection.h
+
+# Build architecture-dependent files here.
+binary-install-client: build-stamp
+	dh_testdir
+	rm -rf $(buildroot)
+	mkdir -p $(buildroot)
+	dh_prep $(dhpkg)
+	dh_installdirs -v $(dhpkg)
+	
+	echo ------------------- START INSTALL
+	set -x; \
+		$(MAKE) -j1 install DESTDIR=$(buildroot)
+	
+	##################
+	# needed directories
+	##################
+	rm -f $(buildroot)$(AMANDAHOMEDIR)/example/inetd.conf.amandaclient
+	
+	echo "Amanda Enterprise Edition - version $(AMVER)" > $(buildroot)$(AMANDAHOMEDIR)/amanda-release
+
+##################
+################################ permissions for backup-client
+##################
+perm-install-client: binary-install
+	dh_testroot
+	dh_fixperms -v
+	##################
+	# root-setuid executable / private-contents
+	##################
+	[ -s installperms.sh ] && \
+            while read d _chown _chmod path; do \
+                eval "chown $$_chown $(buildroot)$$path && chmod $$_chmod $(buildroot)$$path"; \
+            done < installperms.sh
+	
+	# install -o root -g root -m 0644 debian/lintian \
+	# 	$(buildroot)/usr/share/lintian/overrides/amanda-enterprise-backup-client
+	
+	chown -R root:root $(buildroot)$(AMLIBEXECDIR)
+	find $(buildroot)$(AMLIBEXECDIR) -type f | \
+		xargs chmod 0644
+	find $(buildroot)$(AMLIBEXECDIR) -type d | \
+		xargs chmod 0755
+	
+	chmod 0755 $(buildroot)$(AMLIBEXECDIR)/*
+	chmod 0755 $(buildroot)$(AMLIBEXECDIR)/application/*
+	# chmod 0755 $(buildroot)$(AMLIBEXECDIR)/rest-server/bin/*
+	
+	chown root:%%AMANDACLIGROUP%% $(buildroot)$(AMLIBEXECDIR)/ambind
+	chmod 04755 $(buildroot)$(AMLIBEXECDIR)/ambind
+	chown root:%%AMANDACLIGROUP%% $(buildroot)$(AMLIBEXECDIR)/application/amgtar
+	chmod 04755 $(buildroot)$(AMLIBEXECDIR)/application/amgtar
+	chown root:%%AMANDACLIGROUP%% $(buildroot)$(AMLIBEXECDIR)/application/amstar
+	chmod 04755 $(buildroot)$(AMLIBEXECDIR)/application/amstar
+	chown root:%%AMANDACLIGROUP%% $(buildroot)$(AMLIBEXECDIR)/calcsize
+	chmod 04755 $(buildroot)$(AMLIBEXECDIR)/calcsize
+	chown root:%%AMANDACLIGROUP%% $(buildroot)$(AMLIBEXECDIR)/killpgrp
+	chmod 04755 $(buildroot)$(AMLIBEXECDIR)/killpgrp
+	chown root:%%AMANDACLIGROUP%% $(buildroot)$(AMLIBEXECDIR)/rundump
+	chmod 04755 $(buildroot)$(AMLIBEXECDIR)/rundump
+	chown root:%%AMANDACLIGROUP%% $(buildroot)$(AMLIBEXECDIR)/runtar
+	chmod 04755 $(buildroot)$(AMLIBEXECDIR)/runtar
+	
+	chmod 0444  $(buildroot)$(AMLIBEXECDIR)/amcat.awk
+	
+	rm -f $(buildroot)$(AMLIBEXECDIR)/amplot.awk
+	rm -f $(buildroot)$(AMLIBEXECDIR)/amplot.g
+	rm -f $(buildroot)$(AMLIBEXECDIR)/amplot.gp
+	
+	##################
+	# internal executible files
+	##################
+	chown -R $(AMANDAUSER):$(AMANDAGROUP) $(buildroot)/usr/sbin/*
+	chmod 755 $(buildroot)/usr/sbin/*
+	##################
+	# internal readable / private-contents files
+	##################
+	chown -R $(AMANDAUSER):$(AMANDAGROUP) $(buildroot)$(SYSCONFDIR)/amanda
+	chmod -R u=rwX,g=rX,o= $(buildroot)$(SYSCONFDIR)/amanda
+	
+	# NOTE: non-recursive setup of dirs
+	chown $(AMANDAUSER):$(AMANDAGROUP) $(buildroot)$(LOGDIR)
+	chmod 0770 $(buildroot)$(LOGDIR)
+	chown $(AMANDAUSER):$(AMANDAGROUP) $(buildroot)$(LOGDIR)/client
+	chmod 0755 $(buildroot)$(LOGDIR)/client
+	# chown $(AMANDAUSER):$(AMANDAGROUP) $(buildroot)$(LOGDIR)/server
+	# chmod 0700 $(buildroot)$(LOGDIR)/server
+	# chown $(AMANDAUSER):$(AMANDAGROUP) $(buildroot)$(LOGDIR)/amanda-rest-server-log
+	# chmod 0700 $(buildroot)$(LOGDIR)/amanda-rest-server-log
+	
+	##################
+	# homedir internal files
+	##################
+	chown -R $(AMANDAUSER):$(AMANDAGROUP) $(buildroot)$(AMANDAHOMEDIR)/example/
+	chmod -R u=rwX,g=rX,o= $(buildroot)$(AMANDAHOMEDIR)/example/
+	chown -R $(AMANDAUSER):$(AMANDAGROUP) $(buildroot)$(AMANDAHOMEDIR)/gnutar-lists/
+	chmod -R u=rwX,g=rwX,o= $(buildroot)$(AMANDAHOMEDIR)/gnutar-lists/
+	chown -R $(AMANDAUSER):$(AMANDAGROUP) $(buildroot)$(AMANDAHOMEDIR)/template.d/
+	chmod -R u=rwX,g=rX,o= $(buildroot)$(AMANDAHOMEDIR)/template.d/
+	
+	##################
+	# resource files only
+	##################
+	chown root:root $(buildroot)$(AMLIBDIR)/lib*.so
+	chmod 0444 $(buildroot)$(AMLIBDIR)/lib*.so
+	chown root:root $(buildroot)$(SYSCONFDIR)/amanda-security.conf
+	chmod 0644 $(buildroot)$(SYSCONFDIR)/amanda-security.conf
+	# rely on sanity-check permissions otherwise
+	# ---------------------- ASSESS PERMISSIONS NOW IF NEEDED ----------
+
+
+##################
+################################ install for backup-client-devel
+##################
+binary-install-devel: binary-install-client
+	dh_testdir
+	rm -rf $(devel)
+	mkdir -p $(devel)
+	dh_prep $(dhpkg)-devel
+	dh_installdirs -v $(dhpkg)-devel
+	
+	# snip off $(buildroot) from start ... to dup the path
+	mkdir -p $(devel)$(AMLIBDIR)
+	ls -1 $(buildroot)$(AMLIBDIR)/*.{a,la,so} $(buildroot)$(AMLIBDIR)/*.so.* 2>/dev/null | xargs cp -a -t $(devel)$(AMLIBDIR)
+	mkdir -p $(devel)$(AMANDAHOMEDIR)/amanda-autoconf
+	mkdir -p $(devel)/usr/include/amanda
+	
+	echo "Amanda Enterprise Edition - version $(AMVER)" > $(devel)$(AMANDAHOMEDIR)/amanda-release
+	
+	rm -f $(devel)$(AMANDAHOMEDIR)/amanda-client-config
+	
+	cp -a ./config.status ./config.status.save
+	sed -i -e ':redo' -e '/"\\$$/{N;s,"\\\n",,;b redo}' ./config.status.save
+	
+	command -v realpath >/dev/null || realpath() { readlink -e "$@"; }
+	build_topdir=$(BUILD_TOPDIR); \
+	build_topdir_abs=$$(realpath $(BUILD_TOPDIR)); \
+	./config.status.save --config | \
+	   sed \
+		 -e "s|$$build_topdir_abs|$$build_topdir|g" \
+		 -e "s|$$build_topdir|%{BUILD_TOPDIR}|g" \
+		 -e "s| $(AMLIBDIR)/| %{DESTDIR}$(AMLIBDIR)/|g" \
+	     >$(devel)$(AMANDAHOMEDIR)/amanda-client-config
+	
+	cp -a $(addprefix config/,$(DEVEL_CONFIG_COPIED)) $(devel)$(AMANDAHOMEDIR)/amanda-autoconf
+	
+	pkg_root_rev=$$(git submodule | sed -e '\,/packaging,!d' -e 's,^ *\(.........\).*,\1,'); \
+		cp -av ./config.status.save $(devel)$(AMANDAHOMEDIR)/amanda-autoconf/config.status-$${pkg_root_rev}
+	
+	# each may have a different *-src dir
+	cp -a $(addprefix */,$(DEVEL_INCLUDE_FILES)) $(devel)/usr/include/amanda
+		
+	touch dummy.la
+	#
+	# these files can't work with old paths in them anyway
+	#
+	command -v realpath >/dev/null || realpath() { readlink -e "$@"; }
+	build_topdir=$(BUILD_TOPDIR); \
+	build_topdir_abs=$$(realpath $(BUILD_TOPDIR)); \
+	find dummy.la $(devel)/usr/include/amanda $(devel)$(AMANDAHOMEDIR) -type f | \
+		xargs sed -i \
+		     -e "s|$$build_topdir_abs|$$build_topdir|g" \
+		     -e "s|$$build_topdir|%{BUILD_TOPDIR}|g"
+	
+	command -v realpath >/dev/null || realpath() { readlink -e "$@"; }
+	build_topdir=$(BUILD_TOPDIR); \
+	build_topdir_abs=$$(realpath $(BUILD_TOPDIR)); \
+	find dummy.la $(devel)$(LIBDIR) -type f -name \*.la | \
+		xargs sed -i \
+		     -e "s|$$build_topdir_abs|$$build_topdir|g" \
+		     -e "s|$$build_topdir|%{BUILD_TOPDIR}|g" \
+		     -e "/dependency_libs=/s| $(AMLIBDIR)/| %{DESTDIR}$(AMLIBDIR)/|g"
+	
+	find dummy.la $(devel)$(LIBDIR) -type f -name \*.la | \
+		xargs chmod uog-x
+	rm -f dummy.la
+	#
+	# confirm no paths are left
+	#
+	set -x; if find $(devel)/usr/include/amanda $(devel)$(AMANDAHOMEDIR) -type f -exec grep -q $(BUILD_TOPDIR) \{} \; -print | grep -q .; then exit -1; fi
+	set -x; if find $(devel)$(LIBDIR) -type f -name \*.la  -exec grep -q $(BUILD_TOPDIR) \{} \; -print | grep -q .; then exit -1; fi
+	
+	cp -f $(buildroot)$(SYSCONFDIR)/amanda/amanda-security.conf $(buildroot)$(SYSCONFDIR)/amanda-security.conf
+
+##################
+################################ permissions for backup-client-devel
+##################
+perm-install-devel: binary-install
+	dh_testroot
+	chown -R root:root $(devel)
+	find $(devel) -type f | \
+		xargs chmod 0644
+	find $(devel) -type d | \
+		xargs chmod 0755
+	# ---------------------- ASSESS PERMISSIONS NOW IF NEEDED ----------
+
+
+#
+# bottleneck after completed all installation
+#
+binary-install: binary-install-stamp
+binary-install-stamp:
+	LD_PRELOAD= \
+	LD_LIBRARY_PATH= \
+	    $(MAKE) -f $(firstword $(MAKEFILE_LIST)) \
+	        binary-install-client binary-install-devel 
+	#
+	dh_installdocs -v
+	#
+	# One directory of examples does not warrant an "debian/.examples"
+	# file.  These files are repeated in %%AMANDAUSER%%'s home dir.
+	# dh_installexamples -v $(r)$(AMANDAHOMEDIR)/example
+	# Installs both amanda and debian changelogs and
+	dh_installchangelogs -v ChangeLog
+	dh_strip --dbg-package=amanda-enterprise-backup-client-dbg -X $(BITROCK_DIR)
+	#
+	dh_compress
+	
+	# need external dependencies
+	LD_PRELOAD= /usr/bin/touch $@
+
+#
+# bottleneck after completed all permissions resets
+#
+final-install:
+	# fakeroot can remain entirely within this MAKE only,
+	#    if perms were remembered from these chmod/chown calls
+	env -- $(MAKE) -f $(firstword $(MAKEFILE_LIST)) \
+	         perm-install-devel perm-install-client
+	#
+	dh_makeshlibs -v
+	dh_shlibdeps $(dhpkg) -v \
+		-l"$(SHLIBDIR):$(AMLIBDIR)"
+	#
+	# no platform for clients and only check backup_client for perl details (perl version/base deps only)
+	#
+	dh_perl $(dhpkg) -v $(AMPERLDIR)
+	dh_installdeb
+	dh_gencontrol
+	dh_md5sums
+	dh_builddeb
+
+clean:
+	dh_testdir
+	-[ -f Makefile ] && make -s LIBTOOLFLAGS=--silent clean
+	-[ -f Makefile ] && make -s LIBTOOLFLAGS=--silent distclean
+	-rm -f build-stamp missing config/config.h common-src/genversion
+	-find . -type d -name .deps -exec rm -rf {} \;
+	-test -r /usr/share/misc/config.sub && \
+		cp -f /usr/share/misc/config.sub config/config.sub
+	-test -r /usr/share/misc/config.guess && \
+		cp -f /usr/share/misc/config.guess config/config.guess
+	dh_clean -d -v  # build dirs only
+
+binary: final-install
+.PHONY: build clean binary-install binary-install-client binary-install-devel binary-install-platform
+.PHONY: final-install perm-install-client perm-install-devel

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>16</key>
+  <string>This package can only be installed on MacOS X 10.4 (Tiger) or later.</string>
+  <key>17</key>
+  <string>Launchd is not installed on this machine; you may need to manually set up xinetd.</string>
+  <key>18</key>
+  <string>The Amanda Enterprise prerequisites package is not installed or is too old. Please install it from Zmanda Network downloads page.</string>
+  <key>19</key>
+  <string>This package can only be installed on Intel Macs.  Please download the PowerPC package instead.</string>
+  <key>20</key>
+  <string>This package can only be installed on PowerPC Macs.  Please download the Intel package instead.</string>
+</dict>
+</plist>

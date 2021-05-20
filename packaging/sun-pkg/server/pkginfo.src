@@ -1,19 +1,21 @@
-PKG="AMANamanda-server"
+PKG="ZMANae-server"
 ARCH="%%ARCH%%"
 VERSION="%%VERSION%%-%%PKG_REV%%"
 CATEGORY="system"
-VENDOR="Amanda Project, http://www.amanda.org/"
-EMAIL="support@zmanda.com"
+VENDOR="Zmanda, http://www.zmanda.com/"
+EMAIL="info@zmanda.com"
 BASEDIR="/"
 CLASSES="none"
 MAXINST=1
 INTONLY=1
-NAME="Amanda Community Backup Server"
+NAME="Amanda Enterprise Backup Server from Zmanda"
 DESC="Amanda is the leading Open-Source Backup and Archiving software.
 
-This package contains the Amanda client and server.  The Amanda server package
-needs to be installed on every server system.
+This package contains the Amanda enterprise client and server.
+The amanda_enterprise-backup_server package needs to be installed on every
+server system.
 
-Documentation: http://wiki.zmanda.com/
-Mailing Lists: http://www.amanda.org/support/mailinglists.php
-Forums: http://forums.zmanda.com/
+Documentation: http://network.zmanda.com/
+               Click on "Documentation" -> "Enterprise Edition"
+Support: http://network.zmanda.com/
+

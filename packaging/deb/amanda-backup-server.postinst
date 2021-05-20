@@ -1,5 +1,0 @@
-#!/bin/sh
-# Debian recommends this.  Script exits on simple command failure.
-# set -e
-pkg_type=server
-other_pkg_type=client

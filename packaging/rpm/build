@@ -1,34 +1,26 @@
 #!/bin/bash
-# We're assuming that you've copied packaging/* from the 
-# amanda-extensions source tree to the amanda source tree.
-# (buildbot dist tarballs will not contain packaging files!)
 
-# Buildpkg script for producing RPM packages. (Does not require root access.)
-# Buildpkg is designed to be used by both buildbot (to automate rpm production)
-# and by J Random User (to build an rpm for kicks).
-#
-# VERSION: the identifier for the amanda determined from subversion
-#	information.  
-# PKG_NAME_VER: the full version name of amanda we're working on.  This will
-#	become part of the rpm name.  
-# PKG_TARBALL: the name of the tarball which contains the source code.  it must
-#     unpack into a directory named PKG_NAME_VER. 
-# PKG_DIR: Rpmbuild expects absolute paths, so we provide this var.  It also
-#     allows you to build somewhere other than `pwd`.  You probably don't want
-#     to use the system-wide location, as the script tries to blow these
-#     directories away.
-# 
-# Other Hints:
-# Not everyone will want to use the ./configure options we provide.  The
-# easiest way to change them is by editing the .spec file.  This isn't so
-# easy, unfortunately.  Look at the %build section, and the %define xxxx 
-# statements immediately above it. good luck.
+DEFINES=
+[[ "$*" == *release* ]] && DEFINES=(--define 'bundle release' --define 'bitrock_build 1')
+ODEFINES="${DEFINES[@]}"
 
-pkg_name=amanda
-. packaging/common/build_functions.sh
+buildtype=${1:-both}
+shift
 
-set_zmanda_version HEAD
+# must set before including build-functions.sh
+[ $buildtype = platform ] && pkg_name=zmanda-platforms
 
+BUILDVER="4.0"
+git --git-dir=.git/modules/tools-archives \
+   ls-files stack-output/php | grep -q . &&
+   unset BUILDVER
+
+# set the var buildpkg_dir as well
+. ./packaging/common_z/build_functions.sh
+. ./packaging/common_z/set_zmanda_version
+
+export PKG_DIR=$(realpath .)
+mach=`uname -m`
 
 do_rpm_package() {
     gen_pkg_build_config $buildpkg_dir
@@ -43,4 +35,38 @@ do_rpm_package() {
 
 set -e
 
-do_rpm_package "amanda.spec"
+case "$buildtype,$mach,$BUILDVER" in
+   both,x86_64,*)
+#        do_rpm_package "amanda_enterprise${BUILDVER}.spec" \
+#              "${DEFINES[@]}" \
+#              --define "subpkg server"
+        #
+#        STACK_BRANCH=none do_rpm_package "amanda_enterprise_client${BUILDVER}.spec" \
+#              --define "subpkg client"
+        #
+        exit 100
+        ;;
+
+   server,x86_64,*)
+        do_rpm_package "amanda_enterprise${BUILDVER}.spec" \
+              "${DEFINES[@]}" \
+              --define "subpkg server"
+
+
+        ;;
+
+   client,*,*) ;&  both,*,*)
+	STACK_BRANCH=none do_rpm_package "amanda_enterprise_client${BUILDVER}.spec" \
+              --define "subpkg client"
+
+      ;;
+
+   platform,x86_64,*)
+	do_rpm_package "zmanda-platform${BUILDVER}.spec" \
+              "${DEFINES[@]}"
+      ;;
+
+   *) echo "ERROR: cannot build combination of $buildtype-$mach-${BUILDVER:-3.6}" >&2; exit -1 ;;
+esac
+
+true

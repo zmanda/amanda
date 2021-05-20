@@ -1,0 +1,77 @@
+#!/bin/bash
+##########################################
+bashpath="`command -v bash`"
+[ -x "$bashpath" -a -z "$BASH_VERSION" ] && exec "$bashpath" $0 "$@"
+#
+# pre installation
+# pre installation
+# pre installation
+#
+##########################################
+#
+# needed contents are brought from zmanda-platform-shared
+#
+PRE_INST_ARGS=("$@")
+AMANDATES=%%AMANDAHOMEDIR%%/amandates
+
+
+    amanda_user=%%AMANDAUSER%%; 
+    amanda_group=%%AMANDAGROUP%%; 
+    AMANDAHOMEDIR=%%AMANDAHOMEDIR%%; 
+    os=Linux; 
+    dist=%%PKG_DIST%%; 
+    LOGDIR=%%LOGDIR%%; 
+    LOGFILE=$LOGDIR/install.log; 
+    INSTALL_LOG=$LOGDIR/install.log; 
+    SYSCONFDIR=/etc; 
+    SBINDIR=/usr/sbin; 
+    AMLIBEXECDIR=/usr/lib64/amanda; 
+    export PYTHON=/usr/bin/python3; 
+    export PATH="%%INSTALL_TOPDIR%%/bin:/opt/csw/gnu:${PATH}:/sbin:/usr/sbin:/opt/csw/bin"; 
+    mkdir -p $LOGDIR
+logger "Preinstall for amanda_enterprise-"Amanda Enterprise Edition - version %%VERSION%%" on $(date -R)"
+
+# all owned by root
+[ ! -e /usr/bin/bash -a -x /bin/bash ] &&
+   ln -sf /bin/bash /usr/bin/bash
+[ ! -e /usr/bin/sh -a -x /bin/sh ] &&
+   ln -sf /bin/sh /usr/bin/sh
+[ ! -e /usr/lib64 -a -d /lib64 ] &&
+   ln -sf /lib64 /usr/lib64
+
+# always delete any **broken** symlinks in the systemd tree [fine]
+#find /etc /usr/lib/systemd/system /usr/lib/*.d \
+#   -type l -lname /usr/lib/systemd/system/\* \
+#   -not -exec test -e {} \; -delete
+
+# ------------ Library of functions --------------
+%%COMMON_FUNCTIONS%%
+%%PRE_INST_FUNCTIONS%%
+%%PKG_STATE_FUNCTIONS%%
+# ---------- End Library of functions ------------
+
+logger "Preparing to install: "Amanda Enterprise Edition - version %%VERSION%%""
+create_user
+check_user_group "${amanda_group}" ||
+   add_group "${amanda_group}"
+check_user_supplemental_group "%%AMANDACLIGROUP%%" ||
+   add_group "%%AMANDACLIGROUP%%"
+
+#
+# for upgrade or for install... shut down everything we can find
+#
+#UNITS=($(systemctl list-unit-files |sed -e 's,[[:space:]].*,,' ))
+#UNITS=($(grep -E -e '__sub-(zman|zmc|amanda|aee)-' -e '^run-zmanda' <<<"${UNITS[@]}" ))
+
+# if ! is_install_new ...
+#xargs -r systemctl stop <<<"${UNITS[@]}" || true
+#xargs -r systemctl disable <<<"${UNITS[@]}" || true
+# fi
+
+#systemctl reset-failed
+#systemctl daemon-reload
+
+logger "Preinstall done."
+echo "Amanda preinstall logs can be found in '$LOGFILE'."
+
+##########################################

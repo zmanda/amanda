@@ -1,0 +1,31 @@
+#!/usr/bin/perl
+#
+our $amanda_user = $ENV{'amanda_user'} || "%%AMANDAUSER%%";
+
+# make a hash from installperms
+use strict;
+open(INSTPERM, "<" . shift @ARGV) or die("open installperms.sh: $!");
+my %installperms = map {
+    my ($u, $xtra, $g, $m, $fn) = ($_ =~ /^installperm "([^:"]+)(:?([^:"]+))?" "([^"]*)" "(.*)"/);
+    $fn =~ s{^/}{}; # pkgproto has files without the leading slash
+    ($fn, [ $u, $g, $m ]);
+} <INSTPERM>;
+
+# set user/group/mode from installperms, defaulting to %%AMANDAUSER%%:%%AMANDAGROUP%%
+open(PROTO, "<" . shift @ARGV) or die("open proto: $!");
+for my $line (<PROTO>) {
+    if ($line !~ /^[df]/) {
+        print $line;
+        next;
+    }
+    my ($type, $class, $file, $mode, $user, $group) = split(/ /, $line);
+    # default to %%AMANDAUSER%%:%%AMANDAGROUP%%, without changing mode
+    ($user, $group) = ( $amanda_user, "%%AMANDAGROUP%%" );
+    if (exists $installperms{$file}) {
+	my ($u, $g, $m) = @{$installperms{$file}};
+	$user = $u if $u;
+	$group = $g if $g;
+	$mode = $m if $m;
+    }
+    print "$type $class $file $mode $user $group\n";
+}

@@ -1,0 +1,21 @@
+#!/bin/bash
+set +o posix
+##########################################
+#
+# pre installation
+# pre installation
+# pre installation
+#
+##########################################
+PRE_INST_ARGS=("$@")
+
+if [ ! -L /etc/amanda -a -d /etc/amanda/. ]; then
+    i=1
+    rm -rf /etc/amanda.prev
+    while [ -d /etc/amanda~$i/. ];
+       do : $(( ++i )); done
+    mv /etc/amanda /etc/amanda~$i
+    ln -sf /etc/amanda~$i /etc/amanda.prev
+fi
+
+##########################################
