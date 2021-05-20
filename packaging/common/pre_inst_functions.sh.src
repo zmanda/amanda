@@ -1,17 +1,45 @@
 #!/bin/sh
+setopt=$-
+set +xv
+# ------------- Begin Pre Install Functions -----------------
 # These functions are included by various different installers.
 
 # We assume that the following variables are defined in the main script:
 # amanda_user: the amanda account username
+: ${amanda_user:=%%AMANDAUSER%%}
+
 # amanda_group: the amanda account's group
-# amandahomedir: a directory to use as amanda's home
-# deb_uid: sepecific uid amanda_user should get on deb style systems.
-# dist: used on linux for the distro.
-# LOGFILE: a log file we append to
-# os: Linux, Darwin, SunOS, `uname`...
-# wanted_shell:  Linux/SunOS/OSX all keep them in different places
+: ${amanda_group:=%%AMANDAGROUP%%}
+
+# AMANDAHOMEDIR: a directory to use as amanda's home
+: ${AMANDAHOMEDIR:=%%AMANDAHOMEDIR%%}
+
+# os: Linux, Mac, Solaris, etc...
+: ${os:=Linux}
+
 # SYSCONFDIR: location of system config files (ie, /etc)
+: ${SYSCONFDIR:=/etc}
+
 # LOGDIR: logging directory for amanda
+: ${LOGDIR:=%%LOGDIR%%}
+
+# INSTALL_LOG: install log location
+: ${INSTALL_LOG:=${LOGDIR}/install.log}
+
+# wanted_shell:  Linux/SunOS/OSX all keep them in different places
+: ${wanted_shell:=/bin/bash}
+
+# deb_uid: sepecific uid amanda_user should get on deb style systems.
+: ${deb_uid:=%%AMANDAUIDNUM%%}
+
+[ -d ${LOGDIR} ] || mkdir -p ${LOGDIR}
+[ -d ${AMTMP} ] || mkdir -p ${AMTMP}
+
+# dist: used on linux for the distro.
+[ -n "$dist" ] || { echo "dist='' Linux distro is unset"; exit -1; }
+# LOGFILE: a log file we append to
+[ -n "$LOGFILE" ] || { echo "LOGFILE='' LOGFILE is unset"; exit -1; }
+
 
 # These variables are defined, but null to allow checking names
 checked_uid=
@@ -31,13 +59,16 @@ create_user() {
             # we want the output of id, but if the user doesn't exist,
             # sterr output just confuses things
             ID=`id ${amanda_user} 2> /dev/null | sed 's/uid=\([0-9]*\).*/\1/'`
-            if [ "${ID}x" = "x" ] ; then
+            if [ "x${ID}" = "x" ] ; then
+                # Groups must already exist on user creation in solaris
+                log_output_of groupadd --system ${amanda_group}
                 logger "Adding ${amanda_user}."
+                # dont make the home dir.. as it was installed already
                 log_output_of useradd -c "Amanda" \
                             -g ${amanda_group} \
                             ${uid_flag} \
                             -d ${AMANDAHOMEDIR} \
-                            -s ${wanted_shell} ${amanda_user}  || \
+                            -s ${wanted_shell} -l -M ${amanda_user}  || \
                 { logger "WARNING:  Could not create user ${amanda_user}. Installation will fail." ; return 1 ; }
                 logger "Created ${amanda_user} with blank password."
 
@@ -91,7 +122,7 @@ add_group() {
 
     [ "x${1}" = "x" ] && { logger "Error: first argument was not a group to add." ; return 1 ; }
     group_to_add=${1}
-    log_output_of groupadd ${group_to_add}
+    log_output_of groupadd --system ${group_to_add}
     rc=$?
     # return of 0 means group was added; 9 means group existed.
     if [ $rc -eq 0 ] || [ $rc -eq 9 ]; then
@@ -106,6 +137,12 @@ add_group() {
         log_output_of usermod -G ${existing_sup_groups},${group_to_add} ${amanda_user} || { \
             logger "Nonfatal ERROR: Failed to add ${group_to_add}."
             logger "${error_group_member}" ; return 1 ; }
+        # same name group *must* be used as default group now
+        if [ ${group_to_add} = ${amanda_user} ]; then
+            log_output_of usermod -g ${group_to_add} ${amanda_user} || { \
+                logger "Nonfatal ERROR: Failed to add ${group_to_add}."
+                logger "${error_group_member}" ; return 1 ; }
+        fi
     else
         logger "Error: groupadd failed in an unexpected way. return code='$rc'"
         return 1
@@ -126,7 +163,7 @@ check_user_group() {
     [ "x" = "x$1" ] && { logger "check_user_group: no group given"; return 1; }
     logger "Verify ${amanda_user}'s primary group = $1 "
     # Check if the group exists, disregarding membership.
-    group_entry=`grep "^${2}" ${SYSCONFDIR}/group 2> /dev/null`
+    group_entry=`grep "^${1}" ${SYSCONFDIR}/group 2> /dev/null`
     if [ ! "x" = "x${group_entry}" ]; then
         # Assume the user exists, and check the user's primary group.
         GROUP=`id ${amanda_user} 2> /dev/null |\
@@ -232,18 +269,17 @@ create_homedir() {
 }
 
 create_logdir() {
-    if [ -d ${LOGDIR} ] || [ -f ${LOGDIR} ] ; then
-        logger "Found existing ${LOGDIR}"
-        log_output_of mv ${LOGDIR} ${LOGDIR}.save || \
-            { logger "WARNING:  Could not backup existing log directory: ${LOGDIR}" ; return 1 ; }
+    if [ -e ${LOGDIR} -a ! -d ${LOGDIR} ]; then
+        logger "Warning: Found ${LOGDIR}, but it is not a directory"
+	return 1
     fi
-    logger "Creating ${LOGDIR}."
-    log_output_of mkdir -p -m 0750 ${LOGDIR} || \
-        { logger "WARNING:  Could not create ${LOGDIR}" ; return 1 ; }
-    if [ -d ${LOGDIR}.save ] || [ -f ${LOGDIR}.save ] ; then
-        # Move the saved log into the logdir.
-        log_output_of mv ${LOGDIR}.save ${LOGDIR}
+
+    if [ ! -d ${LOGDIR} ] ; then
+        logger "Creating ${LOGDIR}."
+        log_output_of mkdir -p -m 0750 ${LOGDIR} || \
+            { logger "WARNING:  Could not create ${LOGDIR}" ; return 1 ; }
     fi
+
     log_output_of chown -R ${amanda_user}:${amanda_group} ${LOGDIR} || \
         { logger "WARNING:  Could not chown ${LOGDIR}" ; return 1 ; }
 }
@@ -262,7 +298,7 @@ info_unlock_account=" The superuser can unlock the account by running:
 "
 
 info_existing_installs="Pre-existing Amanda installations must confirm:
-  -${SYSCONFDIR}/amanda/* should have 'dumpuser' set to '${amanda_user}'.
+  -existing configurations should have 'dumpuser' set to '${amanda_user}'.
   -${AMANDAHOMEDIR}/.amandahosts on client systems should allow connections by
    '${amanda_user}'."
 
@@ -286,3 +322,4 @@ owned by ${checked_uid} must be chowned to ${amanda_user}."
 warning_homedir_owner="WARNING: The ${amanda_user}'s home directory,'${AMANDAHOMEDIR}' ownership must be changed to '${amanda_user}:${amanda_group}'. "
 
 # --------------- End included Functions -----------------
+set -${setopt/s}

@@ -1,17 +1,45 @@
 #!/bin/sh
+setopt=$-
+set +xv
 # ------------- Begin Post Install Functions -----------------
 # These functions are included by various different installers.
 
 # We assume that the following variables are defined in the main script:
 # amanda_user: the amanda account username
+: ${amanda_user:=%%AMANDAUSER%%}
+
 # amanda_group: the amanda account's group
+: ${amanda_group:=%%AMANDAGROUP%%}
+
 # AMANDAHOMEDIR: a directory to use as amanda's home
-# dist: used on linux for the distro.
-# install_log: a log file we append to
+: ${AMANDAHOMEDIR:=%%AMANDAHOMEDIR%%}
+
 # os: Linux, Mac, Solaris, etc...
+: ${os:=Linux}
+
 # SYSCONFDIR: location of system config files (ie, /etc)
+: ${SYSCONFDIR:=/etc}
+
 # LOGDIR: logging directory for amanda
+: ${LOGDIR:=%%LOGDIR%%}
+
+# uncertain if this will stay here
+: ${AMANDATES:=${SYSCONFDIR}/amandates}
+
+: ${SBINDIR:=/usr/sbin}
+
+# INSTALL_LOG: install log location
+: ${INSTALL_LOG=${LOGDIR}/install.log}
+
+# temp directory for some uses
+: ${AMTMP:="%%AMANDAHOMEDIR%%/tmp"}
+
+[ -d ${LOGDIR} ] || mkdir -p ${LOGDIR}
+[ -d ${AMTMP} ] || mkdir -p ${AMTMP}
+
+
 # encoder: either base64 or uuencode depending on the default for this platform
+encoder=`{ command -v base64 2>/dev/null; } || { command -v uuencode 2>/dev/null; }`
 
 #TODO: gnutar-lists dir for solaris??
 
@@ -58,6 +86,19 @@ create_gnupg() {
 		log_output_of mkdir ${AMANDAHOMEDIR}/.gnupg || \
 			{ logger "WARNING:  Could not create .gnupg dir" ; return 1; }
 	fi
+}
+
+get_random_ascii_lines() {
+    # dont quote inside of (( )) or else
+    local bytes="${1:-0}"
+    local prog='
+import sys
+import base64
+bytes=base64.a85encode(sys.stdin.buffer.read(int(sys.argv[1])))
+print(bytes.decode())
+'
+    bytes="$(( bytes * 60 ))"
+    ${PYTHON:-python} -c "$prog" $bytes </dev/urandom
 }
 
 get_random_lines() {
@@ -110,51 +151,51 @@ create_ampassphrase() {
 }
 
 
-GPG2=$(command -v gpg2 2>/dev/null)
-GPG=$(command -v gpg 2>/dev/null)
-GPG_AGENT=$(command -v gpg-agent 2>/dev/null)
-if [ -z "$GPG2" -a -z "$GPG" ]; then
+GPG=$(command -v gpg2 2>/dev/null || command -v gpg 2>/dev/null)
+GPG_AGENT=`command -v gpg-agent 2>/dev/null`
+if [ -z "$GPG" ]; then
    logger "Error: no gpg"
-elif [ -z "$GPG2" ]; then
+elif [[ $GPG == */gpg2 ]]; then
    GPG_EXTRA="--no-use-agent"
 elif [ -z "$GPG_AGENT" ]; then
    logger "Error: no gpg-agent"
 fi
 
 # NOTE: do NOT attempt to read/log stderr from gpg-agent in bgd
-GPG=${GPG2:-$GPG};   # best available
+[ -x "${GPG}" -a -x "$GPG_AGENT" ] && 
+    GPG_CMD="${GPG_AGENT} --homedir ${AMANDAHOMEDIR} --quiet --daemon"
 
+[ -x "${GPG}" ] && 
+    GPG_CMD="${GPG_CMD}${GPG} --homedir ${AMANDAHOMEDIR} ${GPG_EXTRA}"
 
 create_amkey() {
     [ -f ${AMANDAHOMEDIR}/.am_passphrase ] || \
         { logger "Error: ${AMANDAHOMEDIR}/.am_passphrase is missing, can't create amcrypt key."; return 1; }
     logger "Creating encryption key for amcrypt"
-    if [ ! -f ${AMANDAHOMEDIR}/.gnupg/am_key.gpg -o ! -s ${AMANDAHOMEDIR}/.gnupg/am_key.gpg ]; then
-        # TODO: don't write this stuff to disk!
-        get_random_lines 50 >${AMANDAHOMEDIR}/.gnupg/am_key || return 1
+    [ -f ${AMANDAHOMEDIR}/.gnupg/am_key.gpg -a -s ${AMANDAHOMEDIR}/.gnupg/am_key.gpg ] && { 
+	logger "Info: Encryption key '${AMANDAHOMEDIR}/.gnupg/am_key.gpg' already exists."; 
+        return 0; 
+    }
 
-        exec 3<${AMANDAHOMEDIR}/.am_passphrase
-        # setting homedir prevents some errors, but creates a permissions
-        # warning. perms are fixed in check_gnupg.
-        log_output_of $GPG --homedir ${AMANDAHOMEDIR}/.gnupg \
-                --no-permission-warning \
-                $GPG_EXTRA \
-                --armor \
-                --batch \
-                --symmetric \
-                --passphrase-fd 3 \
-                --output ${AMANDAHOMEDIR}/.gnupg/am_key.gpg \
-                ${AMANDAHOMEDIR}/.gnupg/am_key || \
-            { logger "WARNING: Error encrypting keys." ;
-              rm ${AMANDAHOMEDIR}/.gnupg/am_key;
-              return 1; }
-        # Be nice and clean up.
-        exec 3<&-
-    else
-        logger "Info: Encryption key '${AMANDAHOMEDIR}/.gnupg/am_key.gpg' already exists."
-    fi
-    # Always try to delete unencrypted keys
-    rm -f ${AMANDAHOMEDIR}/.gnupg/am_key
+    # am_key is missing or needs replacing
+    rm -f ${AMANDAHOMEDIR}/.gnupg/am_key.gpg   # required to write it out
+
+    (
+        # read from a file and from a pipe...
+        exec 3<${AMANDAHOMEDIR}/.am_passphrase;
+        rand="$$(get_random_ascii_lines 50)";
+
+        log_output_of $GPG \
+            --no-permission-warning \
+            --armor \
+            --batch \
+            --symmetric \
+            --passphrase-fd 3 \
+            --output ${AMANDAHOMEDIR}/.gnupg/am_key.gpg \
+            /dev/stdin <<<"$rand" \
+          || \
+        { logger "WARNING: Error encrypting keys."; return 1; }
+    )
 }
 
 check_gnupg() {
@@ -165,23 +206,22 @@ check_gnupg() {
         { logger "WARNING:  Could not set permissions on .gnupg dir." ; return 1; }
     # If am_key.gpg and .am_passphrase already existed, we should check
     # if they match!
-    if [ -s ${AMANDAHOMEDIR}/.gnupg/am_key.gpg -a -s ${AMANDAHOMEDIR}/.am_passphrase ]; then
+    [ -s ${AMANDAHOMEDIR}/.gnupg/am_key.gpg -a -s ${AMANDAHOMEDIR}/.am_passphrase ] || 
+       return 1
+
+    (
         exec 3<${AMANDAHOMEDIR}/.am_passphrase
+
         # Perms warning will persist because we are not running as ${amanda_user}
-        log_output_of $GPG --homedir ${AMANDAHOMEDIR}/.gnupg \
+        log_output_of $GPG \
                 --no-permission-warning \
-                $GPG_EXTRA \
                 --batch \
                 --decrypt \
                 --passphrase-fd 3 \
                 --output /dev/null \
                 ${AMANDAHOMEDIR}/.gnupg/am_key.gpg || \
-            { logger "WARNING: .am_passphrase does not decrypt .gnupg/am_key.gpg.";
-                return 1;
-            }
-        # Be nice and clean up.
-        exec 3<&-
-    fi
+            { logger "WARNING: .am_passphrase does not decrypt .gnupg/am_key.gpg."; return 1; }
+    )
 }
 
 create_amandahosts() {
@@ -254,6 +294,7 @@ create_ssh_key() {
 	fi
 	if [ ! -f ${KEYDIR}/${KEYFILE} ] ; then
 		logger "Creating ssh RSA key in '${KEYDIR}/${KEYFILE}'"
+                rm -f ${KEYDIR}/${KEYFILE}  # make sure its gone
 		log_output_of ssh-keygen -q -C $COMMENT -t rsa -f ${KEYDIR}/${KEYFILE} -N '' || \
 			{ logger "WARNING:  Error generating ssh key" ; return 1; }
 	fi
@@ -284,7 +325,7 @@ check_profile(){
     fi
     case $os in
       SunOS)
-        sun_paths=/opt/csw/bin:/usr/ucb:${AMANDAHOMEDIR}/sbin
+	sun_paths=/opt/csw/bin:/usr/ucb:${AMANDAHOMEDIR}/sbin
         if [ -z "`grep PATH ${AMANDAHOMEDIR}/.profile | grep ${sun_paths}`" ] ; then
             echo "PATH=\"$PATH:${SBINDIR}:${sun_paths}\"" >>${AMANDAHOMEDIR}/.profile
         fi
@@ -299,18 +340,67 @@ check_profile(){
 
 install_client_conf() {
     # Install client config
+    am_confdir=${SYSCONFDIR}/amanda
     install="install -m 0600 -o ${amanda_user} -g ${amanda_group}"
     if [ "$os" = "SunOS" ] ; then
-        install="${install/ -o / -u }"
+        install="/usr/ucb/install -m 0600 -u ${amanda_user} -g ${amanda_group}"
+        am_confdir=%%INSTALL_TOPDIR%%/etc/amanda
+	log_output_of mkdir -p ${am_confdir} || \
+		{ logger "WARNING:  Could not create ${am_confdir}." ; return 1; }
     fi
-    logger "Checking '${SYSCONFDIR}/amanda/amanda-client.conf' file."
-    if [ ! -f ${SYSCONFDIR}/amanda/amanda-client.conf ] ; then
+    logger "Checking '${am_confdir}/amanda-client.conf' file."
+    if [ ! -f ${am_confdir}/amanda-client.conf ] ; then
         logger "Installing amanda-client.conf."
-        log_output_of ${install} ${AMANDAHOMEDIR}/example/amanda-client.conf \
-            ${SYSCONFDIR}/amanda/ || \
+        log_output_of ${install} \
+            ${AMANDAHOMEDIR}/example/amanda-client.conf \
+            ${am_confdir}/ || \
                 { logger "WARNING:  Could not install amanda-client.conf" ; return 1; }
     else
-        logger "Note: ${SYSCONFDIR}/amanda/amanda-client.conf exists. Please check ${AMANDAHOMEDIR}/example/amanda-client.conf for updates."
+        logger "Note: ${am_confdir}/amanda-client.conf exists. Please check ${AMANDAHOMEDIR}/example/amanda-client.conf for updates."
+    fi
+}
+
+install_security_conf() {
+    # Install amanda-security config
+    am_confdir=${SYSCONFDIR}/amanda
+    if [ "$os" = "SunOS" ] ; then
+        install="/usr/ucb/install"
+        am_confdir=%%INSTALL_TOPDIR%%/etc/amanda
+        sys_confdir=%%INSTALL_TOPDIR%%/etc
+        log_output_of chown root:root /opt/zmanda %%INSTALL_TOPDIR%% ${sys_confdir} || \
+                { logger "WARNING:  Could not chown ${sys_confdir}" ; return 1; }
+    else
+        install="install"
+        sys_confdir=${SYSCONFDIR}
+    fi
+    logger "Checking '${sys_confdir}/amanda-security.conf' file."
+    if [ ! -f ${sys_confdir}/amanda-security.conf ] ; then
+        logger "Installing amanda-security.conf."
+        log_output_of ${install} -m 0644 -o root -g root \
+            ${am_confdir}/amanda-security.conf \
+            ${sys_confdir}/ || \
+                { logger "WARNING:  Could not install amanda-security.conf" ; return 1; }
+    else
+        logger "Note: ${sys_confdir}/amanda-security.conf exists. Please check ${am_confdir}/amanda-security.conf for updates."
+    fi
+    # for any group... it is wise [and part of most installs] to keep group-write *off*
+    chmod g-w ${sys_confdir}
+}
+
+install_64b_amandad() {
+    # Link 64b amandad to 32b amandad binary on 32b client
+    AMANDAD_32_DIR=/usr/lib/amanda
+    AMANDAD_64_DIR=/usr/lib64/amanda
+    if [ ! -e ${AMANDAD_64_DIR}/amandad ]; then
+        logger "Linking 64b amandad."
+        if [ ! -e ${AMANDAD_64_DIR} ]; then
+            log_output_of mkdir ${AMANDAD_64_DIR} || { logger "WARNING: Could not create ${AMANDAD_64_DIR}"; return 1; }
+        else
+            logger "Note: ${AMANDAD_64_DIR} exists."
+        fi
+        log_output_of ln -s ${AMANDAD_32_DIR}/amandad ${AMANDAD_64_DIR}/amandad || { logger "WARNING: Could not link 64b amandad" ; return 1; }
+    else
+        logger "Note: ${AMANDAD_64_DIR}/amandad exists."
     fi
 }
 
@@ -326,4 +416,15 @@ create_amtmp() {
 	fi
 }
 
+install_pyzphere() {
+	if [ -x ${PYTHON} ]; then
+		pyzphere_dir=${AMLIBEXECDIR}/python/pyzphere
+		if [ -d ${pyzphere_dir} ]; then
+			logger "Installing Pyzphere"
+			( cd ${pyzphere_dir}; ${PYTHON} setup.py install )
+		fi
+	fi
+}
+
 # ------------- End Post Install Functions -----------------
+set -${setopt/s}
