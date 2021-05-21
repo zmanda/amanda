@@ -79,18 +79,19 @@ define CONFIG_FLAGS_COMMON
 --host=$(HOST_GNU_TYPE) \
 --build=$(BUILD_GNU_TYPE) \
 --prefix=$(PREFIX) \
---bindir=$(BINDIR) \
---sbindir=$(SBINDIR) \
---mandir=$(MANDIR) \
 --libdir=$(LIBDIR) \
---libexecdir=$(LIBEXECDIR) \
 --sysconfdir=$(SYSCONFDIR) \
 --sharedstatedir=$(LOCALSTATEDIR) \
 --localstatedir=$(LOCALSTATEDIR) \
---with-amlibdir=$(AMLIBDIR) \
---with-amlibexecdir=$(AMLIBEXECDIR) \
+--bindir=$(BINDIR) \
+--sbindir=$(SBINDIR) \
+--mandir=$(MANDIR) \
+--libexecdir=$(LIBEXECDIR) \
 --with-amperldir=$(AMPERLDIR) \
+--with-configdir=$(AM_CONFDIR} \
+--with-amlibdir=$(AMLIBDIR) \
 --with-amdatadir=$(AMANDAHOMEDIR) \
+--with-amlibexecdir=$(AMLIBEXECDIR) \
 --with-gnutar-listdir=$(AMANDAHOMEDIR)/gnutar-lists \
 --with-index-server=localhost \
 --with-tape-server=localhost \
@@ -109,10 +110,11 @@ define CONFIG_FLAGS_COMMON
 --with-udpportrange=800,840 \
 --with-low-tcpportrange=800,840 \
 --with-assertions \
---with-failure-code \
 --with-debugging=$(LOGDIR) \
+--with-failure-code \
+--without-readline \
 --enable-manpage-build \
---disable-installperms \
+\
 --disable-syntax-checks
 endef
 
@@ -123,9 +125,7 @@ endef
 # used to narrow the dh_ tools focus
 dhpkg           =  --package=amanda-enterprise-backup-client
 # r=$(SRCDIR)/debian/tmp
-# buildroot_server=$(SRCDIR)/debian/amanda-enterprise-backup-server
 buildroot       =  $(SRCDIR)/debian/amanda-enterprise-backup-client
-# platform=$(SRCDIR)/debian/amanda-enterprise-platform
 devel           =  $(SRCDIR)/debian/amanda-enterprise-backup-client-devel
 log             =  $(SRCDIR)/debian/dpkg.log
 
@@ -139,9 +139,9 @@ build-stamp:
 	    PYTHON=$$(command -v python3); \
 	    \
 	    \
-            LDFLAGS="-Wl,--disable-new-dtags -Wl,-rpath -Wl,$(AMLIBDIR)"'; \
+	    LDFLAGS="-Wl,--disable-new-dtags -Wl,-rpath -Wl,$(AMLIBDIR)"'; \
 	    PKG_CONFIG_PATH+=""; \
-	    declare -p PERL PYTHON LDFLAGS PKG_CONFIG_PATH >> ./build-env.sh
+	    declare -p PERL PYTHON LDFLAGS PKG_CONFIG_PATH >> ./build-env.sh \
 	)
 	
 	# annoying.. but it forces inclusion of all the needed perl
@@ -157,11 +157,12 @@ build-stamp:
 	echo -------------------
 	
 	# no need for LDPATH, PATH (for perl/python)
-	set -x; . ./build-env.sh ; \
+	set -x; . ./build-env.sh; \
 	./configure \
 		$(CONFIG_FLAGS_COMMON) \
 		--without-server \
                 --enable-rpath
+
 	touch missing
 	
 	set -x; . ./build-env.sh; \
@@ -192,7 +193,9 @@ DEVEL_INCLUDE_FILES =  \
 # var/log/amanda
 # var/log/amanda/client
 
-# Build architecture-dependent files here.
+##################
+################################ architecture-dependent files here
+##################
 binary-install-client: build-stamp
 	dh_testdir
 	rm -rf $(buildroot)
@@ -431,6 +434,7 @@ binary-install-devel: binary-install-client
 		     -e "s|$$build_topdir_abs|$$build_topdir|g" \
 		     -e "s|$$build_topdir|%{BUILD_TOPDIR}|g" \
 		     -e "/dependency_libs=/s| $(AMLIBDIR)/| %{DESTDIR}$(AMLIBDIR)/|g"
+		     -e "/libdir=/s|$(AMLIBDIR)|%{DESTDIR}$(AMLIBDIR)|g"
 	
 	find dummy.la $(devel)$(LIBDIR) -type f -name \*.la | \
 		xargs chmod uog-x
@@ -482,7 +486,7 @@ binary-install-stamp:
 final-install:
 	# (disabled) fakeroot can remain entirely within this MAKE only, 
 	#    if perms were remembered from these chmod/chown calls
-	env -- $(MAKE) -f $(THIS_MAKEFILE) perm-install-devel perm-install-client
+	env -- $(MAKE) -f $(THIS_MAKEFILE) perm-install-client perm-install-devel 
 	#
 	dh_makeshlibs -v
 	dh_shlibdeps $(dhpkg) -v \
