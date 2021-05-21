@@ -231,6 +231,7 @@ binary-install-server: build-stamp
 	install -D -m 644 system-scripts/amanda-logrotate \
                  $(buildroot)$(SYS_LOGROTATEDIR)/amanda-enterprise
 	
+	rm -f $(buildroot)$(AMANDAHOMEDIR)/example/inetd.conf.amandaclient
 	rm -f $(buildroot)$(AMANDAHOMEDIR)/example/inetd.conf.amandaserver
 	
 	echo "Amanda Enterprise Edition - version $(AMVER)" > $(buildroot)$(AMANDAHOMEDIR)/amanda-release
