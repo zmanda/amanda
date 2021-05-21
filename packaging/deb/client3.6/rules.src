@@ -64,7 +64,6 @@ SYS_UNITDIR=$(lastword $(filter-out %.late,$(shell systemctl show -p UnitPath)))
 SYS_LDSOCONFDIR=$(SYSCONFDIR)/ld.so.conf.d
 SYS_LOGROTATEDIR=$(SYSCONFDIR)/logrotate.d
 
-BITROCK_REPO_DIR=$(SRCDIR)/bitrock-stack
 AMANDAUSER=%%AMANDAUSER%%
 AMANDAGROUP=%%AMANDAGROUP%%
 AMANDACLIGROUP=%%AMANDACLIGROUP%%
@@ -79,18 +78,19 @@ define CONFIG_FLAGS_COMMON
 --host=$(HOST_GNU_TYPE) \
 --build=$(BUILD_GNU_TYPE) \
 --prefix=$(PREFIX) \
---bindir=$(BINDIR) \
---sbindir=$(SBINDIR) \
---mandir=$(MANDIR) \
 --libdir=$(LIBDIR) \
---libexecdir=$(LIBEXECDIR) \
 --sysconfdir=$(SYSCONFDIR) \
 --sharedstatedir=$(LOCALSTATEDIR) \
 --localstatedir=$(LOCALSTATEDIR) \
---with-amlibdir=$(AMLIBDIR) \
---with-amlibexecdir=$(AMLIBEXECDIR) \
+--bindir=$(BINDIR) \
+--sbindir=$(SBINDIR) \
+--mandir=$(MANDIR) \
+--libexecdir=$(LIBEXECDIR) \
 --with-amperldir=$(AMPERLDIR) \
+--with-configdir=$(AM_CONFDIR} \
+--with-amlibdir=$(AMLIBDIR) \
 --with-amdatadir=$(AMANDAHOMEDIR) \
+--with-amlibexecdir=$(AMLIBEXECDIR) \
 --with-gnutar-listdir=$(AMANDAHOMEDIR)/gnutar-lists \
 --with-index-server=localhost \
 --with-tape-server=localhost \
@@ -105,12 +105,16 @@ define CONFIG_FLAGS_COMMON
 --with-ssh-security \
 --with-amandahosts \
 --with-amandates=$(AMANDATES) \
+--with-tcpportrange=11000,11040 \
+--with-udpportrange=800,840 \
+--with-low-tcpportrange=800,840 \
 --with-assertions \
---with-failure-code \
 --with-debugging=$(LOGDIR) \
+--with-failure-code \
+--without-readline \
 --enable-manpage-build \
---disable-installperms \
 \
+--disable-syntax-checks
 endef
 
 
@@ -118,20 +122,25 @@ endef
 # subpackage paths
 #
 # used to narrow the dh_ tools focus
-dhpkg          =   --package=amanda-enterprise-backup-client
+dhpkg          =   --package=amanda-backup-client
 # r=$(SRCDIR)/debian/tmp
-# buildroot_server=$(SRCDIR)/debian/amanda-backup-server
 buildroot      =   $(SRCDIR)/debian/amanda-backup-client
 log             =  $(SRCDIR)/debian/dpkg.log
 
-# These are used for cross-compiling and for saving the configure script
-# from having to guess our platform (since we know it already)
-DEB_HOST_GNU_TYPE   ?= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
-DEB_BUILD_GNU_TYPE  ?= $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
 
 build: build-stamp
 build-stamp:
 	dh_testdir
+	echo 'unset CONFIG_LDPATH ' > ./build-env.sh
+	( \
+	    PERL=$$(command -v perl); \
+	    PYTHON=$$(command -v python3); \
+	    \
+	    \
+	    LDFLAGS="-Wl,--disable-new-dtags -Wl,-rpath -Wl,$(AMLIBDIR)"'; \
+	    PKG_CONFIG_PATH+=""; \
+	    declare -p PERL PYTHON LDFLAGS PKG_CONFIG_PATH >> ./build-env.sh \
+	)
 	
 	# annoying.. but it forces inclusion of all the needed perl
 	sed -i -e 's,^if *WANT_SERVER,if WANT_CLIENT,' perl/Makefile.am
@@ -144,14 +153,15 @@ build-stamp:
 	echo -------------------
 	
 	# no need for LDPATH, PATH (for perl/python)
-	set -x; \
+	set -x; . ./build-env.sh; \
 	./configure \
 		$(CONFIG_FLAGS_COMMON) \
 		--without-server \
                 --enable-rpath
+
 	touch missing
 
-	set -x; \
+	set -x; . ./build-env.sh; \
 	    $(MAKE) -j`nproc` VERBOSE=1
 	
 	touch $@
@@ -184,21 +194,20 @@ binary-install-client: build-stamp
 	
 	echo ------------------- START INSTALL
 	################################################ perform source make-install
-	set -x; \
+	set -x; . ./build-env.sh; \
 		$(MAKE) -j1 install DESTDIR=$(buildroot)
 	################################################ done with source make-install
 	
 	##################
 	# needed directories
 	##################
-	install -d $(buildroot)$(SYS_LDSOCONFDIR)
-	install -d $(buildroot)$(SYS_LOGROTATEDIR)
-	install -m 644 system-scripts/amanda-logrotate \
-                 $(buildroot)$(SYS_LOGROTATEDIR)/amanda-enterprise
+	install -D -m 644 system-scripts/amanda-logrotate \
+                 $(buildroot)$(SYS_LOGROTATEDIR)/amanda
 	
-	# rm -f $(buildroot)$(AMANDAHOMEDIR)/example/inetd.conf.amandaclient
+	#rm -f $(buildroot)$(AMANDAHOMEDIR)/example/inetd.conf.amandaclient
+	rm -f $(buildroot)$(AMANDAHOMEDIR)/example/inetd.conf.amandaserver
 	
-	echo "Amanda - version $(AMVER)" > $(buildroot)/$(AMANDAHOMEDIR)/amanda-release
+	echo "Amanda - version $(AMVER)" > $(buildroot)$(AMANDAHOMEDIR)/amanda-release
 	[ -s $(CWD)/LONG_BRANCH ] && echo "ref=$$(cat $(CWD)/LONG_BRANCH)" >> $(buildroot)/$(AMANDAHOMEDIR)/amanda-release
 
 	##################
@@ -363,7 +372,7 @@ binary-install-stamp:
 	#
 	#dh_installexamples -v $(buildroot)$(AMANDAHOMEDIR)/example
 	dh_installchangelogs -v ChangeLog
-	dh_strip --dbg-package=amanda-enterprise-backup-client-dbg
+	dh_strip --dbg-package=amanda-backup-client-dbg
 	#
 	dh_compress
 	
@@ -403,5 +412,5 @@ clean:
 	dh_clean -d -v  # build dirs only
 
 binary: final-install
-.PHONY: build clean binary-install binary-install-client binary-install-devel binary-install-platform
-.PHONY: final-install perm-install-client perm-install-devel
+.PHONY: build clean binary-install binary-install-client
+.PHONY: final-install perm-install-client
