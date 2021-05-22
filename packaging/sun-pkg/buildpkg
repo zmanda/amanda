@@ -14,8 +14,8 @@ buildtype=${1:-both}
 shift
 
 # set the var buildpkg_dir as well
-. ./packaging/common_z/build_functions.sh
-. ./packaging/common_z/set_zmanda_version
+. ./packaging/common/build_functions.sh
+. ./packaging/common/set_zmanda_version
 
 [ -d /opt/csw/gnu ] && [[ "$PATH" != */opt/csw/gnu* ]] && PATH=/opt/csw/gnu:${PATH}
 [ -d /usr/sfw/bin ] && [[ "$PATH" != */usr/sfw/bin* ]] && PATH=/usr/sfw/bin:${PATH}

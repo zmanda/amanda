@@ -8,8 +8,8 @@ CWD=$PWD
 [ -d debbuild/amanda-enterprise-*/installcheck ] || exit -1
 INSTALLCHECK=$(ls -1d debbuild/amanda-enterprise-*/installcheck)
 
-. ./packaging/common_z/build_functions.sh || { echo "ERROR: did not find ./packaging/... environment"; }
-. ./packaging/common_z/test_functions.sh || { echo "ERROR: did not find ./packaging/... environment"; }
+. ./packaging/common/build_functions.sh || { echo "ERROR: did not find ./packaging/... environment"; }
+. ./packaging/common/test_functions.sh || { echo "ERROR: did not find ./packaging/... environment"; }
 
 overtmp=${src_root}/debbuild/TMP
 [ -d ${src_root}/../../debbuild -a -n "$(ls -d1 "${src_root}/../../debbuild/amanda-enterprise-*/debian" 2>/dev/null)" ] && 

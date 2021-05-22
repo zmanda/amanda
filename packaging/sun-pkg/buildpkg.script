@@ -174,9 +174,9 @@ do_cwd_package() {
 export pkg_name=amanda_enterprise
 
 # set the var buildpkg_dir as well
-. packaging/common_z/build_functions.sh
+. packaging/common/build_functions.sh
 # create package version files 
-. packaging/common_z/set_zmanda_version
+. packaging/common/set_zmanda_version
 
 # export PKG_NAME_VER=amanda-enterprise-$VERSION
 # export PKG_FILE_NAME=amanda-enterprise-$VERSION

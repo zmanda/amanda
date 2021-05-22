@@ -84,8 +84,8 @@ detect_platform_pkg_type() {
     [ -n "$repo_name" ] && presets+="declare -g repo_name=\"$repo_name\";"
     [ -n "$pkg_type" ] && presets+="declare -g pkg_type=\"$pkg_type\";"
 
-    if [ -z "$pkg_type" -a -x $pkgdirs_top/common_z/substitute.pl ]; then
-        declare -g pkg_suffix=$(cd $src_root; $pkgdirs_top/common_z/substitute.pl <(echo %%PKG_SUFFIX%%) /dev/stdout);
+    if [ -z "$pkg_type" -a -x $pkgdirs_top/common/substitute.pl ]; then
+        declare -g pkg_suffix=$(cd $src_root; $pkgdirs_top/common/substitute.pl <(echo %%PKG_SUFFIX%%) /dev/stdout);
         declare -g pkg_type=${pkg_suffix##*.}
     fi
 
@@ -157,7 +157,7 @@ detect_root_pkgtime() {
         buildpkg_dir_t=$(( buildpkg_dir_t + 0 ))
     fi
 
-    d=$(realpath "$pkgdirs_top/common_z/.")
+    d=$(realpath "$pkgdirs_top/common/.")
     if ! [ -n "$pkgdirs_top" -a -d "$d" ]; then
         pkg_common_t=950000000  # feb 2000
         pkg_common_hash=unkn
@@ -171,7 +171,7 @@ detect_root_pkgtime() {
     {
     printf -- "#--------------- %-14s: %s @%s =%d \n" top-dir $(get_yearly_tag $src_root_t) $src_root_hash $src_root_t
     printf -- "#--------------- %-14s: %s @%s =%d \n" pkg-scripts $(get_yearly_tag $buildpkg_dir_t) $buildpkg_dir_hash $buildpkg_dir_t
-    printf -- "#--------------- %-14s: %s @%s =%d \n" pkg-common_z $(get_yearly_tag $pkg_common_t) $pkg_common_hash $pkg_common_t
+    printf -- "#--------------- %-14s: %s @%s =%d \n" pkg-common $(get_yearly_tag $pkg_common_t) $pkg_common_hash $pkg_common_t
     } | LANG=C sort -t: -b -k2
 
     t=${src_root_t}
@@ -249,7 +249,7 @@ do_file_subst() {
             cd $src_root;
 	    export pkg_name=${pkg_name};
             export pkg_type=${pkg_type};
-            $pkgdirs_top/common_z/substitute.pl /dev/stdin /dev/stdout;
+            $pkgdirs_top/common/substitute.pl /dev/stdin /dev/stdout;
         ) || { echo "substitution of \"$file\" -> \"$target\" failed somehow"; exit 255; }
     done
     return 0
@@ -257,7 +257,7 @@ do_file_subst() {
 
 get_version() {
     # requires FULL_VERSION is in place already
-    declare -g VERSION=$(cd $src_root; $pkgdirs_top/common_z/substitute.pl <(echo %%VERSION%%) /dev/stdout);
+    declare -g VERSION=$(cd $src_root; $pkgdirs_top/common/substitute.pl <(echo %%VERSION%%) /dev/stdout);
     [ -n "$pkg_name" ] &&
        declare -g PKG_NAME_VER="$pkg_name-$VERSION"
 }

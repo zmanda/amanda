@@ -512,7 +512,7 @@ git_toplevel=$(git rev-parse --show-toplevel)
 
 command -v realpath >/dev/null || realpath() { readlink -e "$@"; }
 
-. packaging/common_z/common_functions.sh
+. packaging/common/common_functions.sh
 
 [ "$(stat -c '%m' %{buildroot})" = "%{buildroot}" ] &&
    { echo "used mount point %{buildroot}"; exit -1; }

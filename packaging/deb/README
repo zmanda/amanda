@@ -19,6 +19,6 @@ script that does this is buildpkg.
 Standalone client package files are (logically) in the client subdirectory,
 while the server subdirectory builds a server with a built-in client.
 
-Each package is built separately.  Common code is in packaging/common_z/
+Each package is built separately.  Common code is in packaging/common/
 
 YOU MUST RUN ./packaging/amanda-enterprise/deb/buildpkg TO BUILD DEBIAN PACKAGES.

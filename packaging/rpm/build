@@ -16,8 +16,8 @@ git --git-dir=.git/modules/tools-archives \
    unset BUILDVER
 
 # set the var buildpkg_dir as well
-. ./packaging/common_z/build_functions.sh
-. ./packaging/common_z/set_zmanda_version
+. ./packaging/common/build_functions.sh
+. ./packaging/common/set_zmanda_version
 
 export PKG_DIR=$(realpath .)
 mach=`uname -m`

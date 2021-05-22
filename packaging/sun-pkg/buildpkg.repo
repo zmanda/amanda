@@ -30,7 +30,7 @@ shift
 [ -n "$buildref" ] || { echo requires a branch/buildref; exit 1; }
 
 # set the var buildpkg_dir as well
-. ./packaging/common_z/build_functions.sh
+. ./packaging/common/build_functions.sh
 
 [ -d /opt/csw/gnu ] && [[ "$PATH" != */opt/csw/gnu* ]] && PATH=/opt/csw/gnu:${PATH}
 [ -d /usr/sfw/bin ] && [[ "$PATH" != */usr/sfw/bin* ]] && PATH=/usr/sfw/bin:${PATH}

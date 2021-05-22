@@ -16,7 +16,7 @@ git --git-dir=.git/modules/tools-archives \
    unset BUILDVER
 
 # set the var buildpkg_dir as well
-. ./packaging/common_z/build_functions.sh
+. ./packaging/common/build_functions.sh
 # leave set_zmanda_version for later...
 
 export PKG_DIR=$(realpath .)
@@ -50,7 +50,7 @@ generate_override_version() {
 
         git rev-parse --verify --quiet __orig_platform >/dev/null && 
              ref=__orig_platform
-        ../../packaging/common_z/version_setup.sh $ref
+        ../../packaging/common/version_setup.sh $ref
        )
 }
 
