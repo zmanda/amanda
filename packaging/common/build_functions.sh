@@ -23,14 +23,17 @@ unset xargs
 unset realpath
 unset tar
 unset git
-eval "xargs() { $(command -v xargs) -r \"$@\"; }"
-eval "realpath() { $(command -v readlink) -e \"$@\"; }"
-eval "tar() { $(command -v gtar) \"$@\"; }"
-eval "git() { $(command -v git) \"$@\"; }"
+eval "xargs() { $(command -v xargs) -r \"\$@\"; }"
+eval "realpath() { $(command -v readlink) -e \"\$@\"; }"
+eval "tar() { $(command -v gtar) \"\$@\"; }"
+eval "git() { $(command -v git) \"\$@\"; }"
 
 # find abs top-dir path
 [ -d "$src_root" ]      || src_root="$(realpath .)"
 [[ "$src_root" == /* ]] || src_root="$(realpath .)"
+
+pkgdirs_top=${pkgdirs_top:-$(realpath $src_root/packaging/.)}
+
 
 # normally $src_root/packaging/.
 #    - pkgdirs_top
@@ -767,8 +770,13 @@ set_zmanda_version() {
 [ -z "$pkgdirs_top" -a -d "$src_root/packaging/." ] && 
     declare -g pkgdirs_top=$src_root/packaging
 
-# detect missing variables ...
-declare 2>/dev/null >/dev/null -p \
+# detect missing variables from calling script location
+detect_package_vars() {
+
+    # check every time ...
+    detect_pkgdirs_top
+
+    declare >&/dev/null -p \
          pkg_suffix \
          pkg_name \
          pkg_type \
@@ -778,21 +786,29 @@ declare 2>/dev/null >/dev/null -p \
          repo_name ||
    detect_platform_pkg_type
 
-git_srcroot_args="--git-dir=$(cd $src_root; git rev-parse --git-dir | xargs readlink -e ) --work-tree=$(cd $src_root; git rev-parse --show-toplevel) "
-git_pkgdirs_args="--git-dir=$(cd $pkgdirs_top; git rev-parse --git-dir | xargs readlink -e ) --work-tree=$(cd $pkgdirs_top; git rev-parse --show-toplevel)"
+    if ! declare >&/dev/null -p pkg_name_pkgtime; then
+        src_root_top=$(cd $src_root; git rev-parse --show-toplevel)
+        pkgdirs_top_top=$(cd $pkgdirs_top; git rev-parse --show-toplevel)
 
-# detect time stamp from areas touched by this script
-[ -n "$pkg_name_pkgtime" ] || detect_root_pkgtime
+        git_srcroot_args="--git-dir=$src_root_top/.git --work-tree=$src_root_top"
+        git_pkgdirs_args="--git-dir=$pkgdirs_top_top/.git --work-tree=$pkgdirs_top_top"
 
-[ -n "$pkg_name" ] && export pkg_name
-[ -n "$pkg_type" ] && export pkg_type
+        # detect time stamp from areas touched by this script
 
-export pkg_suffix \
+        detect_root_pkgtime
+    fi
+
+    [ -n "$pkg_name" ] && export pkg_name
+    [ -n "$pkg_type" ] && export pkg_type
+
+    export pkg_suffix \
       pkgconf_dir \
       buildpkg_dir \
       pkg_bldroot \
       pkg_name_pkgtime \
       pkgdirs_top
+}
 
+detect_package_vars
 set -${setopt/s}
 # End Common functions
