@@ -372,8 +372,8 @@ gen_pkg_environ() {
     set_zmanda_version HEAD
 
     tmp=$(mktemp -d)
-    rm -f $tmp/${PKG_NAME_VER}
-    ln -sf ${PKG_DIR} $tmp/${PKG_NAME_VER}
+    #rm -f $tmp/${PKG_NAME_VER}
+    #ln -sf ${PKG_DIR} $tmp/${PKG_NAME_VER}
 
     [ -d $pkg_bldroot ] ||
     	die "missing call to gen_pkg_build_config() or missing $pkg_bldroot directory"
@@ -772,9 +772,6 @@ set_zmanda_version() {
 
 # detect missing variables from calling script location
 detect_package_vars() {
-
-    # check every time ...
-    detect_pkgdirs_top
 
     declare >&/dev/null -p \
          pkg_suffix \

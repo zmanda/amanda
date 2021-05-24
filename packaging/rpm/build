@@ -8,7 +8,7 @@ buildtype=${1:-both}
 shift
 
 # must set before including build-functions.sh
-[ $buildtype = platform ] && pkg_name=zmanda-platforms
+pkg_name=amanda
 
 BUILDVER="4.0"
 git --git-dir=.git/modules/tools-archives \

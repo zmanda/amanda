@@ -217,8 +217,8 @@ get_git_info() {
     REV_SUFFIX=
 
     # in case this is the only difference...
-    GIT_WORKING_DIR=${src_root} git reset ${src_root}/.gitmodules
-    GIT_WORKING_DIR=${src_root} git checkout ${src_root}/.gitmodules
+    # GIT_WORKING_DIR=${src_root} git reset ${src_root}/.gitmodules
+    # GIT_WORKING_DIR=${src_root} git checkout ${src_root}/.gitmodules
 
     if [ "$(git rev-parse $ref)" != "$(git rev-parse HEAD)" ]; then
 	:
@@ -307,27 +307,6 @@ branch_version_name() {
     echo "${ver}"
 }
 
-set_build_version() {
-    local top=$(git rev-parse --show-superproject-working-tree)
-    declare -g BUILD_VERSION
-
-    top=${top:-$(git rev-parse --show-toplevel)}
-    top=${top:-.}
-    top=$(realpath $top)
-
-    read pkgbr < <(git 2>/dev/null config --blob ${SHA}:.gitmodules --get submodule.packaging.branch)
-    read toolbr < <(git 2>/dev/null config --blob ${SHA}:.gitmodules --get submodule.tools-archives.branch)
-
-    pkg_pkgdir="--git-dir=${top}/.git/modules/packaging"
-    tools_pkgdir="--git-dir=${top}/.git/modules/tools-archives"
-
-    command git $pkg_pkgdir rev-parse --quiet origin/$pkgbr &&
-        read pkgbr < <(git $pkg_pkgdir rev-parse --verify --short=9 origin/$pkgbr)
-    command git $tools_pkgdir rev-parse --verify --quiet origin/$toolbr &&
-        read toolbr < <(git $tools_pkgdir rev-parse --verify --short=9 origin/$toolbr)
-    declare -g BUILD_VERSION="${SHA}.${pkgbr}.${toolbr}"
-}
-
 old_set_pkg_rev() {
 ###########################################
     # special branches used to exist for each variant
@@ -361,7 +340,6 @@ save_version() {
     ref=$1
     # quiet!  no output until end
     get_git_info $ref >/dev/null
-    set_build_version >/dev/null
 
     VERSION=$(branch_version_name "$BRANCH")
     [ "${BRANCH}" = "trunk" ] && VERSION="trunk"

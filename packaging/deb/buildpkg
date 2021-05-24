@@ -15,7 +15,7 @@ GIT_DIR=.git/modules/tools-archives \
    git ls-files stack-output/php | grep -q . &&
    BUILDVER=""
 
-[ $buildtype = platform ] && pkg_name=zmanda-platforms
+pkg_name=amanda
 
 # set the var buildpkg_dir as well
 . ./packaging/common/build_functions.sh
