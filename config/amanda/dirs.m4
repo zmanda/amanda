@@ -197,8 +197,11 @@ AC_DEFUN([AMANDA_EXPAND_DIRS],
 	    esac
 	]
     )
+
     AC_DEFINE_DIR([unitdir], [unitdir],
 	[Directory in which Amanda Systemd Units should be installed])
+
+    AM_CONDITIONAL([GL_GENERATE_ALLOCA_H], [test -d "$unitdir"])
 
     # amanda-specific directories
     AMLIBDIR=$libdir/amanda
