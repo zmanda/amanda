@@ -1,0 +1,12 @@
+[Unit]
+Description=Amanda Backup Client Localhost-Socket
+
+[Socket]
+ListenStream=[::1]:10080
+Accept=yes
+ReusePort=true
+MaxConnections=100
+
+[Install]
+# started at boot time
+WantedBy=sockets.target

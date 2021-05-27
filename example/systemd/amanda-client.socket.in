@@ -1,44 +1,27 @@
 [Unit]
 Description=Amanda Backup Client Socket
-Requires=network-online.target
 
 [Socket]
-# only for the Unix sockets
-SocketUser=@CLIENT_LOGIN@
-SocketGroup=@SETUID_GROUP@
-SocketMode=0600
 ListenStream=10080
-ListenStream=@amdatadir@/amandad.sock
 Accept=yes
 KeepAlive=true
-RemoveOnStop=yes
-#
-# dont wait two hours
-#
+######## dont wait two hours
 KeepAliveTimeSec=120
-# KeepAliveIntervalSec=75
-# KeepAliveProbes=9
-#
-# speed up unreplied bursts
-#
+#KeepAliveIntervalSec=75
+#KeepAliveProbes=9
+######## speed up unreplied bursts
 NoDelay=true
-#
-# set TOS for TCP outputs if needed (0-6 only normally allowed)
-#
+######## set TOS for TCP outputs if needed (0-6 only normally allowed)
 #Priority= 
-#
-# keep the daemon asleep until real data arrives
-#
+######## don't fork until real data arrives
 DeferAcceptSec=5
-# ReceiveBuffer=
-# SendBuffer=
 IPTOS=throughput
-ReusePort=false
+# allow localhost-only socket elsewhere
+ReusePort=true
 # SELinuxContextFromNet=
 # TCPCongestion=bbr
-MaxConnections=3
+MaxConnections=10
 
 [Install]
 # started at boot time
 WantedBy=sockets.target
-Alias=amanda-client.socket

@@ -1,8 +1,9 @@
 [Unit]
 Description=Amanda Backup Service Connection
+Requires=amanda-lserver.socket
 
 [Service]
 User=@CLIENT_LOGIN@
 Group=@SETUID_GROUP@
-ExecStart=@amlibexecdir@/amandad -auth=bsdtcp amdump senddiscover amindexd amidxtaped
+ExecStart=@amlibexecdir@/amandad -auth=local amdump senddiscover amindexd amidxtaped
 StandardInput=socket

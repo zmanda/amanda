@@ -83,7 +83,7 @@ AC_DEFUN([AMANDA_WITH_LOGDIR],
 #   value given or $localstatedir/amanda/gnutar-lists by default.  Any $xxxdir variables
 #   are fully evaluated in the value.
 #
-AC_DEFUN([AMANDA_WITH_GNUTAR_LISTDIR], 
+AC_DEFUN([AMANDA_WITH_GNUTAR_LISTDIR],
 [
     AC_ARG_WITH(gnutar-listdir,
        AS_HELP_STRING([--with-gnutar-listdir=DIR],
@@ -102,10 +102,10 @@ AC_DEFUN([AMANDA_WITH_GNUTAR_LISTDIR],
     # substitute $prefix, etc. if necessary
     AC_DEFINE_DIR([GNUTAR_LISTED_INCREMENTAL_DIR], [GNUTAR_LISTDIR],
 	[The directory in which GNU tar should store directory lists for incrementals. ])
-    
+
     # handle deprecated option
     AC_ARG_WITH(gnutar-listed-incremental,
-        AS_HELP_STRING([--with-gnutar-listed-incremental], 
+        AS_HELP_STRING([--with-gnutar-listed-incremental],
             [deprecated; use --with-gnutar-listdir]),
         [
             AC_MSG_ERROR([*** The gnutar-listed-incremental option is deprecated; use --with-gnutar-listdir instead])
@@ -173,12 +173,32 @@ AC_DEFUN([AMANDA_EXPAND_DIRS],
     AC_DEFINE_DIR([sbindir], [sbindir],
         [Directory in which administrator binaries should be installed. ])
 
-    AC_DEFINE_DIR([libexecdir], [libexecdir], 
+    AC_DEFINE_DIR([libexecdir], [libexecdir],
         [Directory in which internal binaries should be installed. ])
 
     AC_DEFINE_DIR([mandir], [mandir],
         [Directory in which man-pages should be installed])
 
+    AC_ARG_WITH([systemd],
+	AS_HELP_STRING([--with-systemd,
+		[If systemd services are desired])
+	AS_HELP_STRING([--without-systemd],
+		[If initscripts services are desired])
+	[
+	    case "$withval" in
+               n | no)
+                   unitdir=INITSCRIPTS
+                   ;;
+               y | ye | yes)  ;;
+                   unitdir="$(systemctl show -p UnitPath)";
+                   unitdir="${unitdir% *.late}";
+                   unitdir="${unitdir##* }";
+                  ;;
+	    esac
+	]
+    )
+    AC_DEFINE_DIR([unitdir], [unitdir],
+	[Directory in which Amanda Systemd Units should be installed])
 
     # amanda-specific directories
     AMLIBDIR=$libdir/amanda
