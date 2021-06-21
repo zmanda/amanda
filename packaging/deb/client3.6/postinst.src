@@ -1,5 +1,71 @@
-#!/bin/sh
-# Debian recommends this.  Script exits on simple command failure.
-# set -e
-pkg_type=client
-other_pkg_type=server
+#!/bin/bash
+
+if [[ $DPKG_MAINTSCRIPT_PACKAGE == *-server ]]; then
+    pkg_variant=server
+    pkg_opp_variant=client
+elif [[ $DPKG_MAINTSCRIPT_PACKAGE == *-client ]]; then
+    pkg_variant=client
+    pkg_opp_variant=server
+fi
+
+LOGFILE=`mktemp /tmp/amanda_enterprise_postinst.log.XXXXXXXXXXX`
+if [ $? -ne 0 ]; then
+	echo "Unable to create log file!"
+	exit 1
+fi
+
+# Variable default-overrides assumed by common and post_inst functions
+AMANDAHOMEDIR=%%AMANDAHOMEDIR%%
+dist=%%DISTRO%%
+LOGDIR=%%LOGDIR%%
+
+# ---------- Included functions ------------
+%%COMMON_FUNCTIONS%%
+%%POST_INST_FUNCTIONS%%
+
+# -------- End Included functions ----------
+/sbin/ldconfig
+r=0
+check_xinetd "amanda$pkg_variant" || r=$?
+
+[ $r -gt 2 ] && { logger "bad return from check_xinetd"; cat ${LOGFILE} >> ${INSTALL_LOG}; exit 1; }
+[ $r -ge 2 ] && logger "Xinetd config not installed: either xinetd config is not present or xinetd.d is a file."
+
+[ $r -eq 0 ] && backup_xinetd "amanda$pkg_variant";
+[ $r -le 1 ] && install_xinetd "amanda$pkg_variant"
+
+check_xinetd "amanda$pkg_opp_variant" &&
+   backup_xinetd "amanda$pkg_opp_variant"
+
+check_superserver_running "xinetd"
+[ "$?" = "0" ] && action=restart || action=start
+reload_xinetd $action
+create_amandates
+check_amandates
+create_ampassphrase || \
+    logger "Info: amcryptsimple and amcrpyt will not work until .am_passphrase is created"
+create_gnupg
+create_amkey || \
+    logger "Info: amcrypt will not work until keys are created."
+# Checks permissions, but only tries decrypting if both .am_passphrase
+# and .gnupg/am_key.gpg exist.
+check_gnupg
+create_amandahosts
+check_amandahosts_entry root amindexd amidxtaped
+check_amandahosts_entry ${amanda_user} amdump senddiscover
+check_amandahosts_perms
+create_ssh_key server
+create_ssh_key client
+create_profile
+check_profile
+install_client_conf
+install_security_conf
+create_amtmp
+
+exit_msg="Amanda installation log can be found in"
+logger "Amanda Enterprise installation complete."
+cat $LOGFILE >> $INSTALL_LOG && {
+    rm $LOGFILE
+    echo "${exit_msg} '${INSTALL_LOG}'."
+} || \
+    echo "${exit_msg} '${LOGFILE}'."
