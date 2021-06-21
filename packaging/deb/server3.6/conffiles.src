@@ -1,0 +1,13 @@
+/etc/amanda-security.conf
+%%AMANDAHOMEDIR%%/.am_passphrase
+%%AMANDAHOMEDIR%%/.amandahosts
+%%AMANDAHOMEDIR%%/.gnupg/am_key.gpg
+%%AMANDAHOMEDIR%%/.gnupg/pubring.gpg
+%%AMANDAHOMEDIR%%/.gnupg/random_seed
+%%AMANDAHOMEDIR%%/.gnupg/secring.gpg
+%%AMANDAHOMEDIR%%/.profile
+%%AMANDAHOMEDIR%%/.ssh/id_rsa_amdump
+%%AMANDAHOMEDIR%%/.ssh/id_rsa_amdump.pub
+%%AMANDAHOMEDIR%%/.ssh/id_rsa_amrecover
+%%AMANDAHOMEDIR%%/.ssh/id_rsa_amrecover.pub
+%%AMANDAHOMEDIR%%/amandates
