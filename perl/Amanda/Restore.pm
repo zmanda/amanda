@@ -552,7 +552,7 @@ sub start_reading
     $src->set_callback( sub {
 	my $b;
 	my $n_read = POSIX::read($fd, $b, 1);
-	if (!defined $n_read || $n_read<0) { # neg fd returns -1
+	if (!defined $n_read) {
 	    return;
 	} elsif ($n_read == 0) {
 	    delete $self->{'all_filter'}->{$src};
@@ -609,7 +609,7 @@ sub start_reading_json
     $src->set_callback( sub {
 	my $b;
 	my $n_read = POSIX::read($fd, $b, 1);
-	if (!defined $n_read || $n_read<0) { # neg fd returns -1
+	if (!defined $n_read) {
 	    return;
 	} elsif ($n_read == 0) {
 	    delete $self->{'all_filter'}->{$src};

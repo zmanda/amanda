@@ -69,8 +69,8 @@ usage("'start' or 'stop' must be specified.") if (@ARGV < 1);
 config_init($CONFIG_INIT_GLOBAL, undef);
 Amanda::Util::finish_setup($RUNNING_AS_DUMPUSER);
 
-my $tmpdir = $Amanda::Paths::AMANDA_TMPDIR;
-my $pid_file = $tmpdir . '/rest-api-pid';
+my $dbgdir = $Amanda::Paths::AMANDA_DBGDIR;
+my $pid_file = $dbgdir . '/rest-api-pid';
 my $pid;
 if (-f $pid_file) {
     $pid = Amanda::Util::slurp($pid_file);
@@ -114,10 +114,8 @@ if ($command eq 'start') {
     }
     my @command = ('starman',
 		   $dance_name,
-		   '--listen', '@amdatadir@/amanda-rest.sock',
-		   '--net_server_host', '::1', '--net_server_port', '5000', # XXX: security hazard
+		   '--listen', '127.0.0.1:' . $port,
 		   '--preload-app',
-                   '--error-log', '@AMANDA_DBGDIR@/server/amanda-rest-server.error',
 		   $opt_development ? '--env' : '',
 		   $opt_development ? 'development' : '',
 		   '--max-requests', '1',

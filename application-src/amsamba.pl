@@ -40,6 +40,7 @@ use Amanda::Debug qw( :logging );
 use Amanda::Paths;
 use Amanda::Util qw( :constants :quoting);
 use Amanda::MainLoop qw( :GIOCondition );
+use constant FALSE => "";
 
 # skip first cmd, and snip out anything after \n if present in an arg
 our (@CLI_ARGV) = map {
@@ -50,10 +51,10 @@ our (@CLI_ARGV) = map {
 # must not evaluate undef-uncreated vars using ne or eq
 # BUT ... must also differentiate between defined-but-"" and undef itself..
 sub isNull($) {
-    return !( $_[0] // "" ); # NOT false if not defined AND if not null-string
+    return !( $_[0] // FALSE); # true if first is undefined OR defined-and-false-valued
 }
 sub notNull($) {
-    return $_[0] // "";  # false if not defined OR if null-string
+    return $_[0] // FALSE;  # false if not defined OR if null-string
 }
 
 sub new {
@@ -62,13 +63,13 @@ sub new {
     my $self = $class->SUPER::new($config);
 
     $self->{gnutar}     = $Amanda::Constants::GNUTAR;
-    $self->{smbclient}  = $Amanda::Constants::SAMBA_CLIENT;
+    $self->{smbclient}          = $Amanda::Constants::SAMBA_CLIENT;
     $self->{amandapass} = "$Amanda::Paths::CONFIG_DIR/amandapass";
 
     $self->{config}       = $config;
     $self->{host}         = $host;
-    $self->{disk}         = $device;
-    $self->{device}       = $disk;
+    $self->{disk}         = $disk;  # used to create top dirs
+    $self->{device}       = $device; # unused
 
     $self->{level}            = [ @{$level} ];
     $self->{index}            = $index;
@@ -95,12 +96,13 @@ sub new {
         if (notNull($smbclient_path));
     $self->{amandapass}  = config_dir_relative($amandapass)
         if (notNull($amandapass));
-    $self->{disk}         = $disk
-        if (notNull($disk));
-    $self->{device}       = $device
-        if (notNull($device));
     $self->{regex_match} = 1
-        if ($regex_match && $regex_match =~ /^yes$/i);
+        if ($regex_match && $regex_match =~ m{^yes$}i);
+
+    $self->{smbclient_version} = qx{$self->{smbclient} --version};
+    chomp($self->{smbclient_version});
+    $self->{smbclient_version} =~ s{^\D+}{};
+    $self->{smbclient_version} = join(".", map { sprintf("%03d",($_+0)); } split(m{\.},$self->{smbclient_version}));
 
     return $self;
 }
@@ -132,8 +134,6 @@ sub validate_inexclude {
     # add the onesy-twosy set ... if they exist
     push @{$set}, @{$setitems};
 
-    my ($linesep) = $/;
-
     if ($self->{action} eq 'check' && !$setoptional) {
         # message about failed files...
         foreach my $file (@{$setflists}) {
@@ -143,6 +143,7 @@ sub validate_inexclude {
         }
     }
 
+    my ($linesep) = $/;
     # slurp the contents of files
     foreach my $file (@{$setflists}) {
         local $/ = undef;
@@ -180,7 +181,7 @@ sub validate_inexclude {
     # put all include in a single file $self->{include_filename}
     $self->{include_filename} = "@amdatadir@/tmp/amsamba.$$.include";
     open FULL_FILE, ">$self->{include_filename}";
-    print FULL_FILE join($linesep,@{$set});
+    print FULL_FILE join($/,@{$set});
     # add command line include for amrestore
     close FULL_FILE;
 }
@@ -199,12 +200,12 @@ sub normalize_share {
 
     if ($to_parse =~ m{^/{2}}) {
 	$share      = $host = "//$flds[0]";
-	$share      .= "/$flds[1]" if ( $flds[1] // "" );
+	$share      .= "/$flds[1]" if ( notNull($flds[1]) );
 	$stdshare   = $share;
-	$stdshare   = tr{/}{\\};
+	$stdshare   =~ tr{/}{\\};
     } else {
 	$share      = $host = "\\\\$flds[0]";
-	$share      .= "\\$flds[1]" if ( $flds[1] // "" );
+	$share      .= "\\$flds[1]" if ( notNull($flds[1]) );
 	$stdshare   = $share;
     }
 
@@ -223,7 +224,7 @@ sub normalize_share {
 sub parsesharename {
     my $self = shift;
 
-    my $to_parse = ($self->{target} // "") || ($self->{device} // "");
+    my $to_parse = notNull($self->{target}) || notNull($self->{device}); # use a non-null value but dont show an error
 
     my ($norm) = normalize_share($to_parse);
 
@@ -268,14 +269,13 @@ sub findpass {
                     "cannot open password file '$self->{amandapass}': $!",
                     $Amanda::Script_App::ERROR);
         return;
-
     }
 
     my ($diskname, $userpasswd, $domain, $extra);
 
     while ($line = <$amandapass>) {
 	chomp $line;
-	next if $line =~ /^#/;
+	next if $line =~ m{^#};
 
 	($diskname, $userpasswd, $domain, $extra) = Amanda::Util::split_quoted_string_friendly($line);
 
@@ -324,7 +324,7 @@ sub findpass {
     $username =~ s{@*$}{};
 
     $self->{username} = $username;
-    if ($password =~ /^6G\!dr(.*)/) {
+    if ($password =~ m{^6G\!dr(.*)}) {
         my $base64 = $1;
         $password = MIME::Base64::decode($base64);
         chomp($password);
@@ -390,13 +390,13 @@ sub spawn_smbclient {
 
     # share-specific password is defined-as-empty if no password sent..
     push @cmd, "" if (isNull($self->{password})); #
-    # push @cmd, "-m", "SMB2";
     push @cmd, "-b", "0";
     push @cmd, "-N";
     push @cmd, "-A", $tmpfile;
     push @cmd, "-E";                        # stderr output
     push @cmd, "-D", $self->{subdir}
         if (notNull($self->{subdir}));
+    push @cmd, "-m", "SMB2";
 
     push @cmd, @call_args; # and all the rest...
 
@@ -452,7 +452,7 @@ sub spawn_smbclient {
         $ENV{LC_CTYPE} = $sys_lc_ctype
             if ( defined($sys_lc_ctype) );
         debug(sprintf("ERROR: smbclient cmd: r=$pid '%s' stdin=%s stdout=%s stderr=%s",join("' '",@cmd),$stdin, $$ref_stdout,$$ref_stderr));
-        return undef;
+        return 0;  # invalid pid
     };
 
     debug(sprintf("INFO: smbclient ok cmd: r=$pid '%s' stdin=%s stdout=%s stderr=%s",join("' '",@cmd),$stdin, $$ref_stdout,$$ref_stderr));
@@ -488,9 +488,9 @@ sub command_selfcheck {
     } else {
 	my @sv = `$self->{smbclient} --version`;
 	if ($? >> 8 == 0) {
-	    $sv[0] =~ /^[^0-9]*(.*)$/;
+	    $sv[0] =~ m{^[^0-9]*(.*)$};
 	    my $sv = $1;
-	    $self->print_to_server("amsamba smbclient-version $sv",
+	    $self->print_to_server("amsamba smbclient-version $sv / $self->{smbclient_version}",
 				   $Amanda::Script_App::GOOD);
 	} else {
 	    $self->print_to_server(
@@ -525,7 +525,7 @@ sub command_selfcheck {
                                 $Amanda::Script_App::ERROR);
         close($stderr) if ( $stderr );
         unlink($self->{include_filename})
-           if ( $self->{include_filename} // 0 );
+           if ( notNull($self->{include_filename}) );
 	return;
     }
 
@@ -535,20 +535,20 @@ sub command_selfcheck {
     while (<$stderr>) {
 	chomp;
 	debug("stderr: " . $_);
-	next if /^Domain=/;
-	next if /^WARNING/g;
-	next if /^Unable to initialize messaging context/g;
+	next if m{^Domain=};
+	next if m{^WARNING}g;
+	next if m{^Unable to initialize messaging context}g;
 	# message if samba server is configured with 'security = share'
-	next if /Server not using user level security and no password supplied./;
+	next if m{Server not using user level security and no password supplied.};
 	$self->print_to_server("smbclient: $_",
 			       $Amanda::Script_App::ERROR);
     }
     close($stderr) if ( $stderr );
     waitpid($pid, 0) if ( $pid );
     unlink($self->{tmpfile})
-       if ( $self->{tmpfile} // 0 );
+       if ( notNull($self->{tmpfile}) );
     unlink($self->{include_filename})
-       if ( $self->{include_filename} // 0 );
+       if ( notNull($self->{include_filename}) );
     #check statefile
     #check amdevice
 }
@@ -573,25 +573,25 @@ sub command_estimate {
                                 $Amanda::Script_App::ERROR);
         close($stderr) if ( $stderr );
         unlink($self->{include_filename})
-           if ( $self->{include_filename} // 0 );
+           if ( notNull($self->{include_filename}) );
 	return;
     }
 
     my($size) = -1;
     while(<$stderr>) {
 	chomp;
-	next if /^\s*$/;
-	next if /blocks of size/;
-	next if /blocks available/;
-	next if /^\s*$/;
-	next if /^Domain=/;
-	next if /dumped \d+ files and directories/;
-	next if /^WARNING/g;
-	next if /^Unable to initialize messaging context/g;
+	next if m{^\s*$};
+	next if m{blocks of size};
+	next if m{blocks available};
+	next if m{^\s*$};
+	next if m{^Domain=};
+	next if m{dumped \d+ files and directories};
+	next if m{^WARNING}g;
+	next if m{^Unable to initialize messaging context}g;
 	# message if samba server is configured with 'security = share'
-	next if /Server not using user level security and no password supplied./;
+	next if m{Server not using user level security and no password supplied.};
 	debug("stderr: $_");
-	if ($_ =~ /^Total number of bytes: (\d*)/) {
+	if ($_ =~ m{^Total number of bytes: (\d*)}) {
 	    $size = $1;
 	    last;
 	} else {
@@ -602,9 +602,9 @@ sub command_estimate {
     close($stderr);
     waitpid($pid, 0) if ( $pid );
     unlink($self->{tmpfile})
-       if ( $self->{tmpfile} // 0 );
+       if ( notNull($self->{tmpfile}) );
     unlink($self->{include_filename})
-       if ( $self->{include_filename} // 0 );
+       if ( notNull($self->{include_filename}) );
 
     output_size($level, $size);
 }
@@ -657,8 +657,15 @@ sub command_backup {
     push @cmd, "-d", "0";
     push @cmd, "-c", "";
 
-    $cmd[$#cmd] .= "tarmode $full_or_inc hidden system;"; # quiet
-    $cmd[$#cmd] .= " tar qc";
+    # tarmode quiet is missing/defaulted later on
+    # tar flag "q" is missing in later versions
+    if ( $self->{smbclient_version} gt "004.011.999" ) {
+        $cmd[$#cmd] .= "tarmode $full_or_inc hidden system; tarmode noverbose;";
+        $cmd[$#cmd] .= " tar c";
+    } else {
+        $cmd[$#cmd] .= "tarmode $full_or_inc hidden system;";
+        $cmd[$#cmd] .= " tar cq";
+    }
     $cmd[$#cmd] .= "r" if ($self->{regex_match}); # wildcards in the inc/exc patterns
     $cmd[$#cmd] .= "X" if (@{$self->{exclude}}); # not both
     $cmd[$#cmd] .= "I" if (@{$self->{include}}); # not both
@@ -676,7 +683,7 @@ sub command_backup {
         close($smbclient_rdr) if ( $smbclient_rdr );
         close($smbclient_err) if ( $smbclient_err );
         unlink($self->{include_filename})
-           if ( $self->{include_filename} // 0 );
+           if ( notNull($self->{include_filename}) );
         return;
     }
 
@@ -758,21 +765,21 @@ sub command_backup {
 
 	chomp $line;
 	debug("stderr: " . $line);
-	return if $line =~ /Domain=/;
-	return if $line =~ /tarmode is now /;
-	return if $line =~ /tar_re_search set/;
-	return if $line =~ /WARNING/m;
-	return if $line =~ /^Unable to initialize messaging context/;
-	if ($line =~ /dumped (\d+) files and directories/) {
+	return if $line =~ m{Domain=};
+	return if $line =~ m{tarmode is now };
+	return if $line =~ m{tar_re_search set};
+	return if $line =~ m{WARNING}s;
+	return if $line =~ m{^Unable to initialize messaging context};
+	if ($line =~ m{dumped (\d+) files and directories}) {
 	    $nb_files = $1;
 	    return;
 	}
 	# message if samba server is configured with 'security = share'
-	return if $line =~  /Server not using user level security and no password supplied./;
-	if ($line =~ /Total bytes written: (\d*)/) {
+	return if $line =~  m{Server not using user level security and no password supplied.};
+	if ($line =~ m{Total bytes written: (\d*)}) {
 	    $size = $1;
 	    return;
-	} elsif ($line =~ /Total bytes received: (\d*)/) {
+	} elsif ($line =~ m{Total bytes received: (\d*)}) {
 	    $size = $1;
 	    return;
 	}
@@ -794,7 +801,7 @@ sub command_backup {
 	if ($line !~ m{^\./} ) {
 	    chomp $line;
 
-	    if ($line =~ /Ignoring unknown extended header keyword/) {
+	    if ($line =~ m{Ignoring unknown extended header keyword}) {
 		debug("tar stderr: $line");
                 return;
 	    }
@@ -822,7 +829,7 @@ sub command_backup {
 	}
 
 	chomp $line;
-	if ($line =~ /Ignoring unknown extended header keyword/) {
+	if ($line =~ m{Ignoring unknown extended header keyword}) {
 	    debug("tar stderr: $line");
             return;
 	}
@@ -841,35 +848,16 @@ sub command_backup {
 	print {$self->{mesgout}} "sendbackup: size $ksize\n";
     }
 
-    waitpid($pid, 0) if ( $pid // 0 );
+    waitpid($pid, 0) if ( $pid );
     unlink($self->{tmpfile})
-       if ( $self->{tmpfile} // 0 );
+       if ( notNull($self->{tmpfile}) );
     unlink($self->{include_filename})
-       if ( $self->{include_filename} // 0 );
+       if ( notNull($self->{include_filename}) );
 
     if ($? != 0) {
 	$self->print_to_server_and_die("smbclient returned error",
 				       $Amanda::Script_App::ERROR);
         return;
-    }
-}
-
-sub parse_backup {
-    my $self = shift;
-    my($fhin, $fhout, $indexout) = @_;
-    my $size  = -1;
-    while(<$fhin>) {
-	if ( /^\.\//) {
-	    if(notNull($indexout)) {
-		if(notNull($self->{index})) {
-		    s/^\.//;
-		    print $indexout $_;
-		}
-	    }
-	}
-	else {
-	    print $fhout "? $_";
-	}
     }
 }
 
@@ -881,9 +869,9 @@ sub index_from_output {
    my($fhin, $fhout) = @_;
    my($size) = -1;
    while(<$fhin>) {
-      next if /^Total bytes written:/;
-      next if !/^\.\//;
-      s/^\.//;
+      next if m{^Total bytes written:};
+      next if !m{^\./};
+      s{^\.}{};
       print $fhout $_;
    }
 }
@@ -897,6 +885,94 @@ sub command_index {
     index_from_output($index_fd, \*STDOUT);
 }
 
+sub create_smb_subdir {
+    my ($self,$subdir) = @_;
+
+    # create the CIFS subdir for restore [works if it exists already]
+    notNull($self->{subdir}) || return;
+
+    my $origsubdir = $self->{subdir};
+    my $origdisk = normalize_share($self->{disk});
+
+    $origdisk->{sambashare} =~ m{[\\/]};
+
+    my $sep = ( $& ? $& : '\\' ); # slash or backslash
+    my $path = "";
+    my $cmds = "";
+    my $pid;
+    my $fulldir;
+
+    # pre-create subdirs below target subdirs
+    $fulldir = $origsubdir . $sep . $origdisk->{subdir}
+        if ( notNull($origdisk->{subdir}) );
+    # create target subdir only
+    $fulldir = $origsubdir
+        if ( isNull($origdisk->{subdir}) );
+
+    my $n = ( $fulldir =~ m{[\\/]}g ) + 1; # number of split elements
+
+    # start at root for these calls
+    $self->{subdir} = $sep;
+    for my $dir ( split(m{[\\/]}, $fulldir) )
+    {
+        --$n;
+        {
+            last if ( $dir eq "" );
+
+            $path .= "$sep" if ( $path );
+            $path .= "$dir";  # add to top-relative path.
+            $cmds .= " ; " if ( $cmds );
+            $cmds .= "mkdir \"${path}\"";
+
+            # simply add more cmds if no need ...
+            last if ( $n && length($cmds) < 40 );
+        } continue {
+            # need to keep $cmds from being too long
+            $pid = $self->spawn_smbclient(">&STDERR",">&STDERR","-c","$cmds");
+            waitpid($pid, 0) if ( $pid );
+            $cmds = "";
+        }
+    }
+
+    $pid = $self->spawn_smbclient(">&STDERR",">&STDERR","-c","$cmds");
+    waitpid($pid, 0) if ( $pid );
+
+    unlink($self->{tmpfile})
+       if ( notNull($self->{tmpfile}) );
+
+    $self->{subdir} = $origsubdir;
+}
+
+sub command_restore_gtar {
+    my $self = shift;
+    my @cmd = ();
+
+    qx{mkdir -p $self->{target}};  # try it if possible..
+    #
+    # sending from archive straight to gnutar...
+    #
+    push @cmd, $self->{gnutar}, "-xpvf", "-";
+    if ( notNull($self->{target}) ) {
+        # die if not a writable directory...
+        (-d $self->{target} && -w $self->{target})
+           || $self->print_to_server_and_die( "Directory $self->{target}: $!", $Amanda::Script_App::ERROR);
+        push @cmd, "--directory", $self->{target};
+    }
+
+    #
+    # use collecting files if needed.. else put on command line
+    #
+    push @cmd, "--files-from=$_"   for (@{$self->{include_list}});
+    push @cmd, "--exclude-from=$_" for (@{$self->{exclude_list}});
+    push @cmd, "--exclude=$_"      for (@{$self->{exclude_file}});
+    push @cmd, $_                  for (@{$self->{include_file}});
+
+    debug("cmd: '" . join("' '", @cmd) . "'");
+    exec { $cmd[0] } @cmd;
+    die("Can't exec '", $cmd[0], "'");
+    # does not return.. and no filtering of output..
+}
+
 sub command_restore {
     my $self = shift;
     my @cmd = ();
@@ -904,48 +980,13 @@ sub command_restore {
     $self->parsesharename();
     chdir(Amanda::Util::get_original_cwd());
 
-    if ($self->{recover_mode} ne "smb")
-    {
-	qx{mkdir -p $self->{target}};  # try it if possible..
-        #
-        # sending from archive straight to gnutar...
-        #
-        push @cmd, $self->{gnutar}, "-xpvf", "-";
-        if ($self->{target} // 0) {
-            # die if not a writable directory...
-            (-d $self->{target} && -w $self->{target})
-               || $self->print_to_server_and_die( "Directory $self->{target}: $!", $Amanda::Script_App::ERROR);
-            push @cmd, "--directory", $self->{target};
-        }
-
-        #
-        # use collecting files if needed.. else put on command line
-        #
-        push @cmd, "--files-from=$_"   for (@{$self->{include_list}});
-        push @cmd, "--exclude-from=$_" for (@{$self->{exclude_list}});
-        push @cmd, "--exclude=$_"      for (@{$self->{exclude_file}});
-        push @cmd, $_                  for (@{$self->{include_file}});
-
-        debug("cmd: '" . join("' '", @cmd) . "'");
-        exec { $cmd[0] } @cmd;
-        die("Can't exec '", $cmd[0], "'");
-        # does not return.. and no filtering of output..
-    }
+    # handle a local-mode restore this way...
+    return $self->command_restore_gtar()
+        if ($self->{recover_mode} ne "smb");
 
     $self->validate_inexclude();
     $self->findpass();
-
-    if ( $self->{subdir} // 0 ) { 
-	my ($oldsubdir) = $self->{subdir};
-	$self->{subdir} = "\\";
-	my ($pid) = $self->spawn_smbclient(">&STDERR",">&STDERR","-c","mkdir \"${oldsubdir}\"");
-
-	waitpid($pid, 0) if ( $pid // 0 );
-	unlink($self->{tmpfile})
-	   if ( $self->{tmpfile} // 0 );
-
-	$self->{subdir} = $oldsubdir;
-    }
+    $self->create_smb_subdir();   # given a target location
 
     push @cmd, "-d", "1";
     push @cmd, "-TFx", "-", $self->{include_filename}
@@ -955,36 +996,35 @@ sub command_restore {
         if (not $self->{include_filename});
 
     my ($stderr) = Symbol::gensym;
-
     my ($pid) = $self->spawn_smbclient(\$stderr,\$stderr,@cmd);
 
     if ( ! $pid || ! $stderr ) {
         $self->print_to_server(sprintf("restore smbclient: failed to spawn w/[%s]: %d %s",
                                 join("' '",@cmd), ( defined($pid) ? $pid : -1 ), $stderr.""),
                                 $Amanda::Script_App::ERROR);
-        close($stderr) if ( $stderr );
+        close($stderr) if ( $stderr );  # nothing in it
         unlink($self->{include_filename})
-           if ( $self->{include_filename} // 0 );
+           if ( notNull($self->{include_filename}) );
         return;
     }
 
     while (<$stderr>) {
         chomp;
-        next if /^Domain=/;
-        next if /^WARNING/m;
-        next if /^Unable to initialize messaging context/m;
+        next if m{^Domain=};
+        next if m{^WARNING}m;
+        next if m{^Unable to initialize messaging context}m;
         debug("stderr: " . $_);
         # message if samba server is configured with 'security = share'
-        #next if /Server not using user level security and no password supplied./;
+        #next if m{Server not using user level security and no password supplied.};
         $self->print_to_server("smbclient: $_",
                                $Amanda::Script_App::ERROR);
     }
     close($stderr);
-    waitpid($pid, 0) if ( $pid // 0 );
+    waitpid($pid, 0) if ( $pid );
     unlink($self->{tmpfile})
-       if ( $self->{tmpfile} // 0 );
+       if ( notNull($self->{tmpfile}) );
     unlink($self->{include_filename})
-       if ( $self->{include_filename} // 0 );
+       if ( notNull($self->{include_filename}) );
 }
 
 sub command_validate {
@@ -1010,6 +1050,8 @@ sub command_print_command {
 }
 
 package main;
+
+use constant FALSE => "";
 
 sub usage {
     print <<EOF;
@@ -1044,10 +1086,10 @@ my $opt_target;
 my $opt_regex_match;
 
 sub isNull($) {
-    return ! defined($_[0]) || $_[0] eq "";
+    return !( $_[0] // FALSE); # true if first is undefined OR defined-and-false-valued
 }
 sub notNull($) {
-    return defined($_[0]) && $_[0] ne "";
+    return $_[0] // FALSE;  # false if not defined OR if null-string
 }
 
 Getopt::Long::Configure(qw{bundling});
