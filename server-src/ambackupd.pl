@@ -715,7 +715,7 @@ sub do_backup {
 		$src->set_callback( sub {
 		    my $b;
 		    my $n_read = POSIX::read($fd, $b, 1);
-		    if (!defined $n_read || $n_read<0) { # can return -1
+		    if (!defined $n_read) {
 			return;
 		    } elsif ($n_read == 0) {
 			$src->remove();
@@ -758,7 +758,7 @@ sub do_backup {
 		$src->set_callback( sub {
 		    my $b;
 		    my $n_read = POSIX::read($fd, $b, 1);
-		    if (!defined $n_read || $n_read<0) { # can return -1
+		    if (!defined $n_read) {
 			return;
 		    } elsif ($n_read == 0) {
 			$src->remove();
@@ -806,7 +806,7 @@ sub do_backup {
 		$src->set_callback( sub {
 		    my $b;
 		    my $n_read = POSIX::read($fd, $b, 1);
-		    if (!defined $n_read || $n_read<0) { # can return -1
+		    if (!defined $n_read) {
 			return;
 		    } elsif ($n_read == 0) {
 			$src->remove();
@@ -840,7 +840,7 @@ sub do_backup {
 		$src->set_callback( sub {
 		    my $b;
 		    my $n_read = POSIX::read($fd, $b, 1);
-		    if (!defined $n_read || $n_read<0) { # can return -1
+		    if (!defined $n_read) {
 			return;
 		    } elsif ($n_read == 0) {
 			$src->remove();

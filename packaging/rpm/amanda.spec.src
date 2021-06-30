@@ -341,9 +341,7 @@ Amanda Documentation is available at: http://wiki.zmanda.com/
 %define INCLUDEDIR      %{PREFIX}/include
 %define MANDIR          %{DATADIR}/man
 %define LOGDIR          /var/log/amanda
-%define PERLVENDORARCH   %(eval $(perl -V:installvendorarch); echo $installvendorarch)
-%define PERLSITEARCH   %(eval $(perl -V:installsitearch); echo $installsitearch)
-%define PERLLIBDIR      %PERLSITEARCH
+%define PERLSITELIB     %(eval "`perl -V:installsitelib`"; echo $installsitelib)
 %define AMDATADIR	/var/lib/amanda
 
 # Installation directories:
@@ -405,7 +403,6 @@ find-req-script
         --mandir=%{MANDIR} \
         --enable-manpage-build \
         --with-amdatadir=%{AMDATADIR} \
-	--with-amperldir=%{PERLLIBDIR} \
         --with-gnuplot=/usr/bin/gnuplot \
         --with-gnutar-listdir=%{AMANDAHOMEDIR}/gnutar-lists \
         --with-index-server=localhost \
@@ -791,7 +788,7 @@ fi
 %defattr(0755,%{amanda_user},%{amanda_group},0755)
 %{AMLIBEXECDIR}
 %{AMLIBDIR}
-%{PERLLIBDIR}/auto/Amanda
+%{PERLSITELIB}/auto/Amanda
 %defattr(4750,root,disk)
 %{AMLIBEXECDIR}/application/amgtar
 %{AMLIBEXECDIR}/application/amstar
@@ -810,7 +807,7 @@ fi
 %{SYSCONFDIR}/amanda
 %defattr(0644,%{amanda_user},%{amanda_group},0755)
 %{LOCALSTATEDIR}/amanda
-%{PERLLIBDIR}/Amanda
+%{PERLSITELIB}/Amanda
 %{AMLIBEXECDIR}/amcat.awk
 %{AMANDAHOMEDIR}/gnutar-lists
 %doc %{AMANDAHOMEDIR}/amanda-release
@@ -839,8 +836,8 @@ fi
 %defattr(0755,%{amanda_user},%{amanda_group})
 %{AMLIBEXECDIR}
 %{AMLIBDIR}
-%{PERLLIBDIR}/Amanda
-%{PERLLIBDIR}/auto/Amanda
+%{PERLSITELIB}/Amanda
+%{PERLSITELIB}/auto/Amanda
 %{AMANDAHOMEDIR}
 %{LOCALSTATEDIR}/amanda
 %{SBINDIR}/am*
