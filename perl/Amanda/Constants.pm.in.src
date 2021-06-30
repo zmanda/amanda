@@ -46,100 +46,77 @@ See the source for the list of constants available.
 # for variables only used once.  We turn it off for this module.
 no warnings;
 
-# booleans...
-$AIX_BACKUP = "@AIX_BACKUP@";            # perl unused
+# (keep this list sorted in alphabetical order, for ease of updates)
+
+$AIX_BACKUP = "@AIX_BACKUP@";
+$AMANDA_COMPONENTS = "@AMANDA_COMPONENTS@";
+$AMANDA_DEBUG_DAYS = "@AMANDA_DEBUG_DAYS@";
 $ASSERTIONS = "@ASSERTIONS@";
+$BSDTAR = "@BSDTAR@";
 $BSDTCP_SECURITY = "@BSDTCP_SECURITY@";
 $BSDUDP_SECURITY = "@BSDUDP_SECURITY@";
 $BSD_SECURITY = "@BSD_SECURITY@";
-$CHECK_USERID = "@CHECK_USERID@";
-$DUMP_RETURNS_1 = "@DUMP_RETURNS_1@";
-$FAILURE_CODE = "@FAILURE_CODE@";
-$HAVE_GZIP = "@HAVE_GZIP@";
-$RSH_SECURITY = "@RSH_SECURITY@";
-$SINGLE_USERID = "@SINGLE_USERID@";
-$USE_AMANDAHOSTS = "@USE_AMANDAHOSTS@";
-$USE_RUNDUMP = "@USE_RUNDUMP@";
-
-# fixed command paths
-$BSDTAR = "@BSDTAR@";                # tested during build...
-$COMPRESS_PATH = "@COMPRESS_PATH@";
-$DD = "@DD@";   # unused
-$DUMP = "@DUMP@"; # (ufsdump dump or backup)
-$GNUTAR = "@GNUTAR@";            # tested during build...
-$LPR = "@LPR@";
-$MAILER = "@MAILER@";
-$MOUNT = "@MOUNT@";
-$MT = "@MT@";   # unused
-$MTX = "@MTX@";
-$NC = "@NC@";   # unused
-$NETCAT = "@NETCAT@";   # unused
-$PS = "@PS@";
-$RESTORE = "@RESTORE@"; # (ufsrestore or restore)
-$SAMBA_CLIENT = "@SAMBA_CLIENT@"; # tested during build...
-$SORT_PATH = "@SORT_PATH@";
-$STAR = "@STAR@";                 # tested during build...
-$SUNTAR = "@SUNTAR@";
-$UMOUNT = "@UMOUNT@";
-$UNCOMPRESS_PATH = "@UNCOMPRESS_PATH@";
-$XFSDUMP = "@XFSDUMP@";
-$XFSRESTORE = "@XFSRESTORE@";
-
-# general variables...
-$AMANDA_COMPONENTS = "@AMANDA_COMPONENTS@";
-$AMANDA_DEBUG_DAYS = "@AMANDA_DEBUG_DAYS@";
-$AMANDA_DEVICES = "@AMANDA_DEVICES@";
 $BUILT_BRANCH = "@BUILT_BRANCH@";
 $BUILT_DATE = "@BUILT_DATE@";
 $BUILT_REV = "@BUILT_REV@";
+$CC = "@CC@";
+$CHECK_USERID = "@CHECK_USERID@";
 $CLIENT_LOGIN = "@CLIENT_LOGIN@";
 $COMPRESS_BEST_OPT = "@COMPRESS_BEST_OPT@";
 $COMPRESS_FAST_OPT = "@COMPRESS_FAST_OPT@";
+$COMPRESS_PATH = "@COMPRESS_PATH@";
 $COMPRESS_SUFFIX = "@COMPRESS_SUFFIX@";
+$DD = "@DD@";
 $DEFAULT_AMANDATES_FILE = "@DEFAULT_AMANDATES_FILE@";
 $DEFAULT_CONFIG = "@DEFAULT_CONFIG@";
 $DEFAULT_SERVER = "@DEFAULT_SERVER@";
 $DEFAULT_TAPE_DEVICE = "@DEFAULT_TAPE_DEVICE@";
 $DEFAULT_TAPE_SERVER = "@DEFAULT_TAPE_SERVER@";
+$DUMP = "@DUMP@";
+$DUMP_RETURNS_1 = "@DUMP_RETURNS_1@";
+$FAILURE_CODE = "@FAILURE_CODE@";
+$GNUTAR = "@GNUTAR@";
+$HAVE_GZIP = "@HAVE_GZIP@";
 $KRB5_SECURITY = "@KRB5_SECURITY@";
 $LOCKING = "@LOCKING@";
+$MAILER = "@MAILER@";
+$MT = "@MT@";
+$MTX = "@MTX@";
+$MOUNT = "@MOUNT@";
+$UMOUNT = "@UMOUNT@";
+$LPR = "@LPR@";
 $LPRFLAG = "@LPRFLAG@";
+$PS = "@PS@";
 $PS_ARGUMENT = "@PS_ARGUMENT@";
 $PS_ARGUMENT_ARGS = "@PS_ARGUMENT_ARGS@";
 $REST_EXTENSIONS_DIR = "@REST_EXTENSIONS_DIR@";
+$RESTORE = "@RESTORE@";
+$RSH_SECURITY = "@RSH_SECURITY@";
+$SAMBA_CLIENT = "@SAMBA_CLIENT@";
 $SSH_SECURITY = "@SSH_SECURITY@";
+$STAR = "@STAR@";
+$SUNTAR = "@SUNTAR@";
 $UNCOMPRESS_OPT = "@UNCOMPRESS_OPT@";
-
-# version only
+$UNCOMPRESS_PATH = "@UNCOMPRESS_PATH@";
+$SORT_PATH = "@SORT_PATH@";
+$USE_AMANDAHOSTS = "@USE_AMANDAHOSTS@";
+$USE_RUNDUMP = "@USE_RUNDUMP@";
+$VDUMP = "@VDUMP@";
 $VERSION = "@VERSION@";
 $VERSION_MAJOR = "@VERSION_MAJOR@";
 $VERSION_MINOR = "@VERSION_MINOR@";
 $VERSION_PATCH = "@VERSION_PATCH@";
 $VERSION_COMMENT = "@VERSION_COMMENT@";
-
-# build time only ...
-$CC = "@CC@";
-# PER
-# PCAT
-# RPCGEN
-# LEX
-# REALPATH
-# READLINK
-# XSLTPROC
-
-# autoconf substitute values only ...
-# CAT
-# GETTEXT
-# GNUPLOT
-# GREP
-# GZIP   # (put into COMPRESS_PATH)
-# NC6     # unused
-# SSH
-# UNAME
-# VDUMP 
-# VRESTORE 
-# VXDUMP 
-# VXRESTORE 
+$VRESTORE = "@VRESTORE@";
+$VXDUMP = "@VXDUMP@";
+$VXRESTORE = "@VXRESTORE@";
+$XFSDUMP = "@XFSDUMP@";
+$XFSRESTORE = "@XFSRESTORE@";
+$NC = "@NC@";
+$NC6 = "@NC6@";
+$NETCAT = "@NETCAT@";
+$AMANDA_DEVICES = "@AMANDA_DEVICES@";
+$SINGLE_USERID = "@SINGLE_USERID@";
 
 # non-AC_SUBST'd constants
 
