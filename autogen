@@ -41,9 +41,7 @@ echo "..creating file lists"
 )
 
 echo "..generate FULL_VERSION"
-# use the real path... if a symlink
-p=$(readlink -e config/$amanda_version_setup); 
-$p || die "$amanda_version_setup failed"
+./packaging/common/set_zmanda_version || die "$amanda_version_setup failed"
 
 # get autoconf / automake from all one place ... or dont succeed
 autoconf_path=$(command -v libtoolize)
