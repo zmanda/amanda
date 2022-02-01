@@ -18,7 +18,7 @@ set +xv
 : ${os:=Linux}
 
 # SYSCONFDIR: location of system config files (ie, /etc)
-: ${SYSCONFDIR:=/etc}
+: ${SYSCONFDIR:=%%SYSCONFDIR%%}
 
 # LOGDIR: logging directory for amanda
 : ${LOGDIR:=%%LOGDIR%%}
@@ -34,6 +34,9 @@ set +xv
 # temp directory for some uses
 : ${AMTMP:="%%AMANDAHOMEDIR%%/tmp"}
 
+GNUPGHOME=${AMANDAHOMEDIR}/.gnupg
+export GNUPGHOME
+
 [ -d ${LOGDIR} ] || mkdir -p ${LOGDIR}
 [ -d ${AMTMP} ] || mkdir -p ${AMTMP}
 
@@ -43,21 +46,30 @@ encoder=`{ command -v base64 2>/dev/null; } || { command -v uuencode 2>/dev/null
 
 #TODO: gnutar-lists dir for solaris??
 
-add_service() {
+add_service_ports() {
+    local etc_services=$(readlink -e /etc/services)
     # Only needed on Solaris!
-    entry="amanda       10080/tcp    # amanda backup services"
-    # make sure amanda is in /etc/services
-    if ! grep -q 'amanda.*10080/tcp' ${SYSCONFDIR}/services; then
-        logger "Adding amanda entry to ${SYSCONFDIR}/services."
-        echo "${entry}" >> ${SYSCONFDIR}/services
+    entryA="amanda       10080/tcp             # amanda backup services"
+    entryZ="kamanda      10081/tcp  zmrecover  # amanda zmrecover service"
+    # make sure amanda is in $etc_services
+    if ! grep -q 'amanda.*10080/tcp' ${etc_services}; then
+        logger "Adding amanda entry to ${etc_services}."
+        echo "${entryA}" >> ${etc_services}
     fi
 
-    # make sure kamanda is in /etc/services
-    entry_2="kamanda       10081/tcp    famdc    # amanda backup services (kerberos)"
-    if ! grep -q 'kamanda.*10081/tcp' ${SYSCONFDIR}/services; then
-        logger "Adding kamanda entry to ${SYSCONFDIR}/services."
-        echo "${entry_2}" >> ${SYSCONFDIR}/services
+    if ! grep -qw '10081/tcp' ${etc_services}; then
+        logger "Adding zmrecover entry to ${etc_services}."
+        echo "${entryZ}" >> ${etc_services}
+    elif ! grep -w '10081/tcp' ${etc_services} | grep -q zmrecover; then
+        logger "Appending zmrecover entry in ${etc_services}."
+        sed -i -e '\|10081/tcp|s,$, zmrecover,' ${etc_services}
     fi
+
+#    entryK="kamanda      10081/tcp    famdc    # amanda backup services (kerberos)"
+#    if ! grep -q 'kamanda.*10081/tcp' ${etc_services} && [ "$1" != zmrecover ]; then
+#        logger "Adding kamanda entry to ${etc_services}."
+#        echo "${entryK}" >> ${etc_services}
+#    fi
 }
 
 create_amandates() {
@@ -81,14 +93,26 @@ check_amandates() {
 
 create_gnupg() {
 	# Install .gnupg directory
-	if [ ! -d ${AMANDAHOMEDIR}/.gnupg ] ; then
-		logger "Creating '${AMANDAHOMEDIR}/.gnupg'"
-		log_output_of mkdir ${AMANDAHOMEDIR}/.gnupg || \
+	if [ ! -d ${GNUPGHOME} ] ; then
+		logger "Creating '${GNUPGHOME}'"
+		log_output_of mkdir ${GNUPGHOME} || \
 			{ logger "WARNING:  Could not create .gnupg dir" ; return 1; }
 	fi
 }
 
-get_random_ascii_lines() {
+get_random_ascii_lines_perl() {
+    # dont quote inside of (( )) or else
+    local bytes="${1:-0}"
+    local prog='
+use MIME::Base64;
+sysread(STDIN,$buff,$ARGV[0]);
+print( encode_base64($buff) );
+'
+    bytes="$(( bytes * 51 ))"
+    ${PERL:-perl} -e "$prog" $bytes </dev/urandom
+}
+
+get_random_ascii_lines_python() {
     # dont quote inside of (( )) or else
     local bytes="${1:-0}"
     local prog='
@@ -151,7 +175,7 @@ create_ampassphrase() {
 }
 
 
-GPG=$(command -v gpg2 2>/dev/null || command -v gpg 2>/dev/null)
+GPG=`command -v gpg2 2>/dev/null || command -v gpg 2>/dev/null`
 GPG_AGENT=`command -v gpg-agent 2>/dev/null`
 if [ -z "$GPG" ]; then
    logger "Error: no gpg"
@@ -162,66 +186,69 @@ elif [ -z "$GPG_AGENT" ]; then
 fi
 
 # NOTE: do NOT attempt to read/log stderr from gpg-agent in bgd
-[ -x "${GPG}" -a -x "$GPG_AGENT" ] && 
-    GPG_CMD="${GPG_AGENT} --homedir ${AMANDAHOMEDIR} --quiet --daemon"
+[ -x "${GPG}" -a -x "$GPG_AGENT" ] &&
+    GPG_CMD="${GPG_AGENT} --homedir ${GNUPGHOME} --quiet --daemon"
 
-[ -x "${GPG}" ] && 
-    GPG_CMD="${GPG_CMD}${GPG} --homedir ${AMANDAHOMEDIR} ${GPG_EXTRA}"
+[ -x "${GPG}" ] &&
+    GPG_CMD="${GPG_CMD} ${GPG} --homedir ${GNUPGHOME} ${GPG_EXTRA}"
 
 create_amkey() {
+    # gpg cannot be used... but wait for GPG to be installed ...
+    [ -x "$GPG" ] || return 0
+
     [ -f ${AMANDAHOMEDIR}/.am_passphrase ] || \
         { logger "Error: ${AMANDAHOMEDIR}/.am_passphrase is missing, can't create amcrypt key."; return 1; }
+
     logger "Creating encryption key for amcrypt"
-    [ -f ${AMANDAHOMEDIR}/.gnupg/am_key.gpg -a -s ${AMANDAHOMEDIR}/.gnupg/am_key.gpg ] && { 
-	logger "Info: Encryption key '${AMANDAHOMEDIR}/.gnupg/am_key.gpg' already exists."; 
-        return 0; 
-    }
+    [ -f ${GNUPGHOME}/am_key.gpg -a -s ${GNUPGHOME}/am_key.gpg ] &&
+        { logger "Info: Encryption key '${GNUPGHOME}/am_key.gpg' already exists."; return 0; }
 
     # am_key is missing or needs replacing
-    rm -f ${AMANDAHOMEDIR}/.gnupg/am_key.gpg   # required to write it out
+    rm -f ${GNUPGHOME}/am_key.gpg   # required to write it out
 
-    (
-        # read from a file and from a pipe...
-        exec 3<${AMANDAHOMEDIR}/.am_passphrase;
-        rand="$$(get_random_ascii_lines 50)";
-
-        log_output_of $GPG \
-            --no-permission-warning \
-            --armor \
-            --batch \
-            --symmetric \
-            --passphrase-fd 3 \
-            --output ${AMANDAHOMEDIR}/.gnupg/am_key.gpg \
-            /dev/stdin <<<"$rand" \
-          || \
-        { logger "WARNING: Error encrypting keys."; return 1; }
-    )
+    # read from a file and from a pipe...
+    {
+     get_random_ascii_lines_perl 1 |
+     log_output_of \
+      $GPG_CMD \
+        --no-permission-warning \
+        --armor \
+        --batch \
+        --symmetric \
+        3<${AMANDAHOMEDIR}/.am_passphrase  \
+        --passphrase-fd 3 \
+        --output ${GNUPGHOME}/am_key.gpg \
+        /dev/stdin
+    } || { logger "WARNING: Error encrypting keys."; return 1; }
 }
 
 check_gnupg() {
-    logger "Ensuring correct permissions for '${AMANDAHOMEDIR}/.gnupg'."
-    log_output_of chown -R ${amanda_user}:${amanda_group} ${AMANDAHOMEDIR}/.gnupg || \
+    # gpg cannot be used... but wait for GPG to be installed ...
+    [ -x "$GPG" ] || return 0
+
+    logger "Ensuring correct permissions for '${GNUPGHOME}'."
+    log_output_of chown -R ${amanda_user}:${amanda_group} ${GNUPGHOME} || \
         { logger "WARNING:  Could not chown .gnupg dir." ; return 1; }
-    log_output_of chmod -R u=rwX,go= ${AMANDAHOMEDIR}/.gnupg || \
+    log_output_of chmod -R u=rwX,go= ${GNUPGHOME} || \
         { logger "WARNING:  Could not set permissions on .gnupg dir." ; return 1; }
     # If am_key.gpg and .am_passphrase already existed, we should check
     # if they match!
-    [ -s ${AMANDAHOMEDIR}/.gnupg/am_key.gpg -a -s ${AMANDAHOMEDIR}/.am_passphrase ] || 
+    [ -s ${GNUPGHOME}/am_key.gpg -a -s ${AMANDAHOMEDIR}/.am_passphrase ] ||
        return 1
 
-    (
-        exec 3<${AMANDAHOMEDIR}/.am_passphrase
-
-        # Perms warning will persist because we are not running as ${amanda_user}
-        log_output_of $GPG \
+    # Perms warning will persist because we are not running as ${amanda_user}
+    {
+     get_random_ascii_lines_perl 1 |
+     log_output_of \
+        log_output_of $GPG_CMD \
                 --no-permission-warning \
                 --batch \
                 --decrypt \
+                3<${AMANDAHOMEDIR}/.am_passphrase  \
                 --passphrase-fd 3 \
                 --output /dev/null \
-                ${AMANDAHOMEDIR}/.gnupg/am_key.gpg || \
-            { logger "WARNING: .am_passphrase does not decrypt .gnupg/am_key.gpg."; return 1; }
-    )
+                ${GNUPGHOME}/am_key.gpg
+    } || { logger "WARNING: .am_passphrase does not decrypt .gnupg/am_key.gpg."; return 1; }
 }
 
 create_amandahosts() {
@@ -427,4 +454,4 @@ install_pyzphere() {
 }
 
 # ------------- End Post Install Functions -----------------
-set -${setopt/s}
+set -${setopt//[si]}

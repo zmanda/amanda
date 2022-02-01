@@ -29,6 +29,10 @@ sub get_groupname {
     return $ENV{'AMANDAGROUP'} || "amandabackup";
 }
 
+sub get_cligroupname {
+    return $ENV{'AMANDACLIGROUP'} || "tape";
+}
+
 sub get_userhomedir {
     return $ENV{"AMANDAHOMEDIR"} || "/var/lib/amanda";
 }
@@ -305,7 +309,9 @@ if (defined($ENV{'pkg_name'})) {
 }
 
 # Check environment to see if it's something else.
-if ( $ENV{'pkg_type'} // 0) {
+#
+#
+if ( ($ENV{'pkg_type'} || 0) && $ENV{'pkg_type'} !~ m{/} ) {
     $pkg_type = $ENV{"pkg_type"};
     $pkg_type =~ s/sun-pkg/pkg/;
 }
@@ -358,7 +364,8 @@ my %replacement_strings_common = (
 	"DISTRO" =>              sub { get_pkg_dist(); },
 	"BUILD_GLIB2_VERSION" => sub { get_glib2_version(); },
 	"BUILD_GLIB2_NEXT_VERSION" => sub { get_glib2_next_version(); },
-        "DATE" =>                sub { get_date("'+%a, %d %b %Y %T %z'"); }
+        "DATE" =>                sub { get_date("'+%a, %d %b %Y %T %z'"); },
+	"SYSCONFDIR" =>		 sub { "/etc"; }
 );
 
 # add special variables
@@ -369,19 +376,23 @@ my %replacement_strings_deb = (
         "ARCH" =>       sub { get_debian_arch(); },
 	# Used in server rules
 	"PERL" =>       sub { $^X; },
-        "AMANDACLIGROUP" => sub { "backup"; }
+        "AMANDACLIGROUP" => sub { get_cligroupname(); }
 );
 
 # override date
 my %replacement_strings_rpm = (
 	"DATE" => sub { get_date("'+%a %b %d %Y'"); },
-        "AMANDACLIGROUP" => sub { "tape"; }
+        "AMANDACLIGROUP" => sub { get_cligroupname(); }
 );
 
 # use all defaults
 my %replacement_strings_pkg = (
-	"AMANDAHOMEDIR" =>       sub { "/opt/zmanda/amanda/amanda"; },
-        "AMANDACLIGROUP" => sub { "staff"; }
+	"REL_INSTALL_TOPDIR" =>  sub { substr(get_topdir(),1); },
+	"REL_AMANDAHOMEDIR" =>   sub { substr(get_topdir(),1) . "/amanda"; },
+	"AMANDAHOMEDIR" =>       sub { get_topdir() . "/amanda"; },
+#        "AMANDACLIGROUP" =>     sub { "staff"; },
+        "AMANDACLIGROUP" => 	 sub { get_cligroupname(); },
+	"SYSCONFDIR" =>		 sub { get_topdir() . "/etc"; }
 );
 
 my $ref;
@@ -396,6 +407,9 @@ open my $src, "<", $ARGV[0] or die "could not read $ARGV[0]: $!";
 open my $dst, ">", $ARGV[1] or die "could not write $ARGV[1]: $!";
 select $dst;
 
+my $src_filename = readlink("/proc/self/fd/". fileno($src));
+my $dst_filename = readlink("/proc/self/fd/". fileno($dst));
+
 my $line;
 my $pkg = "";
 
@@ -407,9 +421,9 @@ while (<$src>)
     #
     $line = $_; # dont change $_ while performing m//
 
-    if ( $line =~ m{^%(pre|post|preun|postun)\s*-n\s*(\S+)} ) {
+    if ( $line =~ m{^%(pre|post|posttrans|preun|postun)\s+-n\s+(\S+)} ) {
         $pkg = $2;
-    } elsif ( $line =~ m{^%(pre|post|preun|postun)\s*(\S+)} ) {
+    } elsif ( $line =~ m{^%(pre|post|posttrans|preun|postun)\s+(\S+)} ) {
         $pkg = "%{name}-$2";
     }
     SUBST:
@@ -423,16 +437,18 @@ while (<$src>)
             $line = &{ $replacement_includes{$tag} };
 	    # do not chomp the output..
             $line =~ s/\%/%%/g 
-               if ( $#ARGV && $ARGV[1] =~ m/\.spec$/ );
+               if ( $dst_filename =~ m/\.spec$/ );
             $line = "\nRPM_PACKAGE_NAME=\"$pkg\"; RPM_PACKAGE_VERSION=\"%{version}\";\n$line"
-               if ( $#ARGV && $ARGV[1] =~ m/\.spec$/ );
+               if ( $dst_filename =~ m/\.spec$/ );
+
             last SUBST; # no more patterns on this line...
         }
 
         # strings just replace the tag(s).
         if ( defined($replacement_strings{$tag}) ) {
             my $replacing = &{ $replacement_strings{$tag} };
-            $replacing =~ s/\%/%%/g if ( $#ARGV && $ARGV[1] =~ m/\.spec$/ );
+            $replacing =~ s/\%/%%/g 
+               if ( $dst_filename =~ m/\.spec$/ );
 	    chomp $replacing; # no line-end from string is allowed!
 	    chomp $replacing; # no line-end from string is allowed! (just in case 2)
             $line =~ s/$tagre/$replacing/; # replace one tag only...

@@ -434,7 +434,6 @@ gen_top_environ() {
     case $pkg_bldroot in
 	(*/rpmbuild)
 	    ln -sf $(realpath ..) BUILD/$PKG_NAME_VER
-            # gzip -c < $VERSION_TAR > SOURCES/${PKG_NAME_VER}.tar.gz
 	    ;;
 	(*/debbuild|*/pkgbuild)
 	    # simulate the top directory as the build one...
@@ -560,10 +559,6 @@ gen_repo_pkg_environ() {
             ( cd ..; git archive --format=tar --prefix="$PKG_NAME_VER/./" -o $pkg_bldroot/$repo_tar $remote/$repo_ref ) ||
 		die "ERROR: failed: git archive --format=tar --prefix=\"$PKG_NAME_VER/./\" -o $repo_tar $remote/$repo_ref"
 
-            # append versioning files...
-            #tar -Avf $repo_tar $VERSION_TAR ||
-	    #	die "ERROR: failed to append extra files to $pkg_bldroot/$repo_tar"
-
             gzip -f $repo_tar
 	    ;;
 	(*/debbuild|*/pkgbuild)
@@ -572,14 +567,10 @@ gen_repo_pkg_environ() {
             ( cd ..; git archive --format=tar --prefix="$PKG_NAME_VER/./" $remote/$repo_ref ) |
 		tar -xf - ||
 		die "ERROR: failed: git archive --format=tar $remote/$repo_ref to tar -xf in $pkg_bldroot"
-
-            #tar -xvf $VERSION_TAR ||
-	    #	die "ERROR: failed: tar extract of $VERSION_TAR into $pkg_bldroot/$PKG_NAME_VER"
 	    ;;
 	 (*) die "Unknown packaging for resources of $pkg_bldroot"
 	    ;;
     esac
-    # rm -f $VERSION_TAR
     ) || exit $?
 
     set +e
@@ -818,7 +809,6 @@ get_svn_info() {
 
 set_zmanda_version() {
     eval "$(get_version_evalstr "$1")"
-    # [ -f "$VERSION_TAR" ] || die "failed to create VERSION_TAR file"
     echo -n "$VERSION" > $src_root/FULL_VERSION
     echo -n "$LONG_BRANCH" > $src_root/LONG_BRANCH
     echo -n "$REV" > $src_root/REV

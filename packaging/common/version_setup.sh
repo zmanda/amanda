@@ -172,14 +172,18 @@ get_git_info() {
 
     # exact matches...
     REV_TAGPOS=${REV_TAGPOS:-$(get_latest_git_tag $oref)}
-    REV_TAGROOT=$(git describe --tags $oref 2>/dev/null)
+    REV_TAGROOT=$(git describe --tags --match '*[0-9].[0-9]*' $oref 2>/dev/null)
     REV_TAGPOS="${REV_TAGPOS%^[0-9]*}"
     REV_TAGDIST="$(sed <<<"$REV_TAGROOT" -r -e 's/^.*-([0-9]+)-g[a-f0-9]+$/\1/' -e '/[^0-9]/d')"
     # trim off tag-dist
-    [ -n "$REV_TAGDIST" ] && REV_TAGROOT="${REV_TAGROOT%-$REV_TAGDIST-g[a-f0-9]*}"
+    if [ -n "$REV_TAGDIST" ]; then
+        REV_TAGROOT="${REV_TAGROOT%-$REV_TAGDIST-g[a-f0-9]*}"
+        REV_TAGROOT="$(get_latest_git_tag ${REV_TAGROOT})"   # in case newer ones are available
+    fi
 
     # prefer certain branches if multiples match
     # get describe branch-matching name
+    REF_IDEAL="${REF_IDEAL:-$(git 2>/dev/null describe --all --exact-match --match 'origin/DEV' --match 'origin/__default_build__' $oref)}" #0
     REF_IDEAL="${REF_IDEAL:-$(git 2>/dev/null describe --all --exact-match --match 'origin/R-[Rr]elease*[0-9].[0-9]*' $oref)}" #1
     REF_IDEAL="${REF_IDEAL:-$(git 2>/dev/null describe --all --exact-match --match 'origin/[FH]-*[0-9].[0-9]*' $oref)}" #2
     REF_IDEAL="${REF_IDEAL:-$(git 2>/dev/null describe --all --exact-match --match 'origin/[D]-*[0-9].[0-9]*' $oref)}" #2
@@ -192,8 +196,9 @@ get_git_info() {
     REV_REFDIST=$(sed <<<"$REF_IDEAL" -r -e 's/^[^~]*\~([0-9]+).*$/\1/' -e '/[^0-9]/s,.*,0,g' )
     REV_REFDIST=$(printf %02d $(( REV_REFDIST + 0 )))
 
-    if [ -n "$REV_REFBR" -a $(( ${pkgtime_name:0:2} + 2000 )) -gt 2000 ]; then
+    if [[ "$REV_REFBR" == *[0-9].[0-9]* ]] && [ $(( ${pkgtime_name:0:2}+0 )) -gt 0 ]; then
         year_break=$(printf %04d-01-01 $(( ${pkgtime_name:0:2} + 2000 )) )
+        # use the first *unambiguous* branch-ref (branch~N) after the prev Jan 01
         read REV_YRDIST < <(TZ=GMT git log --pretty='%H' --until $year_break $REV_REFBR |
                              git name-rev --name-only --refs=$REV_REFBR --stdin |
                              sed -r -e '/^[^~]*\~[0-9]+$/!d' -e q)
@@ -248,18 +253,31 @@ get_git_info() {
         PKG_REV="${pkgtime_name:3}.git.$SHA"
 
     # build is the tip of a branch.. so name it with tag-distance if needed
-    elif [ -n "$REV_REFBR" -a $((REV_REFDIST)) = 0 ]; then
+    elif [[ "$REV_REFBR" == */*[0-9].[0-9]* ]] && [ $((REV_REFDIST)) = 0 ]; then
         BRANCH="${REV_REFBR##*/}"
         LONG_BRANCH="branches/$BRANCH"
         REV="$REV_YRDIST"         # add commit# for year
-        PKG_REV="${pkgtime_name:3}.git.$SHA"
+        PKG_REV="${pkgtime_name:3}.branch.$SHA"
 
     # build is not on a branch, so name it with tag and tag-distance
-    elif [ -n "$REV_TAGROOT" ] && [ 0$REV_TAGDIST -gt 0 ]; then
+    elif [[ "$REV_TAGROOT" == *[0-9].[0-9]* ]] && [ $((REV_TAGDIST)) -gt 0 ]; then
         BRANCH="$REV_TAGROOT"
         LONG_BRANCH="tags/$BRANCH"
         REV="+$REV_TAGDIST"
-        PKG_REV="${pkgtime_name:3}.tag.$SHA"
+
+        case "$REV_REFBR.$REV_REFDIST" in
+           (*/DEV.00|*/__default_build__.00)
+                PKG_REV="${pkgtime_name}" ;;
+           (*/*[0-9].[0-9]*.[0-9][0-9])
+                PKG_REV="${pkgtime_name:3}.pred.$SHA"
+                ;;
+           (?*)
+                PKG_REV="${pkgtime_name:3}.branch.$SHA"
+                ;;
+           *)
+                PKG_REV="${pkgtime_name:3}.tag.$SHA"
+                ;;
+        esac
     fi
 
     REV+=$REV_SUFFIX
@@ -288,7 +306,7 @@ branch_version_name() {
     post="${br:$(( ${#br} - ${#post}))}"
 
     # if no version numbers available reject this name ...
-    if [ $pre = $post ]; then return; fi            ###### RETURN
+    if [ "$pre" = "$post" ]; then return; fi            ###### RETURN
 
     # apply _ replacement with . [numbers on both sides] repeatedly until none more found
     [ -n "${post}" ] && ver=${br:${#pre}:-${#post}}  # skip post

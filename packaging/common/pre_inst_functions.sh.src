@@ -47,58 +47,82 @@ export checked_uid
 # PreInstall Functions
 
 create_user() {
-    case $os in
+    local uid_flag
+    case $(uname) in
         Linux|SunOS)
             # Create the amanda user with a specific uid on deb systems
-            if [ "x${dist}" = "xDebian" ] || [ "x${dist}" = "xUbuntu" ] ; then
-                uid_flag="-u ${deb_uid}"
-            else
-                uid_flag=
-            fi
+            [ "x${dist}" = "xDebian" ] && uid_flag="-u ${deb_uid}"
+            [ "x${dist}" = "xUbuntu" ] && uid_flag="-u ${deb_uid}"
+
             logger "Checking for user: ${amanda_user}"
-            # we want the output of id, but if the user doesn't exist,
-            # sterr output just confuses things
             ID=`id ${amanda_user} 2> /dev/null | sed 's/uid=\([0-9]*\).*/\1/'`
-            if [ "x${ID}" = "x" ] ; then
-                # Groups must already exist on user creation in solaris
-                log_output_of groupadd --system ${amanda_group}
-                logger "Adding ${amanda_user}."
-                # dont make the home dir.. as it was installed already
-                log_output_of useradd -c "Amanda" \
-                            -g ${amanda_group} \
-                            ${uid_flag} \
-                            -d ${AMANDAHOMEDIR} \
-                            -s ${wanted_shell} -l -M ${amanda_user}  || \
-                { logger "WARNING:  Could not create user ${amanda_user}. Installation will fail." ; return 1 ; }
-                logger "Created ${amanda_user} with blank password."
-
-                if [ "x$os" = "xLinux" ] && [ "x${dist}" != "xSuSE" ]; then
-                    # Lock the amanda account until admin sets password
-                    log_output_of passwd -l ${amanda_user} && { \
-                        logger "${info_create_user_success}"
-                        logger "${info_unlock_account}"
-                    } || { \
-                        logger "${warning_user_passwd}"; }
-                fi
-                if [ "x$os" = "xSunOS" ]; then
-                    r=`uname -r`
-                    case $r in
-                        5.8|5.9) log_output_of passwd -l ${amanda_user} ;;
-                        5.10) # Special login-lock, while allowing execution.
-                            log_output_of passwd -N ${amanda_user} && { \
-                                logger "${info_create_user_success_sol}"
-                                logger "${info_unlock_account}"
-                            } || { \
-                                logger "${warning_user_passwd}"; }
-                        ;;
-                    esac
-                fi
-
-            else
+            if [ "${ID}" -gt "0" ] ; then
                 # The user already existed
                 logger "The Amanda user '${amanda_user}' exists on this system."
+                return 0
             fi
         ;;
+        Darwin) : #TODO
+        ;;
+    esac
+
+    logger "Adding ${amanda_user}."
+
+    case $(uname) in
+        Linux)
+            log_output_of groupadd --system ${amanda_group}
+            logger "Adding ${amanda_user}."
+            # dont make the home dir.. as it was installed already
+            log_output_of useradd -c "Amanda" \
+                        -g ${amanda_group} \
+                        ${uid_flag} \
+                        -d ${AMANDAHOMEDIR} \
+                        -s ${wanted_shell} \
+                        -l -M \
+                        ${amanda_user}  || { 
+                logger "WARNING:  Could not create user ${amanda_user}. Installation will fail.";
+                return 1; 
+            }
+            logger "Created ${amanda_user} with blank password."
+            # Lock the amanda account until admin sets password
+            log_output_of passwd -l ${amanda_user} || 
+               { logger "${warning_user_passwd}"; return 1; }
+
+            logger "${info_create_user_success}"
+            logger "${info_unlock_account}"
+        ;;
+        SunOS)
+            # Groups must already exist on user creation in solaris
+            log_output_of groupadd ${amanda_group}
+            # dont make the home dir.. as it was installed already
+            # -l -M  cannot use
+            log_output_of useradd -c "Amanda" \
+                        -g ${amanda_group} \
+                        ${uid_flag} \
+                        -d ${AMANDAHOMEDIR} \
+                        -s ${wanted_shell} \
+                        ${amanda_user} || { 
+               logger "WARNING:  Could not create user ${amanda_user}. Installation will fail." ; 
+               return 1 ; 
+            }
+
+            logger "Created ${amanda_user} with blank password."
+
+            case $(uname -r) in
+                5.8) log_output_of passwd -l ${amanda_user} || 
+                       { logger "${warning_user_passwd}"; return 1; }
+                   ;;
+                5.9) log_output_of passwd -l ${amanda_user} || 
+                       { logger "${warning_user_passwd}"; return 1; }
+                   ;;
+                5.1*) # Special login-lock, while allowing execution.
+                    log_output_of passwd -N ${amanda_user}  || 
+                       { logger "${warning_user_passwd}"; return 1; }
+                    logger "${info_unlock_account}"
+                   ;;
+            esac
+            logger "${info_create_user_success_sol}"
+            ;;
         Darwin) : #TODO
         ;;
     esac
@@ -113,6 +137,7 @@ add_profiles() {
 }
 
 add_group() {
+    local grp=$1
     # First, try to add the group, detect via return code if it
     # already exists. Then add ${amanda_user} to the group without
     # checking if account is already a member.  (check_user should
@@ -120,13 +145,13 @@ add_group() {
     #
     # Works on linux and solaris.  OSX has different tools.
 
-    [ "x${1}" = "x" ] && { logger "Error: first argument was not a group to add." ; return 1 ; }
-    group_to_add=${1}
-    log_output_of groupadd --system ${group_to_add}
+    [ -z "$grp" ] && { logger "Error: first argument was not a group to add." ; return 1 ; }
+    [ "$(uname)" = Linux ] && log_output_of groupadd --system ${grp}
+    [ "$(uname)" = Linux ] || log_output_of groupadd ${grp}
     rc=$?
     # return of 0 means group was added; 9 means group existed.
     if [ $rc -eq 0 ] || [ $rc -eq 9 ]; then
-        logger "Adding ${amanda_user} to ${group_to_add}"
+        logger "Adding ${amanda_user} to ${grp}"
         # Generate a comma separated list of existing supplemental groups.
         # Linux prefaces output with '<username> : '.
         existing_sup_groups=`groups ${amanda_user}|sed 's/.*: //;s/ /,/g'`
@@ -134,13 +159,13 @@ add_group() {
         # -A means something else entirely on solaris. So we just use
         # -G, and append a list of the current groups from id.
         # So far, all linux distros have usermod
-        log_output_of usermod -G ${existing_sup_groups},${group_to_add} ${amanda_user} || { \
-            logger "Nonfatal ERROR: Failed to add ${group_to_add}."
+        log_output_of usermod -G ${existing_sup_groups},${grp} ${amanda_user} || { \
+            logger "Nonfatal ERROR: Failed to add ${grp}."
             logger "${error_group_member}" ; return 1 ; }
         # same name group *must* be used as default group now
-        if [ ${group_to_add} = ${amanda_user} ]; then
-            log_output_of usermod -g ${group_to_add} ${amanda_user} || { \
-                logger "Nonfatal ERROR: Failed to add ${group_to_add}."
+        if [ ${grp} = ${amanda_user} ]; then
+            log_output_of usermod -g ${grp} ${amanda_user} || { \
+                logger "Nonfatal ERROR: Failed to add ${grp}."
                 logger "${error_group_member}" ; return 1 ; }
         fi
     else
