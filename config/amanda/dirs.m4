@@ -180,16 +180,14 @@ AC_DEFUN([AMANDA_EXPAND_DIRS],
         [Directory in which man-pages should be installed])
 
     AC_ARG_WITH([systemd],
-	AS_HELP_STRING([--with-systemd,
+	AS_HELP_STRING([--with-systemd],
 		[If systemd services are desired])
 	AS_HELP_STRING([--without-systemd],
 		[If initscripts services are desired])
 	[
 	    case "$withval" in
-               n | no)
-                   unitdir=INITSCRIPTS
-                   ;;
-               y | ye | yes)  ;;
+               (n | no) unitdir=INITSCRIPTS ;;
+               (y | ye | yes)  ;;
                    unitdir="$(systemctl show -p UnitPath)";
                    unitdir="${unitdir% *.late}";
                    unitdir="${unitdir##* }";
