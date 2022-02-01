@@ -156,7 +156,7 @@ detect_platform_pkg_type() {
     local localpkg_suffix
 
     [ -n "$pkg_name" ] && presets+="declare -g pkg_name=\"$pkg_name\";"
-    [ -n "$repo_name" ] && presets+="declare -g repo_name=\"$repo_name\";"
+    # [ -n "$repo_name" ] && presets+="declare -g repo_name=\"$repo_name\";"
     [ -n "$pkg_type" ] && presets+="declare -g pkg_type=\"$pkg_type\";"
 
     # overwrite pkg_type if buildpkg_dir is present...
@@ -165,8 +165,8 @@ detect_platform_pkg_type() {
         declare -g pkg_type=${pkg_type#/}
 
     # only overwrite pkg_type if we need to
-    elif [ -z "$pkg_type" -a -x $pkgdirs_top/common/substitute.pl ]; then
-        localpkg_suffix=$(cd $src_root; $pkgdirs_top/common/substitute.pl <(echo %%PKG_SUFFIX%%) /dev/stdout);
+    elif [ -z "$pkg_type" -a -x $pkgdirs_top/../common/substitute.pl ]; then
+        localpkg_suffix=$(cd $src_root; $pkgdirs_top/../common/substitute.pl <(echo %%PKG_SUFFIX%%) /dev/stdout);
         declare -g pkg_type=${localpkg_suffix##*.}
     fi
 
@@ -188,6 +188,7 @@ detect_platform_pkg_type() {
                        buildpkg_dir=$pkgdirs_top/whl \
                        pkg_bldroot=$src_root/build
             ;;
+       (*) exit 100 ;;
     esac
 
     # gather vars for current settings
@@ -196,13 +197,13 @@ detect_platform_pkg_type() {
     [ -r $buildpkg_dir/0_vars.sh ]          && { . $buildpkg_dir/0_vars.sh; }
 
     declare -g pkg_name=${pkg_name}
-    declare -g repo_name=${repo_name}
+    # declare -g repo_name=${repo_name}
     declare -g pkg_type=${pkg_type}
 
     [ -d $buildpkg_dir ] || { unset buildpkg_dir; set +a; return 0; }
 
     declare -g pkg_name=${pkg_name}
-    declare -g repo_name=${repo_name}
+    # declare -g repo_name=${repo_name}
     declare -g pkg_type=${pkg_type}
 
     # override if they had values originally
@@ -265,27 +266,6 @@ detect_root_pkgtime() {
 
     declare -g pkg_name_pkgtime=$t
 }
-get_remote_branch_repo() {
-    local ref=$1
-    local remote_repo
-
-    ref="${ref:-HEAD}"
-
-    # can ignore trailing info for branch or tag
-    remote_repo=$(git describe --all --match '*/*' --exclude '*/HEAD' $ref )
-
-    [[ "$remote_repo" == */* ]] || die "cannot find branch leading to ref=$ref in remote system"
-
-    remote_repo=${remote_repo#tags/*}   # disallow a non-repo tags refs
-    remote_repo=${remote_repo#refs/}
-    remote_repo=${remote_repo#remotes/}
-
-    [[ "$remote_repo" == */* ]] || die "cannot find branch leading to ref=$ref in remote system"
-
-    remote_repo=${remote_repo%%/*}
-    remote_repo=$(git ls-remote --get-url $remote_repo)
-    echo $remote_repo
-}
 
 get_version_evalstr() {
     local f=$(realpath ${BASH_SOURCE[0]})
@@ -334,7 +314,7 @@ do_file_subst() {
             cd $src_root;
 	    export pkg_name=${pkg_name};
             export pkg_type=${pkg_type};
-            $pkgdirs_top/common/substitute.pl /dev/stdin /dev/stdout;
+            $pkgdirs_top/../common/substitute.pl /dev/stdin /dev/stdout;
         ) || { echo "substitution of \"$file\" -> \"$target\" failed somehow"; exit 255; }
 	echo "substitution of \"$file\" -> \"$target\"" >&2
     done
@@ -343,7 +323,7 @@ do_file_subst() {
 
 get_version() {
     # requires FULL_VERSION is in place already
-    declare -g VERSION=$(cd $src_root; $pkgdirs_top/common/substitute.pl <(echo %%VERSION%%) /dev/stdout);
+    declare -g VERSION=$(cd $src_root; $pkgdirs_top/../common/substitute.pl <(echo %%VERSION%%) /dev/stdout);
     [ -n "$pkg_name" ] &&
        declare -g PKG_NAME_VER="$pkg_name-$VERSION"
 }
@@ -508,72 +488,6 @@ gen_pkg_environ() {
     # ---------------------------------------------------
 
     rm -f $tmp/${PKG_NAME_VER}
-}
-
-gen_repo_pkg_environ() {
-    local repo_name
-    local repo_ref
-    local vars
-    local repo_tar
-
-    repo_name=$1
-    repo_ref=$2
-
-    [ -n "$repo_name" ] ||
-	die "ERROR: usage: <repo-name> <git-ref>, w/first missing";
-    [ -n "$repo_ref" ] ||
-	die "ERROR: usage: <repo-name> <git-ref>, w/second missing";
-
-    if git 2>/dev/null >&2 rev-parse --verify "tags/$repo_ref^{commit}"; then
-        remote=tags
-    elif [[ "$repo_ref" == __temp_merge-* ]] &&
-            git 2>/dev/null >&2 rev-parse --verify "$repo_ref^{commit}"; then
-        # define the remote with "self" if needed
-        git 2>/dev/null >&2 remote remove __self__ || true
-        git remote add __self__ $(realpath $(git rev-parse --show-toplevel)) || true
-        git fetch __self__
-        remote=__self__
-    else
-        remote=$repo_name
-        [ -n "$remote" ] ||
-            die "ERROR: could not use $repo_name to create a remote repo name"
-        git ls-remote --get-url "$remote" >&/dev/null ||
-            die "ERROR: could not use $repo_name to create a remote repo name"
-        repo_ref=${repo_ref#remotes/}
-        repo_ref=${repo_ref#$remote/}
-    fi
-
-    echo "setup attempt: $remote/$repo_ref"
-
-    set_zmanda_version $remote/$repo_ref
-
-    (
-    cd $pkg_bldroot
-
-    set -e
-    case $pkg_bldroot in
-	(*/rpmbuild)
-            repo_tar=SOURCES/${PKG_NAME_VER}.tar
-            rm -f $repo_tar
-
-            ( cd ..; git archive --format=tar --prefix="$PKG_NAME_VER/./" -o $pkg_bldroot/$repo_tar $remote/$repo_ref ) ||
-		die "ERROR: failed: git archive --format=tar --prefix=\"$PKG_NAME_VER/./\" -o $repo_tar $remote/$repo_ref"
-
-            gzip -f $repo_tar
-	    ;;
-	(*/debbuild|*/pkgbuild)
-            repo_tar=${PKG_NAME_VER}.tar
-            rm -rf $PKG_NAME_VER
-            ( cd ..; git archive --format=tar --prefix="$PKG_NAME_VER/./" $remote/$repo_ref ) |
-		tar -xf - ||
-		die "ERROR: failed: git archive --format=tar $remote/$repo_ref to tar -xf in $pkg_bldroot"
-	    ;;
-	 (*) die "Unknown packaging for resources of $pkg_bldroot"
-	    ;;
-    esac
-    ) || exit $?
-
-    set +e
 }
 
 #
@@ -828,7 +742,7 @@ detect_package_vars() {
          pkgconf_dir \
          buildpkg_dir \
          pkg_bldroot \
-         repo_name ||
+         ||
    detect_platform_pkg_type
 
     if ! declare >&/dev/null -p pkg_name_pkgtime; then
