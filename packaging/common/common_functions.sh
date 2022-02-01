@@ -33,31 +33,41 @@ log_output_of() {
 }
 
 check_superserver() {
+    local type=$1
+    local svc=$2
+
     # Check for the superserver $1 for the config $2
-    case $1 in
-	xinetd) check_xinetd $2; return $?;;
-	inetd) check_inetd $2; return $?;;
-	launchd) check_launchd $2; return $?;;
-        smf) check_smf $2; return $?;;
+    case $type in
+	xinetd) check_xinetd $svc;;
+	inetd) check_inetd $svc;;
+	launchd) check_launchd $svc;;
+        smf) check_smf $svc;;
+        *) false ;;
     esac
 }
 
 check_xinetd() {
     # Checks for an xinetd install and a config name passed as the first
     # parameter.
-    # Returns:
-    #	 0 if the file exists,
-    #	 1 if it does not,
+
     #	 2 if xinetd.d/ does not exist or is a file
     [ -d ${SYSCONFDIR}/xinetd.d ]      || return 2
+
+    #	 1 if it does not,
     [ -f ${SYSCONFDIR}/xinetd.d/${1} ] || return 1
+
+    #	 0 if the file exists,
     logger "Found existing xinetd config: ${1}"
     return 0
 }
 
 check_inetd() {
-    local inetd_conf=${SYSCONFDIR}/inet/inetd.conf 
+    case $os in
+        SunOS) inetd_conf=${SYSCONFDIR}/inet/inetd.conf ;;
+        *) inetd_conf=${SYSCONFDIR}/inetd.conf ;;
+    esac
     [ -e ${inetd_conf} ]         || return 2
+
     grep -q "${1}" ${inetd_conf} || return 1
 
     logger "Found existing inetd config: ${1}"
@@ -131,30 +141,37 @@ backup_inetd() {
 }
 
 rm_smf() {
+    local svc=$1
     # Remove the amanda service from solaris style service framework.
     # Different releases have different proceedures:
     #   Solaris 10, OpenSolaris 11, Nexenta, OpenIndiana, Illumos:
     #     use svccfg + delete xml
     #   Oracle Solaris 11: delete xml file + svcadm restart manifest-import,
     #     but openSolaris process still works.
-
-    ret=0; export ret
-    logger "Removing $1's smf entry"
-    log_output_of svcadm disable svc:/network/$1/tcp || { ret=1; }
     # svccfg delete is not recommended for Oracle Solaris 11, but doesn't seem
     # to hurt.  It's the only method for open source variants (so far).
-    log_output_of svccfg delete svc:/network/$1/tcp || { ret=1; }
-    log_output_of rm /var/svc/manifest/network/$1.xml || { ret=1; }
-    return $ret
+
+    local r
+
+    logger "Removing $svc's smf entry"
+    log_output_of svcadm disable svc:/network/$svc/tcp || r=1
+    log_output_of svccfg delete svc:/network/$svc/tcp || r=1
+    log_output_of rm /var/svc/manifest/network/$svc.xml || r=1
+    return $r
 }
 
 backup_smf() {
-    # We assume the service has already been checked with check_smf!
-    log_output_of svccfg export "${1}/tcp" > ${AMANDAHOMEDIR}/example/${1}.xml.orig || {
-        logger "Warning: export of existing ${1} service failed.";
-        return 1; }
+    local svc=$1
 
-    rm_smf ${1} || logger "Warning: existing smf instance may not have been removed."
+    # We assume the service has already been checked with check_smf!
+    log_output_of svcs -H "*${svc}*" ||
+        { logger "No $1 service found."; return 1; }
+
+    log_output_of svccfg export "$svc/tcp" > ${AMANDAHOMEDIR}/example/$svc.xml.orig ||
+        { logger "Warning: export of existing $svc service failed."; return 1; }
+
+    rm_smf $svc ||
+       logger "Warning: existing smf instance may not have been removed."
 }
 
 install_xinetd() {
@@ -171,22 +188,34 @@ install_inetd() {
 }
 
 install_smf() {
+    local svc=$1
+
+    backup_smf $svc && { logger "$svc service found.  Backed up and removed."; }
+
     # First parameter should be the name of the service to install
     # (amandaserver, amandaclient, or zmrecover).
-    ver=`uname -r`
-    case $ver in
-      5.1[01])
-        log_output_of cp ${AMANDAHOMEDIR}/example/${1}.xml /var/svc/manifest/network/
+    case $(uname -r) in
+      5.1?)
+        [ $(uname -r) = 5.11 ] && logger "Solaris 11 should use IPS packages, not post-install scripts."
 
         # Some versions this imports, enables, and onlines a service. Others only import.
         # To be safe, we run svcadm at the end, which won't hurt.
+        # log_output_of cp ${AMANDAHOMEDIR}/example/$svc.xml /var/svc/manifest/network/
 
-        if log_output_of ${basedir}/usr/sbin/svccfg import ${AMANDAHOMEDIR}/example/${1}.xml; then
-            logger "Installed ${1} manifest."
-        else
-            logger "Warning: Failed to import ${1} SMF manifest. Check the system log.";
-            return 1
-        fi
+        log_output_of ${basedir}/usr/sbin/svccfg import ${AMANDAHOMEDIR}/example/$svc.xml || {
+            logger "Warning: Failed to import $svc SMF manifest. Check the system log.";
+            return 1;
+        }
+
+        logger "Installed $svc manifest."
+
+        log_output_of ${basedir}/usr/sbin/svcadm enable network/$svc/tcp || {
+            logger "Warning: Failed to enable $svc service.  See system log for details."
+            return 1;
+        }
+
+        logger "Enabled $svc service."
+        [ $(uname -r) = 5.11 ] && log_output_of svcadm restart manifest-import
       ;;
 
       5.8|5.9)
@@ -200,10 +229,6 @@ install_smf() {
         return 1
       ;;
     esac
-    if ! log_output_of ${basedir}/usr/sbin/svcadm enable network/${1}/tcp; then
-        logger "Warning: Failed to enable ${1} service.  See system log for details.";
-        return 1
-    fi
 }
 
 reload_xinetd() {
@@ -257,39 +282,16 @@ reload_xinetd() {
     ( /usr/sbin/xinetd & )
 }
 
-get_full_suffix()
+get_substitute_output()
 {
-    local a;
-    local f;
-    a=$(mktemp); echo '%%VERSION%%-%%PKG_SUFFIX%%' > $a
-    f="${BASH_SOURCE[0]}"
-    perl ${f%/*}/substitute.pl $a $a.out || exit 255
-    tr -d '\n' < $a.out
-    rm -f $a $a.out
+    { echo -n "$*" | perl $(dirname "${BASH_SOURCE[0]}")/substitute.pl /dev/stdin /dev/stdout; }  || 
+       exit 255
 }
 
-get_pkg_suffix()
-{
-    local a;
-    local f;
-    a=$(mktemp); echo '%%PKG_SUFFIX%%' > $a
-    f="${BASH_SOURCE[0]}"
-    perl ${f%/*}/substitute.pl $a $a.out || exit 255
-    tr -d '\n' < $a.out
-    rm -f $a $a.out
-}
+get_full_suffix()   { get_substitute_output '%%VERSION%%-%%PKG_SUFFIX%%'; }
+get_pkg_suffix()    { get_substitute_output '%%PKG_SUFFIX%%'; }
+get_glib2_version() { get_substitute_output '%%BUILD_GLIB2_VERSION%%'; }
 
-
-get_glib2_version()
-{
-    local a;
-    local f;
-    a=$(mktemp); echo '%%BUILD_GLIB2_VERSION%%' > $a
-    f="${BASH_SOURCE[0]}"
-    perl ${f%/*}/substitute.pl $a $a.out || exit 255
-    tr -d '\n' < $a.out
-    rm -f $a $a.out
-}
 
 create_root_cert() {
    local private
@@ -342,10 +344,25 @@ create_root_cert() {
 
 
 create_self_signed_key() {
+   local private
+   local public
+   local fqdn=
+   local ipaddr=
+   local hostname=$(uname -n)
+   local altnames="DNS:zmanda-zmc"
+
+   p=$( PATH=${PATH}:/sbin:/usr/sbin command -v ip)
+   ipaddr=$($p -o route get 1.1.1.1 | sed -e 's/^.* src[^0-9.]*//' -e 's/[^0-9.].*//')
    private=$1
    public=$2
    fqdn=$(echo -e 'import socket\nprint(socket.getfqdn())' | ${PYTHON:-python})
    [ -z "$fqdn" ] && fqdn=$(perl -e 'use Net::Domain qw(hostfqdn); print hostfqdn();')
+   altnames+=",DNS:$fqdn"
+   altnames+=",DNS:$ipaddr"
+   altnames+=",IP:$ipaddr"
+   [ "$hostname" != "$fqdn" ] && [[ "$hostname" != *[^a-zA-Z0-9.-]* ]] &&
+	   altnames+=",DNS:${hostname%.local}.local"
+   rm -f $public $private || return 1;
    touch $public $private || return 1;
    (
      p=$(command -v openssl)
@@ -353,8 +370,12 @@ create_self_signed_key() {
      export OPENSSL_CONF=${p%/usr}/etc/pki/tls/openssl.cnf;
      [ -s $private ] || openssl genpkey -algorithm rsa -pkeyopt rsa_keygen_bits:2048 -out $private
      openssl req -x509 -nodes -days 365 -key $private -multivalue-rdn -out $public \
-          -subj "/CN=$fqdn/emailAddress=root@$fqdn/C=US/ST=Colorado/L=Default City/O=Betsol Inc/OU=Zmanda"
+          -subj "/CN=$fqdn/emailAddress=root@$fqdn/C=US/ST=Colorado/L=Default City/O=Betsol Inc/OU=Zmanda" \
+	  -addext "subjectAltName=\"$altnames\"" \
+          -addext "certificatePolicies = 2.5.29.32.0"
+     [ -s $private -a -s $public ] || exit 255
    )
+   rmdir private-keys-v1.d || true
    chmod 600 $private
    chmod 644 $public
 }
@@ -420,17 +441,25 @@ shutdown_xinetd_socket() {
     local ports
     local greps
 
-    rm -f /etc/xinetd.d/amandaserver /etc/xinetd.d/zmrecover
-    rm -f /etc/inetd.d/amandaserver /etc/inetd.d/zmrecover
+    systemctl is-enabled $sockunit | grep -q enabled ||
+       return 1
+
+    rm -f /etc/xinetd.d/amandaserver /etc/xinetd.d/zmrecover /etc/xinetd.d/amandaclient
+    rm -f /etc/inetd.d/amandaserver /etc/inetd.d/zmrecover /etc/inetd.d/amandaclient
     ( set -x; systemctl reload xinetd 2>/dev/null ||
               systemctl restart xinetd 2>/dev/null ||
               true )  # if it exists?
 
     readarray -t ports < <(systemctl --no-legend list-sockets $sockunit)
+    ports=("${ports[@]%%/*}");  # remove files entirely
     ports=("${ports[@]%% *}")
     ports=("${ports[@]##*[^0-9]}")
     ports=("${ports[@]%%[^0-9]*}")
     ports=(${ports[*]})
+
+    # must stop if no ports found
+    [ ${#ports[@]} -gt 0 ] ||
+       return 1
 
     greps=()
     for i in ${!ports[*]}; do
@@ -445,11 +474,14 @@ shutdown_xinetd_socket() {
     done
 }
 
+#####################################################################
+# shared config restore function
 restore_saved_configs() {
     local rpmname=$1
     local cfgs=()
     local cfgs_saves=()
     local debname=${1//_/-}
+
     #
     # must restore (or clean up) any old saved-config files in order of priority
     #
@@ -457,13 +489,17 @@ restore_saved_configs() {
     cfgs=()
 
     if command -v rpm >/dev/null && rpm -q "$rpmname"  >&/dev/null; then
-        readarray -t cfgs < <(rpm -qc "$rpmname" )
+        readarray -t cfgs < <(rpm -qc "$rpmname")
     elif command -v dpkg-query >/dev/null && dpkg-query -W "$debname" >&/dev/null; then
         readarray -t cfgs < <(dpkg-query --control-show "$debname" conffiles)
+    elif [ $# -gt 1 ]; then
+        :
     else
         echo >&2 "ERROR: failed to query config files"
         return 1
     fi
+
+    cfgs+=("$@")
 
     # leave this restore behind if no configs exist anyway...
     if [ "${#cfgs[@]}" = 0 ]; then
@@ -471,23 +507,23 @@ restore_saved_configs() {
     fi
 
     # subst all / with \/
-    homedir_patt="${AMANDAHOMEDIR//\//\\\/}"
+    homedir_patt="${AMANDAHOMEDIR//\//[/]}"
 
     # add searches to old home dir
     if [ -d ${AMANDAHOMEDIR}-1/. ]; then
-        home_cfgs=( $(IFS=$'\n' eval 'grep <<<"${cfgs[*]}" "^${AMANDAHOMEDIR}/"') )
-        cfgs+=( "${home_cfgs[@]/#${homedir_patt}/${AMANDAHOMEDIR}-1}" "${cfgs[@]}" )
+        home_cfgs=( $(IFS=$'\n'; grep <<<"${cfgs[*]}" "^${AMANDAHOMEDIR}/") )
+        cfgs+=( "${home_cfgs[@]/#${homedir_patt}/${AMANDAHOMEDIR}-1}" )
     fi
 
     # on a new install ... default is installed and edited config files are .rpmsave
     # otherwise existing config files are preserved (and a .rpmnew is created)
     # [ordered by priority of best result]
 
+    # dirs are valid config ---if they are not empty---
     # preserve non-default in-place cfgs as lowest priority updates
-    for i in $(ls -d 2>/dev/null ${cfgs[@]} ); do
-        [ -d "$i" ] && continue       # dirs are a nono
-        [ -s "$i" ] || rm -f "$i"    # erase zero-len..
-        [ -s "$i" ] || continue
+    for i in $(ls -d 2>/dev/null ${cfgs[@]}); do
+        [ -e "$i" -o -L "$i" ] || continue
+        { find "$i" -maxdepth 0 -empty | grep -q .; } && continue
         mv $i $i.__existing__        # rename to keep cleaned up
         cfgs_saves+=($i.__existing__)
     done
@@ -500,11 +536,10 @@ restore_saved_configs() {
     cfgs_saves+=( $(ls -d 2>/dev/null ${cfgs[@]/%/.dpkg-new}) )
 
     for fnd in ${cfgs_saves[@]}; do
-        [ ! -s "$fnd" ] && {
-            rm -f "$fnd";
-            continue;  # ignore ALL zero-length files
+        { find "$fnd" -maxdepth 0 -empty | grep -q .; } && {
+            rm -f "$fnd" || rmdir "$fnd" 2>/dev/null
+            continue;  # ignore ALL zero-length files or dirs
         }
-        [ -d "$fnd" ] && continue       # dirs are a nono
 
         #
         # wherever it was found, get the target dest
@@ -521,8 +556,13 @@ restore_saved_configs() {
 
         [ "$tgt" = "$fnd" ] && 
            echo >&2 "WARNING: old config file left alone: $fnd "
-        [ "$tgt" != "$fnd" ] && mv -fv $fnd $tgt &&
-           echo >&2 "NOTE: old config file restored: $tgt "
+        [ "$tgt" != "$fnd" ] && [[ "$fnd" != *.__existing__ ]] &&
+           echo >&2 "NOTE: earlier config file re-used: $tgt "
+        [ "$tgt" != "$fnd" ] && [[ "$fnd" == *.__existing__ ]] &&
+           echo >&2 "NOTE: installed config file retained: $tgt "
+
+        [ -d "$tgt" ] && rmdir "$tgt" 2>/dev/null 
+        [ "$tgt" != "$fnd" ] && mv -fv $fnd $tgt
     done
     set +xv
 }
@@ -532,43 +572,54 @@ restore_saved_configs() {
 # (if lines were edited out: do NOT add in.. and don't add at end of file)
 
 fix_security_conf_path() {
-    local pathadd=$1
+    local security_path=$1
     local cmd=$2
     local label=$3
-    local path="$(export PATH=${pathadd}:${PATH}; command -v $cmd 2>/dev/null)"
-    [ -x "$path" ]             || return
-    path="$(realpath -e $path)"
-    [ $path -ef /bin/false ] && return
+    local path="$(command -v $cmd 2>/dev/null)"
 
-    if ! grep -q "^${label}_path=$path\$" /etc/amanda-security.conf; then
-        ( set -x;
-        sed -i -e "\|^#${label}_path=|s|\$|\n${label}_path=$path|" /etc/amanda-security.conf
-        )
-    fi
+    # missing --> do nothing..
+    [ -x "$path" ]             || 
+       return
+
+    # same as /bin/false --> do nothing..
+    path="$(readlink -e $path)"
+    [ $path -ef /bin/false ] && 
+       return
+
+    # already in the file --> do nothing..
+    grep -q "^${label}_path=$path\$" $security_path && 
+       return
+
+    ( set -x; sed -i -e "\|^#${label}_path=|s|\$|\n${label}_path=$path|" $security_path)
 }
 
 fix_security_conf() {
     local pathadd=$1
+    local security_path="${SYSCONFDIR}/amanda-security.conf"
 
-    fix_security_conf_path "$pathadd" gtar   runtar:gnutar
-    fix_security_conf_path "$pathadd" tar    runtar:gnutar
-    fix_security_conf_path "$pathadd" gtar   amgtar:gnutar
-    fix_security_conf_path "$pathadd" tar    amgtar:gnutar
-    fix_security_conf_path "$pathadd" star   amstar:star
-    fix_security_conf_path "$pathadd" bsdtar ambsdtar:bsdtar
+    (
+        export PATH=${pathadd}:${PATH};
+        if [ $(uname) = SunOS ]; then
+            fix_security_conf_path "$security_path" tar   amstar:star
+        else
+           fix_security_conf_path "$security_path" tar    runtar:gnutar
+           fix_security_conf_path "$security_path" tar    amgtar:gnutar
+        fi
+        fix_security_conf_path "$security_path" gtar   runtar:gnutar
+        fix_security_conf_path "$security_path" gtar   amgtar:gnutar
+        fix_security_conf_path "$security_path" bsdtar ambsdtar:bsdtar
+    )
 
     #
     # try to comment any allowed paths that dont exist!
     #
-    approved=($(sed -e '/^[^#=]\+=/!d' -e 's/^[^=]*=//' /etc/amanda-security.conf))
+    approved=($(sed -e '/^[^#=]\+=/!d' -e 's/^[^=]*=//' $security_path))
     for path in ${approved[@]}; do
         path=$(echo ${path})
-        [[ $path == /* ]] || continue     # dont even try
-        [ -e "$path" ] && continue        # no reason to banish it..
+        [[ $path == /* ]] || continue     # ignore non-absolute-path strings...
+        [ -e "$path" ] && continue        # leave existing paths alone...
         # something is wrong...
-        ( set -x;
-        sed -i -e "\,${path}\$,s,^,### INVALID-PATH ###," /etc/amanda-security.conf
-        )
+        ( set -x; sed -i -e "\,${path}\$,s,^,### INVALID-PATH ###," $security_path)
     done
 }
 
@@ -576,15 +627,16 @@ create_dynamic_keys() {
     #
     # create dynamic keys
     #
-    # check if pair is associated and ready
+    # remove current gpg key if check fails...
     check_gnupg 2>/dev/null ||
-       rm -f ${AMANDAHOMEDIR}/.am_passphrase \
-             ${AMANDAHOMEDIR}/.gnupg/am_key.gpg
+       rm -f ${AMANDAHOMEDIR}/.gnupg/am_key.gpg
 
+    # need to create file separately for Solaris
+    ( set -x; install -m 600 /dev/null ${AMANDAHOMEDIR}/.am_passphrase )
     # get a random passphrase from 60 bytes of binary into full ASCII85
     [ -s ${AMANDAHOMEDIR}/.am_passphrase ] ||
-        get_random_ascii_lines 1  |
-        ( set -x; install -m 600 /dev/stdin ${AMANDAHOMEDIR}/.am_passphrase )
+        get_random_ascii_lines_perl 1  |
+        tee -a ${AMANDAHOMEDIR}/.am_passphrase >/dev/null
 
     # create am_key.gpg from the new/old .am_passphrase if needed
     [ -s ${AMANDAHOMEDIR}/.gnupg/am_key.gpg ] ||
