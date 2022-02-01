@@ -370,8 +370,6 @@ true
 #########################################
 cd %{BUILD_TOPDIR}
 
-libtoolize -i
-
 # FIXME: force including *all* perl into client/server
 sed -i -e 's,^if *WANT_CLIENT,if WANT_SERVER,' perl/Makefile.am
 
