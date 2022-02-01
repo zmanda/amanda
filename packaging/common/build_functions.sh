@@ -19,14 +19,29 @@ die() {
    exit 255
 }
 
-unset xargs
-unset realpath
-unset tar
-unset git
-eval "xargs() { $(command -v xargs) -r \"\$@\"; }"
-eval "realpath() { $(command -v readlink) -e \"\$@\"; }"
-eval "tar() { $(command -v gtar) \"\$@\"; }"
-eval "git() { $(command -v git) \"\$@\"; }"
+# dont allow aliases for these
+xargs() { command xargs -r "$@"; }
+realpath() { command readlink -e "$@"; }
+
+if command -v gtar >/dev/null; then
+   tar() { command gtar "$@"; }
+else
+   tar() { command tar "$@"; }
+fi
+
+if command -v gmake >/dev/null; then
+   make() { command gmake "$@"; }
+   export MAKE=$(command -v gmake)
+else
+   make() { command make "$@"; }
+   export MAKE=$(command -v make)
+fi
+
+# needed for latest non-sun solaris ssh
+[ -x /opt/csw/bin/ssh ] &&
+   export GIT_SSH=/opt/csw/bin/ssh
+
+git() { command git "$@"; }
 
 # find abs top-dir path
 [ -d "$src_root" ]      || src_root="$(realpath .)"
@@ -79,17 +94,80 @@ get_yearly_tag() {
     }'  $t $top_of_year
 }
 
-# set pre-defined dirs for three (four) of various builds
+
+#
+# a horrible function that uses the src_root to try and find the packaging context
+#
+# or tries to guess the packaging context by seeing the directory of the highest
+# calling bash script.
+#
+detect_pkgdirs_top() {
+    local calldepth=$(( ${#BASH_SOURCE[@]} - 1 ))
+    local topcall=${BASH_SOURCE[${calldepth}]}
+
+    # get a no-symlink path to file or symlink
+    topcall="$(realpath ${topcall%/*})/${topcall##*/}"
+
+    declare -g pkgdirs_top=$src_root/packaging
+
+    if [ -L $pkgdirs_top/common ] &&
+           [ -f $pkgdirs_top/0_vars.sh ] &&
+           [[ ${topcall} == $(realpath -e $src_root/packaging)* ]];
+    then
+        declare -g pkgdirs_top=$(realpath -e $src_root/packaging)
+        # we,re done for now...
+        return 0
+    fi
+
+    [ -f $topcall ] || topcall=$0
+
+    # cannot detect anything from this script...
+    if [ ! -f "$topcall" -a -L $pkgdirs_top -a -d $pkgdirs_top/. ]; then
+        # should be okay..
+        return 0
+    fi
+
+    if [ ! -f "$topcall" ]; then
+        # must fail...
+        return 1
+    fi
+
+    local d="${topcall%/*}"
+
+    # down levels too many?
+    [ -L $d/../../common ] && d+=/../..
+    [ -L $d/../common ] && d+=/..
+
+# give up and use the top of packaging/ [failed search]
+    [ -d $d/../common -a ! -f $d/0_vars.sh ] && d+=/..
+
+    # narrow choices with calling script.s path, if possible
+    declare -g pkgdirs_top="$(realpath -e $d)"
+
+    # if script came from below the base pkgdirs_top ...
+    if [[ $topcall == $pkgdirs_top/* ]] && [ -d ${topcall%/*} ]; then
+        # validate later ... but use for now
+        declare -g buildpkg_dir=${topcall%/*}
+    fi
+}
+
 detect_platform_pkg_type() {
     local presets
+    local localpkg_suffix
 
     [ -n "$pkg_name" ] && presets+="declare -g pkg_name=\"$pkg_name\";"
     [ -n "$repo_name" ] && presets+="declare -g repo_name=\"$repo_name\";"
     [ -n "$pkg_type" ] && presets+="declare -g pkg_type=\"$pkg_type\";"
 
-    if [ -z "$pkg_type" -a -x $pkgdirs_top/common/substitute.pl ]; then
-        declare -g pkg_suffix=$(cd $src_root; $pkgdirs_top/common/substitute.pl <(echo %%PKG_SUFFIX%%) /dev/stdout);
-        declare -g pkg_type=${pkg_suffix##*.}
+    # overwrite pkg_type if buildpkg_dir is present...
+    if [ -d "$buildpkg_dir" ] && [[ $buildpkg_dir == $pkgdirs_top/* ]]; then
+        pkg_type=${buildpkg_dir:${#pkgdirs_top}}
+        declare -g pkg_type=${pkg_type#/}
+
+    # only overwrite pkg_type if we need to
+    elif [ -z "$pkg_type" -a -x $pkgdirs_top/common/substitute.pl ]; then
+        localpkg_suffix=$(cd $src_root; $pkgdirs_top/common/substitute.pl <(echo %%PKG_SUFFIX%%) /dev/stdout);
+        declare -g pkg_type=${localpkg_suffix##*.}
     fi
 
     case $pkg_type in
@@ -101,7 +179,8 @@ detect_platform_pkg_type() {
                        buildpkg_dir=$pkgdirs_top/deb \
                        pkg_bldroot=$src_root/debbuild
             ;;
-       (pkg) declare -g pkgconf_dir=sun-pkg \
+       (pkg|sun-pkg) 
+             declare -g pkgconf_dir=sun-pkg \
                        buildpkg_dir=$pkgdirs_top/sun-pkg \
                        pkg_bldroot=$src_root/pkgbuild
             ;;
@@ -111,27 +190,30 @@ detect_platform_pkg_type() {
             ;;
     esac
 
+    # gather vars for current settings
+    [ -r $buildpkg_dir/../../0_vars.sh ]    && { . $buildpkg_dir/../../0_vars.sh; }
+    [ -r $buildpkg_dir/../0_vars.sh ]       && { . $buildpkg_dir/../0_vars.sh; }
+    [ -r $buildpkg_dir/0_vars.sh ]          && { . $buildpkg_dir/0_vars.sh; }
+
     declare -g pkg_name=${pkg_name}
     declare -g repo_name=${repo_name}
     declare -g pkg_type=${pkg_type}
 
     [ -d $buildpkg_dir ] || { unset buildpkg_dir; set +a; return 0; }
 
-
-    [ -r $buildpkg_dir/0_vars.sh ] && { . $buildpkg_dir/0_vars.sh; }
-
     declare -g pkg_name=${pkg_name}
     declare -g repo_name=${repo_name}
     declare -g pkg_type=${pkg_type}
 
+    # override if they had values originally
     eval "$presets"
 }
 
-# set the detected "time" stamp for this build.. from the logs
 detect_root_pkgtime() {
     local a=0
     local b=0
     local t="$(date +%s)"
+    local now=$t
     local src_root_t=$t
     local buildpkg_dir_t=$t
     local pkg_common_t=$t
@@ -172,9 +254,9 @@ detect_root_pkgtime() {
     fi
 
     {
-    printf -- "#--------------- %-14s: %s @%s =%d \n" top-dir $(get_yearly_tag $src_root_t) $src_root_hash $src_root_t
-    printf -- "#--------------- %-14s: %s @%s =%d \n" pkg-scripts $(get_yearly_tag $buildpkg_dir_t) $buildpkg_dir_hash $buildpkg_dir_t
-    printf -- "#--------------- %-14s: %s @%s =%d \n" pkg-common $(get_yearly_tag $pkg_common_t) $pkg_common_hash $pkg_common_t
+    printf -- "#--------------- %-14s: %s @%s =%ds old \n" top-dir $(get_yearly_tag $src_root_t) $src_root_hash $(( src_root_t - now ))
+    printf -- "#--------------- %-14s: %s @%s =%ds old \n" pkg-scripts $(get_yearly_tag $buildpkg_dir_t) $buildpkg_dir_hash $(( buildpkg_dir_t - now ))
+    printf -- "#--------------- %-14s: %s @%s =%ds old \n" pkg-common $(get_yearly_tag $pkg_common_t) $pkg_common_hash $(( pkg_common_t - now ))
     } | LANG=C sort -t: -b -k2
 
     t=${src_root_t}
@@ -254,6 +336,7 @@ do_file_subst() {
             export pkg_type=${pkg_type};
             $pkgdirs_top/common/substitute.pl /dev/stdin /dev/stdout;
         ) || { echo "substitution of \"$file\" -> \"$target\" failed somehow"; exit 255; }
+	echo "substitution of \"$file\" -> \"$target\"" >&2
     done
     return 0
 }
@@ -272,16 +355,16 @@ gen_pkg_build_config() {
 
     setup_dir=$1
     pkg_typedir=${pkg_type}
-    [ $pkg_typedir = pkg ] && pkg_typedir=sun-pkg
+    [ "$pkg_typedir" = pkg ] && pkg_typedir=sun-pkg
 
-    [ -d $setup_dir ] ||
+    [ -d "$setup_dir" ] ||
 	die "ERROR: gen_pkg_build_config() \"$setup_dir\" bad setup directory to "
-    [ $buildpkg_dir/../$pkg_typedir -ef $buildpkg_dir ] ||
+    [ "$buildpkg_dir/../$pkg_typedir" -ef "$buildpkg_dir" ] ||
 	die "ERROR: gen_pkg_build_config() invoked by script [$0] --> [$buildpkg_dir] outside of $pkg_type dir"
 
     setup_cwd_dir=${buildpkg_dir}
 
-    setup_dir="$(realpath -e $setup_dir)"
+    setup_dir="$(realpath -e "$setup_dir")"
 
     # detect if setup-dir is at or below same as buildpkg_dir or not
     [ "${setup_dir}" = "${buildpkg_dir}*" ] && setup_cwd_dir=""
@@ -299,7 +382,7 @@ gen_pkg_build_config() {
     cd ${PKG_DIR} || exit 100
 
     mkdir -p $pkg_bldroot
-    cd $pkg_bldroot || exit 100
+    cd "$pkg_bldroot" || exit 100
 
     case $pkg_bldroot in
 	(*/rpmbuild)
@@ -404,6 +487,7 @@ gen_pkg_environ() {
 		   --exclude=*.rpm \
 		   --exclude=*.deb \
 		   --exclude=*.pkg \
+		   --exclude=*.p5p \
 		   --exclude=.git \
 		   --exclude=*.tar \
 		   --exclude=*.tar.gz \
@@ -473,7 +557,7 @@ gen_repo_pkg_environ() {
             repo_tar=SOURCES/${PKG_NAME_VER}.tar
             rm -f $repo_tar
 
-            git archive --remote=file://$(realpath ..) --format=tar --prefix="$PKG_NAME_VER/./" -o $repo_tar $remote/$repo_ref ||
+            ( cd ..; git archive --format=tar --prefix="$PKG_NAME_VER/./" -o $pkg_bldroot/$repo_tar $remote/$repo_ref ) ||
 		die "ERROR: failed: git archive --format=tar --prefix=\"$PKG_NAME_VER/./\" -o $repo_tar $remote/$repo_ref"
 
             # append versioning files...
@@ -483,9 +567,10 @@ gen_repo_pkg_environ() {
             gzip -f $repo_tar
 	    ;;
 	(*/debbuild|*/pkgbuild)
+            repo_tar=${PKG_NAME_VER}.tar
             rm -rf $PKG_NAME_VER
-            git archive --remote=file://$(realpath ..) --format=tar --prefix="$PKG_NAME_VER/" $remote/$repo_ref |
-		tar -xf - --exclude 000-external ||
+            ( cd ..; git archive --format=tar --prefix="$PKG_NAME_VER/./" $remote/$repo_ref ) |
+		tar -xf - ||
 		die "ERROR: failed: git archive --format=tar $remote/$repo_ref to tar -xf in $pkg_bldroot"
 
             #tar -xvf $VERSION_TAR ||
@@ -548,7 +633,7 @@ do_top_package() {
 		die "ERROR: rpmbuild compile command failed"
 	    ;;
 
-	(*/debbuild)
+	(*/debbuild|*/pkgbuild)
             echo "Fake building $pkg_type package in $ctxt =============================================="
             build_srcdir="$ctxt"
 
@@ -562,48 +647,34 @@ do_top_package() {
                     die "missing call to gen_pkg_environ() or failed substitutions"
             rm -f $pkgconf_dir/*.src $pkgconf_dir/build*
 
-            chmod ug+x $pkgconf_dir/rules ||
-               die "could not chmod $pkgconf_dir/rules"
+            case $pkg_bldroot in
+                (*/debbuild)
+                    [ -n "$(command -v dpkg-buildpackage)" ] ||
+                        die "ERROR: dpkg-buildpackage command was not found.  Cannot build without package \"dpkg-dev\" installed."
+                    [ -s $pkgconf_dir/control -a -s $pkgconf_dir/rules ] ||
+                        die "ERROR: no $pkgconf_dir/control file is ready in $pkg_bldroot/$build_srcdir/$pkgconf_dir"
 
-            [ -n "$(command -v dpkg-buildpackage)" ] ||
-                die "ERROR: dpkg-buildpackage command was not found.  Cannot build without package \"dpkg-dev\" installed."
-            [ -s $pkgconf_dir/control ] ||
-                die "ERROR: no $pkgconf_dir/control file is ready in $pkg_bldroot/$build_srcdir/$pkgconf_dir"
+                    chmod ug+x $pkgconf_dir/rules 2>/dev/null
+                    dpkg-buildpackage -rfakeroot -uc -b ||
+                        die "ERROR: dpkg-buildpackage compile command failed"
+                    # Create unsigned packages
+                    ls 2>/dev/null ../*deb | xargs -r mv -fv -t ${PKG_DIR}
+                    echo "$pkgconf_dir package(s) from $build_srcdir ---------------------------------------";
+                    ;;
 
-            dpkg-buildpackage -rfakeroot -uc -b ||
-                die "ERROR: dpkg-buildpackage compile command failed"
-            # Create unsigned packages
-            mv -fv ../*deb ${PKG_DIR}
-            echo "$pkgconf_dir package(s) from $build_srcdir ---------------------------------------";
-            ;;
+                (*/pkgbuild)
+                    [ -n "$(command -v pkgproto)" ] ||
+                        die "ERROR: dpkg-buildpackage command was not found.  Cannot build without package \"dpkg-dev\" installed."
+                    [ -s $pkgconf_dir/makefile.build ] ||
+                        die "ERROR: no $pkgconf_dir/makefile.build file is ready in $pkg_bldroot/$build_srcdir/$pkgconf_dir"
 
-	(*/pkgbuild)
-            echo "Fake building $pkg_type package in $ctxt =============================================="
-            build_srcdir="$ctxt"
-
-            [ -d $pkgconf_dir ] || die "missing call to gen_pkg_build_config"
-            mv $pkgconf_dir $build_srcdir/. || die "directory $build_srcdir under $pkg_bldroot is missing or a broken link"
-            cd $build_srcdir/. || die "directory $build_srcdir under $pkg_bldroot is missing or a broken link"
-
-            find $pkgconf_dir/*.src | while read i; do do_file_subst $i; done ||
-                    die "missing call to gen_pkg_environ() or failed substitutions"
-            rm -f $pkgconf_dir/*.src $pkgconf_dir/build*
-
-            chmod $pkgconf_dir/makefile.build | die "could not chmod $pkgconf_dir/rules"
-            [ -n "$(command -v pkgproto)" -a -n "$(command -v pkgmk)" -a -n "$(command -v pkgtrans)" ] ||
-                die "ERROR: dpkg-buildpackage command was not found.  Cannot build without package \"dpkg-dev\" installed."
-            [ -s $pkgconf_dir/makefile.build ] ||
-                die "ERROR: no $pkgconf_dir/makefile.build file is ready in $pkg_bldroot/$build_srcdir/$pkgconf_dir"
-
-            [ -z "$MAKE" -a -n "$(command -v gmake)" ] && MAKE=gmake
-            [ -z "$MAKE" -a -n "$(command -v make)" ] && MAKE=make
-            declare -g MAKE=$MAKE
-
-            $MAKE -f $pkgconf_dir/makefile.build clean || die "failed during $pkgconf_dir/makefile.build clean"
-            $MAKE -f $pkgconf_dir/makefile.build build || die "failed during $pkgconf_dir/makefile.build build"
-            $MAKE -f $pkgconf_dir/makefile.build binary || die "failed during $pkgconf_dir/makefile.build build"
-            mv -fv *.pkg ${PKG_DIR}
-            echo "$pkgconf_dir package(s) from $build_srcdir ---------------------------------------";
+                    $MAKE -f $pkgconf_dir/makefile.build clean || die "failed during $pkgconf_dir/makefile.build clean"
+                    $MAKE -f $pkgconf_dir/makefile.build build || die "failed during $pkgconf_dir/makefile.build build"
+                    $MAKE -f $pkgconf_dir/makefile.build binary || die "failed during $pkgconf_dir/makefile.build build"
+                    ls 2>/dev/null *.p5p *.pkg | xargs -r mv -fv -t ${PKG_DIR}
+                    echo "$pkgconf_dir package(s) from $build_srcdir ---------------------------------------";
+                    ;;
+            esac
             ;;
 
 	 (*) die "Unknown packaging for resources for $pkg_bldroot"
@@ -659,61 +730,49 @@ do_package() {
 		die "ERROR: rpmbuild compile command failed"
 	    ;;
 
-	(*/debbuild)
+	(*/debbuild|*/pkgbuild)
             echo "Building $pkgconf_dir package in $ctxt =============================================="
             build_srcdir="$ctxt"
 
             [ -d $pkgconf_dir ] || die "missing call to gen_pkg_build_config"
-            mv $pkgconf_dir $build_srcdir/. || die "directory $build_srcdir under $pkg_bldroot is missing or a broken link"
-            cd $build_srcdir/. || die "directory $build_srcdir under $pkg_bldroot is missing or a broken link"
+            mv $pkgconf_dir $build_srcdir/. ||
+               die "directory $build_srcdir under $pkg_bldroot is missing or a broken link"
+            cd $build_srcdir/. ||
+               die "directory $build_srcdir under $pkg_bldroot is missing or a broken link"
 
             find $pkgconf_dir/*.src | while read i; do do_file_subst $i; done ||
                     die "missing call to gen_pkg_environ() or failed substitutions"
             rm -f $pkgconf_dir/*.src $pkgconf_dir/build*
 
-            chmod ug+x $pkgconf_dir/rules ||
-               die "could not chmod $pkgconf_dir/rules"
+            case $pkg_bldroot in
+                (*/debbuild)
+                    [ -n "$(command -v dpkg-buildpackage)" ] ||
+                        die "ERROR: dpkg-buildpackage command was not found.  Cannot build without package \"dpkg-dev\" installed."
+                    [ -s $pkgconf_dir/control -a -s $pkgconf_dir/rules ] ||
+                        die "ERROR: no $pkgconf_dir/control file is ready in $pkg_bldroot/$build_srcdir/$pkgconf_dir"
 
-            [ -n "$(command -v dpkg-buildpackage)" ] ||
-                die "ERROR: dpkg-buildpackage command was not found.  Cannot build without package \"dpkg-dev\" installed."
-            [ -s $pkgconf_dir/control ] ||
-                die "ERROR: no $pkgconf_dir/control file is ready in $pkg_bldroot/$build_srcdir/$pkgconf_dir"
+                    chmod ug+x $pkgconf_dir/rules 2>/dev/null
+                    dpkg-buildpackage -rfakeroot -uc -b ||
+                        die "ERROR: dpkg-buildpackage compile command failed"
+                    # Create unsigned packages
+                    ls 2>/dev/null ../*deb | xargs -r mv -fv -t ${PKG_DIR}
+                    echo "$pkgconf_dir package(s) from $build_srcdir ---------------------------------------";
+                    ;;
 
-            dpkg-buildpackage -rfakeroot -uc -b ||
-                die "ERROR: dpkg-buildpackage compile command failed"
-            # Create unsigned packages
-            mv -fv ../*deb ${PKG_DIR}
-            echo "$pkgconf_dir package(s) from $build_srcdir ---------------------------------------";
-	    ;;
+                (*/pkgbuild)
+                    [ -n "$(command -v pkgproto)" ] ||
+                        die "ERROR: dpkg-buildpackage command was not found.  Cannot build without package \"dpkg-dev\" installed."
+                    [ -s $pkgconf_dir/makefile.build ] ||
+                        die "ERROR: no $pkgconf_dir/makefile.build file is ready in $pkg_bldroot/$build_srcdir/$pkgconf_dir"
 
-	(*/pkgbuild)
-            echo "Building $pkgconf_dir package in $ctxt =============================================="
-            build_srcdir="$ctxt"
-
-            [ -d $pkgconf_dir ] || die "missing call to gen_pkg_build_config"
-            mv $pkgconf_dir $build_srcdir/. || die "directory $build_srcdir under $pkg_bldroot is missing or a broken link"
-            cd $build_srcdir/. || die "directory $build_srcdir under $pkg_bldroot is missing or a broken link"
-
-            find $pkgconf_dir/*.src | while read i; do do_file_subst $i; done ||
-                    die "missing call to gen_pkg_environ() or failed substitutions"
-            rm -f $pkgconf_dir/*.src $pkgconf_dir/build*
-
-            chmod $pkgconf_dir/makefile.build | die "could not chmod $pkgconf_dir/rules"
-            [ -n "$(command -v pkgproto)" -a -n "$(command -v pkgmk)" -a -n "$(command -v pkgtrans)" ] ||
-                die "ERROR: dpkg-buildpackage command was not found.  Cannot build without package \"dpkg-dev\" installed."
-            [ -s $pkgconf_dir/makefile.build ] ||
-                die "ERROR: no $pkgconf_dir/makefile.build file is ready in $pkg_bldroot/$build_srcdir/$pkgconf_dir"
-
-            [ -z "$MAKE" -a -n "$(command -v gmake)" ] && MAKE=gmake
-            [ -z "$MAKE" -a -n "$(command -v make)" ] && MAKE=make
-            declare -g MAKE=$MAKE
-
-            $MAKE -f $pkgconf_dir/makefile.build clean || die "failed during $pkgconf_dir/makefile.build clean"
-            $MAKE -f $pkgconf_dir/makefile.build build || die "failed during $pkgconf_dir/makefile.build build"
-            $MAKE -f $pkgconf_dir/makefile.build binary || die "failed during $pkgconf_dir/makefile.build build"
-            mv -fv *.pkg ${PKG_DIR}
-            echo "$pkgconf_dir package(s) from $build_srcdir ---------------------------------------";
-	    ;;
+                    $MAKE -f $pkgconf_dir/makefile.build clean || die "failed during $pkgconf_dir/makefile.build clean"
+                    $MAKE -f $pkgconf_dir/makefile.build build || die "failed during $pkgconf_dir/makefile.build build"
+                    $MAKE -f $pkgconf_dir/makefile.build binary || die "failed during $pkgconf_dir/makefile.build build"
+                    ls 2>/dev/null *.p5p *.pkg | xargs -r mv -fv -t ${PKG_DIR}
+                    echo "$pkgconf_dir package(s) from $build_srcdir ---------------------------------------";
+                    ;;
+            esac
+            ;;
 
 	 (*) die "Unknown packaging for resources for $pkg_bldroot"
 	    ;;
@@ -722,6 +781,7 @@ do_package() {
     ) || exit $?
 }
 
+###### WARNING: keeping for the oldest builds only
 get_svn_info() {
     local branch_field
 
@@ -766,15 +826,13 @@ set_zmanda_version() {
 }
 
 
-# need to find the root for packaging/*
-[ -z "$pkgdirs_top" -a -d "$src_root/packaging/." ] && 
-    declare -g pkgdirs_top=$src_root/packaging
-
 # detect missing variables from calling script location
 detect_package_vars() {
 
+    # check every time ...
+    detect_pkgdirs_top
+
     declare >&/dev/null -p \
-         pkg_suffix \
          pkg_name \
          pkg_type \
          pkgconf_dir \
@@ -798,8 +856,7 @@ detect_package_vars() {
     [ -n "$pkg_name" ] && export pkg_name
     [ -n "$pkg_type" ] && export pkg_type
 
-    export pkg_suffix \
-      pkgconf_dir \
+    export pkgconf_dir \
       buildpkg_dir \
       pkg_bldroot \
       pkg_name_pkgtime \
@@ -807,5 +864,6 @@ detect_package_vars() {
 }
 
 detect_package_vars
+
 set -${setopt/s}
-# End Common functions
+# End Build functions
