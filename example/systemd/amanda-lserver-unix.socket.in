@@ -1,0 +1,23 @@
+[Unit]
+Description=Amanda Backup Server UNIX-Socket
+
+[Socket]
+ListenStream=@amdatadir@/amandad.sock
+# only for the Unix sockets
+SocketUser=@CLIENT_LOGIN@
+SocketGroup=@SETUID_GROUP@
+SocketMode=0600
+#
+# chmod is ridiculous ... but it allows init_t:s0 creation of the socket
+ExecStartPre=/bin/chmod 757 @amdatadir@
+ExecStartPost=/bin/chmod 750 @amdatadir@
+# chmod is ridiculous ... but it allows init_t:s0 removal of the socket
+ExecStopPre=/bin/chmod 757 @amdatadir@
+ExecStopPost=/bin/chmod 750 @amdatadir@
+Accept=yes
+RemoveOnStop=yes
+MaxConnections=100
+##SELinuxContext=system_u:system_r:amanda_data_t:s0
+
+[Install]
+WantedBy=multi-user.target
