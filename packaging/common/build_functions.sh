@@ -134,18 +134,21 @@ detect_pkgdirs_top() {
 
     local d="${topcall%/*}"
 
-    # down levels too many?
-    [ -L $d/../../common ] && d+=/../..
-    [ -L $d/../common ] && d+=/..
-
-# give up and use the top of packaging/ [failed search]
-    [ -d $d/../common -a ! -f $d/0_vars.sh ] && d+=/..
+    [ ! -L $d/../../common -a -d $d/../../common ] && d+=/../..
+    [ ! -L $d/../common -a -d $d/../common ] && d+=/..
 
     # narrow choices with calling script.s path, if possible
     declare -g pkgdirs_top="$(realpath -e $d)"
 
+    if [ -z "$pkg_type" -a -x $pkgdirs_top/common/substitute.pl ]; then
+        localpkg_suffix=$(cd $src_root; $pkgdirs_top/common/substitute.pl <(echo %%PKG_SUFFIX%%) /dev/stdout);
+        declare -g pkg_type=${localpkg_suffix##*.}
+    fi
+
+    localpkg_suffix=$(cd $src_root; $pkgdirs_top/common/substitute.pl <(echo %%PKG_SUFFIX%%) /dev/stdout);
+
     # if script came from below the base pkgdirs_top ...
-    if [[ $topcall == $pkgdirs_top/$pkg_type ]] && [ -d ${topcall%/*} ]; then
+    if [[ ${topcall%/*} == $pkgdirs_top/$pkg_type ]] && [ -d ${topcall%/*} ]; then
         # validate later ... but use for now
         declare -g buildpkg_dir=${topcall%/*}
     fi
@@ -165,10 +168,6 @@ detect_platform_pkg_type() {
     elif [ -d "$buildpkg_dir" ] && [[ $buildpkg_dir == $pkgdirs_top/* ]]; then
         pkg_type=${buildpkg_dir:${#pkgdirs_top}}
         declare -g pkg_type=${pkg_type#/}
-    # only overwrite pkg_type if we need to
-    elif [ -z "$pkg_type" -a -x $pkgdirs_top/../common/substitute.pl ]; then
-        localpkg_suffix=$(cd $src_root; $pkgdirs_top/../common/substitute.pl <(echo %%PKG_SUFFIX%%) /dev/stdout);
-        declare -g pkg_type=${localpkg_suffix##*.}
     fi
 
     case $pkg_type in
@@ -315,7 +314,7 @@ do_file_subst() {
             cd $src_root;
 	    export pkg_name=${pkg_name};
             export pkg_type=${pkg_type};
-            $pkgdirs_top/../common/substitute.pl /dev/stdin /dev/stdout;
+            $pkgdirs_top/common/substitute.pl /dev/stdin /dev/stdout;
         ) || { echo "substitution of \"$file\" -> \"$target\" failed somehow"; exit 255; }
 	echo "substitution of \"$file\" -> \"$target\"" >&2
     done
@@ -324,7 +323,7 @@ do_file_subst() {
 
 get_version() {
     # requires FULL_VERSION is in place already
-    declare -g VERSION=$(cd $src_root; $pkgdirs_top/../common/substitute.pl <(echo %%VERSION%%) /dev/stdout);
+    declare -g VERSION=$(cd $src_root; $pkgdirs_top/common/substitute.pl <(echo %%VERSION%%) /dev/stdout);
     [ -n "$pkg_name" ] &&
        declare -g PKG_NAME_VER="$pkg_name-$VERSION"
 }
