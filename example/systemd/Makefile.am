@@ -10,7 +10,7 @@ if WANT_SERVER
 
 systemddir = /opt/zmanda/amanda/etc/systemd/system
 systemd_units_in_FILE = \
-    server.socket.in \
+    amanda-server.socket.in \
     amanda-server@.service.in \
     amanda-lserver.socket.in \
     amanda-lserver@.service.in \
