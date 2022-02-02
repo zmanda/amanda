@@ -322,8 +322,6 @@ cd %{BUILD_TOPDIR}
 [ -s Makefile ] && make distclean || true
 [ -s Makefile ] && make clean || true
 
-./autochk || exit -1   # confirm modules are properly set up
-
 cat >./rpm-env.sh /dev/null - <<CLEAR_DEFAULT
    unset CONFIG_LDPATH
    unset AMPERL
