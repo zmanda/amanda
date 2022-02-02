@@ -18,6 +18,7 @@
 [ $0 -ef ${BASH_SOURCE[0]} ] && ref=${1:-HEAD}
 
 if [ "$(type -t get_yearly_tag)" != "function" ]; then
+    pkg_type=${pkg_type:-rpm}
     . packaging/common/build_functions.sh
 fi
 
