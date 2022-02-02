@@ -145,7 +145,7 @@ detect_pkgdirs_top() {
     declare -g pkgdirs_top="$(realpath -e $d)"
 
     # if script came from below the base pkgdirs_top ...
-    if [[ $topcall == $pkgdirs_top/* ]] && [ -d ${topcall%/*} ]; then
+    if [[ $topcall == $pkgdirs_top/$pkg_type ]] && [ -d ${topcall%/*} ]; then
         # validate later ... but use for now
         declare -g buildpkg_dir=${topcall%/*}
     fi
@@ -160,10 +160,11 @@ detect_platform_pkg_type() {
     [ -n "$pkg_type" ] && presets+="declare -g pkg_type=\"$pkg_type\";"
 
     # overwrite pkg_type if buildpkg_dir is present...
-    if [ -d "$buildpkg_dir" ] && [[ $buildpkg_dir == $pkgdirs_top/* ]]; then
+    if [ -d "$buildpkg_dir" ] && [[ $buildpkg_dir == $pkgdirs_top/$pkg_type ]]; then
+        :
+    elif [ -d "$buildpkg_dir" ] && [[ $buildpkg_dir == $pkgdirs_top/* ]]; then
         pkg_type=${buildpkg_dir:${#pkgdirs_top}}
         declare -g pkg_type=${pkg_type#/}
-
     # only overwrite pkg_type if we need to
     elif [ -z "$pkg_type" -a -x $pkgdirs_top/../common/substitute.pl ]; then
         localpkg_suffix=$(cd $src_root; $pkgdirs_top/../common/substitute.pl <(echo %%PKG_SUFFIX%%) /dev/stdout);
