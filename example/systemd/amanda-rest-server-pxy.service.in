@@ -1,19 +1,16 @@
 [Unit]
 Description=Amanda Rest Server Proxy
 # just fail if missing...
-ConditionPathExists=@amdatadir@/amanda-rest.sock
+ConditionPathExists=@DEFAULT_SECURITY_FILE@
 # starts up, waits for but can be stopped by ...
-BindsTo=__sub-amanda-rest-server-pxy.socket
-BindsTo=__sub-amanda-rest-server.service
+BindsTo=amanda-rest-server-pxy.socket
+BindsTo=amanda-rest-server.service
 After=network-online.target
-After=__sub-amanda-rest-server.service
-After=__sub-amanda-rest-server-pxy.socket
+After=amanda-rest-server.service
+After=amanda-rest-server-pxy.socket
 
 [Service]
 User=@CLIENT_LOGIN@
 Group=@SETUID_GROUP@
 ExecStart=/usr/lib/systemd/systemd-socket-proxyd @amdatadir@/amanda-rest.sock
 PrivateTmp=yes
-
-[Install]
-Alias=amanda-rest-server-pxy.service

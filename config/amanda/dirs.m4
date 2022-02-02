@@ -183,15 +183,14 @@ AC_DEFUN([AMANDA_EXPAND_DIRS],
 	AS_HELP_STRING([--with-systemd],
 		[If systemd services are desired])
 	AS_HELP_STRING([--without-systemd],
-		[If initscripts services are desired])
+		[If initscripts services are desired]),
 	[
+            unitdir="$(command systemctl show -p UnitPath 2>/dev/null )";
+            unitdir="${unitdir% *.late}";
+            unitdir="${unitdir##* }";
 	    case "$withval" in
                (n | no) unitdir=INITSCRIPTS ;;
-               (y | ye | yes)  ;;
-                   unitdir="$(systemctl show -p UnitPath)";
-                   unitdir="${unitdir% *.late}";
-                   unitdir="${unitdir##* }";
-                  ;;
+               (y | ye | yes) ;;
 	    esac
 	]
     )
@@ -199,7 +198,7 @@ AC_DEFUN([AMANDA_EXPAND_DIRS],
     AC_DEFINE_DIR([unitdir], [unitdir],
 	[Directory in which Amanda Systemd Units should be installed])
 
-    AM_CONDITIONAL([GL_GENERATE_ALLOCA_H], [test -d "$unitdir"])
+    AM_CONDITIONAL([WANT_SYSTEMD], [test -d "$unitdir"])
 
     # amanda-specific directories
     AMLIBDIR=$libdir/amanda

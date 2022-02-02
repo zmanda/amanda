@@ -24,9 +24,9 @@
 %{?srpm_only: %define build_srpm 1}
 
 %define _my_systemd_units \\\
-       __sub-amanda-server.socket \\\
-       __sub-amanda-lserver-unix.socket \\\
-       __sub-amanda-rest-server.service
+       amanda-server.socket \\\
+       amanda-lserver-unix.socket \\\
+       amanda-rest-server.service
 
 %global _buildshell /bin/bash
 
@@ -196,7 +196,7 @@ Requires(pre): %{_ldsoconfdir}
 Requires: /sbin/ldconfig
 Requires: /usr/bin/gpg-agent
 Requires: /usr/bin/gpg2
-# not available on SuSE
+# SuSE has no package owner
 # Requires: %{_unitdir_compat}
 Requires: %{_logrotatedir}
 Requires: coreutils
@@ -483,8 +483,8 @@ rm -rf %{buildroot}
 make -j1 DESTDIR=%{buildroot} install
 ################################################ done with source make-install
 
-rm -f %{buildroot}%{INSTALL_UNITDIR}/__sub-amanda-client*
-rm -f %{buildroot}%{INSTALL_UNITDIR}/__sub-amanda-lclient*
+rm -f %{buildroot}%{INSTALL_UNITDIR}/amanda-client*
+rm -f %{buildroot}%{INSTALL_UNITDIR}/amanda-lclient*
 
 # to hold a space in case we need the path /usr/lib64 added!
 # install -D -m 644 /dev/null \
@@ -526,7 +526,9 @@ find %{buildroot} -name \*.la -delete -o -name \*.a -delete
 ##################
 # install/shift misc files in place
 ##################
-mkdir -p %{ROOT_AMANDAHOMEDIR}/{gnutar-lists,.gnupg,.ssh,tmp}
+# preserve all these
+mkdir -p %{ROOT_AMANDAHOMEDIR}/{gnutar-lists,.gnupg,.ssh,staging,vtapes,disk}
+mkdir -p %{ROOT_AMANDAHOMEDIR}/tmp
 echo "%{amanda_version_info}" > %{ROOT_AMANDAHOMEDIR}/amanda-release
 
 # package-placeholders all filled in upon install only
@@ -542,15 +544,6 @@ rm -f %{ROOT_AMANDAHOMEDIR}/example/*inetd*
 
 mkdir -p %{buildroot}%{AMVARDIR}
 mkdir -p %{ROOT_AMCONFDIR}
-ln -sf $(basename %{ROOT_AMCONFDIR}) %{buildroot}%{AM_CONFDIR_LNK}
-
-# handle installs that put items into /etc/amanda directly
-if [ ! -L %{AM_CONFDIR_LNK} -a -d %{AM_CONFDIR_LNK}/. ];
-then
-   [ -d %{AM_CONFDIR} ]         || mv %{AM_CONFDIR_LNK} %{AM_CONFDIR} || true
-   [ ! -d %{AM_CONFDIR_LNK}/. ] || mv %{AM_CONFDIR_LNK}/* %{AM_CONFDIR} || true
-   [ ! -d %{AM_CONFDIR_LNK}/. ] || rmdir %{AM_CONFDIR_LNK} || true
-fi
 
 mkdir -p %{ROOT_LOGDIR}
 mkdir -p %{ROOT_LOGDIR}/client
@@ -615,17 +608,20 @@ set +o posix
 # pre installation
 #
 ##########################################
+%{script_vars}
 logger "Preinstall for %{name}-%{amanda_version_info} on $(date -R)"
 
 # all owned by root
-[ ! -e /usr/bin/bash -a -x /bin/bash ] &&
-   ln -sf /bin/bash /usr/bin/bash
-[ ! -e /usr/bin/sh -a -x /bin/sh ] &&
-   ln -sf /bin/sh /usr/bin/sh
-[ ! -e /usr/lib64 -a -d /lib64 ] &&
-   ln -sf /lib64 /usr/lib64
+#[ ! -e /usr/bin/bash -a -x /bin/bash ] &&
+#   ln -sf /bin/bash /usr/bin/bash
+#[ ! -e /usr/bin/sh -a -x /bin/sh ] &&
+#   ln -sf /bin/sh /usr/bin/sh
+#[ ! -e /usr/lib64 -a -d /lib64 ] &&
+#   ln -sf /lib64 /usr/lib64
+#[ ! -e /lib/systemd/system -a -d /usr/lib/systemd/system ] &&
+#   ln -sf /usr/lib/systemd /lib
+# must block use of /usr/lib/systemd/system because its not universal enough
 
-%{script_vars}
 # ------------ Library of functions --------------
 %%COMMON_FUNCTIONS%%
 %%PRE_INST_FUNCTIONS%%
@@ -633,23 +629,30 @@ logger "Preinstall for %{name}-%{amanda_version_info} on $(date -R)"
 
 logger "Preparing to install: %{amanda_version_info} on $(date -R)"
 
-AMANDATES=%{AMANDATES}
 create_user
-check_user_group "${amanda_group}" ||
-   add_group "${amanda_group}"
+check_user_group "%{amanda_group}" ||
+   add_group "%{amanda_group}"
 check_user_supplemental_group "%{amanda_cligroup}" ||
    add_group "%{amanda_cligroup}"
+
+systemctl -q disable --no-reload %{_my_systemd_units} 2>/dev/null || true
 
 #
 # for upgrade or for install... shut down everything we can find
 #
-readarray UNITS < <(systemctl --no-legend --no-pager -a list-unit-files |sed -E -e '/^__sub|^run/!d' -e $'s,[ \t].*,,' )
-readarray UNITS2 < <(systemctl --no-legend --no-pager -a list-units |sed -E -e '/^__sub|^run/!d' -e $'s,[ \t].*,,' )
-readarray UNITS < <(grep -E -e '__sub-(zman|zmc|amanda|aee)-' -e '^run-zmanda' <<<"${UNITS[*]}${UNITS2[*]}" )
+readarray UNITS < <(systemctl --no-legend --no-pager -a list-unit-files |sed -E -e '/^amanda/!d' -e $'s,[ \t].*,,' )
+readarray UNITS2 < <(systemctl --no-legend --no-pager -a list-units |sed -E -e '/^amanda/!d' -e $'s,[ \t].*,,' )
+readarray -t UNITS < <(grep -E -e 'amanda-' <<<"${UNITS[*]}${UNITS2[*]}" | grep -v '@')
 
-# prevent restart
-xargs -tr systemctl -q disable --no-reload <<<"${UNITS[*]}" || true
+# try to apply all at once
 xargs -tr systemctl -q stop <<<"${UNITS[*]}" || true
+
+readarray UNITS < <(systemctl --no-legend --no-pager -a list-unit-files |sed -E -e '/^amanda/!d' -e $'s,[ \t].*,,' )
+readarray UNITS2 < <(systemctl --no-legend --no-pager -a list-units |sed -E -e '/^amanda/!d' -e $'s,[ \t].*,,' )
+readarray -t UNITS < <(grep -E -e 'amanda-' <<<"${UNITS[*]}${UNITS2[*]}" | grep -v '@')
+
+# try again if needed.. but act one-by-one [older debian had issues]
+xargs -tr -n1 systemctl -q stop <<<"${UNITS[*]}" || true
 
 ( set -x; systemctl reset-failed )
 ( set -x; systemctl daemon-reload )
@@ -669,7 +672,6 @@ set +o posix
 # post installation
 #
 ##########################################
-AMANDATES=%{AMANDATES}
 
 %{script_vars}
 # ---------- Library of functions ------------
@@ -709,7 +711,7 @@ command -v semanage >/dev/null &&
 ( set -x; systemctl -q daemon-reload ) || true
 ( set -x; systemctl -q disable --now %{_my_systemd_units} ) || true
 
-shutdown_xinetd_socket __sub-amanda-server.socket
+shutdown_xinetd_socket amanda-server.socket
 
 ( set -x; systemctl preset %{_my_systemd_units} ) || true
 
@@ -754,7 +756,7 @@ done
 
 ( set -x; systemctl -q reset-failed ) || true
 
-units="$(systemctl -a --no-legend --no-pager list-units '__sub-amanda-server@*' '__sub-amanda-lserver-unix@*' ) "
+units="$(systemctl -a --no-legend --no-pager list-units 'amanda-server@*' 'amanda-lserver-unix@*' ) "
 units="$(sed <<<"$units" -e 's,^[^a-z_]*,,' -e 's, .*,,' )"
 xargs -tr systemctl stop <<<"$units" || true
 
@@ -935,7 +937,6 @@ true
 %dir %{AMANDAHOMEDIR}
 %dir %attr(1750,%{amanda_user},%{amanda_group}) %{AMANDAHOMEDIR}/tmp
 %dir %{AM_CONFDIR}
-%{AM_CONFDIR_LNK}
 %dir %{AMVARDIR}
 
 # all these require migration forward from old home dir
@@ -1000,7 +1001,7 @@ true
 ######################
 %defattr(0444,root,root,0555)
 #
-%{INSTALL_UNITDIR}/__sub-amanda-*
+%{INSTALL_UNITDIR}/amanda-*
 %{INSTALL_UNITDIR}-preset/*
 
 # manpages
@@ -1014,7 +1015,7 @@ true
 %{SHAREDIR}/amanda-%{amanda_version}
 # one-possibly-removed stub config file
 %{_logrotatedir}/amanda
-# %{_ldsoconfdir}/amanda*
+# %%{_ldsoconfdir}/amanda*
 
 # --- ChangeLog
 

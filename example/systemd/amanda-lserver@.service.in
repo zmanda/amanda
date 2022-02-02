@@ -1,9 +1,10 @@
 [Unit]
 Description=Amanda Backup Service Connection
-Requires=amanda-lserver.socket
+ConditionPathExists=@DEFAULT_SECURITY_FILE@
 
 [Service]
 User=@CLIENT_LOGIN@
 Group=@SETUID_GROUP@
+# no restart possible
 ExecStart=@amlibexecdir@/amandad -auth=local amdump senddiscover amindexd amidxtaped
 StandardInput=socket

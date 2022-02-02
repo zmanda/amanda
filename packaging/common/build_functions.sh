@@ -134,6 +134,7 @@ detect_pkgdirs_top() {
 
     local d="${topcall%/*}"
 
+    [ ! -L $d/../../../common -a -d $d/../../../common ] && d+=/../../..
     [ ! -L $d/../../common -a -d $d/../../common ] && d+=/../..
     [ ! -L $d/../common -a -d $d/../common ] && d+=/..
 
@@ -414,6 +415,7 @@ gen_top_environ() {
     case $pkg_bldroot in
 	(*/rpmbuild)
 	    ln -sf $(realpath ..) BUILD/$PKG_NAME_VER
+            gzip -c < $VERSION_TAR > SOURCES/${PKG_NAME_VER}.tar.gz
 	    ;;
 	(*/debbuild|*/pkgbuild)
 	    # simulate the top directory as the build one...
@@ -723,6 +725,7 @@ get_svn_info() {
 
 set_zmanda_version() {
     eval "$(get_version_evalstr "$1")"
+    [ -f "$VERSION_TAR" ] || die "failed to create VERSION_TAR file"
     echo -n "$VERSION" > $src_root/FULL_VERSION
     echo -n "$LONG_BRANCH" > $src_root/LONG_BRANCH
     echo -n "$REV" > $src_root/REV

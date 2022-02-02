@@ -2,11 +2,12 @@
 Description=Amanda Backup Client Localhost-Socket
 
 [Socket]
-ListenStream=[::1]:10080
+ListenStream=127.0.0.1:10080
 Accept=yes
+RemoveOnStop=yes
 ReusePort=true
 MaxConnections=100
+##SELinuxContext=system_u:system_r:amanda_data_t:s0
 
 [Install]
-# started at boot time
-WantedBy=sockets.target
+WantedBy=multi-user.target

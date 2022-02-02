@@ -48,6 +48,10 @@ set_zmanda_version $ref
 #printf "$REV" > REV
 #printf "$PKG_REV" > PKG_REV
 
+if [[ "$VERSION_TAR" == /tmp/*/*.tar ]] && [ -f "$VERSION_TAR" ]; then
+    rm -rf ${VERSION_TAR%/*}
+fi
+
 echo "git_rev : $REV"
 echo "git_branch : $BRANCH"
 echo "git_long_branch : $LONG_BRANCH"

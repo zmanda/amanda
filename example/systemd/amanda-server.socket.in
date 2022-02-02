@@ -1,38 +1,30 @@
 [Unit]
 Description=Amanda Backup Server Socket
-# delayed if no network active
-After=network-online.target
 
 [Socket]
 ListenStream=10080
+##SELinuxContext=system_u:system_r:amanda_data_t:s0
 Accept=yes
 KeepAlive=true
-#
-# dont wait two hours
-#
+######## dont wait two hours
 KeepAliveTimeSec=120
-#KeepAliveIntervalSec=75
-#KeepAliveProbes=9
-#
-# speed up unreplied bursts
-#
+######## speed up unreplied bursts
 NoDelay=true
-#
-# set TOS for TCP outputs if needed (0-6 only normally allowed)
-#
+######## set TOS for TCP outputs if needed (0-6 only normally allowed)
 #Priority= 
-#
-# keep the daemon asleep until real data arrives
-#
+######## keep the daemon asleep until real data arrives
 DeferAcceptSec=5
+IPTOS=throughput
+# allow localhost-only socket elsewhere
+ReusePort=true
+#SELinuxContextFromNet=
+TCPCongestion=cubic
+MaxConnections=10
 #ReceiveBuffer=
 #SendBuffer=
-IPTOS=throughput
-ReusePort=false
-#SELinuxContextFromNet=
 #TCPCongestion=bbr
-MaxConnections=10
+#KeepAliveIntervalSec=75
+#KeepAliveProbes=9
 
 [Install]
-Alias=amanda-server.socket
-WantedBy=sockets.target
+WantedBy=multi-user.target

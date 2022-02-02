@@ -1,8 +1,10 @@
 [Unit]
 Description=Amanda Backup Client Connection
+ConditionPathExists=@DEFAULT_SECURITY_FILE@
 
 [Service]
 User=@CLIENT_LOGIN@
 Group=@SETUID_GROUP@
+# no restart possible
 ExecStart=@amlibexecdir@/amandad -auth=bsdtcp amdump senddiscover
 StandardInput=socket
