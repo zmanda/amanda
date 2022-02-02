@@ -197,7 +197,7 @@ Requires: /sbin/ldconfig
 Requires: /usr/bin/gpg-agent
 Requires: /usr/bin/gpg2
 # SuSE has no package owner
-# Requires: %{_unitdir_compat}
+# Requires: %%{_unitdir_compat}
 Requires: %{_logrotatedir}
 Requires: coreutils
 Requires: gettext

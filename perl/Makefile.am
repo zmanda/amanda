@@ -754,7 +754,7 @@ thread-check: libTests.la
 			-MAmanda::Tests -e 'alarm(10); Amanda::Tests::try_threads' \
 	|| { echo "Perl cannot run extensions which use threads; consider linking perl" \
 		"with -pthread or compiling perl with threading enabled"; false; }
-else
-thread-check:
-	@echo "skipping thread check: server component not being built"
+# else
+# thread-check:
+# 	@echo "skipping thread check: server component not being built"
 # endif
