@@ -179,26 +179,26 @@ AC_DEFUN([AMANDA_EXPAND_DIRS],
     AC_DEFINE_DIR([mandir], [mandir],
         [Directory in which man-pages should be installed])
 
+    UNITDIR="$(command systemctl show -p UnitPath 2>/dev/null )";
+    UNITDIR="${UNITDIR% *.late}";
+    UNITDIR="${UNITDIR##* }";
     AC_ARG_WITH([systemd],
 	AS_HELP_STRING([--with-systemd],
 		[If systemd services are desired])
 	AS_HELP_STRING([--without-systemd],
 		[If initscripts services are desired]),
 	[
-            unitdir="$(command systemctl show -p UnitPath 2>/dev/null )";
-            unitdir="${unitdir% *.late}";
-            unitdir="${unitdir##* }";
 	    case "$withval" in
-               (n | no) unitdir=INITSCRIPTS ;;
+               (n | no) UNITDIR=INITSCRIPTS ;;
                (y | ye | yes) ;;
 	    esac
 	]
     )
 
-    AC_DEFINE_DIR([unitdir], [unitdir],
+    AC_DEFINE_DIR([unitdir], [UNITDIR],
 	[Directory in which Amanda Systemd Units should be installed])
 
-    AM_CONDITIONAL([WANT_SYSTEMD], [test -d "$unitdir"])
+    AM_CONDITIONAL([WANT_SYSTEMD], [test -d "$UNITDIR"])
 
     # amanda-specific directories
     AMLIBDIR=$libdir/amanda
