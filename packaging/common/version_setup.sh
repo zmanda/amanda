@@ -377,7 +377,6 @@ save_version() {
         mkdir -p $repo_vers_dir
 
         echo -n $VERSION > $repo_vers_dir/FULL_VERSION
-        echo -n $BUILD_VERSION > $repo_vers_dir/BUILD_VERSION
         echo -n "${PKG_REV:-1}" > $repo_vers_dir/PKG_REV
         echo -n $LONG_BRANCH > $repo_vers_dir/LONG_BRANCH
         echo -n $REV > $repo_vers_dir/REV
@@ -390,7 +389,7 @@ save_version() {
 	sed -e 's,^declare --,declare -g,';
     [ -n "$PKG_NAME_VER" ] && declare -p PKG_NAME_VER |
 	sed -e 's,^declare --,declare -g,';
-    declare -p VERSION BUILD_VERSION PKG_REV |
+    declare -p VERSION PKG_REV |
 	sed -e 's,^declare --,declare -g,';
     declare -p LONG_BRANCH BRANCH REV |
 	sed -e 's,^declare --,declare -g,';
