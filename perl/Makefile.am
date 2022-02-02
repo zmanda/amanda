@@ -32,9 +32,9 @@ AM_CPPFLAGS =  \
 AM_CPPFLAGS += -I$(top_srcdir)/device-src \
 	    -I$(top_srcdir)/server-src
 
-if WANT_CLIENT
+# if WANT_CLIENT
 AM_CPPFLAGS += -I$(top_srcdir)/client-src
-endif
+# endif
 
 if WANT_RECOVER
 AM_CPPFLAGS += -I$(top_srcdir)/recover-src
@@ -169,7 +169,7 @@ Amanda_DATA += Amanda/Cmdline.pm
 MAINTAINERCLEANFILES += Amanda/Cmdline.c Amanda/Cmdline.pm
 EXTRA_DIST += Amanda/Cmdline.swg Amanda/Cmdline.pm Amanda/Cmdline.pod
 
-if WANT_SERVER
+# if WANT_SERVER
 # PACKAGE: Amanda::Tapelist
 libTapelistdir = $(amperldir)/auto/Amanda/Tapelist
 libTapelist_LTLIBRARIES = libTapelist.la
@@ -180,7 +180,7 @@ libTapelist_la_LIBADD = amglue/libamglue.la \
 	$(top_builddir)/common-src/libamanda.la
 Amanda_DATA += Amanda/Tapelist.pm
 MAINTAINERCLEANFILES += Amanda/Tapelist.c Amanda/Tapelist.pm
-endif
+# endif
 EXTRA_DIST += Amanda/Tapelist.swg Amanda/Tapelist.pm Amanda/Tapelist.pod
 
 # PACKAGE: Amanda::Disklist
@@ -220,23 +220,23 @@ Amanda_DATA += Amanda/Feature.pm
 MAINTAINERCLEANFILES += Amanda/Feature.c Amanda/Feature.pm
 EXTRA_DIST += Amanda/Feature.swg Amanda/Feature.pm Amanda/Feature.pod
 
-if WANT_SERVER
+# if WANT_SERVER
 # PACKAGE: Amanda::ScanInventory
 Amanda_DATA += Amanda/ScanInventory.pm
-endif
+# endif
 EXTRA_DIST += Amanda/ScanInventory.pm
 
-if WANT_SERVER
+# if WANT_SERVER
 # PACKAGE: Amanda::Interactivity
 Amanda_DATA += Amanda/Interactivity.pm
-endif
+# endif
 EXTRA_DIST += Amanda/Interactivity.pm
 
 # PACKAGE: Amanda::ClientService
 Amanda_DATA += Amanda/ClientService.pm
 EXTRA_DIST += Amanda/ClientService.pm
 
-if WANT_SERVER
+# if WANT_SERVER
 # PACKAGE: Amanda::Interactivity::*
 AmandaInteractivitydir = $(amperldir)/Amanda/Interactivity
 AmandaInteractivity_DATA = \
@@ -245,7 +245,7 @@ AmandaInteractivity_DATA = \
 	Amanda/Interactivity/tty.pm \
 	Amanda/Interactivity/tty_email.pm
 PM_FILES += $(AmandaInteractivity_DATA)
-endif
+# endif
 EXTRA_DIST +=  \
 	Amanda/Interactivity/email.pm \
 	Amanda/Interactivity/stdin.pm \
@@ -295,28 +295,28 @@ EXTRA_DIST += \
 Amanda_DATA += Amanda/Status.pm
 EXTRA_DIST += Amanda/Status.pm
 
-if WANT_SERVER
+# if WANT_SERVER
 # PACKAGE: Amanda::Cleanup
 Amanda_DATA += Amanda/Cleanup.pm
-endif
+# endif
 EXTRA_DIST += Amanda/Cleanup.pm
 
-if WANT_SERVER
+# if WANT_SERVER
 # PACKAGE: Amanda::Amdump
 Amanda_DATA += Amanda/Amdump.pm
-endif
+# endif
 EXTRA_DIST += Amanda/Amdump.pm
 
-if WANT_SERVER
+# if WANT_SERVER
 # PACKAGE: Amanda::Amflush
 Amanda_DATA += Amanda/Amflush.pm
-endif
+# endif
 EXTRA_DIST += Amanda/Amflush.pm
 
-if WANT_SERVER
+# if WANT_SERVER
 # PACKAGE: Amanda::Vault
 Amanda_DATA += Amanda/Vault.pm
-endif
+# endif
 EXTRA_DIST += Amanda/Vault.pm
 
 # PACKAGE: Amanda::CheckDump
@@ -336,19 +336,19 @@ AmandaFetchDump_DATA = \
 	Amanda/FetchDump/Local.pm
 EXTRA_DIST += Amanda/FetchDump.pm $(AmandaFetchDump_DATA)
 
-if WANT_SERVER
+# if WANT_SERVER
 # PACKAGE: Amanda::Curinfo
 Amanda_DATA += Amanda/Curinfo.pm
-endif
+# endif
 EXTRA_DIST += Amanda/Curinfo.pm
 
-if WANT_SERVER
+# if WANT_SERVER
 # PACKAGE: Amanda::Curinfo::*
 AmandaCurinfodir = $(amperldir)/Amanda/Curinfo
 AmandaCurinfo_DATA = \
 	Amanda/Curinfo/Info.pm
 PM_FILES += $(AmandaCurinfo_DATA)
-endif
+# endif
 EXTRA_DIST += \
 	Amanda/Curinfo/Info.pm
 
@@ -357,10 +357,10 @@ EXTRA_DIST += \
 Amanda_DATA += Amanda/Index.pm
 EXTRA_DIST += Amanda/Index.pm
 
-if WANT_SERVER
+# if WANT_SERVER
 # PACKAGE: Amanda::Recovery
 Amanda_DATA += Amanda/Recovery.pm
-endif
+# endif
 EXTRA_DIST += Amanda/Recovery.pm
 
 # PACKAGE: Amanda::Recovery::*
@@ -372,7 +372,7 @@ AmandaRecovery_DATA = \
 PM_FILES += $(AmandaRecovery_DATA)
 EXTRA_DIST += $(AmandaRecovery_DATA)
 
-if WANT_SERVER
+# if WANT_SERVER
 # PACKAGE: Amanda::Chunker::*
 AmandaChunkerdir = $(amperldir)/Amanda/Chunker
 AmandaChunker_DATA = \
@@ -380,13 +380,13 @@ AmandaChunker_DATA = \
 	Amanda/Chunker/Protocol.pm \
 	Amanda/Chunker/Scribe.pm
 PM_FILES += $(AmandaChunker_DATA)
-endif
+# endif
 EXTRA_DIST += \
 	Amanda/Chunker/Controller.pm \
 	Amanda/Chunker/Protocol.pm \
 	Amanda/Chunker/Scribe.pm
 
-if WANT_SERVER
+# if WANT_SERVER
 # PACKAGE: Amanda::Taper::*
 AmandaTaperdir = $(amperldir)/Amanda/Taper
 AmandaTaper_DATA = \
@@ -396,7 +396,7 @@ AmandaTaper_DATA = \
 	Amanda/Taper/Scribe.pm \
 	Amanda/Taper/Worker.pm
 PM_FILES += $(AmandaTaper_DATA)
-endif
+# endif
 EXTRA_DIST += \
 	Amanda/Taper/Controller.pm \
 	Amanda/Taper/Protocol.pm \
@@ -404,7 +404,7 @@ EXTRA_DIST += \
 	Amanda/Taper/Scribe.pm \
 	Amanda/Taper/Worker.pm
 
-if WANT_SERVER
+# if WANT_SERVER
 # PACKAGE: Amanda::Taper::Scan::*
 AmandaTaperScandir = $(amperldir)/Amanda/Taper/Scan
 AmandaTaperScan_DATA = \
@@ -412,26 +412,26 @@ AmandaTaperScan_DATA = \
 	Amanda/Taper/Scan/oldest.pm \
 	Amanda/Taper/Scan/traditional.pm
 PM_FILES += $(AmandaTaperScan_DATA)
-endif
+# endif
 EXTRA_DIST += \
 	Amanda/Taper/Scan/lexical.pm \
 	Amanda/Taper/Scan/oldest.pm \
 	Amanda/Taper/Scan/traditional.pm
 
-if WANT_SERVER
+# if WANT_SERVER
 # PACKAGE: Amanda::DB
 Amanda_DATA += Amanda/DB.pm
 # PACKAGE: Amanda::DB::*
 Amanda_DBdir = $(Amandadir)/DB
 Amanda_DB_DATA =
 PM_FILES += Amanda/DB.pm $(Amanda_DB_DATA)
-endif
+# endif
 EXTRA_DIST += Amanda/DB.pm
 
-if WANT_SERVER
+# if WANT_SERVER
 # PACKAGE: Amanda::DB::Catalog
 Amanda_DB_DATA += Amanda/DB/Catalog.pm
-endif
+# endif
 EXTRA_DIST += Amanda/DB/Catalog.pm
 
 # PACKAGE: Amanda::Xfer
@@ -460,7 +460,7 @@ MAINTAINERCLEANFILES += Amanda/NDMP.c Amanda/NDMP.pm
 endif
 EXTRA_DIST += Amanda/NDMP.swg Amanda/NDMP.pm Amanda/NDMP.pod
 
-if WANT_SERVER
+# if WANT_SERVER
 # PACKAGE: Amanda::XferServer
 libXferServerdir = $(amperldir)/auto/Amanda/XferServer
 libXferServer_LTLIBRARIES = libXferServer.la
@@ -470,13 +470,13 @@ libXferServer_la_LIBADD = amglue/libamglue.la \
 	$(top_builddir)/server-src/libamserver.la
 Amanda_DATA += Amanda/XferServer.pm
 MAINTAINERCLEANFILES += Amanda/XferServer.c Amanda/XferServer.pm
-endif
+# endif
 EXTRA_DIST += Amanda/XferServer.swg Amanda/XferServer.pm Amanda/XferServer.pod
 
-if WANT_SERVER
+# if WANT_SERVER
 # PACKAGE: Amanda::Report
 Amanda_DATA += Amanda/Report.pm
-endif
+# endif
 EXTRA_DIST += Amanda/Report.pm
 
 # PACKAGE: Amanda::Service
@@ -488,16 +488,16 @@ AmandaServicedir = $(amperldir)/Amanda/Service
 AmandaService_DATA =
 AmandaService_server = Amanda/Service/Amidxtaped.pm
 AmandaService_client = Amanda/Service/Restore.pm
-if WANT_SERVER
+# if WANT_SERVER
 AmandaService_DATA += $(AmandaService_server)
-endif
-if WANT_CLIENT
+# endif
+# if WANT_CLIENT
 AmandaService_DATA += $(AmandaService_client)
-endif
+# endif
 PM_FILES += $(AmandaService_DATA)
 EXTRA_DIST += $(AmandaService_server) $(AmandaService_client)
 
-if WANT_SERVER
+# if WANT_SERVER
 # PACKAGE: Amanda::Report::*
 AmandaReportdir = $(amperldir)/Amanda/Report
 AmandaReport_DATA = \
@@ -507,7 +507,7 @@ AmandaReport_DATA = \
 	Amanda/Report/postscript.pm \
 	Amanda/Report/xml.pm
 PM_FILES += $(AmandaReport_DATA)
-endif
+# endif
 EXTRA_DIST += \
 	Amanda/Report/human.pm \
 	Amanda/Report/json.pm \
@@ -629,16 +629,16 @@ EXTRA_DIST += Amanda/Script_App.pm
 Amanda_DATA += Amanda/Extract.pm
 EXTRA_DIST += Amanda/Extract.pm
 
-if WANT_SERVER
+# if WANT_SERVER
 # PACKAGE: Amanda::Holding
 Amanda_DATA += Amanda/Holding.pm
-endif
+# endif
 EXTRA_DIST += Amanda/Holding.pm
 
-if WANT_SERVER
+# if WANT_SERVER
 # PACKAGE: Amanda::Label
 Amanda_DATA += Amanda/Label.pm
-endif
+# endif
 EXTRA_DIST += Amanda/Label.pm
 
 # PACKAGE: Amanda::Message
@@ -678,7 +678,7 @@ EXTRA_DIST += \
        Amanda/Rest/Version.pm \
        Amanda/Rest/Storages/Labels.pm
 
-if WANT_CLIENT
+# if WANT_CLIENT
 # PACKAGE: Amanda::Application
 libApplicationdir = $(amperldir)/auto/Amanda/Application
 libApplication_LTLIBRARIES = libApplication.la
@@ -688,19 +688,19 @@ libApplication_la_LIBADD = amglue/libamglue.la \
 	$(top_builddir)/client-src/libamclient.la
 Amanda_DATA += Amanda/Application.pm
 MAINTAINERCLEANFILES += Amanda/Application.c Amanda/Application.pm
-endif
+# endif
 EXTRA_DIST += Amanda/Application.swg Amanda/Application.pm Amanda/Application.pod
 
 # PACKAGE: Amanda::Script
 Amanda_DATA += Amanda/Script.pm
 EXTRA_DIST += Amanda/Script.pm
 
-if WANT_CLIENT
+# if WANT_CLIENT
 # PACKAGE: Amanda::Application::*
 AmandaApplicationdir = $(amperldir)/Amanda/Application
 AmandaApplication_DATA = Amanda/Application/Zfs.pm
 PM_FILES += $(AmandaApplication_DATA)
-endif
+# endif
 EXTRA_DIST += Amanda/Application/Zfs.pm
 
 ../genversion.h Amanda/Constants.pm.in: $(top_builddir)/config.status Amanda/Constants.pm.in.src
@@ -748,7 +748,7 @@ else
 installcheck-local: thread-check
 endif
 
-if WANT_SERVER
+# if WANT_SERVER
 thread-check: libTests.la
 	$(PERL) -I$(builddir) -I$(builddir)/.libs -I$(srcdir) \
 			-MAmanda::Tests -e 'alarm(10); Amanda::Tests::try_threads' \
@@ -757,4 +757,4 @@ thread-check: libTests.la
 else
 thread-check:
 	@echo "skipping thread check: server component not being built"
-endif
+# endif
