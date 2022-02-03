@@ -20,10 +20,7 @@ systemd_units_in_FILE = \
 else
 systemd_units_in_FILE = \
     amanda-client.socket.in \
-    amanda-client@.service.in \
-    amanda-lclient-unix.socket.in \
-    amanda-lclient-unix@.service.in
-
+    amanda-client@.service.in
 endif
 
 systemd_presetdir = $(systemddir)-preset
