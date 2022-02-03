@@ -12,6 +12,7 @@ templatedir   = $(amanda_dir)/template.d
 server_exampledir    = $(amanda_dir)/example
 client_exampledir    = $(amanda_dir)/example
 lbltempldir   = $(amanda_dir)/example/label-templates
+xinetddir     = $(sysconfdir)/xinetd.d
 
 template_in_FILE = \
 		template.d/advanced.conf.in \
@@ -63,6 +64,22 @@ client_example_DATA = $(client_example_FILE) $(client_example_generated_FILE)
 EXTRA_DIST += $(client_example_FILE) $(client_example_in_FILE)
 DISTCLEANFILES += $(client_example_generated_FILE)
 
+if WANT_SYSTEMD
+    :
+else
+if WANT_SERVER
+    xinetd_in_FILE = xinetd.amandaserver.in
+else
+    xinetd_in_FILE = xinetd.amandaclient.in
+endif
+
+xinetd_generated_FILE = $(xinetd_in_FILE:%.in=%)
+
+xinetd_DATA = $(xinetd_generated_FILE)
+
+EXTRA_DIST += $(xinetd_in_FILE)
+DISTCLEANFILES += $(xinetd_generated_FILE)
+endif
 
 lbltempl_DATA = DLT.ps \
                 EXB-8500.ps \
