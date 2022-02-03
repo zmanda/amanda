@@ -17,7 +17,9 @@ logger() {
 	# ${@} is all the parameters, also known as the message.  Quoting the input
 	# preserves whitespace.
 	msg="`date +'%b %d %Y %T'`: ${@}"
-	echo "${msg}" >> ${LOGFILE}
+        [ -z "$LOGFILE" ] || LOGFILE=/var/log/amanda/install.log
+        touch 2>/dev/null "${LOGFILE}" && echo "${msg}" >> ${LOGFILE}
+        touch 2>/dev/null "${LOGFILE}" || echo "${msg}"
 }
 
 log_output_of() {
@@ -538,8 +540,6 @@ create_dynamic_keys() {
     check_gnupg 2>/dev/null ||
        rm -f ${AMANDAHOMEDIR}/.gnupg/am_key.gpg
 
-    # need to create file separately for Solaris
-    ( set -x; install -m 600 /dev/null ${AMANDAHOMEDIR}/.am_passphrase )
     # get a random passphrase from 60 bytes of binary into full ASCII85
     [ -s ${AMANDAHOMEDIR}/.am_passphrase ] ||
         get_random_ascii_lines_perl 1  |
@@ -570,6 +570,99 @@ create_dynamic_keys() {
         logger "Info: failed to create client amrecover ssh key"
 }
 
+
+#####################################################################
+# shared config restore function
+restore_saved_configs() {
+    local rpmname="${RPM_PACKAGE_NAME}"
+    local cfgs=()
+    local cfgs_saves=()
+    local debname=${rpmname//_/-}
+
+    #
+    # must restore (or clean up) any old saved-config files in order of priority
+    #
+    # all config files in %files section...
+    cfgs=()
+
+    if command -v rpm >/dev/null && rpm -q "$rpmname"  >&/dev/null; then
+        readarray -t cfgs < <(rpm -qc "$rpmname")
+    elif command -v dpkg-query >/dev/null && dpkg-query -W "$debname" >&/dev/null; then
+        readarray -t cfgs < <(dpkg-query --control-show "$debname" conffiles)
+    elif [ $# -gt 1 ]; then
+        :
+    else
+        echo >&2 "ERROR: failed to query config files"
+        return 1
+    fi
+
+    cfgs+=("$@")
+
+    # leave this restore behind if no configs exist anyway...
+    if [ "${#cfgs[@]}" = 0 ]; then
+        return 0
+    fi
+
+    # subst all / with \/
+    homedir_patt="${AMANDAHOMEDIR//\//[/]}"
+
+    # add searches to old home dir
+    if [ -d ${AMANDAHOMEDIR}-1/. ]; then
+        home_cfgs=( $(IFS=$'\n'; grep <<<"${cfgs[*]}" "^${AMANDAHOMEDIR}/") )
+        cfgs+=( "${home_cfgs[@]/#${homedir_patt}/${AMANDAHOMEDIR}-1}" )
+    fi
+
+    # on a new install ... default is installed and edited config files are .rpmsave
+    # otherwise existing config files are preserved (and a .rpmnew is created)
+    # [ordered by priority of best result]
+
+    # dirs are valid config ---if they are not empty---
+    # preserve non-default in-place cfgs as lowest priority updates
+    for i in $(ls -d 2>/dev/null ${cfgs[@]}); do
+        [ -e "$i" -o -L "$i" ] || continue
+        { find "$i" -maxdepth 0 -empty | grep -q .; } && continue
+        mv $i $i.__existing__        # rename to keep cleaned up
+        cfgs_saves+=($i.__existing__)
+    done
+
+    cfgs_saves+=( $(ls -d 2>/dev/null ${cfgs[@]/%/.cfgsave}) )
+    cfgs_saves+=( $(ls -d 2>/dev/null ${cfgs[@]/%/.rpmsave}) )
+    cfgs_saves+=( $(ls -d 2>/dev/null ${cfgs[@]/%/.dpkg-old}) )
+    cfgs_saves+=( $(ls -d 2>/dev/null ${cfgs[@]/%/.dpkg-dist}) )
+    cfgs_saves+=( $(ls -d 2>/dev/null ${cfgs[@]/%/.rpmnew}) )
+    cfgs_saves+=( $(ls -d 2>/dev/null ${cfgs[@]/%/.dpkg-new}) )
+
+    for fnd in ${cfgs_saves[@]}; do
+        { find "$fnd" -maxdepth 0 -empty | grep -q .; } && {
+            rm -f "$fnd" || rmdir "$fnd" 2>/dev/null
+            continue;  # ignore ALL zero-length files or dirs
+        }
+
+        #
+        # wherever it was found, get the target dest
+        #
+        tgt="$fnd"
+        tgt="${tgt/#${homedir_patt}-1/${AMANDAHOMEDIR}}"
+        tgt="${tgt%.cfgsave}"
+        tgt="${tgt%.rpmsave}"
+        tgt="${tgt%.dpkg-old}"
+        tgt="${tgt%.dpkg-dist}"
+        tgt="${tgt%.rpmnew}"
+        tgt="${tgt%.dpkg-new}"
+        tgt="${tgt%.__existing__}"
+
+        [ "$tgt" = "$fnd" ] &&
+           echo >&2 "WARNING: old config file left alone: $fnd "
+        [ "$tgt" != "$fnd" ] && [[ "$fnd" != *.__existing__ ]] &&
+           echo >&2 "NOTE: earlier config file re-used: $tgt "
+        [ "$tgt" != "$fnd" ] && [[ "$fnd" == *.__existing__ ]] &&
+           echo >&2 "NOTE: installed config file retained: $tgt "
+
+        [ -d "$tgt" ] && rmdir "$tgt" 2>/dev/null 
+        [ "$tgt" != "$fnd" ] && mv -fv $fnd $tgt
+    done
+    set +xv
+}
 
 
 # End Common functions
