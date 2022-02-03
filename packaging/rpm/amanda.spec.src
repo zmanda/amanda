@@ -546,9 +546,10 @@ touch %{ROOT_AMANDAHOMEDIR}/.am_passphrase
 )
 
 mv %{ROOT_SHAREDIR}/amanda %{ROOT_SHAREDIR}/amanda-%{amanda_version}
-rm -f %{ROOT_AMANDAHOMEDIR}/example/inetd.conf.amandaclient
 %if %{with systemd}
 rm -f %{ROOT_AMANDAHOMEDIR}/example/*inetd*
+%else
+for i in %{ROOT_SYSCONFDIR}/xinetd.d/*; do f=${i##*/}; mv $i ${i%/*}/${f#xinetd.}; done
 %endif
 
 mkdir -p %{buildroot}%{AMVARDIR}
@@ -647,22 +648,10 @@ check_user_supplemental_group "%{amanda_cligroup}" ||
 %if %{with systemd}
 systemctl -q disable --no-reload %{_my_systemd_units} 2>/dev/null || true
 
-#
-# for upgrade or for install... shut down everything we can find
-#
-readarray UNITS < <(systemctl --no-legend --no-pager -a list-unit-files |sed -E -e '/^amanda/!d' -e $'s,[ \t].*,,' )
-readarray UNITS2 < <(systemctl --no-legend --no-pager -a list-units |sed -E -e '/^amanda/!d' -e $'s,[ \t].*,,' )
-readarray -t UNITS < <(grep -E -e 'amanda-' <<<"${UNITS[*]}${UNITS2[*]}" | grep -v '@')
-
-# try to apply all at once
-xargs -tr systemctl -q stop <<<"${UNITS[*]}" || true
-
-readarray UNITS < <(systemctl --no-legend --no-pager -a list-unit-files |sed -E -e '/^amanda/!d' -e $'s,[ \t].*,,' )
-readarray UNITS2 < <(systemctl --no-legend --no-pager -a list-units |sed -E -e '/^amanda/!d' -e $'s,[ \t].*,,' )
-readarray -t UNITS < <(grep -E -e 'amanda-' <<<"${UNITS[*]}${UNITS2[*]}" | grep -v '@')
-
-# try again if needed.. but act one-by-one [older debian had issues]
-xargs -tr -n1 systemctl -q stop <<<"${UNITS[*]}" || true
+# for upgrade or for install... shut it all down for preinstall
+xargs -r     systemctl -q stop <<<"${_my_systemd_units}" 2>/dev/null || true
+# try again one line each
+xargs -r -n1 systemctl -q stop <<<"${_my_systemd_units}" 2>/dev/null || true
 
 ( set -x; systemctl reset-failed )
 ( set -x; systemctl daemon-reload )
@@ -698,25 +687,11 @@ set +o posix
 ################################## halt old services ###################################
 
 %if %{without systemd}
-check_xinetd "amandaserver"
-case $? in
-	0) backup_xinetd "amandaserver"
-	   install_xinetd "amandaserver"
-	;;
-	1) install_xinetd "amandaserver" ;;
-	2) logger "Xinetd config not installed: either xinetd config is not present or xinetd.d is a file." ;;
-	*) logger "bad return from check_xinetd"; exit 1 ;;
-esac
-
-# Amanda servers should not have the client xinetd installed.
-check_xinetd "amandaclient"
-case $? in
-	0) backup_xinetd "amandaclient" ;;
-esac
-
-check_superserver_running "xinetd"
-[ "$?" = "0" ] && action=restart || action=start
-reload_xinetd $action
+if check_superserver_running "xinetd"; then
+    reload_xinetd restart
+else
+    reload_xinetd start
+fi
 %endif
 
 # put extra dir directive if no libraries found from /usr/lib64
@@ -727,6 +702,8 @@ reload_xinetd $action
 #   bash -xc 'install -m 444 <(echo "/usr/lib64") /etc/ld.so.conf.d/amanda.conf'
 #   ( set -x; ldconfig )
 #fi
+
+restore_saved_configs
 
 # add this path to check for utilities
 fix_security_conf
@@ -815,6 +792,7 @@ set +o posix
 # post un-installation
 #
 ##########################################
+%{script_vars}
 # ------------ Library of functions --------------
 %%COMMON_FUNCTIONS%%
 %%POST_RM_FUNCTIONS%%
@@ -826,31 +804,7 @@ set +o posix
 /sbin/ldconfig
 
 %if %{without systemd}
-# Check for parameter to script (are we upgrading?)
-if [ $1 -gt 0 ]; then
-    # We're upgrading
-    action="upgrade"
-else
-    # We're uninstalling
-    action="uninstall"
-fi
-
-# See http://fedoraproject.org/wiki/Packaging/ScriptletSnippets for the reason
-# we only remove xinetd on uninstall.
-if [ "$action" = "uninstall" ]; then
-    # Check for and remove existing xinetd configs
-    check_xinetd "amandaserver"
-    if [ $? -eq 0 ] ; then
-	rm_xinetd "amandaserver"
-	reload_xinetd
-    fi
-    check_inetd "amandaserver"
-    if [ $? -eq 0 ] ; then
-	rm_inetd "amandaserver"
-	reload_inetd
-    fi
-    echo "Amanda removal log can be found in '$LOGFILE'."
-fi
+reload_xinetd
 %endif
 
 true
@@ -1075,6 +1029,8 @@ true
 %if %{with systemd}
 %{INSTALL_UNITDIR}/amanda-*
 %{INSTALL_UNITDIR}-preset/*
+%else
+%config /etc/xinetd.d/*
 %endif
 
 # manpages
