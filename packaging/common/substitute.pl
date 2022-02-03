@@ -30,7 +30,11 @@ sub get_groupname {
 }
 
 sub get_cligroupname {
-    return $ENV{'AMANDACLIGROUP'} || "tape";
+    return $ENV{'AMANDACLIGROUP'} || "amandabackup";
+}
+
+sub get_tapegroupname {
+    return $ENV{'AMANDATAPEGROUP'} || "tape";
 }
 
 sub get_userhomedir {
@@ -353,6 +357,8 @@ my %replacement_strings_common = (
         "AMANDAUSER" =>          sub { get_username(); },
         "AMANDAUIDNUM" =>        sub { get_useridnum(); },
         "AMANDAGROUP" =>         sub { get_groupname(); },
+        "AMANDACLIGROUP" =>      sub { get_cligroupname(); }
+        "AMANDATAPEGROUP" =>     sub { get_tapegroupname(); }
 
 	"VERSION" =>             sub { read_file("FULL_VERSION"); },
 	"PKG_REV" =>             sub { read_file("PKG_REV"); },
@@ -376,13 +382,11 @@ my %replacement_strings_deb = (
         "ARCH" =>       sub { get_debian_arch(); },
 	# Used in server rules
 	"PERL" =>       sub { $^X; },
-        "AMANDACLIGROUP" => sub { get_cligroupname(); }
 );
 
 # override date
 my %replacement_strings_rpm = (
 	"DATE" => sub { get_date("'+%a %b %d %Y'"); },
-        "AMANDACLIGROUP" => sub { get_cligroupname(); }
 );
 
 # use all defaults
@@ -390,8 +394,8 @@ my %replacement_strings_pkg = (
 	"REL_INSTALL_TOPDIR" =>  sub { substr(get_topdir(),1); },
 	"REL_AMANDAHOMEDIR" =>   sub { substr(get_topdir(),1) . "/amanda"; },
 	"AMANDAHOMEDIR" =>       sub { get_topdir() . "/amanda"; },
-#        "AMANDACLIGROUP" =>     sub { "staff"; },
-        "AMANDACLIGROUP" => 	 sub { get_cligroupname(); },
+        "AMANDACLIGROUP" =>     sub { "staff"; },
+        "AMANDATAPEGROUP" => 	 sub { "sys"; },
 	"SYSCONFDIR" =>		 sub { get_topdir() . "/etc"; }
 );
 

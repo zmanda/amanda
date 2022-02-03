@@ -110,6 +110,7 @@
 %define amanda_user %%AMANDAUSER%%
 %define amanda_group %%AMANDAGROUP%%
 %define amanda_cligroup %%AMANDACLIGROUP%%
+%define amanda_tapegroup %%AMANDATAPEGROUP%%
 
 %define udpportrange "800,840"
 %define tcpportrange "11000,11040"
@@ -643,6 +644,8 @@ check_user_group "%{amanda_group}" ||
    add_group "%{amanda_group}"
 check_user_supplemental_group "%{amanda_cligroup}" ||
    add_group "%{amanda_cligroup}"
+check_user_supplemental_group "%{amanda_tapegroup}" ||
+   add_group "%{amanda_tapegroup}"
 
 %if %{with systemd}
 systemctl -q disable --no-reload %{_my_systemd_units} 2>/dev/null || true
