@@ -19,21 +19,22 @@
 
 %define rpmbuild_version  %(rpmbuild --version | tr -dc 0-9. | tr . ' ' | xargs -l printf "%03d.%03d.%03d")
 
+%bcond_without systemd
 
 %global build_srpm 0
 %{?srpm_only: %define build_srpm 1}
 
 %define _my_systemd_units \\\
-       __sub-amanda-client.socket
+       amanda-client.socket
 
 %global _buildshell /bin/bash
 
 %undefine _python_bytecompile_errors_terminate_build
 %undefine _missing_build_ids_terminate_build
 %define _debugsource_packages 1
-# %%undefine _use_internal_dependency_generator
+# @undefine _use_internal_dependency_generator
 # Null __perl_requires to prevent perl module auto requires generation.
-# %%define __perl_requires %%{nil}
+# @define __perl_requires @{nil}
 
 # use a python byte compiler
 %if "%{rpmbuild_version}" > "004.015.999"
@@ -194,15 +195,13 @@ Requires(pre): %{_ldsoconfdir}
 Requires: /sbin/ldconfig
 Requires: /usr/bin/gpg-agent
 Requires: /usr/bin/gpg2
-# not available on SuSE
-# Requires: %{_unitdir_compat}
+# SuSE has no package owner
+# Requires: @{_unitdir_compat}
 Requires: %{_logrotatedir}
 Requires: coreutils
-Requires: gawk
 Requires: gettext
 Requires: grep
 Requires: gnuplot
-# Requires: xinetd
 Requires: curl >= 7.10.0
 Requires: openssl
 %if "%{dist}" == "suse"
@@ -225,7 +224,11 @@ Recommends: mtx
 %endif
 # NOTE: mailx missing will make errors in logs, but
 #      configuration could override these
+%if %{with systemd}
 Requires: /usr/bin/systemctl
+%else
+Requires: /etc/xinetd.d
+%endif
 Requires: tar >= %{tarver}
 Requires: %glib2_pkg_name >= %glib2_build
 Requires: /etc/services
@@ -321,8 +324,6 @@ cd %{BUILD_TOPDIR}
 [ -s Makefile ] && make distclean || true
 [ -s Makefile ] && make clean || true
 
-./autochk || exit -1   # confirm modules are properly set up
-
 cat >./rpm-env.sh /dev/null - <<CLEAR_DEFAULT
    unset CONFIG_LDPATH
    unset AMPERL
@@ -369,11 +370,6 @@ true
 #########################################
 cd %{BUILD_TOPDIR}
 
-libtoolize -i
-
-# FIXME: force including *all* perl into client/server
-sed -i -e 's,^if *WANT_SERVER,if WANT_CLIENT,' perl/Makefile.am
-
 #
 # install needed environment
 #
@@ -401,6 +397,12 @@ export GCC_TARGET=$(gcc -dumpmachine | tr -d '\n')
 ##    GNUPLOT MAILER REALPATH
 ##    SSH SORT UNCOMPRESS_PATH
 ##    MTX
+
+%if %{with systemd}
+   systemd_with=with
+%else
+   systemd_with=without
+%endif
 
 ./configure \
         CFLAGS="%{optflags} -g -pipe -O2 -std=c11" \
@@ -456,6 +458,7 @@ export GCC_TARGET=$(gcc -dumpmachine | tr -d '\n')
         --enable-manpage-build \
 	--enable-rpath        \
         --with-xsltproc=$(command -v xsltproc) \
+        --${systemd_with}-systemd \
         --without-server
 
 make -j`nproc`
@@ -485,12 +488,9 @@ rm -rf %{buildroot}
 make -j1 DESTDIR=%{buildroot} install
 ################################################ done with source make-install
 
-rm -f %{buildroot}%{INSTALL_UNITDIR}/__sub-amanda-server*
-rm -f %{buildroot}%{INSTALL_UNITDIR}/__sub-amanda-lserver*
-
 # to hold a space in case we need the path /usr/lib64 added!
-install -D -m 644 /dev/null \
-         %{buildroot}%{_ldsoconfdir}/amanda.conf
+# install -D -m 644 /dev/null \
+#          %{buildroot}%{_ldsoconfdir}/amanda.conf
 install -D -m 644 system-scripts/amanda-logrotate \
          %{buildroot}%{_logrotatedir}/amanda
 
@@ -523,11 +523,12 @@ rm -f %{ROOT_AMLIBEXECDIR}/amplot.gp
 
 %{?AMLIBEXECDIR_COMPAT: ln -sf %{AMLIBEXECDIR} %{AMLIBEXECDIR_COMPAT}}
 
-find %{buildroot} -name \*.la -delete -o -name \*.a -delete
+find %{buildroot} -name \*.la -delete -o -name \*.a -delete -o -type l -name \*.so -delete
 
 ##################
 # install/shift misc files in place
 ##################
+# preserve all these
 mkdir -p %{ROOT_AMANDAHOMEDIR}/{gnutar-lists,.gnupg,.ssh,tmp}
 echo "%{amanda_version_info}" > %{ROOT_AMANDAHOMEDIR}/amanda-client-release
 
@@ -540,19 +541,14 @@ touch %{ROOT_AMANDAHOMEDIR}/.am_passphrase
 )
 
 mv %{ROOT_SHAREDIR}/amanda %{ROOT_SHAREDIR}/amanda-%{amanda_version}
+%if %{with systemd}
 rm -f %{ROOT_AMANDAHOMEDIR}/example/*inetd*
+%else
+for i in %{ROOT_SYSCONFDIR}/xinetd.d/*; do f=${i##*/}; mv $i ${i%/*}/${f#xinetd.}; done
+%endif
 
 mkdir -p %{buildroot}%{AMVARDIR}
 mkdir -p %{ROOT_AMCONFDIR}
-ln -sf $(basename %{ROOT_AMCONFDIR}) %{buildroot}%{AM_CONFDIR_LNK}
-
-# handle installs that put items into /etc/amanda directly
-if [ ! -L %{AM_CONFDIR_LNK} -a -d %{AM_CONFDIR_LNK}/. ];
-then
-   [ -d %{AM_CONFDIR} ]         || mv %{AM_CONFDIR_LNK} %{AM_CONFDIR} || true
-   [ ! -d %{AM_CONFDIR_LNK}/. ] || mv %{AM_CONFDIR_LNK}/* %{AM_CONFDIR} || true
-   [ ! -d %{AM_CONFDIR_LNK}/. ] || rmdir %{AM_CONFDIR_LNK} || true
-fi
 
 mkdir -p %{ROOT_LOGDIR}
 mkdir -p %{ROOT_LOGDIR}/client
@@ -617,17 +613,20 @@ set +o posix
 # pre installation
 #
 ##########################################
+%{script_vars}
 logger "Preinstall for %{name}-%{amanda_version_info} on $(date -R)"
 
 # all owned by root
-[ ! -e /usr/bin/bash -a -x /bin/bash ] &&
-   ln -sf /bin/bash /usr/bin/bash
-[ ! -e /usr/bin/sh -a -x /bin/sh ] &&
-   ln -sf /bin/sh /usr/bin/sh
-[ ! -e /usr/lib64 -a -d /lib64 ] &&
-   ln -sf /lib64 /usr/lib64
+#[ ! -e /usr/bin/bash -a -x /bin/bash ] &&
+#   ln -sf /bin/bash /usr/bin/bash
+#[ ! -e /usr/bin/sh -a -x /bin/sh ] &&
+#   ln -sf /bin/sh /usr/bin/sh
+#[ ! -e /usr/lib64 -a -d /lib64 ] &&
+#   ln -sf /lib64 /usr/lib64
+#[ ! -e /lib/systemd/system -a -d /usr/lib/systemd/system ] &&
+#   ln -sf /usr/lib/systemd /lib
+# must block use of /usr/lib/systemd/system because its not universal enough
 
-%{script_vars}
 # ------------ Library of functions --------------
 %%COMMON_FUNCTIONS%%
 %%PRE_INST_FUNCTIONS%%
@@ -635,26 +634,23 @@ logger "Preinstall for %{name}-%{amanda_version_info} on $(date -R)"
 
 logger "Preparing to install: %{amanda_version_info} on $(date -R)"
 
-AMANDATES=%{AMANDATES}
 create_user
-check_user_group "${amanda_group}" ||
-   add_group "${amanda_group}"
+check_user_group "%{amanda_group}" ||
+   add_group "%{amanda_group}"
 check_user_supplemental_group "%{amanda_cligroup}" ||
    add_group "%{amanda_cligroup}"
 
-#
-# for upgrade or for install... shut down everything we can find
-#
-readarray UNITS < <(systemctl --no-legend --no-pager -a list-unit-files |sed -E -e '/^__sub|^run/!d' -e $'s,[ \t].*,,' )
-readarray UNITS2 < <(systemctl --no-legend --no-pager -a list-units |sed -E -e '/^__sub|^run/!d' -e $'s,[ \t].*,,' )
-readarray UNITS < <(grep -E -e '__sub-(zman|zmc|amanda|aee)-' -e '^run-zmanda' <<<"${UNITS[*]}${UNITS2[*]}" )
+%if %{with systemd}
+systemctl -q disable --no-reload %{_my_systemd_units} 2>/dev/null || true
 
-# prevent restart
-xargs -tr systemctl -q disable --no-reload <<<"${UNITS[*]}" || true
-xargs -tr systemctl -q stop <<<"${UNITS[*]}" || true
+# for upgrade or for install... shut it all down for preinstall
+xargs -r     systemctl -q stop <<<"${_my_systemd_units}" 2>/dev/null || true
+# try again one line each
+xargs -r -n1 systemctl -q stop <<<"${_my_systemd_units}" 2>/dev/null || true
 
 ( set -x; systemctl reset-failed )
 ( set -x; systemctl daemon-reload )
+%endif
 
 logger "Preinstall done."
 
@@ -671,7 +667,6 @@ set +o posix
 # post installation
 #
 ##########################################
-AMANDATES=%{AMANDATES}
 
 %{script_vars}
 # ---------- Library of functions ------------
@@ -680,10 +675,19 @@ AMANDATES=%{AMANDATES}
 # ---------- End Library of functions ------------
 
 ################################## halt old services ###################################
+%if %{with systemd}
 ( set -x; systemctl -q disable --no-reload %{_my_systemd_units} 2>/dev/null ) || true
 ( set -x; systemctl -q stop %{_my_systemd_units} 2>/dev/null ) || true
+%endif
 ################################## halt old services ###################################
 
+%if %{without systemd}
+if check_superserver_running "xinetd"; then
+    reload_xinetd restart
+else
+    reload_xinetd start
+fi
+%endif
 
 # put extra dir directive if no libraries found from /usr/lib64
 #touch /etc/ld.so.conf.d/amanda.conf
@@ -693,6 +697,8 @@ AMANDATES=%{AMANDATES}
 #   bash -xc 'install -m 444 <(echo "/usr/lib64") /etc/ld.so.conf.d/amanda.conf'
 #   ( set -x; ldconfig )
 #fi
+
+restore_saved_configs
 
 # add this path to check for utilities
 fix_security_conf
@@ -708,15 +714,17 @@ chown -R %{amanda_user}:%{amanda_group} %{AM_CONFDIR}
 command -v semanage >/dev/null &&
     semanage fcontext -a -f s -t amanda_data_t -r 's0' '/var/lib/amanda/amandad.sock' || true
 
+%if %{with systemd}
 ( set -x; systemctl -q daemon-reload ) || true
 ( set -x; systemctl -q disable --now %{_my_systemd_units} ) || true
 
-shutdown_xinetd_socket __sub-amanda-client.socket
+shutdown_xinetd_socket amanda-client.socket
 
 ( set -x; systemctl preset %{_my_systemd_units} ) || true
 
 # only restart those already running...
 ( set -x; systemctl try-restart %{_my_systemd_units} )
+%endif
 
 logger "Amanda Community Client installation complete."
 
@@ -745,6 +753,7 @@ bash -c 'read -t10 delay < <(%{SBINDIR}/amcleanup -vk  --note "critical shutdown
 bash -c 'read -t10 delay < <(%{SBINDIR}/amcleanup -vk  --note "second critical shutdown attempt" 2>&1)'
 
 set +e
+%if %{with systemd}
 ################################## halt old services ###################################
 ( set -x; systemctl -q disable --no-reload %{_my_systemd_units} ) || true
 ( set -x; systemctl -q stop %{_my_systemd_units} ) || true
@@ -756,13 +765,14 @@ done
 
 ( set -x; systemctl -q reset-failed ) || true
 
-units="$(systemctl -a --no-legend --no-pager list-units '__sub-amanda-client@*' ) "
+units="$(systemctl -a --no-legend --no-pager list-units 'amanda-client@*' ) "
 units="$(sed <<<"$units" -e 's,^[^a-z_]*,,' -e 's, .*,,' )"
 xargs -tr systemctl stop <<<"$units" || true
 
 ( set -x; systemctl -q reset-failed ) || true
 ( set -x; systemctl -q daemon-reload ) || true
 ################################## halt old services ###################################
+%endif
 
 true
 
@@ -777,11 +787,21 @@ set +o posix
 # post un-installation
 #
 ##########################################
+%{script_vars}
+# ------------ Library of functions --------------
+%%COMMON_FUNCTIONS%%
+%%POST_RM_FUNCTIONS%%
+# ---------- End Library of functions ------------
 
+%if %{with systemd}
 ( set -x; systemctl -q daemon-reload ) || true
+%endif
 /sbin/ldconfig
 
-echo "Amanda removal log can be found in '$LOGFILE'."
+%if %{without systemd}
+reload_xinetd
+%endif
+
 true
 
 
@@ -894,9 +914,11 @@ true
 %dir %{AMANDAHOMEDIR}
 %dir %attr(1750,%{amanda_user},%{amanda_group}) %{AMANDAHOMEDIR}/tmp
 %dir %{AM_CONFDIR}
-%{AM_CONFDIR_LNK}
 %dir %{AMVARDIR}
 
+# @dir @{AMANDAHOMEDIR}/staging
+# @dir @{AMANDAHOMEDIR}/vtapes
+# @dir @{AMANDAHOMEDIR}/disk
 %dir %attr(0700,%{amanda_user},%{amanda_group}) %{AMANDAHOMEDIR}/.gnupg
 %dir %attr(0700,%{amanda_user},%{amanda_group}) %{AMANDAHOMEDIR}/.ssh
 %dir %attr(0770,%{amanda_user},%{amanda_group}) %{AMANDAHOMEDIR}/gnutar-lists
@@ -928,6 +950,8 @@ true
 
 %defattr(0600,%{amanda_user},%{amanda_group},0700)
 # prefer any old file but preserve new update..
+# @ghost @{AMANDAHOMEDIR}/amandad.sock
+# @ghost @{AMANDAHOMEDIR}/amanda-rest.sock
 
 %config(noreplace) %{AMANDAHOMEDIR}/.gnupg/*
 #.gnupg/am_key.gpg
@@ -953,8 +977,12 @@ true
 ######################
 %defattr(0444,root,root,0555)
 #
-%{INSTALL_UNITDIR}/__sub-amanda-*
+%if %{with systemd}
+%{INSTALL_UNITDIR}/amanda-*
 %{INSTALL_UNITDIR}-preset/*
+%else
+%config /etc/xinetd.d/*
+%endif
 
 # manpages
 %{MANDIR}/man5/am*
@@ -967,7 +995,7 @@ true
 %{SHAREDIR}/amanda-%{amanda_version}
 # one-possibly-removed stub config file
 %{_logrotatedir}/amanda
-# %{_ldsoconfdir}/amanda*
+# @{_ldsoconfdir}/amanda*
 
 # --- ChangeLog
 
