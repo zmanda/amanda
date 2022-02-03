@@ -314,7 +314,7 @@ if (defined($ENV{'pkg_name'})) {
 
 # Check environment to see if it's something else.
 #
-#
+# NOTE: "//" is NOT compatible with perl 5.10..
 if ( ($ENV{'pkg_type'} || 0) && $ENV{'pkg_type'} !~ m{/} ) {
     $pkg_type = $ENV{"pkg_type"};
     $pkg_type =~ s/sun-pkg/pkg/;
