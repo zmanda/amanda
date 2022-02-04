@@ -1,18 +1,16 @@
 #!/usr/bin/env bash
 
-# Buildpkg is designed to be used by both buildbot (to automate deb production)
-# and by J Random User (to build a deb for kicks).
 #
-# VERSION: the identifier for the amanda determined from subversion
+# VERSION: the identifier for the amanda determined from git
 #	information.  
 # PKG_NAME_VER: the full version name of amanda we're working on.  This will
-#	become part of the deb name.  {PKG_NAME_VER} gets substituted into
-#	various package files.  
+#	become part of the sun name.  {PKG_NAME_VER} gets substituted
 #
 
 buildtype=${1:-both}
 shift
 
+BUILDVER="4.0"
 # set the var buildpkg_dir as well
 . ./packaging/common/build_functions.sh
 . ./packaging/common/set_zmanda_version
@@ -23,21 +21,38 @@ shift
 
 export PATH
 export PKG_DIR=$(realpath .)
-
 mach=`uname -m`
-# build only if not blocked by arch or directive
-if [ "$buildtype" = "server" -o "$buildtype" = both ] && [ $mach = "x86_64" ]; then
-    # debian must be cleared-and-created twice
-    gen_pkg_build_config "$buildpkg_dir/server"
+
+do_sun_package() {
+    gen_pkg_build_config "$@"
     gen_pkg_environ
     do_package "${PKG_NAME_VER}"
-fi
+}
 
-if [ "$buildtype" = "client" -o "$buildtype" = both ]; then
-    # debian must be cleared-and-created twice
-    gen_pkg_build_config "$buildpkg_dir/client"
-    gen_pkg_environ
-    do_package "${PKG_NAME_VER}"
-fi
+set -e
 
-exit 0
+case "$buildtype,$mach,$BUILDVER" in
+#   both,x86_64,*)
+#        do_sun_package "$buildpkg_dir/server${BUILDVER}"
+#        do_sun_package "$buildpkg_dir/client${BUILDVER}"
+#        ;;
+
+#   server,x86_64,*)
+#        do_sun_package "$buildpkg_dir/server${BUILDVER}"
+#        ;;
+#
+   client,*,*) ;&
+   both,*,*)
+	( export STACK_BRANCH=none
+          do_sun_package "$buildpkg_dir/client${BUILDVER}"
+	)
+        ;;
+
+#   platform,x86_64,*)
+#       do_sun_package "$buildpkg_dir/zmanda-platform${BUILDVER}.spec"
+#       ;;
+
+   *) echo "ERROR: cannot build combination of $buildtype-$mach-${BUILDVER:-3.6}" >&2; exit -1 ;;
+esac
+
+true
