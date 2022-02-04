@@ -357,8 +357,8 @@ my %replacement_strings_common = (
         "AMANDAUSER" =>          sub { get_username(); },
         "AMANDAUIDNUM" =>        sub { get_useridnum(); },
         "AMANDAGROUP" =>         sub { get_groupname(); },
-        "AMANDACLIGROUP" =>      sub { get_cligroupname(); }
-        "AMANDATAPEGROUP" =>     sub { get_tapegroupname(); }
+        "AMANDACLIGROUP" =>      sub { get_cligroupname(); },
+        "AMANDATAPEGROUP" =>     sub { get_tapegroupname(); },
 
 	"VERSION" =>             sub { read_file("FULL_VERSION"); },
 	"PKG_REV" =>             sub { read_file("PKG_REV"); },
@@ -411,8 +411,8 @@ open my $src, "<", $ARGV[0] or die "could not read $ARGV[0]: $!";
 open my $dst, ">", $ARGV[1] or die "could not write $ARGV[1]: $!";
 select $dst;
 
-my $src_filename = readlink("/proc/self/fd/". fileno($src));
-my $dst_filename = readlink("/proc/self/fd/". fileno($dst));
+my $src_filename = readlink("/proc/self/fd/". fileno($src)) || $ARGV[0];
+my $dst_filename = readlink("/proc/self/fd/". fileno($dst)) || $ARGV[1];
 
 my $line;
 my $pkg = "";

@@ -126,7 +126,7 @@ check_gnupg 2>/dev/null ||
 
 # get a random passphrase from 60 bytes of binary into full ASCII85
 [ -s %%AMANDAHOMEDIR%%/.am_passphrase ] ||
-    get_random_ascii_lines 1  | install -m 600 /dev/stdin %%AMANDAHOMEDIR%%/.am_passphrase
+    get_random_ascii_lines_perl 1  | install -m 600 /dev/stdin %%AMANDAHOMEDIR%%/.am_passphrase
 
 # create am_key.gpg from the new/old .am_passphrase if needed
 [ -s %%AMANDAHOMEDIR%%/.gnupg/am_key.gpg ] ||

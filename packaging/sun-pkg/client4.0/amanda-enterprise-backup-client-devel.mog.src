@@ -1,0 +1,13 @@
+set name=pkg.fmri value=betsol/amanda-enterprise/backup-client-devel@4.0,4.0-2002
+set name=pkg.human-version      value="%%VERSION%%"
+set name=pkg.summary            value="Amanda Enterprise Backup Client Devel Files"
+set name=variant.arch 		value="i386"
+set name=info.classification 	value=org.opensolaris.category.2008:System/Services
+set name=pkg.description 	\
+	value="File is only for delivery of compiled development libraries and includes for C"
+
+<transform file dir -> default owner root>
+<transform file dir -> default group bin>
+<transform file -> default mode 0444>
+<transform dir -> default mode 0755>
+

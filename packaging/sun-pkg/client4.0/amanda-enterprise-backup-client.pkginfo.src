@@ -1,0 +1,21 @@
+PKG="ZMANae-client"
+ARCH="%%ARCH%%"
+VERSION="%%VERSION%%-%%PKG_REV%%"
+CATEGORY="system"
+VENDOR="Zmanda, http://www.zmanda.com/"
+EMAIL="info@zmanda.com"
+BASEDIR="/"
+CLASSES="none"
+MAXINST=1
+INTONLY=1
+NAME="Amanda Enterprise Backup Client from Zmanda"
+DESC="Amanda is the leading Open-Source Backup and Archiving software.
+
+This package contains the Amanda enterprise client.
+The amanda_enterprise-backup_client package needs to be installed on every
+system that is being backed up.
+
+Documentation: http://network.zmanda.com/
+               Click on "Documentation" -> "Enterprise Edition"
+Support: http://network.zmanda.com/
+

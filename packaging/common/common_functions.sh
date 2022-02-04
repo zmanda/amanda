@@ -82,7 +82,7 @@ check_launchd() {
 }
 
 check_smf() {
-    local svc="${1:-amanda}"
+    local svc="${1:-amandaclient}"
     # Only for solaris! Check if the given service is active
     # it does not notice server vs client entries.
     log_output_of svcs -H "*${svc}*" || { \

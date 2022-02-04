@@ -104,17 +104,33 @@ get_yearly_tag() {
 detect_pkgdirs_top() {
     local calldepth=$(( ${#BASH_SOURCE[@]} - 1 ))
     local topcall=${BASH_SOURCE[${calldepth}]}
+    local localpkg_suffix=
+    local pkgsdirs_toptest=
 
-    # get a no-symlink path to file or symlink
-    topcall="$(realpath ${topcall%/*})/${topcall##*/}"
-
+    # try a smart default for a standard autochk dir
     declare -g pkgdirs_top=$src_root/packaging
 
-    if [ -L $pkgdirs_top/common ] &&
-           [ -f $pkgdirs_top/0_vars.sh ] &&
-           [[ ${topcall} == $(realpath -e $src_root/packaging)* ]];
+    pkgdirs_toptest="$(realpath -e ${pkgdirs_top})"
+
+    # reform top of path with realpath
+    if [ -d $pkgdirs_toptest ] && [[ "/$topcall" == */packaging/* ]]; then
+        topcall="${topcall#*/packaging/}"
+        topcall=${pkgdirs_toptest}/${topcall}
+    fi
+
+    # must get a valid pkg_type immediately to proceed on
+    if [ -z "$pkg_type" -a -x $pkgdirs_top/common/substitute.pl ]; then
+        localpkg_suffix=$(cd $src_root; $pkgdirs_top/common/substitute.pl <(echo %%PKG_SUFFIX%%) /dev/stdout);
+        declare -g pkg_type=${localpkg_suffix##*.}
+    fi
+
+    # we are calling functions under the directory?
+    if [ -d $pkgdirs_toptest/../common ] && 
+           [ -f $pkgdirs_toptest/0_vars.sh ] && 
+           [[ ${topcall} == ${pkgdirs_toptest}* ]];
     then
-        declare -g pkgdirs_top=$(realpath -e $src_root/packaging)
+        declare -g pkgdirs_top=${pkgdirs_toptest}
+
         # we,re done for now...
         return 0
     fi
@@ -132,21 +148,24 @@ detect_pkgdirs_top() {
         return 1
     fi
 
+    # script is real but not a clear directory location
+
     local d="${topcall%/*}"
 
+    # top common directory shows how deep the script is
     [ ! -L $d/../../../common -a -d $d/../../../common ] && d+=/../../..
     [ ! -L $d/../../common -a -d $d/../../common ] && d+=/../..
     [ ! -L $d/../common -a -d $d/../common ] && d+=/..
+    [ $d -ef $d/../common ] && d+=/..
 
     # narrow choices with calling script.s path, if possible
     declare -g pkgdirs_top="$(realpath -e $d)"
 
-    if [ -z "$pkg_type" -a -x $pkgdirs_top/common/substitute.pl ]; then
-        localpkg_suffix=$(cd $src_root; $pkgdirs_top/common/substitute.pl <(echo %%PKG_SUFFIX%%) /dev/stdout);
+    # must get a valid pkg_type immediately to proceed on
+    if [ -z "$pkg_type" -a -x $pkgdirs_top/common_z/substitute.pl ]; then
+        localpkg_suffix=$(cd $src_root; $pkgdirs_top/common_z/substitute.pl <(echo %%PKG_SUFFIX%%) /dev/stdout);
         declare -g pkg_type=${localpkg_suffix##*.}
     fi
-
-    localpkg_suffix=$(cd $src_root; $pkgdirs_top/common/substitute.pl <(echo %%PKG_SUFFIX%%) /dev/stdout);
 
     # if script came from below the base pkgdirs_top ...
     if [[ ${topcall%/*} == $pkgdirs_top/$pkg_type ]] && [ -d ${topcall%/*} ]; then
@@ -157,18 +176,15 @@ detect_pkgdirs_top() {
 
 detect_platform_pkg_type() {
     local presets
-    local localpkg_suffix
 
     [ -n "$pkg_name" ] && presets+="declare -g pkg_name=\"$pkg_name\";"
     # [ -n "$repo_name" ] && presets+="declare -g repo_name=\"$repo_name\";"
     [ -n "$pkg_type" ] && presets+="declare -g pkg_type=\"$pkg_type\";"
 
-    # overwrite pkg_type if buildpkg_dir is present...
-    if [ -d "$buildpkg_dir" ] && [[ $buildpkg_dir == $pkgdirs_top/$pkg_type ]]; then
-        :
-    elif [ -d "$buildpkg_dir" ] && [[ $buildpkg_dir == $pkgdirs_top/* ]]; then
-        pkg_type=${buildpkg_dir:${#pkgdirs_top}}
-        declare -g pkg_type=${pkg_type#/}
+    # overwrite pkg_type if buildpkg_dir is present
+    if [ -d "$buildpkg_dir" -a -f "$buildpkg_dir/0_vars.sh" ] && [[ $buildpkg_dir/.. -ef $pkgdirs_top ]]; then
+        # reset this once to a non-normal location
+        declare -g pkg_type=${buildpkg_dir##*/}
     fi
 
     case $pkg_type in
@@ -189,7 +205,7 @@ detect_platform_pkg_type() {
                        buildpkg_dir=$pkgdirs_top/whl \
                        pkg_bldroot=$src_root/build
             ;;
-       (*) exit 100 ;;
+       (*) die "cannot find pkg_type in time to set up build configs" ;;
     esac
 
     # gather vars for current settings
@@ -436,8 +452,8 @@ gen_pkg_environ() {
     set_zmanda_version HEAD
 
     tmp=$(mktemp -d)
-    #rm -f $tmp/${PKG_NAME_VER}
-    #ln -sf ${PKG_DIR} $tmp/${PKG_NAME_VER}
+    rm -f $tmp/${PKG_NAME_VER}
+    ln -sf ${PKG_DIR} $tmp/${PKG_NAME_VER}
 
     [ -d $pkg_bldroot ] ||
     	die "missing call to gen_pkg_build_config() or missing $pkg_bldroot directory"

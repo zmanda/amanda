@@ -1,0 +1,15 @@
+PKG="ZMANae-client-devel"
+ARCH="%%ARCH%%"
+VERSION="%%VERSION%%-%%PKG_REV%%"
+CATEGORY="system"
+VENDOR="Zmanda, http://www.zmanda.com/"
+EMAIL="info@zmanda.com"
+BASEDIR="/"
+CLASSES="none"
+MAXINST=1
+INTONLY=1
+NAME="Amanda Enterprise Backup Client-Devel files from Zmanda"
+DESC="Amanda is the leading Open-Source Backup and Archiving software.
+
+Files here are needed for coordinating the open-source components with any other add-ons or plugins.
+
