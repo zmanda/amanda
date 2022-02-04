@@ -162,8 +162,8 @@ detect_pkgdirs_top() {
     declare -g pkgdirs_top="$(realpath -e $d)"
 
     # must get a valid pkg_type immediately to proceed on
-    if [ -z "$pkg_type" -a -x $pkgdirs_top/common_z/substitute.pl ]; then
-        localpkg_suffix=$(cd $src_root; $pkgdirs_top/common_z/substitute.pl <(echo %%PKG_SUFFIX%%) /dev/stdout);
+    if [ -z "$pkg_type" -a -x $pkgdirs_top/common/substitute.pl ]; then
+        localpkg_suffix=$(cd $src_root; $pkgdirs_top/common/substitute.pl <(echo %%PKG_SUFFIX%%) /dev/stdout);
         declare -g pkg_type=${localpkg_suffix##*.}
     fi
 
