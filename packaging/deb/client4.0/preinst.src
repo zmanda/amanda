@@ -1,5 +1,4 @@
 #!/bin/bash
-set +o posix
 ##########################################
 #
 # pre installation
@@ -7,11 +6,9 @@ set +o posix
 # pre installation
 #
 ##########################################
-PRE_INST_ARGS=("$@")
 ###############################################################
 # needed contents are brought from zmanda-platform-shared
 ###############################################################
-logger "Preinstall for amanda_enterprise-"Amanda Enterprise Edition - version %%VERSION%%" on $(date -R)"
 
 # all owned by root
 [ ! -e /usr/bin/bash -a -x /bin/bash ] &&
@@ -24,68 +21,36 @@ logger "Preinstall for amanda_enterprise-"Amanda Enterprise Edition - version %%
 #    ln -sf /usr/lib/systemd /lib
 # must block use of /usr/lib/systemd/system because its not universal enough
 
-# always delete any **broken** symlinks in the systemd tree [fine]
-find /etc /usr/lib/systemd/system /usr/lib/*.d \
-   -type l -lname /usr/lib/systemd/system/\* \
-   -not -exec test -e {} \; -delete
-
-
-    amanda_user=%%AMANDAUSER%%; 
-    amanda_group=%%AMANDAGROUP%%; 
-    AMANDAHOMEDIR=%%AMANDAHOMEDIR%%; 
-    os=Linux; 
-    dist=%%PKG_DIST%%; 
-    LOGDIR=%%LOGDIR%%; 
-    LOGFILE=$LOGDIR/install.log; 
-    INSTALL_LOG=$LOGDIR/install.log; 
-    INSTALL_TOPDIR=%%INSTALL_TOPDIR%%; 
-    SYSCONFDIR=/etc; 
-    SBINDIR=/usr/sbin; 
-    AMLIBEXECDIR=/usr/lib64/amanda; 
-    export PYTHON=/usr/bin/python3; 
-    export OPATH="${PATH}"; 
-    export PATH="/opt/csw/gnu:${PATH}:/sbin:/usr/sbin:/opt/csw/bin"; 
-    install -m 755 -o %%AMANDAUSER%% -g %%AMANDAGROUP%% -d %%LOGDIR%% 2>/dev/null || true
 # ------------ Library of functions --------------
 %%COMMON_FUNCTIONS%%
 %%PRE_INST_FUNCTIONS%%
-%%PKG_STATE_FUNCTIONS%%
 # ---------- End Library of functions ------------
 
-logger "Preparing to install: "Amanda Enterprise Edition - version %%VERSION%%""
+logger "Preparing to install: "Amanda Enterprise Edition - version %%VERSION%%" on $(date -R)"
 
-AMANDATES=%%AMANDAHOMEDIR%%/amandates
 create_user
-check_user_group "${amanda_group}" ||
-   add_group "${amanda_group}"
-check_user_supplemental_group "%%AMANDACLIGROUP%%" ||
-   add_group "%%AMANDACLIGROUP%%"
+check_user_group "%%AMANDAGROUP%%" ||
+   add_group "%%AMANDAGROUP%%"
 
-#
-# for upgrade or for install... shut down everything we can find
-#
-readarray UNITS < <(systemctl --no-legend --no-pager -a list-unit-files |sed -E -e '/^__sub|^run/!d' -e $'s,[ \t].*,,' )
-readarray UNITS2 < <(systemctl --no-legend --no-pager -a list-units |sed -E -e '/^__sub|^run/!d' -e $'s,[ \t].*,,' )
-readarray UNITS < <(grep -E -e '__sub-(zman|zmc|amanda|aee)-' -e '^run-zmanda' <<<"${UNITS[*]}${UNITS2[*]}" )
+systemctl -q disable --no-reload \
+       __sub-amanda-client.socket 2>/dev/null || true
 
-# prevent restart
-xargs -tr systemctl -q disable --no-reload <<<"${UNITS[*]}" || true
-xargs -tr systemctl -q stop <<<"${UNITS[*]}" || true
+# for upgrade or for install... shut it all down for preinstall
+xargs -r     systemctl -q stop <<<"${_my_systemd_units}" 2>/dev/null || true
+# try again one line each
+xargs -r -n1 systemctl -q stop <<<"${_my_systemd_units}" 2>/dev/null || true
 
 ( set -x; systemctl reset-failed )
 ( set -x; systemctl daemon-reload )
 
-if [ ! -L /etc/amanda -a -d /etc/amanda/. ]; then
-    i=1
-    rm -rf /etc/amanda.prev
-    while [ -d /etc/amanda~$i/. ];
-       do : $(( ++i )); done
-    mv /etc/amanda /etc/amanda~$i
-    ln -sf /etc/amanda~$i /etc/amanda.prev
-fi
+
+check_user_supplemental_group "%%AMANDACLIGROUP%%" ||
+   add_group "%%AMANDACLIGROUP%%"
+# check_user_supplemental_group "%%{amanda_tapegroup}" ||
+#    add_group "%%{amanda_tapegroup}"
 
 logger "Preinstall done."
 
-echo "Amanda preinstall logs can be found in '$LOGFILE'."
+echo "Amanda preinstall logs can be found in '$INSTALL_LOG'."
 
 ##########################################

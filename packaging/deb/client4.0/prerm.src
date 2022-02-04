@@ -1,5 +1,4 @@
 #!/bin/bash
-set +o posix
 ##########################################
 #
 # pre un-installation
@@ -7,27 +6,8 @@ set +o posix
 # pre un-installation
 #
 ##########################################
-PRE_RM_ARGS=("$@")
-
-
-    amanda_user=%%AMANDAUSER%%; 
-    amanda_group=%%AMANDAGROUP%%; 
-    AMANDAHOMEDIR=%%AMANDAHOMEDIR%%; 
-    os=Linux; 
-    dist=%%PKG_DIST%%; 
-    LOGDIR=%%LOGDIR%%; 
-    LOGFILE=$LOGDIR/install.log; 
-    INSTALL_LOG=$LOGDIR/install.log; 
-    INSTALL_TOPDIR=%%INSTALL_TOPDIR%%; 
-    SYSCONFDIR=/etc; 
-    SBINDIR=/usr/sbin; 
-    AMLIBEXECDIR=/usr/lib64/amanda; 
-    export PYTHON=/usr/bin/python3; 
-    export OPATH="${PATH}"; 
-    export PATH="/opt/csw/gnu:${PATH}:/sbin:/usr/sbin:/opt/csw/bin"; 
-    install -m 755 -o %%AMANDAUSER%% -g %%AMANDAGROUP%% -d %%LOGDIR%% 2>/dev/null || true
 # ---------- Library of functions ------------
-%%PKG_STATE_FUNCTIONS%%
+%%PRE_RM_FUNCTIONS%%
 # ---------- End Library of functions ------------
 
 set +e
@@ -37,7 +17,8 @@ set +e
 bash -c 'read -t10 delay < <(/usr/sbin/amcleanup -vk  --note "critical shutdown before uninstall" 2>&1)'
 bash -c 'read -t10 delay < <(/usr/sbin/amcleanup -vk  --note "second critical shutdown attempt" 2>&1)'
 
-# prevent restarting...
+set +e
+################################## halt old services ###################################
 ( set -x; systemctl -q disable --no-reload \
        __sub-amanda-client.socket ) || true
 ( set -x; systemctl -q stop \
@@ -57,6 +38,7 @@ xargs -tr systemctl stop <<<"$units" || true
 
 ( set -x; systemctl -q reset-failed ) || true
 ( set -x; systemctl -q daemon-reload ) || true
+################################## halt old services ###################################
 
 true 
 

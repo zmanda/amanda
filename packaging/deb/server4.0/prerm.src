@@ -1,5 +1,4 @@
 #!/bin/bash
-set +o posix
 ##########################################
 #
 # pre un-installation
@@ -7,27 +6,8 @@ set +o posix
 # pre un-installation
 #
 ##########################################
-PRE_RM_ARGS=("$@")
-
-
-    amanda_user=%%AMANDAUSER%%; 
-    amanda_group=%%AMANDAGROUP%%; 
-    AMANDAHOMEDIR=%%AMANDAHOMEDIR%%; 
-    os=Linux; 
-    dist=%%PKG_DIST%%; 
-    LOGDIR=%%LOGDIR%%; 
-    LOGFILE=$LOGDIR/install.log; 
-    INSTALL_LOG=$LOGDIR/install.log; 
-    INSTALL_TOPDIR=%%INSTALL_TOPDIR%%; 
-    SYSCONFDIR=/etc; 
-    SBINDIR=/usr/sbin; 
-    AMLIBEXECDIR=/usr/lib64/amanda; 
-    export PYTHON=%%INSTALL_TOPDIR%%/python/bin/python3.6; 
-    export OPATH="${PATH}"; 
-    export PATH="%%INSTALL_TOPDIR%%/bin:/opt/csw/gnu:${PATH}:/sbin:/usr/sbin:/opt/csw/bin"; 
-    install -m 755 -o %%AMANDAUSER%% -g %%AMANDAGROUP%% -d %%LOGDIR%% 2>/dev/null || true
 # ---------- Library of functions ------------
-%%PKG_STATE_FUNCTIONS%%
+%%PRE_RM_FUNCTIONS%%
 # ---------- End Library of functions ------------
 
 set +e
@@ -38,30 +18,33 @@ bash -c 'read -t10 delay < <(/usr/sbin/amcleanup -vk  --note "critical shutdown 
 bash -c 'read -t10 delay < <(/usr/sbin/amcleanup -vk  --note "second critical shutdown attempt" 2>&1)'
 
 set +e
-# prevent restarting...
+################################## halt old services ###################################
 ( set -x; systemctl -q disable --no-reload \
        __sub-amanda-server.socket \
+       __sub-amanda-lserver-unix.socket \
        __sub-amanda-rest-server.service ) || true
 ( set -x; systemctl -q stop \
        __sub-amanda-server.socket \
+       __sub-amanda-lserver-unix.socket \
        __sub-amanda-rest-server.service ) || true
 
 for i in {0..9}; do
    systemctl is-active --quiet \
        __sub-amanda-server.socket \
+       __sub-amanda-lserver-unix.socket \
        __sub-amanda-rest-server.service || break
    sleep 1;
 done
 
-( set -x; systemctl reset-failed )
+( set -x; systemctl -q reset-failed ) || true
 
-units="$(systemctl -a --no-legend --no-pager list-units '__sub-amanda-server@*' ) "
+units="$(systemctl -a --no-legend --no-pager list-units '__sub-amanda-lserver-unix@*' '__sub-amanda-server@*' ) "
 units="$(sed <<<"$units" -e 's,^[^a-z_]*,,' -e 's, .*,,' )"
 xargs -tr systemctl stop <<<"$units" || true
 
-( set -x; systemctl reset-failed )
-
+( set -x; systemctl -q reset-failed ) || true
 ( set -x; systemctl -q daemon-reload ) || true
+################################## halt old services ###################################
 
 true
 

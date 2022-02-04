@@ -7,26 +7,24 @@
 #	become part of the deb name.  {PKG_NAME_VER} gets substituted
 #
 
-
 buildtype=${1:-both}
 shift
 
 BUILDVER="4.0"
 GIT_DIR=.git/modules/tools-archives \
    git ls-files stack-output/php | grep -q . &&
-   BUILDVER=""
-
-pkg_name=amanda
+   unset BUILDVER
 
 # set the var buildpkg_dir as well
-. ./packaging/common/build_functions.sh
-. ./packaging/common/set_zmanda_version
+. ./packaging/common_z/build_functions.sh
+
+. ./packaging/common_z/set_zmanda_version
 
 export PKG_DIR=$(realpath .)
 mach=`uname -m`
 
 do_deb_package() {
-    gen_pkg_build_config "$@"
+    gen_pkg_build_config $@
     gen_top_environ
     do_top_package "${PKG_NAME_VER}"
 }

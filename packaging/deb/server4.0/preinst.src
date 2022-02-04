@@ -1,5 +1,4 @@
 #!/bin/bash
-set +o posix
 ##########################################
 #
 # pre installation
@@ -7,15 +6,20 @@ set +o posix
 # pre installation
 #
 ##########################################
-PRE_INST_ARGS=("$@")
+# ------------ Library of functions --------------
+%%COMMON_FUNCTIONS%%
+%%PRE_INST_FUNCTIONS%%
+# ---------- End Library of functions ------------
 
-if [ ! -L /etc/amanda -a -d /etc/amanda/. ]; then
-    i=1
-    rm -rf /etc/amanda.prev
-    while [ -d /etc/amanda~$i/. ];
-       do : $(( ++i )); done
-    mv /etc/amanda /etc/amanda~$i
-    ln -sf /etc/amanda~$i /etc/amanda.prev
-fi
+logger "Preinstall for amanda_enterprise-"Amanda Enterprise Edition - version %%VERSION%%" on $(date -R)"
+
+check_user_supplemental_group "%%AMANDACLIGROUP%%" ||
+   add_group "%%AMANDACLIGROUP%%"
+check_user_supplemental_group "%%AMANDATAPEGROUP%%" ||
+   add_group "%%AMANDATAPEGROUP%%"
+
+logger "Preinstall done."
+
+echo "Amanda preinstall logs can be found in '$INSTALL_LOG'."
 
 ##########################################
