@@ -110,103 +110,94 @@ detect_pkgdirs_top() {
     # try a smart default for a standard autochk dir
     declare -g pkgdirs_top=$src_root/packaging
 
-    pkgdirs_toptest="$(realpath -e ${pkgdirs_top})"
+    topcall="$(realpath -e "${topcall}" || echo $0)"
 
-    # reform top of path with realpath
-    if [ -d $pkgdirs_toptest ] && [[ "/$topcall" == */packaging/* ]]; then
-        topcall="${topcall#*/packaging/}"
-        topcall=${pkgdirs_toptest}/${topcall}
-    fi
-
-    # must get a valid pkg_type immediately to proceed on
-    if [ -z "$pkg_type" -a -x $pkgdirs_top/common/substitute.pl ]; then
-        localpkg_suffix=$(cd $src_root; $pkgdirs_top/common/substitute.pl <(echo %%PKG_SUFFIX%%) /dev/stdout);
+    # not a real script path?
+    if [ ! -f "$topcall" ]; then
+        # use a default for pkg_type plus pkgdirs_top
+        if [ -z "$pkg_type" -a -x $pkgdirs_top/common_z/substitute.pl ]; then
+            localpkg_suffix=$(cd $src_root; $pkgdirs_top/common_z/substitute.pl <(echo %%PKG_SUFFIX%%) /dev/stdout);
         declare -g pkg_type=${localpkg_suffix##*.}
     fi
 
-    # we are calling functions under the directory?
-    if [ -d $pkgdirs_toptest/../common ] && 
-           [ -f $pkgdirs_toptest/0_vars.sh ] && 
-           [[ ${topcall} == ${pkgdirs_toptest}* ]];
-    then
-        declare -g pkgdirs_top=${pkgdirs_toptest}
+        declare -g buildpkg_dir="${buildpkg_dir:-${pkgdirs_top}/${pkg_type}}"
 
-        # we,re done for now...
-        return 0
+        # should be okay, use defaults if successful
+        [ -L $pkgdirs_top -a -d $pkgdirs_top/. ]
+        return $? # else fail
     fi
 
-    [ -f $topcall ] || topcall=$0
-
-    # cannot detect anything from this script...
-    if [ ! -f "$topcall" -a -L $pkgdirs_top -a -d $pkgdirs_top/. ]; then
-        # should be okay..
-        return 0
-    fi
-
-    if [ ! -f "$topcall" ]; then
-        # must fail...
-        return 1
-    fi
+    local topcall_dir="${topcall%/*}"
+    declare -g buildpkg_dir="${buildpkg_dir:-${topcall_dir}}"
 
     # script is real but not a clear directory location
+    d="$buildpkg_dir"
 
-    local d="${topcall%/*}"
+    # top common_z directory is based on packaging repo common dir ... 
+    # correct pkgdirs_top is just below it
+    [ ! -L $d/../../../common_z -a -d $d/../../../common_z ] && d+=/../..
+    [ ! -L $d/../../common_z -a -d $d/../../common_z ] && d+=/..
 
-    # top common directory shows how deep the script is
-    [ ! -L $d/../../../common -a -d $d/../../../common ] && d+=/../../..
-    [ ! -L $d/../../common -a -d $d/../../common ] && d+=/../..
-    [ ! -L $d/../common -a -d $d/../common ] && d+=/..
-    [ $d -ef $d/../common ] && d+=/..
+    # if called from within common_z or scripts ... just use "packaging" as top
+    [ $d -ef $d/../common_z ] && d+=/..
+    [ $d -ef $d/../scripts ] && d+=/..
 
     # narrow choices with calling script.s path, if possible
     declare -g pkgdirs_top="$(realpath -e $d)"
+    local n=$(( ${#pkgdirs_top} + 1 ))
 
-    # must get a valid pkg_type immediately to proceed on
-    if [ -z "$pkg_type" -a -x $pkgdirs_top/common/substitute.pl ]; then
-        localpkg_suffix=$(cd $src_root; $pkgdirs_top/common/substitute.pl <(echo %%PKG_SUFFIX%%) /dev/stdout);
-        declare -g pkg_type=${localpkg_suffix##*.}
-    fi
+    # confirm dir if needed to assert pkg_type 
+    case ${buildpkg_dir:$n} in
+       rpm*|deb*|sun-pkg*|whl*) 
+            pkg_type=${buildpkg_dir:$n}
+            pkg_type=${pkg_type%%/*}
+        ;;
+       (*) ;;  # leave as it was
+    esac
 
+    # don't have any valid pkg_type??   must give up for here
+
+    [ ${pkgdirs_top}/${pkg_type} -ef ${pkgdirs_top}/common_z ] && return 1
+    [ ${pkgdirs_top}/${pkg_type} -ef ${pkgdirs_top}/scripts ] && return 1
     # if script came from below the base pkgdirs_top ...
-    if [[ ${topcall%/*} == $pkgdirs_top/$pkg_type ]] && [ -d ${topcall%/*} ]; then
-        # validate later ... but use for now
-        declare -g buildpkg_dir=${topcall%/*}
-    fi
+    [[ ${buildpkg_dir} == $pkgdirs_top/$pkg_type ]] || return 1
+    [ -d ${buildpkg_dir} ] || return 1
+
+    declare -g pkg_type=${pkg_type}
 }
 
-detect_platform_pkg_type() {
+detect_build_dirs() {
     local presets
+    local path_buildpkg_dir="$(readlink -e $buildpkg_dir)"
 
+    [ -n "$pkg_type" ] || die "cannot determine package type to use upon build"
+
+    presets="declare -g pkg_type=\"$pkg_type\";"
     [ -n "$pkg_name" ] && presets+="declare -g pkg_name=\"$pkg_name\";"
     # [ -n "$repo_name" ] && presets+="declare -g repo_name=\"$repo_name\";"
-    [ -n "$pkg_type" ] && presets+="declare -g pkg_type=\"$pkg_type\";"
 
-    # overwrite pkg_type if buildpkg_dir is present
-    if [ -d "$buildpkg_dir" -a -f "$buildpkg_dir/0_vars.sh" ] && [[ $buildpkg_dir/.. -ef $pkgdirs_top ]]; then
-        # reset this once to a non-normal location
-        declare -g pkg_type=${buildpkg_dir##*/}
-    fi
+    [ -n "$buildpkg_dir" ] ||
+        declare -g buildpkg_dir=${pkgdirs_top}/${pkg_type/#pkg/sun-pkg}
 
     case $pkg_type in
        (rpm) declare -g pkgconf_dir=SPECS   \
-                       buildpkg_dir=$pkgdirs_top/rpm \
                        pkg_bldroot=$src_root/rpmbuild
             ;;
        (deb) declare -g pkgconf_dir=debian  \
-                       buildpkg_dir=$pkgdirs_top/deb \
                        pkg_bldroot=$src_root/debbuild
             ;;
        (pkg|sun-pkg) 
              declare -g pkgconf_dir=sun-pkg \
-                       buildpkg_dir=$pkgdirs_top/sun-pkg \
                        pkg_bldroot=$src_root/pkgbuild
             ;;
        (whl) declare -g pkgconf_dir=.       \
-                       buildpkg_dir=$pkgdirs_top/whl \
-                       pkg_bldroot=$src_root/build
+                       pkg_bldroot=$src_root/whlbuild
             ;;
        (*) die "cannot find pkg_type in time to set up build configs" ;;
     esac
+
+    [[ $buildpkg_dir == $pkgdirs_top/$pkg_type* ]] || 
+       die "mismatch of $buildpkg_dir and $pkgdirs_top/$pkg_type top directory"
 
     # gather vars for current settings
     [ -r $buildpkg_dir/../../0_vars.sh ]    && { . $buildpkg_dir/../../0_vars.sh; }
@@ -346,25 +337,19 @@ get_version() {
 }
 
 gen_pkg_build_config() {
-    local setup_dir
-    local setup_cwd_dir
+    local buildparm_dir
     local pkg_typedir
 
-    setup_dir=$1
+    buildparm_dir=$1
     pkg_typedir=${pkg_type}
     [ "$pkg_typedir" = pkg ] && pkg_typedir=sun-pkg
 
-    [ -d "$setup_dir" ] ||
-	die "ERROR: gen_pkg_build_config() \"$setup_dir\" bad setup directory to "
+    [ -d "$buildparm_dir" ] ||
+	die "ERROR: gen_pkg_build_config() \"$buildparm_dir\" bad setup directory"
     [ "$buildpkg_dir/../$pkg_typedir" -ef "$buildpkg_dir" ] ||
 	die "ERROR: gen_pkg_build_config() invoked by script [$0] --> [$buildpkg_dir] outside of $pkg_type dir"
 
-    setup_cwd_dir=${buildpkg_dir}
-
-    setup_dir="$(realpath -e "$setup_dir")"
-
-    # detect if setup-dir is at or below same as buildpkg_dir or not
-    [ "${setup_dir}" = "${buildpkg_dir}*" ] && setup_cwd_dir=""
+    buildparm_dir="$(realpath -e "$buildparm_dir")"
 
     # Check for the packaging dirs.
     if [ -z "$PKG_DIR" ]; then
@@ -383,32 +368,33 @@ gen_pkg_build_config() {
 
     case $pkg_bldroot in
 	(*/rpmbuild)
-	    echo "Config rpm package from $setup_dir =============================================="
+	    echo "Config rpm package from $buildparm_dir =============================================="
 	    mkdir -p {SOURCES,SRPMS,SPECS,BUILD,RPMS,BUILDROOT} ||
 		   die "top directories for build under $(realpath .) cannot be created."
 	    # Copy files into rpmbuild locations
             rm -rf $pkgconf_dir
-	    cp -av $setup_dir $pkgconf_dir ||
-		die "failed to copy spec files ($setup_dir/*.src) to $pkgconf_dir";
+	    cp -av $buildparm_dir $pkgconf_dir ||
+		die "failed to copy spec files ($buildparm_dir/*.src) to $pkgconf_dir";
             # remove spurious vars files..
             rm -f $pkgconf_dir/[0-9]*
 	    ;;
+
 	(*/debbuild|*/pkgbuild)
-	    echo "Config $pkg_type package from $setup_dir ${setup_cwd:+and $setup_cwd }=============================================="
+	    echo "Config $pkg_type package from $buildparm_dir ${buildpkg_dir:+and $buildpkg_dir }=============================================="
 	    rm -rf $pkgconf_dir
             mkdir -p $pkgconf_dir
             # first the upper level ... then the pkg-specific files will overwrite
-            if [ -d "$setup_cwd_dir" ]; then
-                find $setup_cwd_dir/* -type d -prune -o -print |
-                  xargs -l cp -fv -t $pkgconf_dir ||
-                die "failed to copy all files from $setup_cwd_dir to $pkgconf_dir"
-            fi
-	    cp -fav $setup_dir/* $pkgconf_dir/ ||
-		die "failed to copy all files from $setup_dir to $pkgconf_dir";
+            find $buildpkg_dir/* -maxdepth 0 -type f -print |
+              xargs -rl cp -fv -t $pkgconf_dir ||
+                die "failed to copy all files from $buildpkg_dir to $pkgconf_dir"
+            find $buildparm_dir/* -maxdepth 0 -type f -print |
+              xargs -rl cp -fv -t $pkgconf_dir ||
+                die "failed to copy all files from $buildparm_dir to $pkgconf_dir";
 
 	    [ $pkg_type = deb -a ! -r $pkgconf_dir/control.src -a ! -r $pkgconf_dir/control ] &&
-		die "$pkgconf_dir control (nor control.src) file was not present in $setup_dir nor selected automatically";
+		die "$pkgconf_dir control (nor control.src) file was not present in $buildparm_dir nor selected automatically";
 	    ;;
+
 	 (*) die 'Unknown packaging for resources';;
     esac
     true
@@ -755,6 +741,7 @@ detect_package_vars() {
     # check every time ...
     detect_pkgdirs_top
 
+    # dont re-discover if already set
     declare >&/dev/null -p \
          pkg_name \
          pkg_type \
@@ -762,7 +749,7 @@ detect_package_vars() {
          buildpkg_dir \
          pkg_bldroot \
          ||
-   detect_platform_pkg_type
+   detect_build_dirs
 
     if ! declare >&/dev/null -p pkg_name_pkgtime; then
         src_root_top=$(cd $src_root; git rev-parse --show-toplevel)
