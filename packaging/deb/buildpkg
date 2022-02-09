@@ -18,7 +18,7 @@ GIT_DIR=.git/modules/tools-archives \
 # set the var buildpkg_dir as well
 . ./packaging/common/build_functions.sh
 
-. ./packaging/common/set_zmanda_version
+# . ./packaging/common/set_zmanda_version
 
 export PKG_DIR=$(realpath .)
 mach=`uname -m`
