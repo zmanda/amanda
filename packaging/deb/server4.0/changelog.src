@@ -1,4 +1,4 @@
-amanda-enterprise-backup-server (%%VERSION%%-%%PKG_REV%%%%DISTRO%%%%DEB_REL%%) unstable; urgency=low
+amanda-backup-server (%%VERSION%%-%%PKG_REV%%%%DISTRO%%%%DEB_REL%%) unstable; urgency=low
 
   * Initial release of version %%VERSION%%
 

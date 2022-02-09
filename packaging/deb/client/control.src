@@ -29,12 +29,12 @@ Description: Amanda Network Backup and Archiving software
  Amanda Forums are located at: http://forums.zmanda.com/
  Amanda Documentation is available at: http://wiki.zmanda.com/
 
-Package: amanda-enterprise-backup-client-dbg
+Package: amanda-backup-client-dbg
 Architecture: any
 Section: debug
 Priority: extra
-Depends: amanda-enterprise-backup-client (= ${binary:Version}),
+Depends: amanda-backup-client (= ${binary:Version}),
     ${misc:Depends}
-Description: debugging symbols for amanda-enterprise-backup-client
+Description: debugging symbols for amanda-backup-client
  .
  debugging symbols

@@ -1,1 +1,1 @@
-pkg_name=amanda-server
+pkg_name=amanda-backup-server

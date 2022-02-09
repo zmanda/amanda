@@ -1,4 +1,4 @@
-i pkginfo=./amanda-enterprise-backup-client.pkginfo
+i pkginfo=./amanda-backup-client.pkginfo
 i depend=./depend
 i preinstall=./preinst
 i postinstall=./postinst

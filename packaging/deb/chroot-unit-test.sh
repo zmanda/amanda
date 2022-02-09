@@ -5,14 +5,14 @@ umask 022  # critical at times for root or other users!
 files=("$@");
 CWD=$PWD
 
-[ -d debbuild/amanda-enterprise-*/installcheck ] || exit -1
-INSTALLCHECK=$(ls -1d debbuild/amanda-enterprise-*/installcheck)
+[ -d debbuild/amanda-*/installcheck ] || exit -1
+INSTALLCHECK=$(ls -1d debbuild/amanda-*/installcheck)
 
 . ./packaging/common/build_functions.sh || { echo "ERROR: did not find ./packaging/... environment"; }
 . ./packaging/common/test_functions.sh || { echo "ERROR: did not find ./packaging/... environment"; }
 
 overtmp=${src_root}/debbuild/TMP
-[ -d ${src_root}/../../debbuild -a -n "$(ls -d1 "${src_root}/../../debbuild/amanda-enterprise-*/debian" 2>/dev/null)" ] && 
+[ -d ${src_root}/../../debbuild -a -n "$(ls -d1 "${src_root}/../../debbuild/amanda-*/debian" 2>/dev/null)" ] && 
     overtmp=${src_root%/*}/TMP
 overstem=$overtmp/mnt
 

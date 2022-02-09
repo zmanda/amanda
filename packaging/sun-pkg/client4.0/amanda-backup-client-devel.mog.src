@@ -1,4 +1,4 @@
-set name=pkg.fmri value=betsol/amanda-enterprise/backup-client-devel@4.0,4.0-2002
+set name=pkg.fmri value=betsol/amanda/backup-client-devel@4.0,4.0-2002
 set name=pkg.human-version      value="%%VERSION%%"
 set name=pkg.summary            value="Amanda Enterprise Backup Client Devel Files"
 set name=variant.arch 		value="i386"

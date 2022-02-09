@@ -1,6 +1,6 @@
 Building Debian and Ubuntu Packages
 ----------------------------------
-YOU MUST RUN ./packaging/amanda-enterprise/deb/buildpkg TO BUILD DEBIAN PACKAGES.
+YOU MUST RUN ./packaging/amanda/deb/buildpkg TO BUILD DEBIAN PACKAGES.
 
 dpkg produced packages do not include information about the release they are
 intended to run on (e.g. Debian Sarge, or Ubuntu Intrepid).  The packaging
@@ -13,7 +13,7 @@ happen.
 The process causes problems for us (a vendor) while trying to provide packages
 for multiple debian/ubuntu releases in the form of filename conflicts.  The
 solution is to substitute values into
-"packaging/amanda-enterprise/deb/changelog" before building dpkg files. The
+"packaging/amanda/deb/changelog" before building dpkg files. The
 script that does this is buildpkg.
 
 Standalone client package files are (logically) in the client subdirectory,
@@ -21,4 +21,4 @@ while the server subdirectory builds a server with a built-in client.
 
 Each package is built separately.  Common code is in packaging/common/
 
-YOU MUST RUN ./packaging/amanda-enterprise/deb/buildpkg TO BUILD DEBIAN PACKAGES.
+YOU MUST RUN ./packaging/amanda/deb/buildpkg TO BUILD DEBIAN PACKAGES.

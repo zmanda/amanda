@@ -13,6 +13,6 @@ P SUNWopenssl-libraries OpenSSL Libraries (Usr)
 P CSWbash               GNU Bourne-again shell (bash)
 P CSWperl               perl - A high-level, general-purpose programming language.
 P CSWpm-mime-base64     MIME-Base64: Encoding and decoding of base64 strings
-I AmandaEnterpriseBackupServer Amanda Enterprise Backup Server from Zmanda
-I AmandaEnterpriseBackupClient Amanda Enterprise Backup Client from Zmanda
-I ZMANae-server Amanda Enterprise Backup Server from Zmanda
+I AmandaBackupServer Amanda Backup Server from Zmanda
+I AmandaBackupClient Amanda Backup Client from Zmanda
+I ZMANae-server Amanda Backup Server from Zmanda

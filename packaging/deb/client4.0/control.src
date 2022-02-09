@@ -1,4 +1,4 @@
-Source: amanda-enterprise-backup-client
+Source: amanda-backup-client
 Section: utils
 Priority: optional
 Maintainer: Zmanda Inc <support@zmanda.com>
@@ -10,13 +10,13 @@ Build-Depends: debhelper (>=8), dump, fakeroot, flex, gettext, gnuplot-nox|gnupl
 	docbook-xsl, swig, xsltproc
 Standards-Version: 3.8.0
 
-Package: amanda-enterprise-backup-client
+Package: amanda-backup-client
 Architecture: any
 Depends: ca-certificates, perl (>=5.6.0), gettext,
         libencode-locale-perl, libio-socket-ssl-perl, libjson-perl, libxml-simple-perl,
 	libglib2.0-0 (>=%%BUILD_GLIB2_VERSION%%),
 	${shlibs:Depends}, ${perl:Depends}, ${misc:Depends}
-Conflicts: amanda-enterprise-backup-server, amanda-backup-server, amanda-server
+Conflicts: amanda-backup-server, amanda-backup-server, amanda-server
 Replaces: amanda-client, amanda-common, amanda-server
 Description: Amanda Enterprise Network Backup and Archiving software
  .
@@ -24,25 +24,25 @@ Description: Amanda Enterprise Network Backup and Archiving software
  Archiving software with Enterprise support.
  .
  This package contains the Amanda Enterprise Client.
- The amanda-enterprise-backup-client package needs to be installed on every
+ The amanda-backup-client package needs to be installed on every
  system that is being backed up.
  .
  Documentation: http://network.zmanda.com/
                 Click on "Documentation" -> "Enterprise Edition"
  Support: http://network.zmanda.com/
 
-Package: amanda-enterprise-backup-client-dbg
+Package: amanda-backup-client-dbg
 Architecture: any
 Section: debug
 Priority: extra
-Depends: amanda-enterprise-backup-client (= ${binary:Version}),
+Depends: amanda-backup-client (= ${binary:Version}),
     ${misc:Depends}
-Description: debugging symbols for amanda-enterprise-backup-client
+Description: debugging symbols for amanda-backup-client
  .
  debugging symbols
 
 
-Package: amanda-enterprise-backup-client-devel
+Package: amanda-backup-client-devel
 Architecture: any
 Pre-Depends: libc6
 Description: Amanda Enterprise Network Backup and Archiving software

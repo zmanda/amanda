@@ -124,7 +124,7 @@ endef
 # subpackage paths
 #
 # used to narrow the dh_ tools focus
-dhpkg          =   --package=amanda-enterprise-backup-server
+dhpkg          =   --package=amanda-backup-server
 # r=$(SRCDIR)/debian/tmp
 buildroot      =   $(SRCDIR)/debian/amanda-backup-server
 log             =  $(SRCDIR)/debian/dpkg.log
@@ -333,7 +333,7 @@ binary-install-stamp:
 	#
 	#dh_installexamples -v $(buildroot)$(AMANDAHOMEDIR)/example
 	dh_installchangelogs -v ChangeLog
-	dh_strip --dbg-package=amanda-enterprise-backup-server-dbg -X $(INSTALL_TOPDIR)
+	dh_strip --dbg-package=amanda-backup-server-dbg -X $(INSTALL_TOPDIR)
 	#
 	dh_compress
 	

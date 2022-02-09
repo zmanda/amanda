@@ -21,12 +21,12 @@
 
 
 # put extra dir directive if no libraries found from /usr/lib64
-# touch /etc/ld.so.conf.d/amanda-enterprise.conf
+# touch /etc/ld.so.conf.d/amanda.conf
 # just in case...
 ldconfig
 # if ! ldconfig -p | grep -q '=> /usr/lib64/'; then
 #    # must create a new execve to effect real change (??)
-#    bash -xc 'install -m 444 <(echo "/usr/lib64") /etc/ld.so.conf.d/amanda-enterprise.conf'
+#    bash -xc 'install -m 444 <(echo "/usr/lib64") /etc/ld.so.conf.d/amanda.conf'
 #    ( set -x; ldconfig )
 # fi
 

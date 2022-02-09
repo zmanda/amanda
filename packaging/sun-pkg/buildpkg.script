@@ -178,8 +178,8 @@ export pkg_name=amanda_enterprise
 # create package version files 
 . packaging/common/set_zmanda_version
 
-# export PKG_NAME_VER=amanda-enterprise-$VERSION
-# export PKG_FILE_NAME=amanda-enterprise-$VERSION
+# export PKG_NAME_VER=amanda-$VERSION
+# export PKG_FILE_NAME=amanda-$VERSION
 export PKG_DIR=${PWD}
 
 gen_pkg_build_config $buildpkg_dir/client

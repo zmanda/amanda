@@ -13,7 +13,7 @@ PRE_INST_ARGS=("$@")
 ###############################################################
 # needed contents are brought from zmanda-platform-shared
 ###############################################################
-logger "Preinstall for amanda_enterprise-\"Amanda Enterprise Edition - version %%VERSION%%\""
+logger "Preinstall for amanda-\"Amanda Community Edition - version %%VERSION%%\""
 
 # all owned by root
 [ ! -e /usr/bin/bash -a -x /bin/bash ] &&
@@ -53,7 +53,7 @@ logger "Preinstall for amanda_enterprise-\"Amanda Enterprise Edition - version %
 %%PRE_INST_FUNCTIONS%%
 # ---------- End Library of functions ------------
 
-logger "Preparing to install: "Amanda Enterprise Edition - version %%VERSION%%" on $(date -R)"
+logger "Preparing to install: "Amanda Community Edition - version %%VERSION%%" on $(date -R)"
 
 AMANDATES=%%AMANDAHOMEDIR%%/amandates
 create_user

@@ -1,4 +1,4 @@
-Source: amanda-enterprise-backup-server
+Source: amanda-backup-server
 Section: utils
 Priority: optional
 Maintainer: Zmanda Inc <support@zmanda.com>
@@ -8,14 +8,14 @@ Build-Depends: debhelper (>=8), dump, fakeroot, flex, gettext, gnuplot-nox|gnupl
 	libncurses5-dev, libreadline5-dev|libreadline-dev
 Standards-Version: 3.9.1
 
-Package: amanda-enterprise-backup-server
+Package: amanda-backup-server
 Architecture: any
 Pre-Depends: libc6
 Depends: ca-certificates, libgcc1, libncurses5, libreadline5,
 	gettext, mailx|bsd-mailx, smbclient,
 	${shlibs:Depends}, zmanda-platform-shared
 Suggests: gnuplot-nox:any|gnuplot:any
-Provides: amanda-enterprise-backup-client
+Provides: amanda-backup-client
 Replaces: amanda-client, amanda-common, amanda-server
 Description: Amanda Enterprise Network Backup and Archiving software
  .
@@ -23,28 +23,28 @@ Description: Amanda Enterprise Network Backup and Archiving software
  Archiving software with Enterprise support.
  .
  This package contains the Amanda Enterprise Server.  The
- amanda-enterprise-backup-server package should be installed on the
+ amanda-backup-server package should be installed on the
  Amanda server, i.e. the machine attached to backup media (such as a
  tape drive or disk drives) where backups will be written.  The
- amanda-enterprise-backup-server package includes Amanda enterprise
+ amanda-backup-server package includes Amanda enterprise
  client.
  .
  Documentation: http://network.zmanda.com/
                 Click on "Documentation" -> "Enterprise Edition"
  Support: http://network.zmanda.com/
 
-Package: amanda-enterprise-backup-server-dbg
+Package: amanda-backup-server-dbg
 Architecture: any
 Section: debug
 Priority: extra
-Depends: amanda-enterprise-backup-server (= ${binary:Version}),
+Depends: amanda-backup-server (= ${binary:Version}),
     ${misc:Depends}
-Description: debugging symbols for amanda-enterprise-backup-server
+Description: debugging symbols for amanda-backup-server
  .
  debugging symbols
 
 
-Package: amanda-enterprise-backup-server-devel
+Package: amanda-backup-server-devel
 Architecture: any
 Pre-Depends: libc6
 Description: Amanda Enterprise Network Backup and Archiving software
@@ -54,7 +54,7 @@ Description: Amanda Enterprise Network Backup and Archiving software
  .
  This package contains the Amanda Enterprise Server devel environment.
 
-Package: amanda-enterprise-platform
+Package: amanda-platform
 Architecture: any
 Pre-Depends: libc6
 Depends: ${shlibs:Depends}
@@ -64,8 +64,8 @@ Description: Amanda Enterprise Network Backup and Archiving software
  Archiving software with Enterprise support.
  .
  This package contains the Amanda Enterprise Server.  The
- amanda-enterprise-backup-server package should be installed on the
+ amanda-backup-server package should be installed on the
  Amanda server, i.e. the machine attached to backup media (such as a
  tape drive or disk drives) where backups will be written.  The
- amanda-enterprise-backup-server package includes Amanda enterprise
+ amanda-backup-server package includes Amanda enterprise
  client.

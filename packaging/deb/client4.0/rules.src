@@ -123,10 +123,10 @@ endef
 # subpackage paths
 #
 # used to narrow the dh_ tools focus
-dhpkg           =  --package=amanda-enterprise-backup-client
+dhpkg           =  --package=amanda-backup-client
 # r=$(SRCDIR)/debian/tmp
-buildroot       =  $(SRCDIR)/debian/amanda-enterprise-backup-client
-devel           =  $(SRCDIR)/debian/amanda-enterprise-backup-client-devel
+buildroot       =  $(SRCDIR)/debian/amanda-backup-client
+devel           =  $(SRCDIR)/debian/amanda-backup-client-devel
 log             =  $(SRCDIR)/debian/dpkg.log
 
 
@@ -215,9 +215,9 @@ binary-install-client: build-stamp
 	# needed directories
 	##################
 	install -D -m 644 /dev/null \
-                 $(buildroot)$(SYS_LDSOCONFDIR)/amanda-enterprise.conf
+                 $(buildroot)$(SYS_LDSOCONFDIR)/amanda.conf
 	install -D -m 644 system-scripts/amanda-logrotate \
-                 $(buildroot)$(SYS_LOGROTATEDIR)/amanda-enterprise
+                 $(buildroot)$(SYS_LOGROTATEDIR)/amanda
 	
 	rm -f $(buildroot)$(AMANDAHOMEDIR)/example/inetd.conf.amandaclient
 	
@@ -254,7 +254,7 @@ perm-install-client: binary-install
 	dh_fixperms -v
 	
 	install -o root -g root -m 0644 debian/lintian \
-	    $(buildroot)/usr/share/lintian/overrides/amanda-enterprise-backup-client
+	    $(buildroot)/usr/share/lintian/overrides/amanda-backup-client
 	chown -R root:root $(buildroot)$(AMLIBEXECDIR)
 
 	chown -R $(AMANDAUSER):$(AMANDAGROUP) \
@@ -473,7 +473,7 @@ binary-install-stamp:
 	#
 	#dh_installexamples -v $(buildroot)$(AMANDAHOMEDIR)/example
 	dh_installchangelogs -v ChangeLog
-	dh_strip --dbg-package=amanda-enterprise-backup-client-dbg -X $(INSTALL_TOPDIR)
+	dh_strip --dbg-package=amanda-backup-client-dbg -X $(INSTALL_TOPDIR)
 	#
 	dh_compress
 	
