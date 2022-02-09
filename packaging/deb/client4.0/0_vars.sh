@@ -1,1 +1,1 @@
-pkg_name=amanda-client
+pkg_name=amanda-backup-client
