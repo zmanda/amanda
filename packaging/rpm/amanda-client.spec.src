@@ -235,7 +235,7 @@ Requires: %glib2_pkg_name >= %glib2_build
 Requires: /etc/services
 
 Provides: amanda-backup-client = %{amanda_version}
-Conflicts: amanda_enterprise-backup-server
+Conflicts: amanda-backup-server
 Conflicts: amanda-backup_client, amanda-backup_server
 Conflicts: amanda, amanda-server, amanda-client, amanda-backup-server
 

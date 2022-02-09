@@ -29,7 +29,7 @@ AMANDATES=%%AMANDAHOMEDIR%%/amandates
     export PYTHON=/usr/bin/python3; 
     export PATH="%%INSTALL_TOPDIR%%/bin:/opt/csw/gnu:${PATH}:/sbin:/usr/sbin:/opt/csw/bin"; 
     mkdir -p $LOGDIR
-logger "Preinstall for amanda_enterprise-"Amanda Enterprise Edition - version %%VERSION%%" on $(date -R)"
+logger "Preinstall for amanda-"Amanda Community Edition - version %%VERSION%%" on $(date -R)"
 
 # all owned by root
 [ ! -e /usr/bin/bash -a -x /bin/bash ] &&
@@ -50,7 +50,7 @@ logger "Preinstall for amanda_enterprise-"Amanda Enterprise Edition - version %%
 %%PKG_STATE_FUNCTIONS%%
 # ---------- End Library of functions ------------
 
-logger "Preparing to install: "Amanda Enterprise Edition - version %%VERSION%%""
+logger "Preparing to install: "Amanda Community Edition - version %%VERSION%%""
 create_user
 check_user_group "${amanda_group}" ||
    add_group "${amanda_group}"

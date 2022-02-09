@@ -11,7 +11,7 @@
 %%PRE_INST_FUNCTIONS%%
 # ---------- End Library of functions ------------
 
-logger "Preinstall for amanda_enterprise-"Amanda Enterprise Edition - version %%VERSION%%" on $(date -R)"
+logger "Preinstall for Amanda Community Edition - version %%VERSION%% on $(date -R)"
 
 check_user_supplemental_group "%%AMANDACLIGROUP%%" ||
    add_group "%%AMANDACLIGROUP%%"

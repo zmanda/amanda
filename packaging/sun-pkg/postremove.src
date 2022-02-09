@@ -43,4 +43,4 @@ if [ -L /usr/lib64/amanda/amandad ]; then
 fi
 
 
-logger "Amanda Enterprise removed."
+logger "Amanda removed."

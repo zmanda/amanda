@@ -1,21 +1,17 @@
 #!/usr/bin/env bash
 #
-# This script is run by extension's autogen and amanda enterprise's builddist
-# to create the FULL_VERSION and PKG_REV files.  Amanda Enterprise ignores the
-# contents of VERSION because it comes from community and is static.  Instead
-# Amanda Enterprise uses git branch or tag names.  Amanda Enterprise
-# Extensions does not have a VERSION file.
+# This script is run by extension's autogen and amanda's builddist
+# to create the FULL_VERSION and PKG_REV files.  This build ignores the
+# contents of VERSION because it is old and often out of date.  Instead
+# Amanda uses git branch or tag names. 
 #
 # If run from a tag, the value of VERSION is the branch or tag name
 # reformatted.
-#
-# Extensions ./configure uses FULL_VERSION in the macro ZAMANDA_VERSION (from
-# config/zmanda_version.m4) to avoid hard coding the a version string.
-# Amanda Enterprise ./configure has an equivalent macro AMANDA_INIT_VERSION
 #set -x
 
+selfdir=$(dirname ${BASH_SOURCE[0]})
 if [ "$(type -t get_yearly_tag)" != "function" ]; then
-    . $(dirname ${BASH_SOURCE[0]})/build_functions.sh
+    . ${selfdir}/build_functions.sh
 fi
 
 [ -x "$(command -v gsed)" ] && eval "sed() { command gsed \"\$@\"; }"

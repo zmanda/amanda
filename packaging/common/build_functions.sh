@@ -715,8 +715,7 @@ get_svn_info() {
 
     # Set the branch name that goes in a version string
     if test "$TYPE" = "branches" -o "$TYPE" = "tags"; then
-        # Strip posible "zmanda_" prefix used in SF to indicate enterprise
-        # tags
+        # Strip posible "zmanda_" prefix used in SF to indicate tags
 	BRANCH=`echo "${SVN_PATH}"| cut -d "/" -f 2| sed "s/zmanda_//"`
 	LONG_BRANCH="$TYPE/$BRANCH"
     else

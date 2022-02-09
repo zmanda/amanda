@@ -66,9 +66,9 @@ shutdown_xinetd_socket __sub-amanda-server.socket
        __sub-amanda-lserver-unix.socket \
        __sub-amanda-rest-server.service )
 
-logger "Amanda Enterprise Server installation complete."
+logger "Amanda Server installation complete."
 
-echo "Amanda Enterprise Server installation log can be found in '${INSTALL_LOG}'.";
+echo "Amanda Server installation log can be found in '${INSTALL_LOG}'.";
 
 true
 

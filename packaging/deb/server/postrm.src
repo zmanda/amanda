@@ -8,7 +8,7 @@ elif [[ $DPKG_MAINTSCRIPT_PACKAGE == *-client ]]; then
     pkg_opp_variant=server
 fi
 
-LOGFILE=`mktemp /tmp/amanda_enterprise_remove.log.XXXXXXXXXXX`
+LOGFILE=`mktemp /tmp/amanda_remove.log.XXXXXXXXXXX`
 if [ $? -ne 0 ]; then
 	echo "Unable to create log file!"
 	exit 1
@@ -89,4 +89,4 @@ case "$1" in
   ;;
 esac
 
-logger "Amanda Enterprise removed."
+logger "Amanda removed."

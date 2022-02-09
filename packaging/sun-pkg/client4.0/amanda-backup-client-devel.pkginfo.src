@@ -8,7 +8,7 @@ BASEDIR="/"
 CLASSES="none"
 MAXINST=1
 INTONLY=1
-NAME="Amanda Enterprise Backup Client-Devel files from Zmanda"
+NAME="Amanda Community Backup Client-Devel files from Zmanda"
 DESC="Amanda is the leading Open-Source Backup and Archiving software.
 
 Files here are needed for coordinating the open-source components with any other add-ons or plugins.

@@ -120,7 +120,7 @@ do_cwd_build() {
     # amanda does not create $ETCDIR
     mkdir -p $INSTALL_DEST/$ETCDIR || exit 1
 
-    echo "Amanda Enterprise Edition - version $VERSION" > $INSTALL_DEST/$PREFIX/amanda-release || exit 1
+    echo "Amanda Community Edition - version $VERSION" > $INSTALL_DEST/$PREFIX/amanda-release || exit 1
 }
 
 do_cwd_package() {
@@ -171,7 +171,7 @@ do_cwd_package() {
 
 # Don't change username lightly.
 # need this name
-export pkg_name=amanda_enterprise
+export pkg_name=amanda
 
 # set the var buildpkg_dir as well
 . packaging/common/build_functions.sh

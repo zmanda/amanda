@@ -17,20 +17,19 @@ Depends: ca-certificates, libgcc1, libncurses5, libreadline5,
 Suggests: gnuplot-nox:any|gnuplot:any
 Provides: amanda-backup-client
 Replaces: amanda-client, amanda-common, amanda-server
-Description: Amanda Enterprise Network Backup and Archiving software
+Description: Amanda Network Backup and Archiving software
  .
- Amanda Enterprise Edition is the leading Open-Source Backup and
- Archiving software with Enterprise support.
+ Amanda Community Edition is the most trusted Open-Source Backup and Archiving
+ software solution.
  .
- This package contains the Amanda Enterprise Server.  The
+ This package contains the Amanda Server.  The
  amanda-backup-server package should be installed on the
  Amanda server, i.e. the machine attached to backup media (such as a
  tape drive or disk drives) where backups will be written.  The
- amanda-backup-server package includes Amanda enterprise
- client.
+ amanda-backup-server package includes Amanda client.
  .
  Documentation: http://network.zmanda.com/
-                Click on "Documentation" -> "Enterprise Edition"
+                Click on "Documentation" -> "Community Edition"
  Support: http://network.zmanda.com/
 
 Package: amanda-backup-server-dbg
@@ -42,30 +41,3 @@ Depends: amanda-backup-server (= ${binary:Version}),
 Description: debugging symbols for amanda-backup-server
  .
  debugging symbols
-
-
-Package: amanda-backup-server-devel
-Architecture: any
-Pre-Depends: libc6
-Description: Amanda Enterprise Network Backup and Archiving software
- .
- Amanda Enterprise Edition is the leading Open-Source Backup and
- Archiving software with Enterprise support.
- .
- This package contains the Amanda Enterprise Server devel environment.
-
-Package: amanda-platform
-Architecture: any
-Pre-Depends: libc6
-Depends: ${shlibs:Depends}
-Description: Amanda Enterprise Network Backup and Archiving software
- .
- Amanda Enterprise Edition is the leading Open-Source Backup and
- Archiving software with Enterprise support.
- .
- This package contains the Amanda Enterprise Server.  The
- amanda-backup-server package should be installed on the
- Amanda server, i.e. the machine attached to backup media (such as a
- tape drive or disk drives) where backups will be written.  The
- amanda-backup-server package includes Amanda enterprise
- client.

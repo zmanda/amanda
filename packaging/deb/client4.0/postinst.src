@@ -50,9 +50,9 @@ shutdown_xinetd_socket amanda-client.socket
 
 ( set -x; systemctl restart amanda-client.socket )
 
-logger "Amanda Enterprise Client installation complete."
+logger "Amanda Client installation complete."
 
-echo "Amanda Enterprise Client installation log can be found in '${INSTALL_LOG}'.";
+echo "Amanda Client installation log can be found in '${INSTALL_LOG}'.";
 
 true
 

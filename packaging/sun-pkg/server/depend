@@ -7,6 +7,6 @@ P SUNWesu Extended System Utilities
 P CSWgtar  gnutar
 P SUNWgnome-base-libs GNOME base GUI libraries 
 P SUNWflexruntime Lex Runtime Libraries
-I AmandaEnterpriseBackupClient Amanda Enterprise Backup Client from Zmanda
-I AmandaEnterpriseBackupServer Amanda Enterprise Backup Server from Zmanda
-I ZMANae-client Amanda Enterprise Backup Client from Zmanda
+I AmandaBackupClient Amanda Backup Client from Zmanda
+I AmandaBackupServer Amanda Backup Server from Zmanda
+I ZMANae-client Amanda Backup Client from Zmanda

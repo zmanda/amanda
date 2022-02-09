@@ -1,6 +1,6 @@
 #!/bin/bash
 
-LOGFILE=`mktemp /tmp/amanda_enterprise_preinst.log.XXXXXXXXXXX`
+LOGFILE=`mktemp /tmp/amanda_preinst.log.XXXXXXXXXXX`
 if [ $? -ne 0 ]; then
 	echo "Unable to create log file!"
 	exit 1
@@ -18,7 +18,7 @@ LOGDIR=%%LOGDIR%%
 %%PRE_INST_FUNCTIONS%%
 
 # -------- End Common functions ----------
-logger "Preparing to install: Amanda Enterprise Server %%VERSION%%"
+logger "Preparing to install: Amanda Server %%VERSION%%"
 create_user
 check_user_group "${amanda_group}" || add_group "${amanda_group}"
 check_user_supplemental_group "%%AMANDACLIGROUP%%" || add_group "%%AMANDACLIGROUP%%"

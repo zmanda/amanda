@@ -35,5 +35,5 @@ reset_local_scripts() {
     return 0
 }
 
-reset_local_scripts client4.0 amanda_enterprise_client4.0
-reset_local_scripts server4.0 amanda_enterprise4.0
+reset_local_scripts client4.0 amanda-client
+reset_local_scripts server4.0 amanda
