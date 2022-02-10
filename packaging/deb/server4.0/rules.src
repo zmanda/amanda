@@ -234,7 +234,7 @@ binary-install-server: build-stamp
 	rm -f $(buildroot)$(AMANDAHOMEDIR)/example/inetd.conf.amandaclient
 	rm -f $(buildroot)$(AMANDAHOMEDIR)/example/inetd.conf.amandaserver
 	
-	echo "Amanda Enterprise Edition - version $(AMVER)" > $(buildroot)$(AMANDAHOMEDIR)/amanda-release
+	echo "Amanda Community Edition - version $(AMVER)" > $(buildroot)$(AMANDAHOMEDIR)/amanda-release
 	[ -s $(CWD)/LONG_BRANCH ] && echo "ref=$$(cat $(CWD)/LONG_BRANCH)" >> $(buildroot)/$(AMANDAHOMEDIR)/amanda-release
 	
 	##################
@@ -360,7 +360,7 @@ binary-install-devel: binary-install-server
 	mkdir -p $(devel)$(AMANDAHOMEDIR)/amanda-autoconf
 	mkdir -p $(devel)/usr/include/amanda
 	
-	echo "Amanda Enterprise Edition - version $(AMVER)" > $(devel)$(AMANDAHOMEDIR)/amanda-release
+	echo "Amanda Community Edition - version $(AMVER)" > $(devel)$(AMANDAHOMEDIR)/amanda-release
 	
 	rm -f $(devel)$(AMANDAHOMEDIR)/amanda-config
 	

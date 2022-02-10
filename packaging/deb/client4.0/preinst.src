@@ -26,7 +26,7 @@
 %%PRE_INST_FUNCTIONS%%
 # ---------- End Library of functions ------------
 
-logger "Preparing to install: "Amanda Enterprise Edition - version %%VERSION%%" on $(date -R)"
+logger "Preparing to install: "Amanda Community Edition - version %%VERSION%%" on $(date -R)"
 
 create_user
 check_user_group "%%AMANDAGROUP%%" ||

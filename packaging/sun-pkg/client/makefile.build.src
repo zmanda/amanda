@@ -20,8 +20,8 @@ SRCDIR			  := $(shell pwd -P)
 # dh_testdir
 # dh_testroot
 # dh_clean -d -v  # build dirs only
-# dh_prep --package=amanda-enterprise-backup-client
-# dh_installdirs -v --package=amanda-enterprise-backup-client
+# dh_prep --package=amanda-backup-client
+# dh_installdirs -v --package=amanda-backup-client
 # dh_installdocs -v
 # dh_installchangelogs -v ChangeLog
 # dh_install -v --list-missing
@@ -166,12 +166,12 @@ endef
 # subpackage paths
 #
 # used to narrow the dh_ tools focus
-# dhpkg=--package=amanda-enterprise-backup-client
+# dhpkg=--package=amanda-backup-client
 # r=$(SRCDIR)/sun-pkg/tmp
-# buildroot_server=$(SRCDIR)/sun-pkg/amanda-enterprise-backup-server
-buildroot=$(SRCDIR)/sun-pkg/amanda-enterprise-backup-client
-# platform=$(SRCDIR)/sun-pkg/amanda-enterprise-platform
-devel=$(SRCDIR)/sun-pkg/amanda-enterprise-backup-client-devel
+# buildroot_server=$(SRCDIR)/sun-pkg/amanda-backup-server
+buildroot=$(SRCDIR)/sun-pkg/amanda-backup-client
+# platform=$(SRCDIR)/sun-pkg/amanda-platform
+devel=$(SRCDIR)/sun-pkg/amanda-backup-client-devel
 
 # export LD_LIBRARY_PATH=/opt/csw/lib/amd64:/opt/csw/lib:/usr/sfw/lib/amd64:/usr/sfw/lib
 
@@ -250,14 +250,14 @@ binary-install-client: build-stamp
 	# install -d $(buildroot)$(SYS_LDSOCONFDIR)
 	# install -d $(buildroot)$(SYS_LOGROTATEDIR)
 	# install -m 644 /dev/null \
-        #          $(buildroot)$(SYS_LDSOCONFDIR)/amanda-enterprise.conf
+        #          $(buildroot)$(SYS_LDSOCONFDIR)/amanda.conf
 	# install -m 644 system-scripts/amanda-logrotate \
-        #          $(buildroot)$(SYS_LOGROTATEDIR)/amanda-enterprise
+        #          $(buildroot)$(SYS_LOGROTATEDIR)/amanda
 
 	install -d $(buildroot)/etc/inet
 	install $(buildroot)$(AMANDAHOMEDIR)/example/inetd.conf.amandaclient $(buildroot)/etc/inet/amandaclient
 
-	echo "Amanda Enterprise Edition - version $(AMVER)" > $(buildroot)$(AMANDAHOMEDIR)/amanda-release
+	echo "Amanda Community Edition - version $(AMVER)" > $(buildroot)$(AMANDAHOMEDIR)/amanda-release
 	
 	##################
 	# install/shift misc files in place
@@ -270,7 +270,7 @@ binary-install-client: build-stamp
 	umask 027; touch $(buildroot)$(AMANDAHOMEDIR)/.ssh/{id_rsa_amrecover,id_rsa_amdump}{,.pub};
 	umask 027; touch $(buildroot)$(AMANDAHOMEDIR)/.am_passphrase
 	
-	# mv ${ROOT_SHAREDIR}/amanda ${ROOT_SHAREDIR}/amanda_enterprise-${amanda_version}
+	# mv ${ROOT_SHAREDIR}/amanda ${ROOT_SHAREDIR}/amanda-${amanda_version}
 	
 	mkdir -p $(buildroot)$(AMCONFDIR)
 	mkdir -p $(buildroot)$(LOGDIR)
@@ -301,7 +301,7 @@ perm-install-client: binary-install
             done < installperms.sh
 	
 	# install -o root -g root -m 0644 sun-pkg/lintian \
-	# 	$(buildroot)/usr/share/lintian/overrides/amanda-enterprise-backup-client
+	# 	$(buildroot)/usr/share/lintian/overrides/amanda-backup-client
 	chown -R root:root $(buildroot)$(AMLIBEXECDIR)
 	chown -R $(AMANDAUSER):$(AMANDAGROUP) $(buildroot)$(AMANDAHOMEDIR)
 	chown -R $(AMANDAUSER):$(AMANDAGROUP) $(buildroot)$(SYSCONFDIR)/amanda
@@ -432,7 +432,7 @@ binary-install-devel: binary-install-client
 	mkdir -p $(devel)$(AMANDAHOMEDIR)/amanda-autoconf
 	mkdir -p $(devel)/usr/include/amanda
 	
-	echo "Amanda Enterprise Edition - version $(AMVER)" > $(devel)$(AMANDAHOMEDIR)/amanda-release
+	echo "Amanda Community Edition - version $(AMVER)" > $(devel)$(AMANDAHOMEDIR)/amanda-release
 	
 	rm -f $(devel)$(AMANDAHOMEDIR)/amanda-client-config
 	
@@ -518,7 +518,7 @@ binary-install-stamp:
 	#
 	#dh_installexamples -v $(buildroot)$(AMANDAHOMEDIR)/example
 	#dh_installchangelogs -v ChangeLog
-	#dh_strip --dbg-package=amanda-enterprise-backup-client-dbg -X $(BITROCK_DIR)
+	#dh_strip --dbg-package=amanda-backup-client-dbg -X $(BITROCK_DIR)
 	#
 	#dh_compress
 	
