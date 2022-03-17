@@ -123,8 +123,8 @@ detect_pkgdirs_top() {
 
     # top common directory is based on packaging repo common dir ... 
     # correct pkgdirs_top is just below it
-    [ ! -L $d/../../../common -a -d $d/../../../common ] && d+=/../..
-    [ ! -L $d/../../common -a -d $d/../../common ] && d+=/..
+    [ ! -L $d/../../common -a -d $d/../../common ] && d+=/../..
+    [ ! -L $d/../common -a -d $d/../common ] && d+=/..
 
     # if called from within common or scripts ... just use "packaging" as top
     [ $d -ef $d/../common ] && d+=/..
@@ -149,13 +149,16 @@ detect_pkgdirs_top() {
        (*) ;;  # leave as it was
     esac
 
+    pkg_type=${pkg_type#/}
+    pkg_type=${pkg_type%/}
+
     # don't have any valid pkg_type??   must give up for here
 
     [ ${pkgdirs_top}/${pkg_type} -ef ${pkgdirs_top}/common ] && return 1
     [ ${pkgdirs_top}/${pkg_type} -ef ${pkgdirs_top}/scripts ] && return 1
 
     # if script came from below the base pkgdirs_top ...
-    [[ ${buildpkg_dir} == $pkgdirs_top/$pkg_type ]] || return 1
+    [[ ${buildpkg_dir} = $pkgdirs_top/$pkg_type ]] || return 1
     [ -d ${buildpkg_dir} ] || return 1
 
     declare -g pkg_type=${pkg_type}
