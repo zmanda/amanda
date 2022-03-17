@@ -1,0 +1,41 @@
+#!/bin/sh
+setopt=$-
+set +o posix
+set +xv
+
+__SCRIPT_INSTALLER_ARGS=("$@")
+# amanda_user: the amanda account username
+# amanda_group: the amanda account's group
+# AMANDAHOMEDIR: a directory to use as amanda's home
+# os: Linux, Mac, Solaris, etc...
+# SYSCONFDIR: location of system config files (ie, /etc)
+# LOGDIR: logging directory for amanda
+# INSTALL_LOG: install log location
+# wanted_shell:  Linux/SunOS/OSX all keep them in different places
+# deb_uid: sepecific uid amanda_user should get on deb style systems.
+# temp directory for some uses
+
+amanda_user=%%AMANDAUSER%%
+amanda_group=%%AMANDAGROUP%%
+AMANDAHOMEDIR=%%AMANDAHOMEDIR%%
+SYSCONFDIR=%%SYSCONFDIR%%
+LOGDIR=%%LOGDIR%%
+INSTALL_TOPDIR=%%INSTALL_TOPDIR%%
+AMANDATES=%%AMANDAHOMEDIR%%/amandates
+SBINDIR=/usr/sbin
+INSTALL_LOG=%%LOGDIR%%/install.log
+AMTMP=%%AMANDAHOMEDIR%%/tmp
+AMLIBEXECDIR=${AMLIBEXECDIR:-/usr/lib/amanda}
+
+dist=%%PKG_DIST%%
+os=$(uname)
+wanted_shell=/bin/bash
+deb_uid=%%AMANDAUIDNUM%%
+
+export OPATH="${PATH}"
+export PATH="%%INSTALL_TOPDIR%%/bin:/opt/csw/gnu:${OPATH}:/sbin:/usr/sbin:/opt/csw/bin"
+export GNUPGHOME=%%AMANDAHOMEDIR%%/.gnupg
+export PYTHON=${PYTHON:-$(command -v python)}
+
+[ -d ${LOGDIR} ] || install -m 700 -o ${amanda_user} -g ${amanda_group} -d ${LOGDIR} 2>/dev/null || true
+[ -d ${AMTMP} ] || install -m 700 -o ${amanda_user} -g ${amanda_group} -d ${AMTMP} 2>/dev/null || true

@@ -217,10 +217,6 @@ get_git_info() {
     # check if not using same location as head?
     REV_SUFFIX=
 
-    # in case this is the only difference...
-    # GIT_WORKING_DIR=${src_root} git reset ${src_root}/.gitmodules
-    # GIT_WORKING_DIR=${src_root} git checkout ${src_root}/.gitmodules
-
     if [ "$(git rev-parse $ref)" != "$(git rev-parse HEAD)" ]; then
 	:
     # check if zero diff found in files anywhere?

@@ -144,13 +144,19 @@ detect_pkgdirs_top() {
 
     # narrow choices with calling script.s path, if possible
     declare -g pkgdirs_top="$(realpath -e $d)"
-    local n=$(( ${#pkgdirs_top} + 1 ))
+    local n=$(( ${#pkgdirs_top} + 1))
 
     # confirm dir if needed to assert pkg_type 
-    case ${buildpkg_dir:$n} in
-       rpm*|deb*|sun-pkg*|whl*) 
-            pkg_type=${buildpkg_dir:$n}
+    case "${buildpkg_dir:$n}/" in
+       # in case buildpkg dir is subdir of type (debian or sun)
+       rpm/*|deb/*|sun-pkg/*|whl/*) 
+            pkg_type=${buildpkg_dir:$n}/
             pkg_type=${pkg_type%%/*}
+        ;;
+       # in case buildpkg dir is above type dir
+       */rpm/|*/deb/|*/sun-pkg/|*/whl/)
+            pkg_type=${buildpkg_dir:$n}
+            pkg_type=${pkg_type##/*}
         ;;
        (*) ;;  # leave as it was
     esac
@@ -458,6 +464,7 @@ gen_pkg_environ() {
 		   --exclude=debbuild \
 		   --exclude=rpmbuild \
 		   --exclude=pkgbuild \
+		   --exclude=whlbuild \
 		    -C $tmp ${PKG_NAME_VER}/. ||
 			die "tar creation from $(readlink ${PKG_NAME_VER} || echo "<missing symlink>") failed"
             #
@@ -467,13 +474,13 @@ gen_pkg_environ() {
 	(*/debbuild|*/pkgbuild)
             rm -rf $PKG_NAME_VER
 	    tar -cf - \
-		   --exclude=*.rpm \
-		   --exclude=*.deb \
-		   --exclude=*.pkg \
-		   --exclude=*.p5p \
+		   --exclude=\*.rpm \
+		   --exclude=\*.deb \
+		   --exclude=\*.pkg \
+		   --exclude=\*.p5p \
 		   --exclude=.git \
-		   --exclude=*.tar \
-		   --exclude=*.tar.gz \
+		   --exclude=\*.tar \
+		   --exclude=\*.tar.gz \
 		   --exclude=debbuild \
 		   --exclude=rpmbuild \
 		   --exclude=pkgbuild \

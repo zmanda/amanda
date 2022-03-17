@@ -35,8 +35,8 @@ git remote -v show > vcs_repo.info
 git --no-pager log --max-count=1 >> vcs_repo.info
 
 # call the version...
-set_zmanda_version $ref
-# eval "$(get_version_evalstr $ref)"
+set_zmanda_version $gitref
+# eval "$(get_version_evalstr $gitref)"
 #printf "$VERSION" > FULL_VERSION
 #printf "$BUILD_VERSION" > BUILD_VERSION
 #printf "$LONG_BRANCH" > LONG_BRANCH

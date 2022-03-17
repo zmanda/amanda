@@ -4,46 +4,9 @@ set +xv
 # ------------- Begin Pre Install Functions -----------------
 # These functions are included by various different installers.
 
-# We assume that the following variables are defined in the main script:
-# amanda_user: the amanda account username
-: ${amanda_user:=%%AMANDAUSER%%}
+%%SCRIPT_VARS%%
+LOGFILE=`mktemp /tmp/${RPM_PACKAGE_NAME}-preinst.log.XXXXXXXXXXX`
 
-# amanda_group: the amanda account's group
-: ${amanda_group:=%%AMANDAGROUP%%}
-
-# AMANDAHOMEDIR: a directory to use as amanda's home
-: ${AMANDAHOMEDIR:=%%AMANDAHOMEDIR%%}
-
-# os: Linux, Mac, Solaris, etc...
-: ${os:=Linux}
-
-# SYSCONFDIR: location of system config files (ie, /etc)
-: ${SYSCONFDIR:=/etc}
-
-# LOGDIR: logging directory for amanda
-: ${LOGDIR:=%%LOGDIR%%}
-
-# INSTALL_LOG: install log location
-: ${INSTALL_LOG:=${LOGDIR}/install.log}
-
-# wanted_shell:  Linux/SunOS/OSX all keep them in different places
-: ${wanted_shell:=/bin/bash}
-
-# deb_uid: sepecific uid amanda_user should get on deb style systems.
-: ${deb_uid:=%%AMANDAUIDNUM%%}
-
-[ -d ${LOGDIR} ] || mkdir -p ${LOGDIR}
-[ -d ${AMTMP} ] || mkdir -p ${AMTMP}
-
-# dist: used on linux for the distro.
-[ -n "$dist" ] || { echo "dist='' Linux distro is unset"; exit -1; }
-# LOGFILE: a log file we append to
-[ -n "$LOGFILE" ] || { echo "LOGFILE='' LOGFILE is unset"; exit -1; }
-
-
-# These variables are defined, but null to allow checking names
-checked_uid=
-export checked_uid
 # PreInstall Functions
 
 create_user() {
@@ -348,3 +311,5 @@ warning_homedir_owner="WARNING: The ${amanda_user}'s home directory,'${AMANDAHOM
 
 # --------------- End included Functions -----------------
 set -${setopt/s}
+
+# vim: filetype=bash

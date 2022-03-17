@@ -82,12 +82,7 @@ sub get_debian_pkg_arch {
 
 sub read_sh_lib {
     my $filename = "$_[0]";
-    my $content = read_file($filename);
-    # bad idea -- too many requirements
-    # open(WROUT,'|/bin/bash -c "repo_name=blork; . /dev/stdin;"');
-    # print WROUT $content;
-    # close(WROUT) || exit -1;
-    return $content;
+    return read_file($filename);
 }
 
 sub read_file {
@@ -338,8 +333,10 @@ die "failed to recognize platform"
        unless ( $ENV{"PLATFORM_PKG"} && $ENV{"PLATFORM_DIST"} && $ENV{"PLATFORM_DISTVER"} );
 
 my %replacement_includes = (
+	"SCRIPT_VARS" =>    	 sub { read_sh_lib("packaging/common/script_vars.sh"); },
 	"COMMON_FUNCTIONS" =>    sub { read_sh_lib("packaging/common/common_functions.sh"); },
 	"PRE_INST_FUNCTIONS" =>  sub { read_sh_lib("packaging/common/pre_inst_functions.sh"); },
+	"PRE_RM_FUNCTIONS" =>   sub { read_sh_lib("packaging/common/pre_rm_functions.sh"); },
 	"POST_INST_FUNCTIONS" => sub { read_sh_lib("packaging/common/post_inst_functions.sh"); },
 	"POST_RM_FUNCTIONS" =>   sub { read_sh_lib("packaging/common/post_rm_functions.sh"); },
 	"PKG_STATE_FUNCTIONS" =>   sub { read_sh_lib("packaging/common/pkg_state_functions.sh"); },
@@ -440,10 +437,17 @@ while (<$src>)
         if ( m/^$tagre/ && defined($replacement_includes{$tag}) ) {
             $line = &{ $replacement_includes{$tag} };
 	    # do not chomp the output..
-            $line =~ s/\%/%%/g 
-               if ( $dst_filename =~ m/\.spec$/ );
-            $line = "\nRPM_PACKAGE_NAME=\"$pkg\"; RPM_PACKAGE_VERSION=\"%{version}\";\n$line"
-               if ( $dst_filename =~ m/\.spec$/ );
+	    if ( $dst_filename =~ m/\.spec$/ ) 
+	    {
+	    	my ($pre);
+                $pre = "\nRPM_PACKAGE_NAME=\"$pkg\";";
+		$pre .= "\nRPM_PACKAGE_VERSION=\"%{version}\";";
+		$pre .= "\nAMLIBEXECDIR=\"%{AMLIBEXECDIR}\";";
+		$pre .= "\nexport PYTHON=\"%{INSTALL_PYTHON}\";";
+
+		$line =~ s/\%/%%/g;
+		$line = "$pre\n$line"
+	    }
 
             last SUBST; # no more patterns on this line...
         }

@@ -4,42 +4,10 @@ set +xv
 # ------------- Begin Post Install Functions -----------------
 # These functions are included by various different installers.
 
-# We assume that the following variables are defined in the main script:
-# amanda_user: the amanda account username
-: ${amanda_user:=%%AMANDAUSER%%}
+%%SCRIPT_VARS%%
+LOGFILE=`mktemp /tmp/${RPM_PACKAGE_NAME}-postinst.log.XXXXXXXXXXX`
 
-# amanda_group: the amanda account's group
-: ${amanda_group:=%%AMANDAGROUP%%}
-
-# AMANDAHOMEDIR: a directory to use as amanda's home
-: ${AMANDAHOMEDIR:=%%AMANDAHOMEDIR%%}
-
-# os: Linux, Mac, Solaris, etc...
-: ${os:=Linux}
-
-# SYSCONFDIR: location of system config files (ie, /etc)
-: ${SYSCONFDIR:=%%SYSCONFDIR%%}
-
-# LOGDIR: logging directory for amanda
-: ${LOGDIR:=%%LOGDIR%%}
-
-# uncertain if this will stay here
-: ${AMANDATES:=${SYSCONFDIR}/amandates}
-
-: ${SBINDIR:=/usr/sbin}
-
-# INSTALL_LOG: install log location
-: ${INSTALL_LOG=${LOGDIR}/install.log}
-
-# temp directory for some uses
-: ${AMTMP:="%%AMANDAHOMEDIR%%/tmp"}
-
-GNUPGHOME=${AMANDAHOMEDIR}/.gnupg
-export GNUPGHOME
-
-[ -d ${LOGDIR} ] || mkdir -p ${LOGDIR}
-[ -d ${AMTMP} ] || mkdir -p ${AMTMP}
-
+# PostInstall Functions
 
 # encoder: either base64 or uuencode depending on the default for this platform
 encoder=`{ command -v base64 2>/dev/null; } || { command -v uuencode 2>/dev/null; }`
@@ -455,3 +423,5 @@ install_pyzphere() {
 
 # ------------- End Post Install Functions -----------------
 set -${setopt//[si]}
+
+# vim: filetype=bash
