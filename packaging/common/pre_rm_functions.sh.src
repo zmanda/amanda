@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+setopt=$-
+set +xv
+# ------------- Begin Post Removal Functions -----------------
+# Functions used for post removal actions
+
+%%SCRIPT_VARS%%
+LOGFILE=`mktemp /tmp/${RPM_PACKAGE_NAME}-prerm.log.XXXXXXXXXXX`
+
+# PreRemove Functions
+
+# ------------- End Pre Removal Functions -----------------
+set -${setopt/s}
