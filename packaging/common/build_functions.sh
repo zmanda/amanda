@@ -115,8 +115,8 @@ detect_pkgdirs_top() {
     # not a real script path?
     if [ ! -f "$topcall" ]; then
         # use a default for pkg_type plus pkgdirs_top
-        if [ -z "$pkg_type" -a -x $pkgdirs_top/common_z/substitute.pl ]; then
-            localpkg_suffix=$(cd $src_root; $pkgdirs_top/common_z/substitute.pl <(echo %%PKG_SUFFIX%%) /dev/stdout);
+        if [ -z "$pkg_type" -a -x $pkgdirs_top/common/substitute.pl ]; then
+            localpkg_suffix=$(cd $src_root; $pkgdirs_top/common/substitute.pl <(echo %%PKG_SUFFIX%%) /dev/stdout);
         declare -g pkg_type=${localpkg_suffix##*.}
     fi
 
@@ -133,13 +133,13 @@ detect_pkgdirs_top() {
     # script is real but not a clear directory location
     d="$buildpkg_dir"
 
-    # top common_z directory is based on packaging repo common dir ... 
+    # top common directory is based on packaging repo common dir ... 
     # correct pkgdirs_top is just below it
-    [ ! -L $d/../../../common_z -a -d $d/../../../common_z ] && d+=/../..
-    [ ! -L $d/../../common_z -a -d $d/../../common_z ] && d+=/..
+    [ ! -L $d/../../../common -a -d $d/../../../common ] && d+=/../..
+    [ ! -L $d/../../common -a -d $d/../../common ] && d+=/..
 
-    # if called from within common_z or scripts ... just use "packaging" as top
-    [ $d -ef $d/../common_z ] && d+=/..
+    # if called from within common or scripts ... just use "packaging" as top
+    [ $d -ef $d/../common ] && d+=/..
     [ $d -ef $d/../scripts ] && d+=/..
 
     # narrow choices with calling script.s path, if possible
@@ -163,7 +163,7 @@ detect_pkgdirs_top() {
 
     # don't have any valid pkg_type??   must give up for here
 
-    [ ${pkgdirs_top}/${pkg_type} -ef ${pkgdirs_top}/common_z ] && return 1
+    [ ${pkgdirs_top}/${pkg_type} -ef ${pkgdirs_top}/common ] && return 1
     [ ${pkgdirs_top}/${pkg_type} -ef ${pkgdirs_top}/scripts ] && return 1
     # if script came from below the base pkgdirs_top ...
     [[ ${buildpkg_dir} == $pkgdirs_top/$pkg_type ]] || return 1
