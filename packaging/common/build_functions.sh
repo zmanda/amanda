@@ -104,7 +104,6 @@ get_yearly_tag() {
 detect_pkgdirs_top() {
     local calldepth=$(( ${#BASH_SOURCE[@]} - 1 ))
     local topcall=${BASH_SOURCE[${calldepth}]}
-    local localpkg_suffix=
     local pkgsdirs_toptest=
 
     # try a smart default for a standard autochk dir
@@ -113,19 +112,8 @@ detect_pkgdirs_top() {
     topcall="$(realpath -e "${topcall}" || echo $0)"
 
     # not a real script path?
-    if [ ! -f "$topcall" ]; then
-        # use a default for pkg_type plus pkgdirs_top
-        if [ -z "$pkg_type" -a -x $pkgdirs_top/common/substitute.pl ]; then
-            localpkg_suffix=$(cd $src_root; $pkgdirs_top/common/substitute.pl <(echo %%PKG_SUFFIX%%) /dev/stdout);
-        declare -g pkg_type=${localpkg_suffix##*.}
-    fi
-
-        declare -g buildpkg_dir="${buildpkg_dir:-${pkgdirs_top}/${pkg_type}}"
-
-        # should be okay, use defaults if successful
-        [ -L $pkgdirs_top -a -d $pkgdirs_top/. ]
-        return $? # else fail
-    fi
+    [ -f "$topcall" ] ||
+        return 1
 
     local topcall_dir="${topcall%/*}"
     declare -g buildpkg_dir="${buildpkg_dir:-${topcall_dir}}"
@@ -165,6 +153,7 @@ detect_pkgdirs_top() {
 
     [ ${pkgdirs_top}/${pkg_type} -ef ${pkgdirs_top}/common ] && return 1
     [ ${pkgdirs_top}/${pkg_type} -ef ${pkgdirs_top}/scripts ] && return 1
+
     # if script came from below the base pkgdirs_top ...
     [[ ${buildpkg_dir} == $pkgdirs_top/$pkg_type ]] || return 1
     [ -d ${buildpkg_dir} ] || return 1
@@ -743,9 +732,20 @@ set_zmanda_version() {
 
 # detect missing variables from calling script location
 detect_package_vars() {
+    local localpkg_suffix=
 
     # check every time ...
-    detect_pkgdirs_top
+    if detect_pkgdirs_top; then
+        :
+    else
+        # use a default for pkg_type plus pkgdirs_top
+        if [ -z "$pkg_type" -a -x $pkgdirs_top/common/substitute.pl ]; then
+            localpkg_suffix=$(cd $src_root; $pkgdirs_top/common/substitute.pl <(echo %%PKG_SUFFIX%%) /dev/stdout);
+            declare -g pkg_type=${localpkg_suffix##*.}
+        fi
+        declare -g buildpkg_dir="${pkgdirs_top}/${pkg_type}"
+        [ -d $pkgdirs_top/. ]
+    fi
 
     # dont re-discover if already set
     declare >&/dev/null -p \
