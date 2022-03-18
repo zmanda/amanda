@@ -37,10 +37,11 @@ case "$buildtype,$mach,$BUILDVER" in
 #        do_sun_package "$buildpkg_dir/client${BUILDVER}"
 #        ;;
 
-#   server,x86_64,*)
-#        do_sun_package "$buildpkg_dir/server${BUILDVER}"
-#        ;;
-#
+#    server,x86_64,*)
+    server,*,*)
+        do_sun_package "$buildpkg_dir/server${BUILDVER}"
+        ;;
+
    client,*,*) ;&
    both,*,*)
 	( export STACK_BRANCH=none
