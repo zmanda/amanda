@@ -15,8 +15,8 @@ user username=%%AMANDAUSER%% \
    group-list="disk"
 group groupname=%%AMANDAGROUP%% \
    gid=%%AMANDAUIDNUM%%
-license %%REL_INSTALL_TOPDIR%%/share/amanda/COPYRIGHT \
-   license='Amanda, The Advanced Maryland Automatic Network Disk Archiver'
+license %%REL_INSTALL_TOPDIR%%/share/doc/COPYRIGHT \
+   license='license.UnivOfMaryland'
 
 <transform file dir -> default owner root>
 <transform file dir -> default group bin>

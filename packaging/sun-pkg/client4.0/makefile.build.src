@@ -106,7 +106,7 @@ BUILD_GNU_TYPE  = $(GCC_TARGET)
 
 # These are variables that the user can override.  They get used in various
 # places during configure, build, and install.
-PREFIX=/usr
+# PREFIX=/usr
 BINDIR=$(PREFIX)/bin
 SBINDIR=$(PREFIX)/sbin
 LIBDIR=$(PREFIX)/lib
@@ -116,7 +116,7 @@ AMLIBEXECDIR=$(LIBEXECDIR)/amanda
 SHLIBDIR=$(PREFIX)/$(LIBARCHDIR)
 AMLIBDIR=$(LIBEXECDIR)/amanda
 MANDIR=$(PREFIX)/share/man
-DOCDIR=$(PREFIX)/share/doc
+DOCDIR=%%REL_INSTALL_TOPDIR%%/share/doc
 SYSCONFDIR=%%SYSCONFDIR%%
 AMCONFDIR=$(SYSCONFDIR)/amanda
 AMANDATES=$(AMANDAHOMEDIR)/amandates
@@ -555,6 +555,8 @@ binary-install-stamp:
 	#
 	#dh_installexamples -v $(buildroot)$(AMANDAHOMEDIR)/example
 	#dh_installchangelogs -v ChangeLog
+	for i in $(<$(BUILDROOT).docs); do install -D $$i $(buildroot)$(DOCDIR); done
+	
 	#dh_strip --dbg-package=amanda-backup-client-dbg -X $(PREFIX)
 
 	#dh_compress
