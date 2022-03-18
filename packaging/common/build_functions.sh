@@ -105,6 +105,7 @@ detect_pkgdirs_top() {
     local calldepth=$(( ${#BASH_SOURCE[@]} - 1 ))
     local topcall=${BASH_SOURCE[${calldepth}]}
     local pkgsdirs_toptest=
+    local pkg_typedir=
 
     # try a smart default for a standard autochk dir
     declare -g pkgdirs_top=$src_root/packaging
@@ -132,7 +133,7 @@ detect_pkgdirs_top() {
 
     # narrow choices with calling script.s path, if possible
     declare -g pkgdirs_top="$(realpath -e $d)"
-    local n=$(( ${#pkgdirs_top} + 1))
+    local n=$(( ${#pkgdirs_top} ))
 
     # confirm dir if needed to assert pkg_type 
     case "${buildpkg_dir:$n}/" in
@@ -151,17 +152,22 @@ detect_pkgdirs_top() {
 
     pkg_type=${pkg_type#/}
     pkg_type=${pkg_type%/}
+    pkg_typedir=${pkg_type/#pkg/sun-pkg}
 
     # don't have any valid pkg_type??   must give up for here
 
-    [ ${pkgdirs_top}/${pkg_type} -ef ${pkgdirs_top}/common ] && return 1
-    [ ${pkgdirs_top}/${pkg_type} -ef ${pkgdirs_top}/scripts ] && return 1
+    [ -z "$pkg_type" ] && return 1;
+    [ ${pkgdirs_top}/${pkg_typedir} -ef ${pkgdirs_top}/common ] && return 1
+    [ ${pkgdirs_top}/${pkg_typedir} -ef ${pkgdirs_top}/scripts ] && return 1
 
     # if script came from below the base pkgdirs_top ...
-    [[ ${buildpkg_dir} = $pkgdirs_top/$pkg_type ]] || return 1
-    [ -d ${buildpkg_dir} ] || return 1
+    [[ ${buildpkg_dir} = $pkgdirs_top/${pkg_typedir} ]] || 
+       return 1
+    [ -d ${buildpkg_dir} ] || 
+       return 1
 
     declare -g pkg_type=${pkg_type}
+    declare -g pkg_typedir=${pkg_typedir}
 }
 
 detect_build_dirs() {
@@ -175,7 +181,7 @@ detect_build_dirs() {
     # [ -n "$repo_name" ] && presets+="declare -g repo_name=\"$repo_name\";"
 
     [ -n "$buildpkg_dir" ] ||
-        declare -g buildpkg_dir=${pkgdirs_top}/${pkg_type/#pkg/sun-pkg}
+        declare -g buildpkg_dir=${pkgdirs_top}/${pkg_typedir}
 
     case $pkg_type in
        (rpm) declare -g pkgconf_dir=SPECS   \
@@ -187,6 +193,11 @@ detect_build_dirs() {
        (pkg|sun-pkg) 
              declare -g pkgconf_dir=sun-pkg \
                        pkg_bldroot=$src_root/pkgbuild
+             buildpkg_dir="${buildpkg_dir%/pkg}"
+             buildpkg_dir="${buildpkg_dir%/sun-pkg}"
+             buildpkg_dir+="/sun-pkg"
+             declare -g buildpkg_dir="${buildpkg_dir}"
+             pkg_type=sun-pkg
             ;;
        (whl) declare -g pkgconf_dir=.       \
                        pkg_bldroot=$src_root/whlbuild
@@ -194,7 +205,7 @@ detect_build_dirs() {
        (*) die "cannot find pkg_type in time to set up build configs" ;;
     esac
 
-    [[ $buildpkg_dir == $pkgdirs_top/$pkg_type* ]] || 
+    [[ $buildpkg_dir == $pkgdirs_top/$pkg_type ]] || 
        die "mismatch of $buildpkg_dir and $pkgdirs_top/$pkg_type top directory"
 
     # gather vars for current settings
@@ -336,11 +347,8 @@ get_version() {
 
 gen_pkg_build_config() {
     local buildparm_dir
-    local pkg_typedir
 
     buildparm_dir=$1
-    pkg_typedir=${pkg_type}
-    [ "$pkg_typedir" = pkg ] && pkg_typedir=sun-pkg
 
     [ -d "$buildparm_dir" ] ||
 	die "ERROR: gen_pkg_build_config() \"$buildparm_dir\" bad setup directory"
@@ -746,8 +754,10 @@ detect_package_vars() {
             localpkg_suffix=$(cd $src_root; $pkgdirs_top/common/substitute.pl <(echo %%PKG_SUFFIX%%) /dev/stdout);
             declare -g pkg_type=${localpkg_suffix##*.}
         fi
-        declare -g buildpkg_dir="${pkgdirs_top}/${pkg_type}"
-        [ -d $pkgdirs_top/. ]
+        pkg_typedir=${pkg_type/#pkg/sun-pkg}
+        declare -g buildpkg_dir="${pkgdirs_top}/${pkg_typedir}"
+        declare -g pkg_typedir="${pkg_typedir}"
+        [ -d $pkgdirs_top/. -a -d $buildpkg_dir ] || exit 1
     fi
 
     # dont re-discover if already set
