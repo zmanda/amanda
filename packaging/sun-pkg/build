@@ -25,8 +25,8 @@ mach=`uname -m`
 
 do_sun_package() {
     gen_pkg_build_config "$@"
-    gen_pkg_environ
-    do_package "${PKG_NAME_VER}"
+    gen_top_environ
+    do_top_package "${PKG_NAME_VER}"
 }
 
 set -e
