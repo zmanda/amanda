@@ -39,7 +39,7 @@ AMVER=%%VERSION%%
 
 export GNU_TRIPLET ?= $(shell $(SHELL) config/config.guess)
 
-PREFIX=%%INSTALL_TOPDIR%%
+AMPREFIX=%%INSTALL_TOPDIR%%
 AMANDAHOMEDIR=%%AMANDAHOMEDIR%%
 BUILD_TOPDIR=$(SRCDIR)
 # Comment this to disable silent make.
@@ -64,7 +64,7 @@ BINARCHDIR=bin/amd64
 endif
 
 CSWLIBDIR=/opt/csw/$(LIBARCHDIR)
-PKG_CONFIG_PATH="$(SRCDIR)/sun-pkg:$(LIBDIR)/pkgconfig:$(CSWLIBDIR)/pkgconfig"
+export PKG_CONFIG_PATH="$(SRCDIR)/sun-pkg:$(LIBDIR)/pkgconfig:$(CSWLIBDIR)/pkgconfig"
 
 #
 # - gnu-only bin dirs (2.10 and 2.11)
@@ -106,17 +106,18 @@ BUILD_GNU_TYPE  = $(GCC_TARGET)
 
 # These are variables that the user can override.  They get used in various
 # places during configure, build, and install.
-# PREFIX=/usr
+PREFIX=/usr
 BINDIR=$(PREFIX)/bin
 SBINDIR=$(PREFIX)/sbin
+
 LIBDIR=$(PREFIX)/lib
 LIBEXECDIR=$(PREFIX)/lib
 AMLIBEXECDIR=$(LIBEXECDIR)/amanda
 # must be architecture-specific ...
 SHLIBDIR=$(PREFIX)/$(LIBARCHDIR)
 AMLIBDIR=$(LIBEXECDIR)/amanda
-MANDIR=$(PREFIX)/share/man
-DOCDIR=%%REL_INSTALL_TOPDIR%%/share/doc
+MANDIR=$(AMPREFIX)/share/man
+DOCDIR=$(AMPREFIX)/share/doc
 SYSCONFDIR=%%SYSCONFDIR%%
 AMCONFDIR=$(SYSCONFDIR)/amanda
 AMANDATES=$(AMANDAHOMEDIR)/amandates
@@ -555,7 +556,7 @@ binary-install-stamp:
 	#
 	#dh_installexamples -v $(buildroot)$(AMANDAHOMEDIR)/example
 	#dh_installchangelogs -v ChangeLog
-	for i in $(<$(BUILDROOT).docs); do install -D $$i $(buildroot)$(DOCDIR); done
+	for i in $$(<$(BUILDROOT).docs); do install -D $$i $(buildroot)$(DOCDIR); done
 	
 	#dh_strip --dbg-package=amanda-backup-client-dbg -X $(PREFIX)
 

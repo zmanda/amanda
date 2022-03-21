@@ -15,7 +15,7 @@ user username=%%AMANDAUSER%% \
    group-list="disk"
 group groupname=%%AMANDAGROUP%% \
    gid=%%AMANDAUIDNUM%%
-license %%REL_INSTALL_TOPDIR%%/share/doc/COPYRIGHT \
+license usr/share/amanda/COPYRIGHT \
    license='license.UnivOfMaryland'
 
 <transform file dir -> default owner root>
