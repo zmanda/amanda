@@ -12,7 +12,8 @@
 # only if called externally ...
 [ $0 -ef ${BASH_SOURCE[0]} ] && gitref=${1:-HEAD}
 
-selfdir=$(dirname ${BASH_SOURCE[0]})
+selfdir=$(readlink -e ${BASH_SOURCE[0]})
+selfdir=$(dirname ${selfdir})
 if [ "$(type -t get_yearly_tag)" != "function" ]; then
     . ${selfdir}/build_functions.sh
 fi
