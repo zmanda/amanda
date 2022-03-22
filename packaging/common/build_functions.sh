@@ -145,7 +145,8 @@ detect_pkgdirs_top() {
        # in case buildpkg dir is above type dir
        */rpm/|*/deb/|*/sun-pkg/|*/whl/)
             pkg_type=${buildpkg_dir:$n}
-            pkg_type=${pkg_type##/*}
+            pkg_type=${pkg_type%/}
+            pkg_type=${pkg_type##*/}
         ;;
        (*) ;;  # leave as it was
     esac
