@@ -105,7 +105,6 @@ detect_pkgdirs_top() {
     local calldepth=$(( ${#BASH_SOURCE[@]} - 1 ))
     local topcall=${BASH_SOURCE[${calldepth}]}
     local pkgsdirs_toptest=
-    local pkg_typedir=
 
     # try a smart default for a standard autochk dir
     declare -g pkgdirs_top=$src_root/packaging
