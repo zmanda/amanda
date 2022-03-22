@@ -27,7 +27,7 @@ SRCDIR := $(realpath $(PWD))
 # dh_install -v --list-missing
 # dh_compress
 # dh_fixperms -v
-# dh_perl -v $(buildroot)$(AMPERLDIR) $(buildroot)$(AMLIBEXECDIR) $(buildroot)$(BINDIR) $(buildroot)/usr/sbin
+# dh_perl -v $(buildroot)$(AMPERLDIR) $(buildroot)$(AMLIBEXECDIR) $(buildroot)$(BINDIR) $(buildroot)$(SBINDIR)
 # dh_makeshlibs -v
 # dh_shlibdeps -v -l"$(buildroot)$(AMLIBDIR)"
 # dh_installdeb
@@ -52,7 +52,11 @@ BUILD_TOPDIR=$(SRCDIR)
 
 CC := $(shell PATH=$$(ls 2>/dev/null -d /usr/gcc/*/bin):/usr/sfw/bin:/opt/csw/bin:$${PATH} command -v gcc)
 
-GCC_TARGET := $(shell $(CC) -dumpmachine | tr -d '\n')
+# NOTE: below needs to run under fakeroot!!!
+ifeq ($(FAKEROOTKEY),)
+GCC_TARGET := $(shell $(CC) -dumpmachine)
+GCC_TARGET := $(strip $(GCC_TARGET))
+endif
 
 LIBARCHDIR=lib
 BINARCHDIR=bin
@@ -64,7 +68,8 @@ BINARCHDIR=bin/amd64
 endif
 
 CSWLIBDIR=/opt/csw/$(LIBARCHDIR)
-export PKG_CONFIG_PATH="$(SRCDIR)/sun-pkg:$(LIBDIR)/pkgconfig:$(CSWLIBDIR)/pkgconfig"
+ROOTLIBDIR=/usr/lib
+export PKG_CONFIG_PATH="$(SRCDIR)/sun-pkg:$(ROOTLIBDIR)/pkgconfig:$(CSWLIBDIR)/pkgconfig"
 
 #
 # - gnu-only bin dirs (2.10 and 2.11)
@@ -101,6 +106,9 @@ BUILD_PATH = $(shell IFS=:; set -- $(PATH_DIRS); echo "$$*")
 FAKEROOT_PATH=/opt/csw/gnu:/opt/csw/bin
 export PATH=$(BUILD_PATH)
 
+XSLTPROC_PATH   = $(wildcard /opt/csw/bin/xsltproc)
+XSLTPROC_PATH   ?= $(wildcard /usr/bin/xsltproc)
+
 HOST_GNU_TYPE   = $(GCC_TARGET)
 BUILD_GNU_TYPE  = $(GCC_TARGET)
 
@@ -115,7 +123,9 @@ LIBEXECDIR=$(PREFIX)/lib
 AMLIBEXECDIR=$(LIBEXECDIR)/amanda
 # must be architecture-specific ...
 SHLIBDIR=$(PREFIX)/$(LIBARCHDIR)
-AMLIBDIR=$(LIBEXECDIR)/amanda
+AMLIBDIR=$(SHLIBDIR)
+AMPERLDIR=$(AMLIBDIR)/perl
+
 MANDIR=$(AMPREFIX)/share/man
 DOCDIR=$(AMPREFIX)/share/doc
 SYSCONFDIR=%%SYSCONFDIR%%
@@ -123,7 +133,6 @@ AMCONFDIR=$(SYSCONFDIR)/amanda
 AMANDATES=$(AMANDAHOMEDIR)/amandates
 LOCALSTATEDIR=/var
 LOGDIR=%%LOGDIR%%
-AMPERLDIR=$(AMLIBDIR)/perl
 
 CONFIG_FILES = \
     $(AMANDAHOMEDIR)/.amandahosts \
@@ -148,7 +157,7 @@ AMANDACLIGROUP=%%AMANDACLIGROUP%%
 
 # -------------- flags that are not possible
 # CFLAGS="$${CFLAGS}"
-# export CFLAGS="-specs=$${CURDIR}/gcc-specs -L/usr/ccs/lib -m64 "; \
+# export CFLAGS="-specs=$${SRCDIR}/gcc-specs -L/usr/ccs/lib -m64 "; \
 # --enable-as-needed
 # LD=$(LD)
 
@@ -196,7 +205,7 @@ MAKE=$(MAKE) \
 --enable-manpage-build \
 --disable-syntax-checks \
 --disable-installperms \
---with-xsltproc=/opt/csw/bin/xsltproc \
+--with-xsltproc=$(XSLTPROC) \
 --disable-static
 endef
 # NOTE: disable-installperms or install conflicts with chown/chmod later
@@ -205,7 +214,7 @@ endef
 # subpackage paths
 #
 # used to narrow the dh_ tools focus
-#dhpkg              =   --package=amanda-backup-client
+#dhpkg              =  --package=amanda-backup-client
 #r=$(SRCDIR)/sun-pkg/tmp
 # buildroot_server  =  $(SRCDIR)/sun-pkg/amanda-backup-server
 buildroot           =  $(SRCDIR)/sun-pkg/amanda-backup-client
@@ -375,7 +384,7 @@ perm-install-client: binary-install
 	##################
 	# internal executible files
 	##################
-	chmod u=rwx,g=rx,o=rx $(buildroot)/usr/sbin/*
+	chmod u=rwx,g=rx,o=rx $(buildroot)$(SBINDIR)/*
 	##################
 	# internal readable / private-contents files
 	##################
@@ -545,6 +554,7 @@ perm-install-devel: binary-install
 #
 binary-install: binary-install-stamp
 binary-install-stamp:
+	# reset back to BUILD PATH again...
 	LD_PRELOAD= \
 	LD_LIBRARY_PATH= \
 	    $(MAKE) -f $(THIS_MAKEFILE) \
@@ -558,7 +568,7 @@ binary-install-stamp:
 	#dh_installchangelogs -v ChangeLog
 	for i in $$(<$(BUILDROOT).docs); do install -D $$i $(buildroot)$(DOCDIR); done
 	
-	#dh_strip --dbg-package=amanda-backup-client-dbg -X $(PREFIX)
+	#dh_strip --dbg-package=amanda-backup-client-dbg
 
 	#dh_compress
 	# need external dependencies
@@ -611,7 +621,7 @@ final-install:
 	   SHELL=/opt/csw/bin/bash \
 	   GCC_TARGET=$(GCC_TARGET) \
 		perm-install-devel \
-		perm-install-client 
+		perm-install-client
 	#
 	# dh_makeshlibs -v
 	# dh_shlibdeps $(dhpkg) -v \
@@ -632,7 +642,7 @@ final-install:
 	[ ! -x /bin/pkg ] || $(MAKE) -f $(THIS_MAKEFILE) -C sun-pkg BUILDROOT=$(buildroot) create_p5m
 	[ ! -x /bin/pkg ] || $(MAKE) -f $(THIS_MAKEFILE) -C sun-pkg BUILDROOT=$(devel) create_p5m
 	for i in $$(ls 2>/dev/null sun-pkg/*.pkg sun-pkg/*.p5p ); do mv $$i $${i/./-$(AMVER)-$(GNU_TRIPLET).}; done
-	{ ls 2>/dev/null sun-pkg/*.pkg sun-pkg/*.p5p | xargs mv -t $(CURDIR); } || true
+	{ ls 2>/dev/null sun-pkg/*.pkg sun-pkg/*.p5p | xargs mv -t "$(SRCDIR)"; } || true
 
 clean:
 	# dh_testdir
