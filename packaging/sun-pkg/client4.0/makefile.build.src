@@ -205,7 +205,7 @@ MAKE=$(MAKE) \
 --enable-manpage-build \
 --disable-syntax-checks \
 --disable-installperms \
---with-xsltproc=$(XSLTPROC) \
+--with-xsltproc=$(XSLTPROC_PATH) \
 --disable-static
 endef
 # NOTE: disable-installperms or install conflicts with chown/chmod later
@@ -225,8 +225,8 @@ build-stamp:
 	# dh_testdir
 	echo 'unset CONFIG_LDPATH ' > ./build-env.sh
 	( \
-           PERL=$$(command -v perl); \
-           PYTHON=$$(command -v python3); \
+	   PERL=$$(command -v perl); \
+	   PYTHON=$$(command -v python3); \
 	   PKG_CONFIG_PATH+=""; \
 	   declare -p PERL PYTHON PKG_CONFIG_PATH >> ./build-env.sh \
         )
@@ -380,6 +380,7 @@ perm-install-client: binary-install
 	rm -f $(buildroot)$(AMLIBEXECDIR)/amplot.awk
 	rm -f $(buildroot)$(AMLIBEXECDIR)/amplot.g
 	rm -f $(buildroot)$(AMLIBEXECDIR)/amplot.gp
+	rm -f $(buildroot)$(ROOTLIBDIR)/charset.alias  # from gnulib somehow
 	
 	##################
 	# internal executible files
