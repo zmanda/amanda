@@ -10,45 +10,56 @@ export DH_VERBOSE=1
 
 AMVER=%%VERSION%%
 
-# export GNU_TRIPLET ?= $(shell $(SHELL) config/config.guess)
-
-PREFIX=/usr
+AMPREFIX=%%INSTALL_TOPDIR%%
 AMANDAHOMEDIR=%%AMANDAHOMEDIR%%
 BUILD_TOPDIR=$(SRCDIR)
 # Comment this to disable silent make.
 #MAKEFLAGS+=s LIBTOOLFLAGS=--silent
 
 CC := $(shell command -v gcc)
-
 GCC_TARGET := $(shell $(CC) -dumpmachine | tr -d '\n')
-
 LIBARCHDIR=lib/$(GCC_TARGET)
 
 HOST_GNU_TYPE   = $(GCC_TARGET)
 BUILD_GNU_TYPE  = $(GCC_TARGET)
+
+# These are used for cross-compiling and for saving the configure script
+# from having to guess our platform (since we know it already)
+DEB_HOST_GNU_TYPE   ?= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
+DEB_BUILD_GNU_TYPE  ?= $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
 
 # These are variables that the user can override.  They get used in various
 # places during configure, build, and install.
 PREFIX=/usr
 BINDIR=$(PREFIX)/bin
 SBINDIR=$(PREFIX)/sbin
+
 LIBDIR=$(PREFIX)/lib
 LIBEXECDIR=$(PREFIX)/lib
 AMLIBEXECDIR=$(LIBEXECDIR)/amanda
 # must be architecture-specific ...
 SHLIBDIR=$(PREFIX)/$(LIBARCHDIR)
 AMLIBDIR=$(SHLIBDIR)/amanda
-MANDIR=$(PREFIX)/share/man
-DOCDIR=$(PREFIX)/share/doc
+AMPERLDIR=$(AMLIBDIR)/perl
+
+MANDIR=$(AMPREFIX)/share/man
+DOCDIR=$(AMPREFIX)/share/doc
 SYSCONFDIR=%%SYSCONFDIR%%
 AMCONFDIR=$(SYSCONFDIR)/amanda
 AMANDATES=$(AMANDAHOMEDIR)/amandates
 LOCALSTATEDIR=/var
 LOGDIR=%%LOGDIR%%
-AMPERLDIR=$(AMLIBDIR)/perl
+
+# Extract the perl directory.  This is used to install amanda's perl 
+# libs. If configure finds a different install or you specify a different path using
+# --with-amperldir= make sure you change this variable in the config dirs.m4 as well.
+# NOTE: perl -V:varname emits a final ";".   Don't let it match to make ";;".
+# PERLVENDORARCH=$(shell eval "$$(perl -V:installvendorarch)"; echo $$installvendorarch)
+# PERLSITEARCH=$(shell eval "$$(perl -V:installsitearch)"; echo $$installsitearch)
 
 # for Debian.. most reliable is this
-SYS_UNITDIR=$(lastword $(filter-out %.late,$(shell systemctl show -p UnitPath)))
+SYS_UNITDIR_SYSD=$(lastword $(filter-out %.late,$(shell systemctl show -p UnitPath)))
+SYS_UNITDIR=$(or $(SYS_UNITDIR_SYSD),/lib/systemd/system)
 #SYS_LDSOCONFDIR=$(SYSCONFDIR)/ld.so.conf.d
 SYS_LOGROTATEDIR=$(SYSCONFDIR)/logrotate.d
 
@@ -120,10 +131,10 @@ build-stamp:
 	dh_testdir
 	echo 'unset CONFIG_LDPATH ' > ./build-env.sh
 	( \
-	    PERL=$$(command -v perl); \
-	    PYTHON=$$(command -v python3); \
-	    PKG_CONFIG_PATH+=""; \
-	    declare -p PERL PYTHON PKG_CONFIG_PATH >> ./build-env.sh \
+	   PERL=$$(command -v perl); \
+	   PYTHON=$$(command -v python3); \
+	   PKG_CONFIG_PATH+=""; \
+	   declare -p PERL PYTHON PKG_CONFIG_PATH >> ./build-env.sh \
         )
 	( \
 	    LDFLAGS="-Wl,--disable-new-dtags -Wl,-rpath -Wl,$(AMLIBDIR)"; \
