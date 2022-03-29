@@ -37,8 +37,6 @@ SRCDIR := $(realpath $(PWD))
 
 AMVER=%%VERSION%%
 
-export GNU_TRIPLET ?= $(shell $(SHELL) config/config.guess)
-
 AMPREFIX=%%INSTALL_TOPDIR%%
 AMANDAHOMEDIR=%%AMANDAHOMEDIR%%
 BUILD_TOPDIR=$(SRCDIR)
@@ -57,6 +55,7 @@ ifeq ($(FAKEROOTKEY),)
 GCC_TARGET := $(shell $(CC) -dumpmachine)
 GCC_TARGET := $(strip $(GCC_TARGET))
 endif
+FAKEROOT_PATH=/opt/csw/gnu:/opt/csw/bin
 
 LIBARCHDIR=lib
 BINARCHDIR=bin
@@ -103,7 +102,6 @@ SHARED_DIRS = \
 
 BUILD_PATH = $(shell IFS=:; set -- $(PATH_DIRS); echo "$$*")
 
-FAKEROOT_PATH=/opt/csw/gnu:/opt/csw/bin
 export PATH=$(BUILD_PATH)
 
 XSLTPROC_PATH   = $(wildcard /opt/csw/bin/xsltproc)
@@ -111,6 +109,7 @@ XSLTPROC_PATH   ?= $(wildcard /usr/bin/xsltproc)
 
 HOST_GNU_TYPE   = $(GCC_TARGET)
 BUILD_GNU_TYPE  = $(GCC_TARGET)
+
 
 # These are variables that the user can override.  They get used in various
 # places during configure, build, and install.
@@ -147,7 +146,8 @@ CONFIG_FILES = \
     $(SYSCONFDIR)/amanda-security.conf
 
 # for Debian.. most reliable is this
-#SYS_UNITDIR=$(lastword $(filter-out %.late,$(shell systemctl show -p UnitPath)))
+#SYS_UNITDIR_SYSD=$(lastword $(filter-out %.late,$(shell systemctl show -p UnitPath)))
+#SYS_UNITDIR=$(or $(SYS_UNITDIR_SYSD),/lib/systemd/system)
 #SYS_LDSOCONFDIR=$(SYSCONFDIR)/ld.so.conf.d
 #SYS_LOGROTATEDIR=$(SYSCONFDIR)/logrotate.d
 
