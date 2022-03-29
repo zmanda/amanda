@@ -24,6 +24,7 @@ license usr/share/amanda/COPYRIGHT \
 <transform dir -> default mode 0755>
 
 <transform dir path=^usr/lib$ -> edit group root bin>
+<transform dir path=^usr/lib/amd64$ -> edit group root bin>
 
 <transform file path=(var|lib)/svc/manifest/.*\.xml -> \
     add restart_fmri svc:/system/manifest-import:default>
