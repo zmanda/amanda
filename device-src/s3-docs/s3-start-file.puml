@@ -1,0 +1,159 @@
+@startuml
+newpage S3-Specific File Writes
+
+boundary "Device API" as api
+
+create participant "Device" as dev
+api -> dev ** : << s3_device_factory("s3",\n\t\t\t"<bucket>/<prefix>")
+activate dev
+create participant "S3Device" as s3dev
+dev ->o s3dev : << s3_device_open_device() >>
+
+dev ->o s3dev : set defaults
+dev ->o s3dev : set bucket name
+?<-/ dev : << set property >>
+?<-/ dev : << set property >>
+...
+?<-/ dev : << set property >>
+?<-/ dev : << set property >>
+?<-/ dev : << parent->(*open_device)() >>
+dev --/ api -- : return
+
+api -> dev ++ : << s3_device_create() >>
+dev -> s3dev ++ : <setup_handle()>
+s3dev /->o s3dev : init auth
+s3dev /->o s3dev : <catalog_open()>
+s3dev /->o s3dev : clear threads
+
+loop over all threads
+
+create collections "Idle S3_by_thread" as s3t
+s3dev o-> s3t : new0
+create collections "CurlBuffer" as s3buf
+s3t /->o s3buf : s3_buffer_ctor(0)   [empty]
+s3t /->o s3t : reset_idle_thread()
+
+create collections "S3Handle" as s3hdl
+s3t ->o s3hdl ++ : s3_open(....)
+deactivate s3dev
+s3hdl /->o s3hdl : init auth
+s3hdl /->o s3hdl : init cloud params
+s3hdl /->o s3hdl : << s3_new_curl() >>
+create collections "CURL" as curl
+s3hdl /->o curl : << curl_easy_init() >>
+s3hdl /->o curl : << curl_easy_setopt(...) >>
+...
+s3hdl /-> curl -- : << curl_easy_setopt(...) >>
+curl --/ s3hdl : return if error
+activate s3dev
+s3t ->o s3dev : init del/wr/rd thread pools
+s3t ->o s3hdl : s3_use_ssl(<bool>)
+s3t ->o s3hdl : s3_set_max_send_speed(<bytes-per-second>)
+s3t ->o s3hdl : s3_set_max_recv_speed(<bytes-per-second>)
+s3t ->o s3hdl : s3_open2() [if swift auth in use]
+
+end
+s3t ->o s3dev : choose one 'free' thread at start
+s3dev --/ dev -- : return
+deactivate s3dev
+
+dev -> s3dev : <make_bucket()>
+activate s3dev
+s3dev o--> s3t : get_temp_curl()
+s3t -> s3hdl ++ : s3_is_bucket_exists()
+s3hdl -> curl ++ : curl_easy_perform()
+curl --/ dev -- : return if error
+deactivate s3hdl
+
+s3t -> s3hdl ++ : s3_make_bucket()
+s3hdl -> curl ++ : curl_easy_perform()
+curl --/ s3hdl -- :
+deactivate s3hdl
+
+s3dev ->o s3dev : abort_partial_uploads()
+s3dev --/ dev --++ : return
+?<- dev : << parent->(*create)() >>
+dev --/ api -- : return
+
+api -> dev ++ : s3_device_start(ACCESS_APPEND, \
+		    \n\t\t\t<label>, \
+		    \n\t\t\t<timestamp>)
+dev -X s3dev : <setup_handle()> [NO REDO]
+dev ->o s3dev : s3_cancel_busy_threads(FULL)
+dev ->o s3dev : s3_wait_threads_done()
+dev -X s3dev : <make_bucket()> [NO REDO]
+dev --/ api -- : return
+
+api -> dev ++ : << s3_device_start_file() >>
+dev /->o dev : << s3_device_seek_block(0) >>
+?-> dev : device_build_amanda_header()
+
+dev ->o s3buf ** : s3_buffer_load()
+activate s3buf
+
+dev ->o s3dev : <check_at_leom()>,\n\t<check_at_peom()>
+s3dev ->o s3dev : <reset_file_state()>
+dev ->o dev : set state to in_file == TRUE (file pos incr)
+s3dev ->o s3dev : <init_upload_hooks()>
+dev ->o dev : <filestart_key()>
+s3dev o--> s3t : get_temp_curl()
+s3t -> s3hdl ++ : <s3_upload()>
+s3hdl -> curl ++ : << curl_easy_perform() >>
+s3buf -->o curl -- : s3_buffer_read_data()
+dev --/ api -- : return
+deactivate curl
+deactivate s3hdl
+
+loop until final block write 
+api -> dev ++ : << s3_device_write_block(ptr,nbytes) >>
+dev ->o s3dev : <check_at_leom()>,\n\t<check_at_peom()>
+
+alt no matching curl thread 
+s3t --X dev : <find_active_file_thread()> [NULL]
+create collections "Active S3_by_thread" as s3tact
+s3dev -> s3tact : (*fxn_thread_write_factory)()
+s3tact -> s3tact ++ : s3_thread_write_session()
+end
+
+dev o-> s3buf ++ : <s3_buffer_write_func()>
+s3tact -> s3hdl ++ : <s3_upload()>
+s3hdl -> curl ++ : << curl_easy_perform() >>
+s3buf -->o curl : s3_buffer_read_func()
+dev o-> s3buf : <s3_buffer_write_func()>
+dev --> api : return
+deactivate dev
+
+s3buf -->o curl : s3_buffer_read_func()
+s3buf -->o curl : s3_buffer_read_func()
+s3buf -->o curl : s3_buffer_read_func()
+s3buf -->o curl -- : s3_buffer_read_func()
+...
+
+loop for all API write blocks
+
+api -> dev ++ : << s3_device_write_block(ptr,nbytes) >>
+dev ->o s3dev : <check_at_leom()>,\n\t<check_at_peom()>
+alt find matching curl thread
+s3tact o--> dev : <find_active_file_thread()>
+end
+dev o-> s3buf ++ : <s3_buffer_write_func()>
+s3buf -->o curl : s3_buffer_read_func()
+dev o-> s3buf : <s3_buffer_write_func()>
+dev --> api : return
+deactivate dev
+
+s3buf -->o curl : s3_buffer_read_func()
+s3buf -->o curl : s3_buffer_read_func()
+s3buf -->o curl : s3_buffer_read_func()
+s3buf -->o curl -- : s3_buffer_read_func()
+
+end
+
+...
+api -> dev : << device_finish_file() >>
+return 
+
+api -> dev : << device_finish() >>
+api -> dev : << device_finalize() >>
+
+@enduml

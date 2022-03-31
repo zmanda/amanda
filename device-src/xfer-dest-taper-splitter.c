@@ -1247,6 +1247,7 @@ xfer_dest_taper_splitter(
     XferDestTaperSplitter *self = (XferDestTaperSplitter *)g_object_new(XFER_DEST_TAPER_SPLITTER_TYPE, NULL);
     GValue val;
 
+    max_memory = MAX(max_memory, 128*1024);  // reasonable minimum
     /* max_memory and part_size get rounded up to the next multiple of
      * block_size */
     max_memory = ((max_memory + first_device->block_size - 1)

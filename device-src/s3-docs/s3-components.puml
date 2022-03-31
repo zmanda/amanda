@@ -1,0 +1,30 @@
+@startuml
+
+package "application/taper" {
+    [Amanda::Taper::Controller] as taper 
+    [Amanda::Taper::Worker] as worker
+    taper -> worker : spawn
+}
+
+package "libcurl.so" {
+    [curl_easy_*] as curl
+}
+
+package "libamdevice.so" {
+    [Amanda::Xfer] as xfer
+    [Device API] as api
+    [S3-Device] as s3dev
+    [S3-Request] as s3
+    [CurlBuffer] as s3buf
+    worker --> xfer : setup
+    xfer -> api : execute xfer
+    api -> s3dev : data source
+    s3dev --> curl : rd-wr data
+    s3dev -> s3 : start up-dnload
+    s3 <.> s3buf : rd-wr xml mesgs
+    s3 <--> curl : S3 auth
+    s3 <--> curl : do HTTP request
+    curl <..> s3buf : rd-wr data
+}
+
+@enduml
