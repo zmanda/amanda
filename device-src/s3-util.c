@@ -1030,7 +1030,7 @@ s3_buffer_read_reset_func(CurlBuffer *stream)
 	goto failed; // could not reset any other cases
     } while(FALSE);
 
-    g_debug("[%p] %s: performed read-reset [%#x-%#x/%#x)", s3buf, __FUNCTION__, 
+    g_info("[%p] %s: performed upload-buffer reset [%#x-%#x/%#x)", s3buf, __FUNCTION__, 
        s3buf->buffer_pos, s3buf->buffer_pos + s3buf->bytes_filled, s3buf->max_buffer_size);
 
     // wake writers (any??) up to notice new state
@@ -1058,9 +1058,17 @@ s3_buffer_write_reset_func(CurlBuffer *stream)
     content_toread = s3_buffer_read_size_func(s3buf);
     s3_buffer_reset_eod_func(s3buf, 0);
     // eod == 0 for now
+    // NOTE: CALLS LOCK AND UNLOCK
     s3_buffer_init(s3buf, s3buf->max_buffer_size, s3buf->opt_verbose); 
     // eod == old value 
     s3_buffer_reset_eod_func(s3buf, content_toread); // set back again (if it matters)
+
+    g_info("[%p] %s: performed download-buffer reset [%#x-%#x/%#x)", s3buf, __FUNCTION__, 
+       s3buf->buffer_pos, s3buf->buffer_pos + s3buf->bytes_filled, s3buf->max_buffer_size);
+
+    // wake readers (any??) up to notice new state
+    if (s3buf->cond)
+	g_cond_signal(s3buf->cond);
 }
 
 /* a CURLOPT_READFUNCTION that writes nothing. */

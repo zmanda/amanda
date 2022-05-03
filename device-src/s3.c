@@ -1797,8 +1797,9 @@ record_response(S3Handle *hdl,
         hdl->last_message = g_strdup_printf("CURL error: %s", curl_error_buffer);
     }
 
+    // go no further?
     if (hdl->last_response_code == 0)
-        return S3_RESULT_FAIL; // must be a curl error
+        return S3_RESULT_RETRY_BACKOFF; // must be a curl error
 
     /* check ETag, if present and not CAStor */
     if (hdl->last_etag && content_md5) {
@@ -2367,7 +2368,7 @@ perform_request(S3Handle *hdl,
         curl_error_buffer[0] = '\0';
 
 	// reset upload data back to start of read [if possible]
-        if (read_data && read_reset_func && retry_num) {
+        if (retry_num && read_data && read_reset_func) {
             read_reset_func(read_data); 
 
 	    if (read_reset_func == (device_reset_func_t) s3_buffer_read_reset_func && ((CurlBuffer*)read_data)->cancel) {
@@ -2678,6 +2679,12 @@ perform_request(S3Handle *hdl,
         }
     } // for(backoff)
 
+    if (write_data && ! int_writedata.write_data) {
+        // response was an error that was not passed on ... so notify any readers
+        s3_buffer_reset_eod_func(write_data, 0);  // assert simple zero bytes to read (assumes reader is waiting)
+        s3_buffer_read_reset_func(write_data);  // lock/reset and then notify any readers
+    }
+
     if (hdl->verbose)
         g_debug("[%p] %s: requested try=#%d after %s of %s",(curlopt_setsizeopt ? read_data : write_data),__FUNCTION__, retry_num, verb,url);
 
@@ -2692,9 +2699,11 @@ perform_request(S3Handle *hdl,
     }
 
     if (result != S3_RESULT_OK) {
-        g_debug(_("%s %s failed with %d/%s"), verb, url,
-                hdl->last_response_code,
-                s3_error_name_from_code(hdl->last_s3_error_code));
+        g_debug(_("%s [r=%d/%d] %s failed with %d/%s backoff=%lu retries=%d"), 
+                verb, curl_code, result, url, 
+                 hdl->last_response_code, s3_error_name_from_code(hdl->last_s3_error_code),
+                backoff,
+                retries);
     }
 
 cleanup:
@@ -2818,12 +2827,8 @@ s3_internal_write_func(void *ptr, size_t size, size_t nmemb, void * stream)
 	    s3_buffer_reset_eod_func(data->write_data, content_len);
 	}
 
-	if (hdl->last_response_code >= 300 && data->write_data) {
-	    // response is an error... so block through data
-	    s3_buffer_reset_eod_func(data->write_data, 0);  // assert simple zero bytes to read
-	    s3_buffer_read_reset_func(data->write_data);  // notify any readers of change/reset
-	    data->write_data = NULL; // no more writes into external buffer
-	}
+	if (hdl->last_response_code >= 300 && data->write_data)
+	    data->write_data = NULL; // no writes into external buffer
     }
 
     dupavail = s3buf_dup->max_buffer_size - hdl->last_response_body_size;

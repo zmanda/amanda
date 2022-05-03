@@ -160,6 +160,8 @@ typedef curl_xferinfo_callback s3_xferinfo_func;
 # define AMZ_TOP_DOMAIN "s3.amazonaws.com"
 # define GCP_TOP_DOMAIN ".googleapis.com"
 
+# define S3_MULTIPART_UPLOAD_MAX   10000
+
 # define STS_PRODUCT_TOKEN "{ProductToken}AAAGQXBwVGtu4geoGybuwuk8VEEPzJ9ZANpu0yzbf9g4Gs5Iarzff9B7qaDBEEaWcAzWpcN7zmdMO765jOtEFc4DWTRNkpPSzUnTdkHbdYUamath73OreaZtB86jy/JF0gsHZfhxeKc/3aLr8HNT//DsX3r272zYHLDPWWUbFguOwqNjllnt6BshYREx59l8RrWABLSa37dyJeN+faGvz3uQxiDakZRn3LfInOE6d9+fTFl50LPoP08LCqI/SJfpouzWix7D/cep3Jq8yYNyM1rgAOTF7/wh7r8OuPDLJ/xZUDLfykePIAM="
 
 /* This preprocessor magic will enumerate constants named S3_ERROR_XxxYyy for
