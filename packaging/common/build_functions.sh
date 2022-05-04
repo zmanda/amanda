@@ -137,12 +137,12 @@ detect_pkgdirs_top() {
     # confirm dir if needed to assert pkg_type 
     case "${buildpkg_dir:$n}/" in
        # in case buildpkg dir is subdir of type (debian or sun)
-       rpm/*|deb/*|sun-pkg/*|whl/*) 
+       rpm/*|deb/*|sun-pkg/*|whl/*|tar/*) 
             pkg_type=${buildpkg_dir:$n}/
             pkg_type=${pkg_type%%/*}
         ;;
        # in case buildpkg dir is above type dir
-       */rpm/|*/deb/|*/sun-pkg/|*/whl/)
+       */rpm/|*/deb/|*/sun-pkg/|*/whl/|*/tar/)
             pkg_type=${buildpkg_dir:$n}
             pkg_type=${pkg_type%/}
             pkg_type=${pkg_type##*/}
@@ -190,8 +190,8 @@ detect_build_dirs() {
        (deb) declare -g pkgconf_dir=debian  \
                        pkg_bldroot=$src_root/debbuild
             ;;
-       (pkg|sun-pkg) 
-             declare -g pkgconf_dir=sun-pkg \
+       (pkg|sun-pkg)
+             declare -g pkgconf_dir=PKGBUILD \
                        pkg_bldroot=$src_root/pkgbuild
              buildpkg_dir="${buildpkg_dir%/pkg}"
              buildpkg_dir="${buildpkg_dir%/sun-pkg}"
@@ -202,7 +202,7 @@ detect_build_dirs() {
        (whl) declare -g pkgconf_dir=.       \
                        pkg_bldroot=$src_root/whlbuild
             ;;
-       (tar) declare -g pkgconf_dir=tar       \
+       (tar) declare -g pkgconf_dir=BUILD \
                        pkg_bldroot=$src_root/tarbuild
             ;;
        (*) die "cannot find pkg_type in time to set up build configs" ;;
@@ -289,7 +289,7 @@ detect_root_pkgtime() {
 
 get_version_evalstr() {
     local f=$(realpath ${BASH_SOURCE[0]})
-    ${f%/*}/version_setup.sh $1
+    ${BASH} -${setopt} ${f%/*}/version_setup.sh $1
 }
 
 logger() {
@@ -611,7 +611,7 @@ do_top_package() {
 	    ;;
     esac
     true
-    )  || exit $?
+    ) || exit $?
 }
 
 do_package() {
@@ -691,7 +691,7 @@ do_package() {
 
                 (*/pkgbuild)
                     [ -n "$(command -v pkgproto)" ] ||
-                        die "ERROR: dpkg-buildpackage command was not found.  Cannot build without package \"dpkg-dev\" installed."
+                        die "ERROR: pkgproto command was not found.  Cannot build without package \"dpkg-dev\" installed."
                     [ -s $pkgconf_dir/makefile.build ] ||
                         die "ERROR: no $pkgconf_dir/makefile.build file is ready in $pkg_bldroot/$build_srcdir/$pkgconf_dir"
 

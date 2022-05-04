@@ -1,5 +1,4 @@
 #!/usr/bin/make -f
-
 SHELL := $(shell [ -x /bin/bash ] && echo /bin/bash || command -v bash)
 THIS_MAKEFILE := $(realpath $(lastword $(MAKEFILE_LIST)))
 #
@@ -7,14 +6,6 @@ THIS_MAKEFILE := $(realpath $(lastword $(MAKEFILE_LIST)))
 SRCDIR := $(realpath $(PWD))
 # Uncomment this to turn on verbose mode.
 # export DH_VERBOSE=1
-
-# Explanation of solaris paths:
-# %%INSTALL_TOPDIR%%/common/*: Bitrock stack.
-# /opt/SUNWspro/*: Sun compiler, NOT USED FOR PACKAGING.
-# /opt/csw/*: OpenCSW.
-# /usr/ccs/*: sun compilation tools (ld, lex, yacc)
-# /usr/sfw/*: SunFreeware, sometimes. (solaris 10)
-# /usr/local/*: SunFreeware, othertimes. (solaris 8)
 
 # list of debian-helper bins ignored:
 # dh_testdir
@@ -43,19 +34,14 @@ BUILD_TOPDIR=$(SRCDIR)
 # Comment this to disable silent make.
 #MAKEFLAGS+=s LIBTOOLFLAGS=--silent
 
-# first prefer /usr/gcc/N/bin/gcc
-# then prefer /usr/sfw/bin/gcc
-# then prefer /opt/csw/bin/gcc
-# then allow /bin/gcc etc...
-
-CC := $(shell PATH=$$(ls 2>/dev/null -d /usr/gcc/*/bin):/usr/sfw/bin:/opt/csw/bin:$${PATH} command -v gcc)
+CC := $(shell command -v gcc)
 
 # NOTE: below needs to run under fakeroot!!!
 ifeq ($(FAKEROOTKEY),)
 GCC_TARGET := $(shell $(CC) -dumpmachine)
 GCC_TARGET := $(strip $(GCC_TARGET))
 endif
-FAKEROOT_PATH=/opt/csw/gnu:/opt/csw/bin
+FAKEROOT_PATH=$(PATH)
 
 LIBARCHDIR=lib
 BINARCHDIR=bin
@@ -65,47 +51,6 @@ ifeq ($(findstring x86_64,$(GCC_TARGET)),x86_64)
 LIBARCHDIR=lib/amd64
 BINARCHDIR=bin/amd64
 endif
-
-CSWLIBDIR=/opt/csw/$(LIBARCHDIR)
-ROOTLIBDIR=/usr/lib
-export PKG_CONFIG_PATH="$(SRCDIR)/sun-pkg:$(ROOTLIBDIR)/pkgconfig:$(CSWLIBDIR)/pkgconfig"
-
-#
-# - gnu-only bin dirs (2.10 and 2.11)
-# - directory of CC (likely /usr/sfw/bin or /opt/csw/bin
-# - /usr/sfw/bin
-# - /usr/bin or /usr/bin/amd64
-# - /usr/bin itself
-#
-##
-export MAKE=/opt/csw/bin/gmake
-PATH_DIRS = \
-    /usr/lib/git-core \
-    /usr/gnu/$(BINARCHDIR) /usr/gnu/$(BIN) \
-    /opt/csw/gnu \
-    $(BINARCHDIR) \
-    /$(BIN) \
-    $(dir $(CC)) \
-    /usr/sfw/$(BINARCHDIR) /usr/sfw/$(BIN) \
-    /opt/csw/$(BINARCHDIR) /opt/csw/$(BIN) \
-    /usr/$(BINARCHDIR) /usr/$(BIN) \
-    /usr/s$(BINARCHDIR) /usr/s$(BIN) \
-    /usr/ccs/$(BINARCHDIR) /usr/ccs/$(BIN)
-
-SHARED_DIRS = \
-    opt var usr \
-    usr/sbin \
-    usr/share usr/share/man \
-    usr/share/man/man[0-9] \
-    var/svc var/svc/manifest var/svc/manifest/network \
-    var/log
-
-BUILD_PATH = $(shell IFS=:; set -- $(PATH_DIRS); echo "$$*")
-
-export PATH=$(BUILD_PATH)
-
-XSLTPROC_PATH   = $(wildcard /opt/csw/bin/xsltproc)
-XSLTPROC_PATH   ?= $(wildcard /usr/bin/xsltproc)
 
 HOST_GNU_TYPE   = $(GCC_TARGET)
 BUILD_GNU_TYPE  = $(GCC_TARGET)
@@ -205,7 +150,7 @@ MAKE=$(MAKE) \
 --enable-manpage-build \
 --disable-syntax-checks \
 --disable-installperms \
---with-xsltproc=$(XSLTPROC_PATH) \
+--with-xsltproc \
 --disable-static
 endef
 # NOTE: disable-installperms or install conflicts with chown/chmod later
@@ -251,15 +196,14 @@ build-stamp:
 		$(CONFIG_FLAGS_COMMON) \
 		--without-server \
                 --enable-rpath
-
-	touch missing
 	
+	touch missing
+		
 	# remake once to make sure
 	set -x; $(MAKE) -j1 ./config.status VERBOSE=1
 	# perform real build
 	set -x; . ./build-env.sh; \
 	    $(MAKE) -j`nproc` VERBOSE=1
-	
 	touch $@
 	echo ------------------- END BUILD
 
@@ -278,16 +222,16 @@ binary-install-client: build-stamp
 	# dh_prep
 	# dh_installdirs -v
 	mkdir -p $(buildroot)$(AMANDAHOMEDIR)/{gnutar-lists,.gnupg,.ssh,tmp}
-
+	
 	echo ------------------- START INSTALL
 	################################################ perform source make-install
 	set -x; . ./build-env.sh; \
 	    $(MAKE) -j1 install DESTDIR=$(buildroot)
 	################################################ done with source make-install
-
+	
 	# rm -f $(buildroot)$(SYS_UNITDIR)/__sub-amanda-server*
 	# rm -f $(buildroot)$(AMANDAHOMEDIR)/example/inetd.conf.amandaclient
-	
+		
 	##################
 	# needed directories
 	##################
@@ -295,7 +239,7 @@ binary-install-client: build-stamp
 	#          $(buildroot)$(SYS_LDSOCONFDIR)/amanda.conf
 	#install -D -m 644 system-scripts/amanda-logrotate \
 	#          $(buildroot)$(SYS_LOGROTATEDIR)/amanda
-	
+		
 	# only for solaris...
 	install -D $(buildroot)$(AMANDAHOMEDIR)/example/amandaclient.xml \
 			$(buildroot)/var/svc/manifest/network/amandaclient.xml
@@ -333,22 +277,22 @@ binary-install-client: build-stamp
 perm-install-client: binary-install
 	# dh_testroot
 	# dh_fixperms -v
-
-        # NOTE: USE SINGLE LINES FOR CHOWN.  MUST ACCOMODATE OLDER CHOWN WITH FAKEROOT SETUP
+	
+	# NOTE: USE SINGLE LINES FOR CHOWN.  MUST ACCOMODATE OLDER CHOWN WITH FAKEROOT SETUP
 	# install -o root -g root -m 0644 sun-pkg/lintian \
 	# 	$(buildroot)/usr/share/lintian/overrides/amanda-backup-client
 	chown -R root:root $(buildroot)$(AMLIBEXECDIR)
-
+	
 	chown -R $(AMANDAUSER):$(AMANDAGROUP) \
            $(buildroot)$(AMANDAHOMEDIR)
 	chown -R $(AMANDAUSER):$(AMANDAGROUP) $(buildroot)$(AMCONFDIR)
 	chown -R $(AMANDAUSER):$(AMANDAGROUP) $(buildroot)$(LOGDIR)
 	chown -R $(AMANDAUSER):$(AMANDAGROUP) $(buildroot)/usr/sbin/*
-
+	
 	chown root:root \
            $(buildroot)$(AMLIBDIR)/lib*.so
 	chown root:root                       $(buildroot)$(SYSCONFDIR)/amanda-security.conf
-
+	
 	chown root:$(AMANDACLIGROUP) \
            $(buildroot)$(AMLIBEXECDIR)/ambind
 	chown root:$(AMANDACLIGROUP) $(buildroot)$(AMLIBEXECDIR)/application/amgtar
@@ -357,9 +301,9 @@ perm-install-client: binary-install
 	chown root:$(AMANDACLIGROUP) $(buildroot)$(AMLIBEXECDIR)/killpgrp
 	chown root:$(AMANDACLIGROUP) $(buildroot)$(AMLIBEXECDIR)/rundump
 	chown root:$(AMANDACLIGROUP) $(buildroot)$(AMLIBEXECDIR)/runtar
-
+	
 	chmod -R u=rwX,g=rX,o=rX $(buildroot)$(AMLIBEXECDIR) 
-
+	
 	chmod 0755 \
            $(buildroot)$(AMLIBEXECDIR)/*
 	chmod 0755 $(buildroot)$(AMLIBEXECDIR)/application/*
@@ -414,10 +358,7 @@ perm-install-client: binary-install
 	# chmod u=r,g=r,o=r $(buildroot)$(SYSCONFDIR)/*.d/*
 	# rely on sanity-check permissions otherwise
 	# ---------------------- ASSESS PERMISSIONS NOW IF NEEDED ----------
-	# FIXME: instead, translate fakeroot into pkgproto
-	sed -i -e '/^i /!d' $(buildroot).pkgproto.hdr       # remove old lines if present?
-	cd $(buildroot); [ -x /bin/pkgproto ] && \
-		{ /bin/pkgproto . | cat $(buildroot).pkgproto.hdr - > $(buildroot).pkgproto; }
+	cd $(buildroot); find . -printf "chmod %m %p; chown %u:%g %p\n" > $(buildroot).install-perms.sh
 
 #    -rw-r--r--    1 root    root                     2030 Nov 16 22:05 /etc/amanda-security.conf
 #
@@ -544,11 +485,7 @@ perm-install-devel: binary-install
 	find $(devel) -type d | \
 		xargs chmod 0755
 	# ---------------------- ASSESS PERMISSIONS NOW IF NEEDED ----------
-	# FIXME: instead, translate fakeroot into pkgproto
-	sed -i -e '/^i /!d' $(devel).pkgproto.hdr       # remove old lines if present?
-	cd $(devel); [ -x /bin/pkgproto ] && \
-		{ /bin/pkgproto . | cat $(devel).pkgproto.hdr - > $(devel).pkgproto; }
-
+	cd $(devel); find . -printf "chmod %m %p; chown %u:%g %p\n" > $(devel).install-perms.sh
 
 #
 # bottleneck after completed all installation
@@ -570,45 +507,10 @@ binary-install-stamp:
 	for i in $$(<$(BUILDROOT).docs); do install -D $$i $(buildroot)$(DOCDIR); done
 	
 	#dh_strip --dbg-package=amanda-backup-client-dbg
-
+	
 	#dh_compress
 	# need external dependencies
 	LD_PRELOAD= /usr/bin/touch $@
-
-
-ifdef BUILDROOT 
-
-PKG_NAME := $(shell [ ! -s $(BUILDROOT).pkginfo ] || { eval $$(grep '^PKG=' $(BUILDROOT).pkginfo); echo $$PKG; })
-
-create_pkg: $(PKG_NAME).pkg
-
-create_p5m: $(BUILDROOT).p5p
-
-%.pkg: $(BUILDROOT).pkginfo $(BUILDROOT).pkgproto
-	# FIXME: instead, translate fakeroot into pkgproto
-	for i in $(addsuffix ",$(addprefix ",$(SHARED_DIRS))); \
-            do i="$${i#/}"; ( set -x; sed -i -e "\|^d none $$i |d" $(BUILDROOT).pkgproto; ); done
-	for i in $(addsuffix ",$(addprefix ",$(CONFIG_FILES))); \
-            do i="$${i#/}"; ( set -x; sed -i -e "\|^f none $$i |s/^f/e/" $(BUILDROOT).pkgproto; ); done
-	pkgmk -d . -r $(BUILDROOT) -o -f $(BUILDROOT).pkgproto
-	pkgtrans -s . $@ $(PKG_NAME)
-
-%.p5p: %.mog
-	# it will complain about preinst postinst scripts...
-	ls $(dir $@)$(PKG_NAME).pkg 
-	pkgsend generate 2>/dev/null $(dir $@)$(PKG_NAME).pkg > $*.proto || true
-	sed -i -e '/^unknown /d' -e '/^license.*$(PKG_NAME)/d' $*.proto
-	[ -s $*.proto ]
-	pkgmogrify -v $< $*.proto > $*.list
-	[ -s $*.list ]
-	pkgdepend generate -md $* $*.list | pkgfmt > $*.p5m
-	pkgdepend resolve -m $*.p5m |& tee $*.depend-err
-	rm -rf $*.repo
-	pkgrepo create $*.repo
-	pkgrepo -s $*.repo set publisher/prefix=betsol.com
-	pkgsend publish -s $*.repo -d $* $*.p5m.res
-	pkgrecv -s $*.repo -a -d $@ \*
-endif
 
 
 #
@@ -618,8 +520,6 @@ final-install:
 	# fakeroot can remain entirely within this MAKE only,
 	#    if perms were remembered from these chmod/chown calls
 	fakeroot -- $(MAKE) -f $(THIS_MAKEFILE) \
-	   PATH=$(FAKEROOT_PATH) \
-	   SHELL=/opt/csw/bin/bash \
 	   GCC_TARGET=$(GCC_TARGET) \
 		perm-install-devel \
 		perm-install-client
@@ -635,15 +535,8 @@ final-install:
 	# dh_gencontrol
 	# dh_md5sums
 	# dh_builddeb
-
-	cd sun-pkg; [ -f depend ] || { [ -f depend-$(GNU_TRIPLET) ] && cp -f depend-$(GNU_TRIPLET) depend; }
-	#
-	$(MAKE) -f $(THIS_MAKEFILE) -C sun-pkg BUILDROOT=$(buildroot) create_pkg
-	$(MAKE) -f $(THIS_MAKEFILE) -C sun-pkg BUILDROOT=$(devel) create_pkg
-	[ ! -x /bin/pkg ] || $(MAKE) -f $(THIS_MAKEFILE) -C sun-pkg BUILDROOT=$(buildroot) create_p5m
-	[ ! -x /bin/pkg ] || $(MAKE) -f $(THIS_MAKEFILE) -C sun-pkg BUILDROOT=$(devel) create_p5m
-	for i in $$(ls 2>/dev/null sun-pkg/*.pkg sun-pkg/*.p5p ); do mv $$i $${i/./-$(AMVER)-$(GNU_TRIPLET).}; done
-	{ ls 2>/dev/null sun-pkg/*.pkg sun-pkg/*.p5p | xargs mv -t "$(SRCDIR)"; } || true
+	# for i in $$(ls 2>/dev/null sun-pkg/*.pkg sun-pkg/*.p5p ); do mv $$i $${i/./-$(AMVER)-$(GNU_TRIPLET).}; done
+	# { ls 2>/dev/null sun-pkg/*.pkg sun-pkg/*.p5p | xargs mv -t "$(SRCDIR)"; } || true
 
 clean:
 	# dh_testdir
@@ -660,3 +553,6 @@ clean:
 binary: final-install
 .PHONY: build clean binary-install binary-install-client binary-install-devel binary-install-platform
 .PHONY: final-install perm-install-client perm-install-devel
+
+# vim:ft=gmake
+

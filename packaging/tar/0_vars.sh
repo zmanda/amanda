@@ -1,1 +1,1 @@
-pkg_name=ZMANae
+pkg_name=amanda-enterprise
