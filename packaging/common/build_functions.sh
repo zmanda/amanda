@@ -202,6 +202,9 @@ detect_build_dirs() {
        (whl) declare -g pkgconf_dir=.       \
                        pkg_bldroot=$src_root/whlbuild
             ;;
+       (tar) declare -g pkgconf_dir=tar       \
+                       pkg_bldroot=$src_root/tarbuild
+            ;;
        (*) die "cannot find pkg_type in time to set up build configs" ;;
     esac
 
@@ -385,7 +388,7 @@ gen_pkg_build_config() {
             rm -f $pkgconf_dir/[0-9]*
 	    ;;
 
-	(*/debbuild|*/pkgbuild)
+	(*/debbuild|*/pkgbuild|*/tarbuild)
 	    echo "Config $pkg_type package from $buildparm_dir ${buildpkg_dir:+and $buildpkg_dir }=============================================="
 	    rm -rf $pkgconf_dir
             mkdir -p $pkgconf_dir
@@ -423,9 +426,9 @@ gen_top_environ() {
     case $pkg_bldroot in
 	(*/rpmbuild)
 	    ln -sf $(realpath ..) BUILD/$PKG_NAME_VER
-            gzip -c < $VERSION_TAR > SOURCES/${PKG_NAME_VER}.tar.gz
+        # gzip -c < $VERSION_TAR > SOURCES/${PKG_NAME_VER}.tar.gz
 	    ;;
-	(*/debbuild|*/pkgbuild)
+	(*/debbuild|*/pkgbuild|*/tarbuild)
 	    # simulate the top directory as the build one...
 	    ln -sf $(realpath ..) $PKG_NAME_VER
 	    ;;
@@ -464,6 +467,7 @@ gen_pkg_environ() {
 		   --exclude=debbuild \
 		   --exclude=rpmbuild \
 		   --exclude=pkgbuild \
+		   --exclude=tarbuild \
 		   --exclude=whlbuild \
 		    -C $tmp ${PKG_NAME_VER}/. ||
 			die "tar creation from $(readlink ${PKG_NAME_VER} || echo "<missing symlink>") failed"
@@ -471,7 +475,7 @@ gen_pkg_environ() {
 	    # ready for the spec file to untar it
             gzip -f SOURCES/${PKG_NAME_VER}.tar
 	    ;;
-	(*/debbuild|*/pkgbuild)
+	(*/debbuild|*/pkgbuild|*/tarbuild)
             rm -rf $PKG_NAME_VER
 	    tar -cf - \
 		   --exclude=\*.rpm \
@@ -484,6 +488,7 @@ gen_pkg_environ() {
 		   --exclude=debbuild \
 		   --exclude=rpmbuild \
 		   --exclude=pkgbuild \
+		   --exclude=tarbuild \
 		    -C $tmp $PKG_NAME_VER/. |
 		tar -xf - ||
 		    die "tar-based copy from $(readlink ${PKG_NAME_VER} || echo "<missing symlink>") to $pkg_bldroot failed"
@@ -549,7 +554,7 @@ do_top_package() {
 		die "ERROR: rpmbuild compile command failed"
 	    ;;
 
-	(*/debbuild|*/pkgbuild)
+	(*/debbuild|*/pkgbuild|*/tarbuild)
             echo "Fake building $pkg_type package in $ctxt =============================================="
             build_srcdir="$ctxt"
 
@@ -588,6 +593,15 @@ do_top_package() {
                     $MAKE -f $pkgconf_dir/makefile.build build || die "failed during $pkgconf_dir/makefile.build build"
                     $MAKE -f $pkgconf_dir/makefile.build binary || die "failed during $pkgconf_dir/makefile.build build"
                     ls 2>/dev/null *.p5p *.pkg | xargs -r mv -fv -t ${PKG_DIR}
+                    echo "$pkgconf_dir package(s) from $build_srcdir ---------------------------------------";
+                    ;;
+                (*/tarbuild)
+                    [ -s $pkgconf_dir/makefile.build ] ||
+                        die "ERROR: no $pkgconf_dir/makefile.build file is ready in $pkg_bldroot/$build_srcdir/$pkgconf_dir"
+
+                    $MAKE -f $pkgconf_dir/makefile.build clean || die "failed during $pkgconf_dir/makefile.build clean"
+                    $MAKE -f $pkgconf_dir/makefile.build build || die "failed during $pkgconf_dir/makefile.build build"
+                    $MAKE -f $pkgconf_dir/makefile.build binary || die "failed during $pkgconf_dir/makefile.build build"
                     echo "$pkgconf_dir package(s) from $build_srcdir ---------------------------------------";
                     ;;
             esac
@@ -646,7 +660,7 @@ do_package() {
 		die "ERROR: rpmbuild compile command failed"
 	    ;;
 
-	(*/debbuild|*/pkgbuild)
+	(*/debbuild|*/pkgbuild|*/tarbuild)
             echo "Building $pkgconf_dir package in $ctxt =============================================="
             build_srcdir="$ctxt"
 
@@ -685,6 +699,16 @@ do_package() {
                     $MAKE -f $pkgconf_dir/makefile.build build || die "failed during $pkgconf_dir/makefile.build build"
                     $MAKE -f $pkgconf_dir/makefile.build binary || die "failed during $pkgconf_dir/makefile.build build"
                     ls 2>/dev/null *.p5p *.pkg | xargs -r mv -fv -t ${PKG_DIR}
+                    echo "$pkgconf_dir package(s) from $build_srcdir ---------------------------------------";
+                    ;;
+
+                (*/tarbuild)
+                    [ -s $pkgconf_dir/makefile.build ] ||
+                        die "ERROR: no $pkgconf_dir/makefile.build file is ready in $pkg_bldroot/$build_srcdir/$pkgconf_dir"
+
+                    $MAKE -f $pkgconf_dir/makefile.build clean || die "failed during $pkgconf_dir/makefile.build clean"
+                    $MAKE -f $pkgconf_dir/makefile.build build || die "failed during $pkgconf_dir/makefile.build build"
+                    $MAKE -f $pkgconf_dir/makefile.build binary || die "failed during $pkgconf_dir/makefile.build build"
                     echo "$pkgconf_dir package(s) from $build_srcdir ---------------------------------------";
                     ;;
             esac
@@ -733,7 +757,7 @@ get_svn_info() {
 
 set_zmanda_version() {
     eval "$(get_version_evalstr "$1")"
-    [ -f "$VERSION_TAR" ] || die "failed to create VERSION_TAR file"
+    # [ -f "$VERSION_TAR" ] || die "failed to create VERSION_TAR file"
     echo -n "$VERSION" > $src_root/FULL_VERSION
     echo -n "$LONG_BRANCH" > $src_root/LONG_BRANCH
     echo -n "$REV" > $src_root/REV

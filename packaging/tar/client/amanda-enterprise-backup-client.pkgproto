@@ -1,0 +1,6 @@
+i pkginfo=./amanda-backup-client.pkginfo
+i depend=./depend
+i preinstall=./preinst
+i postinstall=./postinst
+i preremove=./prerm
+i copyright=./copyright

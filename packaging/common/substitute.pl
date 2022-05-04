@@ -229,6 +229,9 @@ sub find_platform_info {
     return [ "Debian${RELVER1}_${debarch}.deb", "Debian", $RELVER1 ]
        if ( $RELTYPES =~ m/debian/ );
 
+    return [ "Manjaro${RELVER1}.tar", "Manjaro", $RELVER1 ]
+       if ( $RELTYPES =~ m/manjaro/ );
+
     return [ ];
 }
 
@@ -324,6 +327,9 @@ elsif ( $pkg_suffix =~ /\.rpm$/ ) {
 elsif ( $pkg_suffix =~ /\.pkg$/ ) {
 	$pkg_type = "pkg";
 }
+elsif ( $pkg_suffix =~ /\.tar$/ ) {
+	$pkg_type = "tar";
+}
 else {
     die "Could not determine pkg_type either by environment variable, or
 	pathname of files to substitute ($ARGV[0]).";
@@ -384,6 +390,10 @@ my %replacement_strings_deb = (
 # override date
 my %replacement_strings_rpm = (
 	"DATE" => sub { get_date("'+%a %b %d %Y'"); },
+);
+
+# override date
+my %replacement_strings_tar = (
 );
 
 # use all defaults

@@ -1,0 +1,92 @@
+#!/bin/bash
+bashpath="`command -v bash`"
+[ -x "$bashpath" -a -z "$BASH_VERSION" ] && exec "$bashpath" $0 "$@"
+set +o posix
+##########################################
+#
+# pre installation
+# pre installation
+# pre installation
+#
+##########################################
+PRE_INST_ARGS=("$@")
+###############################################################
+# needed contents are brought from zmanda-platform-shared
+###############################################################
+logger "Preinstall for amanda-\"Amanda Community Edition - version %%VERSION%%\""
+
+# all owned by root
+[ ! -e /usr/bin/bash -a -x /bin/bash ] &&
+   ln -sf /bin/bash /usr/bin/bash
+[ ! -e /usr/bin/sh -a -x /bin/sh ] &&
+   ln -sf /bin/sh /usr/bin/sh
+[ ! -e /usr/lib64 -a -d /lib64 ] &&
+   ln -sf /lib64 /usr/lib64
+# [ ! -e /lib/systemd/system -a -d /usr/lib/systemd/system ] &&
+#    ln -sf /usr/lib/systemd /lib
+# must block use of /usr/lib/systemd/system because its not universal enough
+
+# always delete any **broken** symlinks in the systemd tree [fine]
+#find /etc /usr/lib/systemd/system /usr/lib/*.d \
+#   -type l -lname /usr/lib/systemd/system/\* \
+#   -not -exec test -e {} \; -delete
+
+
+    amanda_user=%%AMANDAUSER%%; 
+    amanda_group=%%AMANDAGROUP%%; 
+    AMANDAHOMEDIR=%%AMANDAHOMEDIR%%; 
+    os=Linux; 
+    dist=%%PKG_DIST%%; 
+    LOGDIR=%%LOGDIR%%; 
+    LOGFILE=$LOGDIR/install.log; 
+    INSTALL_LOG=$LOGDIR/install.log; 
+    INSTALL_TOPDIR=%%INSTALL_TOPDIR%%; 
+    SYSCONFDIR=%%SYSCONFDIR%%; 
+    SBINDIR=/usr/sbin; 
+    AMLIBEXECDIR=/usr/lib64/amanda; 
+    export PYTHON=/usr/bin/python3; 
+    export OPATH="${PATH}"; 
+    export PATH="/opt/csw/gnu:${PATH}:/sbin:/usr/sbin:/opt/csw/bin"; 
+    install -m 755 -o %%AMANDAUSER%% -g %%AMANDAGROUP%% -d %%LOGDIR%% 2>/dev/null || true
+# ------------ Library of functions --------------
+%%COMMON_FUNCTIONS%%
+%%PRE_INST_FUNCTIONS%%
+# ---------- End Library of functions ------------
+
+logger "Preparing to install: "Amanda Community Edition - version %%VERSION%%" on $(date -R)"
+
+AMANDATES=%%AMANDAHOMEDIR%%/amandates
+create_user
+check_user_group "${amanda_group}" ||
+   add_group "${amanda_group}"
+check_user_supplemental_group "%%AMANDACLIGROUP%%" ||
+   add_group "%%AMANDACLIGROUP%%"
+
+#
+# for upgrade or for install... shut down everything we can find
+#
+#readarray UNITS < <(systemctl --no-legend --no-pager -a list-unit-files |sed -E -e '/^__sub|^run/!d' -e $'s,[ \t].*,,' )
+#readarray UNITS2 < <(systemctl --no-legend --no-pager -a list-units |sed -E -e '/^__sub|^run/!d' -e $'s,[ \t].*,,' )
+#readarray UNITS < <(grep -E -e '__sub-(zman|zmc|amanda|aee)-' -e '^run-zmanda' <<<"${UNITS[*]}${UNITS2[*]}" )
+#
+# prevent restart
+#xargs -tr systemctl -q disable --no-reload <<<"${UNITS[*]}" || true
+#xargs -tr systemctl -q stop <<<"${UNITS[*]}" || true
+#
+#( set -x; systemctl reset-failed )
+#( set -x; systemctl daemon-reload )
+
+if [ ! -L %%SYSCONFDIR%%/amanda -a -d %%SYSCONFDIR%%/amanda/. ]; then
+    i=1
+    rm -rf %%SYSCONFDIR%%/amanda.prev
+    while [ -d %%SYSCONFDIR%%/amanda~$i/. ];
+       do : $(( ++i )); done
+    mv %%SYSCONFDIR%%/amanda %%SYSCONFDIR%%/amanda~$i
+    ln -sf %%SYSCONFDIR%%/amanda~$i %%SYSCONFDIR%%/amanda.prev
+fi
+
+logger "Preinstall done."
+
+echo "Amanda preinstall logs can be found in '$LOGFILE'."
+
+##########################################
