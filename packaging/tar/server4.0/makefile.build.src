@@ -214,7 +214,7 @@ DEVEL_INCLUDE_FILES =  \
 	directtcp-connection.h
 
 # build-install step
-binary-install-client: build-stamp
+binary-install-server: build-stamp
 	#dh_testdir
 	rm -rf $(buildroot)
 	mkdir -p $(buildroot)
@@ -240,8 +240,8 @@ binary-install-client: build-stamp
 	#          $(buildroot)$(SYS_LOGROTATEDIR)/amanda
 		
 	# only for solaris...
-	install -D $(buildroot)$(AMANDAHOMEDIR)/example/amandaclient.xml \
-			$(buildroot)/var/svc/manifest/network/amandaclient.xml
+	# install -D $(buildroot)$(AMANDAHOMEDIR)/example/amandaclient.xml \
+	#		$(buildroot)/var/svc/manifest/network/amandaclient.xml
 	#
 	# write release file with version
 	echo "Amanda Community Edition - version $(AMVER)" \
@@ -258,7 +258,7 @@ binary-install-client: build-stamp
 	umask 027; touch $(buildroot)$(AMANDAHOMEDIR)/.am_passphrase
 	
 	mkdir -p $(buildroot)$(LOGDIR)
-	mkdir -p $(buildroot)$(LOGDIR)/client
+	mkdir -p $(buildroot)$(LOGDIR)/server
 	
 	install -m 640 /dev/null $(buildroot)$(AMANDATES)
 	
@@ -271,7 +271,7 @@ binary-install-client: build-stamp
 	
 
 ##################
-################################ permissions for backup-client
+################################ permissions for backup-server
 ##################
 perm-install-server: binary-install
 	# dh_testroot
@@ -414,7 +414,8 @@ binary-install-devel: binary-install-server
 	
 	# snip off $(buildroot) from start ... to dup the path
 	mkdir -p $(devel)$(AMLIBDIR)
-	ls -1 $(buildroot)$(AMLIBDIR)/*.{a,la,so} $(buildroot)$(AMLIBDIR)/*.so.* 2>/dev/null | xargs cp -a -t $(devel)$(AMLIBDIR)
+	ls -1 $(buildroot)$(AMLIBDIR)/*.{a,la,so} $(buildroot)$(AMLIBDIR)/*.so.* 2>/dev/null | \
+                xargs -r cp -a -t $(devel)$(AMLIBDIR)
 	mkdir -p $(devel)$(AMANDAHOMEDIR)/amanda-autoconf
 	mkdir -p $(devel)/usr/include/amanda
 	
@@ -448,7 +449,7 @@ binary-install-devel: binary-install-server
 	build_topdir=$(BUILD_TOPDIR); \
 	build_topdir_abs=$$(realpath $(BUILD_TOPDIR)); \
 	find dummy.la $(devel)/usr/include/amanda $(devel)$(AMANDAHOMEDIR) -type f | \
-		xargs sed -i \
+		xargs -r sed -i \
 		     -e "s|$$build_topdir_abs|$$build_topdir|g" \
 		     -e "s|$$build_topdir|%{BUILD_TOPDIR}|g"
 	
@@ -456,14 +457,14 @@ binary-install-devel: binary-install-server
 	build_topdir=$(BUILD_TOPDIR); \
 	build_topdir_abs=$$(realpath $(BUILD_TOPDIR)); \
 	find dummy.la $(devel)$(LIBDIR) -type f -name \*.la | \
-		xargs sed -i \
+		xargs -r sed -i \
 		     -e "s|$$build_topdir_abs|$$build_topdir|g" \
 		     -e "s|$$build_topdir|%{BUILD_TOPDIR}|g" \
-		     -e "/dependency_libs=/s| $(AMLIBDIR)/| %{DESTDIR}$(AMLIBDIR)/|g"
+		     -e "/dependency_libs=/s| $(AMLIBDIR)/| %{DESTDIR}$(AMLIBDIR)/|g" \
 		     -e "/libdir=/s|$(AMLIBDIR)|%{DESTDIR}$(AMLIBDIR)|g"
 	
 	find dummy.la $(devel)$(LIBDIR) -type f -name \*.la | \
-		xargs chmod uog-x
+		xargs -r chmod uog-x
 	rm -f dummy.la
 	#
 	# confirm no paths are left
@@ -480,9 +481,9 @@ perm-install-devel: binary-install
 	# dh_testroot
 	chown -R root:root $(devel)
 	find $(devel) -type f | \
-		xargs chmod 0644
+		xargs -r chmod 0644
 	find $(devel) -type d | \
-		xargs chmod 0755
+		xargs -r chmod 0755
 	# ---------------------- ASSESS PERMISSIONS NOW IF NEEDED ----------
 	cd $(devel); find . -printf "chmod %m %p; chown %u:%g %p\n" > $(devel).install-perms.sh
 
