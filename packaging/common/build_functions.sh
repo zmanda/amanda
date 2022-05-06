@@ -183,28 +183,21 @@ detect_build_dirs() {
     [ -n "$buildpkg_dir" ] ||
         declare -g buildpkg_dir=${pkgdirs_top}/${pkg_typedir}
 
+    declare -g pkg_bldroot="$src_root/${pkg_type}build"
     case $pkg_type in
-       (rpm) declare -g pkgconf_dir=SPECS   \
-                       pkg_bldroot=$src_root/rpmbuild
-            ;;
-       (deb) declare -g pkgconf_dir=debian  \
-                       pkg_bldroot=$src_root/debbuild
-            ;;
+       (rpm) declare -g pkgconf_dir=SPECS ;;
+       (deb) declare -g pkgconf_dir=debian ;;
        (pkg|sun-pkg)
-             declare -g pkgconf_dir=PKGBUILD \
-                       pkg_bldroot=$src_root/pkgbuild
+	     declare -g pkg_bldroot=${pkg_bldroot/sun-pkg/pkg}
+             declare -g pkgconf_dir=PKGBUILD
              buildpkg_dir="${buildpkg_dir%/pkg}"
              buildpkg_dir="${buildpkg_dir%/sun-pkg}"
-             buildpkg_dir+="/sun-pkg"
+             buildpkg_dir+="/sun-pkg"  # must add good suffix
              declare -g buildpkg_dir="${buildpkg_dir}"
              pkg_type=sun-pkg
             ;;
-       (whl) declare -g pkgconf_dir=.       \
-                       pkg_bldroot=$src_root/whlbuild
-            ;;
-       (tar) declare -g pkgconf_dir=BUILD \
-                       pkg_bldroot=$src_root/tarbuild
-            ;;
+       (whl) declare -g pkgconf_dir=. ;;
+       (tar) declare -g pkgconf_dir=BUILD ;;
        (*) die "cannot find pkg_type in time to set up build configs" ;;
     esac
 
@@ -388,7 +381,7 @@ gen_pkg_build_config() {
             rm -f $pkgconf_dir/[0-9]*
 	    ;;
 
-	(*/debbuild|*/pkgbuild|*/tarbuild)
+	(*/???build)
 	    echo "Config $pkg_type package from $buildparm_dir ${buildpkg_dir:+and $buildpkg_dir }=============================================="
 	    rm -rf $pkgconf_dir
             mkdir -p $pkgconf_dir
@@ -428,7 +421,7 @@ gen_top_environ() {
 	    ln -sf $(realpath ..) BUILD/$PKG_NAME_VER
         # gzip -c < $VERSION_TAR > SOURCES/${PKG_NAME_VER}.tar.gz
 	    ;;
-	(*/debbuild|*/pkgbuild|*/tarbuild)
+	(*/???build)
 	    # simulate the top directory as the build one...
 	    ln -sf $(realpath ..) $PKG_NAME_VER
 	    ;;
@@ -464,18 +457,14 @@ gen_pkg_environ() {
 		   --exclude=.git \
 		   --exclude=\*.tar.gz \
 		   --exclude=\*.tar \
-		   --exclude=debbuild \
-		   --exclude=rpmbuild \
-		   --exclude=pkgbuild \
-		   --exclude=tarbuild \
-		   --exclude=whlbuild \
+		   --exclude=\?\?\?build \
 		    -C $tmp ${PKG_NAME_VER}/. ||
 			die "tar creation from $(readlink ${PKG_NAME_VER} || echo "<missing symlink>") failed"
             #
 	    # ready for the spec file to untar it
             gzip -f SOURCES/${PKG_NAME_VER}.tar
 	    ;;
-	(*/debbuild|*/pkgbuild|*/tarbuild)
+	(*/???build)
             rm -rf $PKG_NAME_VER
 	    tar -cf - \
 		   --exclude=\*.rpm \
@@ -485,10 +474,7 @@ gen_pkg_environ() {
 		   --exclude=.git \
 		   --exclude=\*.tar \
 		   --exclude=\*.tar.gz \
-		   --exclude=debbuild \
-		   --exclude=rpmbuild \
-		   --exclude=pkgbuild \
-		   --exclude=tarbuild \
+		   --exclude=\?\?\?build \
 		    -C $tmp $PKG_NAME_VER/. |
 		tar -xf - ||
 		    die "tar-based copy from $(readlink ${PKG_NAME_VER} || echo "<missing symlink>") to $pkg_bldroot failed"
@@ -554,7 +540,7 @@ do_top_package() {
 		die "ERROR: rpmbuild compile command failed"
 	    ;;
 
-	(*/debbuild|*/pkgbuild|*/tarbuild)
+	(*/???build)
             echo "Fake building $pkg_type package in $ctxt =============================================="
             build_srcdir="$ctxt"
 
@@ -585,7 +571,7 @@ do_top_package() {
 
                 (*/pkgbuild)
                     [ -n "$(command -v pkgproto)" ] ||
-                        die "ERROR: dpkg-buildpackage command was not found.  Cannot build without package \"dpkg-dev\" installed."
+                        die "ERROR: pkgproto command was not found.  Cannot build without package \"dpkg-dev\" installed."
                     [ -s $pkgconf_dir/makefile.build ] ||
                         die "ERROR: no $pkgconf_dir/makefile.build file is ready in $pkg_bldroot/$build_srcdir/$pkgconf_dir"
 
@@ -595,6 +581,7 @@ do_top_package() {
                     ls 2>/dev/null *.p5p *.pkg | xargs -r mv -fv -t ${PKG_DIR}
                     echo "$pkgconf_dir package(s) from $build_srcdir ---------------------------------------";
                     ;;
+
                 (*/tarbuild)
                     [ -s $pkgconf_dir/makefile.build ] ||
                         die "ERROR: no $pkgconf_dir/makefile.build file is ready in $pkg_bldroot/$build_srcdir/$pkgconf_dir"
@@ -660,7 +647,7 @@ do_package() {
 		die "ERROR: rpmbuild compile command failed"
 	    ;;
 
-	(*/debbuild|*/pkgbuild|*/tarbuild)
+         (*/???build)
             echo "Building $pkgconf_dir package in $ctxt =============================================="
             build_srcdir="$ctxt"
 
