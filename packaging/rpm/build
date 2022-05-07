@@ -1,7 +1,6 @@
 #!/bin/bash
 
 DEFINES=
-ODEFINES="${DEFINES[@]}"
 
 buildtype=${1:-both}
 shift
@@ -11,6 +10,7 @@ shift
 
 . ./packaging/common/set_zmanda_version
 
+BUILDVER=${BUILDVER:-4.0}
 export PKG_DIR=$(realpath .)
 mach=`uname -m`
 
@@ -41,14 +41,12 @@ case "$buildtype,$mach,$BUILDVER" in
         do_rpm_package "amanda${BUILDVER}.spec" \
               "${DEFINES[@]}" \
               --define "subpkg server"
-
         ;;
 
    client,*,*) ;&  both,*,*)
 	do_rpm_package "amanda-client${BUILDVER}.spec" \
               --define "subpkg client"
-
-      ;;
+        ;;
 
    *) echo "ERROR: cannot build combination of $buildtype-$mach-${BUILDVER:-3.6}" >&2; exit -1 ;;
 esac

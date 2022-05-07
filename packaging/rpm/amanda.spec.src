@@ -53,9 +53,9 @@
 %define disttag    %(A="%%PKG_SUFFIX%%"; A="${A#.}"; echo ${A%%%%.*})
 
 #
-# must match the build-OS to be deployed on the same...
+# use the platform to determine it
 #
-%define glib2_build   %%BUILD_GLIB2_VERSION%%
+%define glib2_build   %(pkg-config --modversion glib-2.0)
 
 %define glib2_pkg_name glib2
 %define glib2_devel_pkg_name  glib2-devel
@@ -115,6 +115,39 @@
 %define udpportrange "800,840"
 %define tcpportrange "11000,11040"
 %define low_tcpportrange "800,840"
+
+%define devel_include_files \
+    am_sl.h  \
+    amjson.h  \
+    amanda.h  \
+    amflock.h  \
+    amutil.h  \
+    conffile.h  \
+    config.h  \
+    debug.h  \
+    device.h  \
+    directtcp-connection.h \
+    directtcp.h  \
+    file.h  \
+    fileheader.h  \
+    full-read.h  \
+    full-write.h  \
+    glib-util.h  \
+    property.h  \
+    s3-util.h  \
+    s3.h  \
+    safe-read.h  \
+    sockaddr-util.h
+
+%define devel_config_files \
+	config.rpath \
+	amanda \
+	gnulib \
+	gettext-macros \
+	macro-archive \
+	automake \
+	config.h
+
 
 #####################################
 ################  BUILD PACKAGE DEFINITION
@@ -251,6 +284,34 @@ will be written.  The amanda-backup-server package includes Amanda client.
 Amanda Forums is located at: http://forums.zmanda.com/
 Amanda Documentation is available at: http://wiki.zmanda.com/
 
+#####################################
+################  BACKUP-DEVEL #####################
+#####################################
+%package -n amanda-backup-server-devel
+Release: %{rpm_release}.%{subpkg}
+Summary: Amanda Backup and Archiving Server [%{disttag}]
+Group: %{rpm_group}
+
+%description server-devel
+Amanda is the leading Open-Source Backup and Archiving software.
+
+This package contains the Amanda server development files.
+
+#####################################
+################  BACKUP-TEST #####################
+#####################################
+%package server-tests
+Release: %{rpm_release}.%{subpkg}
+Summary: Amanda Enterprise Backup and Archiving Server Tests [%{disttag}]
+Group: %{rpm_group}
+Provides: amanda_enterprise-server = %{amanda_version}
+
+%description server-tests
+Amanda Enterprise Edition is the leading Open-Source Backup and
+Archiving software with Enterprise support.
+
+This package contains the Amanda enterprise server test files.
+
 # --- Directory setup ---
 
 # Configure directories:
@@ -258,6 +319,7 @@ Amanda Documentation is available at: http://wiki.zmanda.com/
 %define EPREFIX         %{PREFIX}
 %define BINDIR          %{EPREFIX}/bin
 %define SBINDIR         %{EPREFIX}/sbin
+%define AMINCDIR        %{EPREFIX}/include/amanda
 %define SHAREDIR         %{PREFIX}/share
 %define SYSCONFDIR      %%SYSCONFDIR%%
 %define LOCALSTATEDIR   /var
@@ -267,6 +329,7 @@ Amanda Documentation is available at: http://wiki.zmanda.com/
 %define AMANDAHOMEDIR   %%AMANDAHOMEDIR%%
 %define AMHOMEDIR       %%AMANDAHOMEDIR%%
 %define AMVARDIR        %{LOCALSTATEDIR}/amanda
+%define AMDATADIR       %{SHAREDIR}/amanda-%{amanda_version}
 
 %ifarch x86_64 s390x
 %define LIBDIR          %{EPREFIX}/lib64
@@ -286,11 +349,12 @@ Amanda Documentation is available at: http://wiki.zmanda.com/
 %define MANDIR          %{SHAREDIR}/man
 %define LOGDIR          %%LOGDIR%%
 
-%define BUILD_TOPDIR	%{_builddir}/%{name}-%{amanda_version}
+%define __builddir	%{_builddir}/%{name}-%{amanda_version}
 
 %global __python 	%(command -v python3)
 %global __python3 	%(command -v python3)
 %global __perl 		%(command -v perl)
+%global __build_shell   %(command -v bash)
 %global __build_shell   %(command -v bash)
 %define INSTALL_CONFDIR %{SYSCONFDIR}
 # [must usable for ALL Debian paths too]
@@ -323,7 +387,6 @@ Amanda Documentation is available at: http://wiki.zmanda.com/
 ########################################
 
 %setup -T -b 0
-cd %{BUILD_TOPDIR}
 
 [ -s Makefile ] && make distclean || true
 [ -s Makefile ] && make clean || true
@@ -354,7 +417,7 @@ eval 'LDFLAGS="$(tr -d "\\n")"' <<==========LDFLAGS
     -Wl,--disable-new-dtags
     -Wl,-rpath -Wl,%{INSTALL_LDPATH}
 ==========LDFLAGS
-declare -p >>./rpm-env.sh 2>/dev/null \
+ declare -p >>./rpm-env.sh 2>/dev/null \
     LDFLAGS
 
 
@@ -372,7 +435,6 @@ true
 %build
 #!/bin/bash
 #########################################
-cd %{BUILD_TOPDIR}
 
 #
 # install needed environment
@@ -473,7 +535,6 @@ make -j`nproc`
 %install
 #!/bin/bash
 ########################################
-cd %{BUILD_TOPDIR}
 
 git_toplevel=$(git rev-parse --show-toplevel)
 
@@ -527,13 +588,15 @@ chmod 0644  %{ROOT_AMLIBEXECDIR}/amplot.gp
 
 %{?AMLIBEXECDIR_COMPAT: ln -sf %{AMLIBEXECDIR} %{AMLIBEXECDIR_COMPAT}}
 
-find %{buildroot} -name \*.la -delete -o -name \*.a -delete -o -type l -name \*.so -delete
+# keep for devel
+# find %{buildroot} -name \*.la -delete -o -name \*.a -delete
 
 ##################
 # install/shift misc files in place
 ##################
 # preserve all these
-mkdir -p %{ROOT_AMANDAHOMEDIR}/{gnutar-lists,.gnupg,.ssh,tmp}
+mkdir -p %{ROOT_AMANDAHOMEDIR}/{gnutar-lists,.gnupg,.ssh}
+mkdir -p %{ROOT_AMANDAHOMEDIR}/tmp
 echo "%{amanda_version_info}" > %{ROOT_AMANDAHOMEDIR}/amanda-release
 mkdir -p %{ROOT_AMANDAHOMEDIR}/{staging,vtapes,disk}
 
@@ -545,7 +608,7 @@ touch %{ROOT_AMANDAHOMEDIR}/.ssh/client_authorized_keys
 touch %{ROOT_AMANDAHOMEDIR}/.am_passphrase
 )
 
-mv %{ROOT_SHAREDIR}/amanda %{ROOT_SHAREDIR}/amanda-%{amanda_version}
+mv %{ROOT_SHAREDIR}/amanda %{ROOT_AMDATADIR}
 %if %{with systemd}
 rm -f %{ROOT_AMANDAHOMEDIR}/example/*inetd*
 %else
@@ -572,13 +635,115 @@ install -D -m 600 %{ROOT_AMANDAHOMEDIR}/example/amandahome-dot-amandahosts %{ROO
 install -D -m 600 %{ROOT_AMANDAHOMEDIR}/example/amandahome-dot-amandahosts %{ROOT_AMANDAHOMEDIR}/.amandahosts.default
 install -D -m 640 %{ROOT_AMANDAHOMEDIR}/example/amandahome-dot-profile     %{ROOT_AMANDAHOMEDIR}/.profile
 
+##################
+# install all config/devel files correctly
+##################
+# set the top of the build
+build_topdir=%{__builddir}
+# set the no-softlink build path...
+build_topdir_abs=$(realpath %{__builddir})
+# no-op substitutions
+
+sed -i -e ':redo' -e '/"\\$/{N;s,"\\\n",,;b redo}' ./config.status
+
+if ./config.status --config 2>/dev/null | grep -q .; then
+    CONFIG="$(./config.status --config)"
+else
+    CONFIG="$(./config.status --version | sed -e '/with options/!d' -e 's,with options ",,' -e 's,"$,,')"
+fi
+
+rm -f %{ROOT_AMANDAHOMEDIR}/amanda-config
+echo "$CONFIG" |
+    sed \
+     -e "s|$build_topdir_abs|$build_topdir|g" \
+     \
+     -e "s|$build_topdir|%%{BUILD_TOPDIR}|g" \
+     -e "s| %{AMLIBDIR}/| %%{DESTDIR}%{AMLIBDIR}/|g" \
+   	>%{ROOT_AMANDAHOMEDIR}/amanda-config
+
+mkdir -p %{ROOT_AMANDAHOMEDIR}/amanda-autoconf
+f=(%{devel_config_files});
+( cd config; cp -a "${f[@]}" %{ROOT_AMANDAHOMEDIR}/amanda-autoconf; )
+
+pkg_root_rev=$(cd $git_toplevel; git submodule status | sed -e 's,^ *\(.........\).*,\1,');
+cp -a ./config.status %{ROOT_AMANDAHOMEDIR}/amanda-autoconf/config.status-$(git_submodule_ref 000-external/packaging)
+
+mkdir -p %{ROOT_AMINCDIR}
+f=(%{devel_include_files});
+for i in "${f[@]}"; do cp */$i %{ROOT_AMINCDIR}; done
+cp gnulib/*.h %{ROOT_AMINCDIR}
+
+##################
+# install all test files correctly
+##################
+mkdir -p %{ROOT_AMDATADIR}/tests
+PERL5LIB=%{AMPERLDIR} declare -p PERL5LIB > %{ROOT_AMDATADIR}/tests/run.sh
+echo 'cd $(dirname $0);' >> %{ROOT_AMDATADIR}/tests/run.sh
+
+(
+    set -x
+    unset CDPATH
+    cd %{__builddir}/installcheck
+
+    make --eval=$'cleanfiles-query:\n\t@ls -1 $(CLEANFILES) 2>/dev/null || true' \
+             cleanfiles-query |
+       cpio -dvp %{ROOT_AMDATADIR}/tests || true
+
+    ls -1d *.pm */. | xargs realpaths --relative-to=. | find $(cat) -type f | 
+       cpio -dvp %{ROOT_AMDATADIR}/tests || true
+
+    rm -f %{ROOT_AMDATADIR}/tests/amcat*.??
+
+# tests/catalogs/tapers.cat is executable but has no shebang, removing executable bit
+# tests/amrecover is executable but has no shebang, removing executable bit
+# tests/Amanda_Report.pl is executable but has no shebang, removing executable bit
+
+    for i in common_tests client_tests server_tests full_tests restore_tests ndmp_tests mock_tests all_tests; do
+        make --eval=$'testfiles-query:\n\t@ls -1d $('"$i"') 2>/dev/null || true' \
+           testfiles-query > "%{ROOT_AMDATADIR}/tests/.${i//_/-}"
+    done
+
+    # remove any -flush tests [that always fail] from the all-tests set
+    sed -i -e '/-flush$/d' "%{ROOT_AMDATADIR}/tests/.all-tests"
+
+    cp -vt %{ROOT_AMDATADIR}/tests \
+       %{__builddir}/packaging/scripts/run-installcheck.sh
+
+)
+
+#
+# these files can't work with old paths in them anyway
+#
+find %{ROOT_AMINCDIR} %{ROOT_AMANDAHOMEDIR} -type f | \
+    xargs --no-run-if-empty sed -i \
+     -e "s|$build_topdir_abs|$build_topdir|g" \
+     -e "s|$build_topdir|%%{BUILD_TOPDIR}|g"
+
+find %{ROOT_AMLIBDIR} -type f -name \*.la | \
+    xargs --no-run-if-empty sed -i \
+     -e "s|$build_topdir_abs|$build_topdir|g" \
+     -e "s|$build_topdir|%%{BUILD_TOPDIR}|g" \
+     -e "/dependency_libs=/s| %{AMLIBDIR}/| %%{DESTDIR}%{AMLIBDIR}/|g" \
+     -e "/libdir=/s|%{AMLIBDIR}|%%{DESTDIR}%{AMLIBDIR}|g"
+
+find %{ROOT_AMLIBDIR} -type f -name \*.la | \
+    xargs --no-run-if-empty chmod uog-x
+
+# double check that no devel files have the local BUILD_TOPDIR paths in them at all!!
+if find %{ROOT_AMINCDIR} %{ROOT_AMANDAHOMEDIR} -type f -exec grep -q %{_builddir} \{} \; -print | grep -q .; then exit -1; fi
+if find %{ROOT_AMLIBDIR} -type f -name \*.la  -exec grep -q %{_builddir} \{} \; -print | grep -q .; then exit -1; fi
+true
+
+%if "%{rpmbuild_version}" > "004.015.999"
+# don't need for client
+%py_byte_compile %{__python3} %{ROOT_INSTALLDIR}/python
+%endif
 
 # --- Clean up buildroot ---
 
 #########################################
 %clean
 #########################################
-cd %{BUILD_TOPDIR};
 
 [ "$(stat -c '%m' %{buildroot})" = "%{buildroot}" ] &&
    { echo "used mount point %{buildroot}"; exit -1; }
@@ -586,31 +751,11 @@ cd %{BUILD_TOPDIR};
 chmod u+rwX -R %{buildroot}
 true
 
-# Define script variables
-%define script_vars \
-    amanda_user=%{amanda_user}; \
-    amanda_group=%{amanda_group}; \
-    AMANDAHOMEDIR=%{AMANDAHOMEDIR}; \
-    os=Linux; \
-    dist=%{dist}; \
-    LOGDIR=%{LOGDIR}; \
-    LOGFILE=$LOGDIR/install.log; \
-    INSTALL_LOG=$LOGDIR/install.log; \
-    SYSCONFDIR=%{SYSCONFDIR}; \
-    SBINDIR=%{SBINDIR}; \
-    AMLIBEXECDIR=%{AMLIBEXECDIR}; \
-    export PYTHON=%{INSTALL_PYTHON}; \
-    export OPATH="${PATH}"; \
-    export PATH="/opt/csw/gnu:${PATH}:/sbin:/usr/sbin:/opt/csw/bin"; \
-    install -m 755 -o %{amanda_user} -g %{amanda_group} -d %{LOGDIR} 2>/dev/null || true; \
-    true
-
 # --- Pre/post (un)installation scripts ---
 
 ##########################################
 %pre -n amanda-backup-server
 #!/bin/bash
-set +o posix
 ##########################################
 #
 # pre installation
@@ -1026,7 +1171,6 @@ true
 # resource files only
 ######################
 %defattr(0444,root,root,0555)
-#
 %if %{with systemd}
 %{INSTALL_UNITDIR}/amanda-*
 %{INSTALL_UNITDIR}-preset/*
@@ -1042,10 +1186,32 @@ true
 %{MANDIR}/man8/am*
 %{MANDIR}/man8/script-email.8*
 
-%{SHAREDIR}/amanda-%{amanda_version}
+%dir %{AMDATADIR}
+%{AMDATADIR}/[A-Z]*
 # one-possibly-removed stub config file
 %{_logrotatedir}/amanda
 # @{_ldsoconfdir}/amanda*
+
+######################################################
+%files -n amanda-backup-server-devel
+######################################################
+##################
+# resource files only
+##################
+%defattr(0644,root,root,0755)
+%{AMINCDIR}
+%{AMLIBDIR}/lib*.so
+%{AMLIBDIR}/lib*.a
+%{AMLIBDIR}/lib*.la
+
+%{AMANDAHOMEDIR}/amanda-autoconf
+%{AMANDAHOMEDIR}/amanda-config
+
+######################################################
+%files server-tests
+######################################################
+%defattr(-,%{amanda_user},%{amanda_group},0755)
+%{AMDATADIR}/tests
 
 # --- ChangeLog
 

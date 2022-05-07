@@ -383,6 +383,7 @@ gen_pkg_build_config() {
 
 	(*/???build)
 	    echo "Config $pkg_type package from $buildparm_dir ${buildpkg_dir:+and $buildpkg_dir }=============================================="
+	    [ ! -e "$pkgconf_dir" ] || [ -d "$pkgconf_dir" ] || die "could not recreate $pkgconf_dir"
 	    rm -rf $pkgconf_dir
             mkdir -p $pkgconf_dir
             # first the upper level ... then the pkg-specific files will overwrite
@@ -418,12 +419,14 @@ gen_top_environ() {
 
     case $pkg_bldroot in
 	(*/rpmbuild)
-	    ln -sf $(realpath ..) BUILD/$PKG_NAME_VER
+            rm -rf BUILD/$PKG_NAME_VER
+	    ln -sf $(realpath ..) BUILD/$PKG_NAME_VER || die "could not create symlink"
         # gzip -c < $VERSION_TAR > SOURCES/${PKG_NAME_VER}.tar.gz
 	    ;;
 	(*/???build)
 	    # simulate the top directory as the build one...
-	    ln -sf $(realpath ..) $PKG_NAME_VER
+            rm -rf $PKG_NAME_VER
+	    ln -sf $(realpath ..) $PKG_NAME_VER || die "could not create symlink"
 	    ;;
   	(*) die "Unknown packaging for resources in $pkg_bldroot"
 	    ;;
@@ -451,6 +454,7 @@ gen_pkg_environ() {
     case $pkg_bldroot in
 	(*/rpmbuild)
             rm -f SOURCES/${PKG_NAME_VER}.tar
+	    [ -L BUILD/$PKG_NAME_VER ] && die "can not perform tar-copy via gen_pkg_version through $(realpath BUILD/${PKG_NAME_VER})"
 	    tar -cf SOURCES/${PKG_NAME_VER}.tar \
 		   --exclude=\*.rpm \
 		   --exclude=\*.deb \
@@ -465,7 +469,8 @@ gen_pkg_environ() {
             gzip -f SOURCES/${PKG_NAME_VER}.tar
 	    ;;
 	(*/???build)
-            rm -rf $PKG_NAME_VER
+	    [ -L $PKG_NAME_VER ] && die "can not perform tar-copy via gen_pkg_version through $(realpath ${PKG_NAME_VER})"
+	    rm -rf $PKG_NAME_VER
 	    tar -cf - \
 		   --exclude=\*.rpm \
 		   --exclude=\*.deb \
