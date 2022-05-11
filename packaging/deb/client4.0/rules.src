@@ -124,9 +124,9 @@ endef
 # used to narrow the dh_ tools focus
 dhpkg           =  --package=amanda-backup-client
 #r=$(SRCDIR)/debian/tmp
-# buildroot_client  =  $(SRCDIR)/debian/amanda-backup-client
-buildroot      =   $(SRCDIR)/debian/amanda-backup-server
-devel          =   $(SRCDIR)/debian/amanda-backup-server-devel
+# buildroot_server  =  $(SRCDIR)/debian/amanda-backup-server
+buildroot      =   $(SRCDIR)/debian/amanda-backup-client
+devel          =   $(SRCDIR)/debian/amanda-backup-client-devel
 log            =   $(SRCDIR)/debian/dpkg.log
 
 
@@ -193,11 +193,11 @@ binary-install-client: build-stamp
 	dh_prep $(dhpkg)
 	dh_installdirs -v $(dhpkg)
 	mkdir -p $(buildroot)$(AMANDAHOMEDIR)/{gnutar-lists,.gnupg,.ssh,tmp}
+	mkdir -p $(buildroot)$(AMLIBEXECDIR)
 	
 	echo ------------------- START INSTALL
 	################################################ perform source make-install
-	set -x; \
-		$(MAKE) -j1 install DESTDIR=$(buildroot)
+	set -x; $(MAKE) -j1 install DESTDIR=$(buildroot)
 	################################################ done with source make-install
 	
 	rm -f $(buildroot)$(SYS_UNITDIR)/__sub-amanda-server*
@@ -240,10 +240,6 @@ binary-install-client: build-stamp
 	install -D -m 600 $(buildroot)$(AMANDAHOMEDIR)/example/amandahome-dot-amandahosts $(buildroot)$(AMANDAHOMEDIR)/.amandahosts
 	install -D -m 640 $(buildroot)$(AMANDAHOMEDIR)/example/amandahome-dot-profile     $(buildroot)$(AMANDAHOMEDIR)/.profile
 
-	echo ------------ finished install client -----------
-	find $(buildroot) -type f -ls
-	echo ------------ finished install client -----------
-
 
 ##################
 ################################ permissions for backup-client
@@ -252,8 +248,6 @@ perm-install-client: binary-install
 	dh_testroot
 	dh_fixperms -v
 
-	find $(buildroot) -type f -ls
-	
 	install -o root -g root -m 0644 debian/lintian \
 	    $(buildroot)/usr/share/lintian/overrides/amanda-backup-client
 	chown -R root:root $(buildroot)$(AMLIBEXECDIR)
@@ -333,9 +327,6 @@ perm-install-client: binary-install
 	# rely on sanity-check permissions otherwise
 	# ---------------------- ASSESS PERMISSIONS NOW IF NEEDED ----------
 
-	echo ------------ finished install client-devel -----------
-	find $(buildroot) -type f -ls
-	echo ------------ finished install client-devel -----------
 
 #    -rw-r--r--    1 root    root                     2030 Nov 16 22:05 /etc/amanda-security.conf
 #
@@ -360,22 +351,22 @@ perm-install-client: binary-install
 #    -r--r--r--    1 root    root                        0 Nov 16 22:05 /etc/*.d/...
 #    -r--r--r--    1 root    root                      784 Nov 16 22:05 /usr/lib/systemd/system/
 #
-#    -rw-r--r--    1 root    root                      135 Nov 16 22:05 /usr/lib64/amanda/amcat.awk
+#    -rw-r--r--    1 root    root                      135 Nov 16 22:05 /usr/lib/x86_64-linux-gnu/amanda/amcat.awk
 #
-#    drwxr-xr-x    2 root    root                        0 Nov 16 22:05 /usr/lib64/...
-#    -rwxr-xr-x    1 root    root                      965 Nov 16 22:05 /usr/lib64/...
+#    drwxr-xr-x    2 root    root                        0 Nov 16 22:05 /usr/lib/x86_64-linux-gnu/...
+#    -rwxr-xr-x    1 root    root                      965 Nov 16 22:05 /usr/lib/x86_64-linux-gnu/...
 #    -rwxr-xr-x    1 root    root                     3365 Nov 16 22:05 /usr/sbin/...
 #
-#    drwxr-xr-x    2 root    root                        0 Nov 16 22:05 /usr/lib64/amanda/perl
-#    -rw-r--r--    2 root    root                        0 Nov 16 22:05 /usr/lib64/amanda/perl/...
+#    drwxr-xr-x    2 root    root                        0 Nov 16 22:05 /usr/lib/x86_64-linux-gnu/amanda/perl
+#    -rw-r--r--    2 root    root                        0 Nov 16 22:05 /usr/lib/x86_64-linux-gnu/amanda/perl/...
 #
-#    -rwsr-x---    1 root    tape                    11376 Nov 16 22:05 /usr/lib64/amanda/ambind
-#    -rwsr-xr-x    1 root    root                    51096 Nov 16 22:05 /usr/lib64/amanda/application/amgtar
-#    -rwsr-xr-x    1 root    root                    42200 Nov 16 22:05 /usr/lib64/amanda/application/amstar
-#    -rwsr-x---    1 root    tape                    15920 Nov 16 22:05 /usr/lib64/amanda/calcsize
-#    -rwsr-x---    1 root    tape                    11520 Nov 16 22:05 /usr/lib64/amanda/killpgrp
-#    -rwsr-x---    1 root    tape                    11544 Nov 16 22:05 /usr/lib64/amanda/rundump
-#    -rwsr-x---    1 root    tape                    15728 Nov 16 22:05 /usr/lib64/amanda/runtar
+#    -rwsr-x---    1 root    tape                    11376 Nov 16 22:05 /usr/lib/x86_64-linux-gnu/amanda/ambind
+#    -rwsr-xr-x    1 root    root                    51096 Nov 16 22:05 /usr/lib/x86_64-linux-gnu/amanda/application/amgtar
+#    -rwsr-xr-x    1 root    root                    42200 Nov 16 22:05 /usr/lib/x86_64-linux-gnu/amanda/application/amstar
+#    -rwsr-x---    1 root    tape                    15920 Nov 16 22:05 /usr/lib/x86_64-linux-gnu/amanda/calcsize
+#    -rwsr-x---    1 root    tape                    11520 Nov 16 22:05 /usr/lib/x86_64-linux-gnu/amanda/killpgrp
+#    -rwsr-x---    1 root    tape                    11544 Nov 16 22:05 /usr/lib/x86_64-linux-gnu/amanda/rundump
+#    -rwsr-x---    1 root    tape                    15728 Nov 16 22:05 /usr/lib/x86_64-linux-gnu/amanda/runtar
 #
 #    dr-xr-xr-x    2 root    root                        0 Nov 16 22:05 /usr/share/
 #    -r--r--r--    1 root    root                     1508 Nov 16 22:05 /usr/share/
