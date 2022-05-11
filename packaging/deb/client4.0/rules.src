@@ -240,6 +240,10 @@ binary-install-client: build-stamp
 	install -D -m 600 $(buildroot)$(AMANDAHOMEDIR)/example/amandahome-dot-amandahosts $(buildroot)$(AMANDAHOMEDIR)/.amandahosts
 	install -D -m 640 $(buildroot)$(AMANDAHOMEDIR)/example/amandahome-dot-profile     $(buildroot)$(AMANDAHOMEDIR)/.profile
 
+	echo ------------ finished install client -----------
+	find $(buildroot) -type f -ls
+	echo ------------ finished install client -----------
+
 
 ##################
 ################################ permissions for backup-client
@@ -247,6 +251,8 @@ binary-install-client: build-stamp
 perm-install-client: binary-install
 	dh_testroot
 	dh_fixperms -v
+
+	find $(buildroot) -type f -ls
 	
 	install -o root -g root -m 0644 debian/lintian \
 	    $(buildroot)/usr/share/lintian/overrides/amanda-backup-client
@@ -327,6 +333,10 @@ perm-install-client: binary-install
 	# rely on sanity-check permissions otherwise
 	# ---------------------- ASSESS PERMISSIONS NOW IF NEEDED ----------
 
+	echo ------------ finished install client-devel -----------
+	find $(buildroot) -type f -ls
+	echo ------------ finished install client-devel -----------
+
 #    -rw-r--r--    1 root    root                     2030 Nov 16 22:05 /etc/amanda-security.conf
 #
 #    drwx------    2 amandabaamandaba                    0 Nov 16 22:05 /var/lib/amanda/.gnupg
@@ -382,7 +392,8 @@ binary-install-devel: binary-install-client
 	
 	# snip off $(buildroot) from start ... to dup the path
 	mkdir -p $(devel)$(AMLIBDIR)
-	ls -1 $(buildroot)$(AMLIBDIR)/*.{a,la,so} $(buildroot)$(AMLIBDIR)/*.so.* 2>/dev/null | xargs -r cp -a -t $(devel)$(AMLIBDIR)
+	mkdir -p $(devel)$(AMLIBEXECDIR)
+	ls -1 $(buildroot)$(SHLIBDIR)/*.{a,la,so} $(buildroot)$(SHLIBDIR)/*.so.* 2>/dev/null | xargs -r cp -a -t $(devel)$(SHLIBDIR)
 	mkdir -p $(devel)$(AMANDAHOMEDIR)/amanda-autoconf
 	mkdir -p $(devel)/usr/include/amanda
 	
