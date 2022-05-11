@@ -310,9 +310,9 @@ binary-install-client: build-stamp
 	##################
 	
 	# package-placeholders all filled in upon install only
-	umask 027; touch $(buildroot)$(AMANDAHOMEDIR)/.gnupg/{pubring.gpg,random_seed,secring.gpg,am_key.gpg}
-	umask 027; touch $(buildroot)$(AMANDAHOMEDIR)/.ssh/{id_rsa_amrecover,id_rsa_amdump}{,.pub};
-	umask 027; touch $(buildroot)$(AMANDAHOMEDIR)/.am_passphrase
+	umask 027; install -D /dev/null $(buildroot)$(AMANDAHOMEDIR)/.gnupg/{pubring.gpg,random_seed,secring.gpg,am_key.gpg}
+	umask 027; install -D /dev/null $(buildroot)$(AMANDAHOMEDIR)/.ssh/{id_rsa_amrecover,id_rsa_amdump}{,.pub};
+	umask 027; install -D /dev/null $(buildroot)$(AMANDAHOMEDIR)/.am_passphrase
 	
 	mkdir -p $(buildroot)$(LOGDIR)
 	mkdir -p $(buildroot)$(LOGDIR)/client
@@ -519,7 +519,7 @@ binary-install-devel: binary-install-client
 		xargs sed -i \
 		     -e "s|$$build_topdir_abs|$$build_topdir|g" \
 		     -e "s|$$build_topdir|%{BUILD_TOPDIR}|g" \
-		     -e "/dependency_libs=/s| $(AMLIBDIR)/| %{DESTDIR}$(AMLIBDIR)/|g"
+		     -e "/dependency_libs=/s| $(AMLIBDIR)/| %{DESTDIR}$(AMLIBDIR)/|g" \
 		     -e "/libdir=/s|$(AMLIBDIR)|%{DESTDIR}$(AMLIBDIR)|g"
 	
 	find dummy.la $(devel)$(LIBDIR) -type f -name \*.la | \

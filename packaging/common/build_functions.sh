@@ -550,6 +550,8 @@ do_top_package() {
             build_srcdir="$ctxt"
 
             [ -d $pkgconf_dir ] || die "missing call to gen_pkg_build_config"
+            [ $build_srcdir/$pkgconf_dir/. -ef $build_srcdir/. ] || 
+               rm -rf $build_srcdir/$pkgconf_dir
             mv $pkgconf_dir $build_srcdir/. ||
                die "directory $build_srcdir under $pkg_bldroot is missing or a broken link"
             cd $build_srcdir/. ||
