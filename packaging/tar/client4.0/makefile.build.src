@@ -160,10 +160,10 @@ endef
 #
 # used to narrow the dh_ tools focus
 #dhpkg              =  --package=amanda-backup-client
-#r=$(SRCDIR)/sun-pkg/tmp
-# buildroot_server  =  $(SRCDIR)/sun-pkg/amanda-backup-server
-buildroot           =  $(SRCDIR)/sun-pkg/amanda-backup-client
-devel               =  $(SRCDIR)/sun-pkg/amanda-backup-client-devel
+#r=$(SRCDIR)/BUILD/tmp
+# buildroot_server  =  $(SRCDIR)/BUILD/amanda-backup-server
+buildroot           =  $(SRCDIR)/BUILD/amanda-backup-client
+devel               =  $(SRCDIR)/BUILD/amanda-backup-client-devel
 
 build: build-stamp
 build-stamp:
@@ -241,8 +241,8 @@ binary-install-client: build-stamp
 	#          $(buildroot)$(SYS_LOGROTATEDIR)/amanda
 		
 	# only for solaris...
-	install -D $(buildroot)$(AMANDAHOMEDIR)/example/amandaclient.xml \
-			$(buildroot)/var/svc/manifest/network/amandaclient.xml
+	# install -D $(buildroot)$(AMANDAHOMEDIR)/example/amandaclient.xml \
+	#		$(buildroot)/var/svc/manifest/network/amandaclient.xml
 	#
 	# write release file with version
 	echo "Amanda Community Edition - version $(AMVER)" \
@@ -279,7 +279,7 @@ perm-install-client: binary-install
 	# dh_fixperms -v
 	
 	# NOTE: USE SINGLE LINES FOR CHOWN.  MUST ACCOMODATE OLDER CHOWN WITH FAKEROOT SETUP
-	# install -o root -g root -m 0644 sun-pkg/lintian \
+	# install -o root -g root -m 0644 BUILD/lintian \
 	# 	$(buildroot)/usr/share/lintian/overrides/amanda-backup-client
 	chown -R root:root $(buildroot)$(AMLIBEXECDIR)
 	
@@ -415,7 +415,8 @@ binary-install-devel: binary-install-client
 	
 	# snip off $(buildroot) from start ... to dup the path
 	mkdir -p $(devel)$(AMLIBDIR)
-	ls -1 $(buildroot)$(AMLIBDIR)/*.{a,la,so} $(buildroot)$(AMLIBDIR)/*.so.* 2>/dev/null | xargs cp -a -t $(devel)$(AMLIBDIR)
+	ls -1 $(buildroot)$(AMLIBDIR)/*.{a,la,so} $(buildroot)$(AMLIBDIR)/*.so.* 2>/dev/null | \
+                 xargs -r cp -a -t $(devel)$(AMLIBDIR)
 	mkdir -p $(devel)$(AMANDAHOMEDIR)/amanda-autoconf
 	mkdir -p $(devel)/usr/include/amanda
 	
@@ -449,7 +450,7 @@ binary-install-devel: binary-install-client
 	build_topdir=$(BUILD_TOPDIR); \
 	build_topdir_abs=$$(realpath $(BUILD_TOPDIR)); \
 	find dummy.la $(devel)/usr/include/amanda $(devel)$(AMANDAHOMEDIR) -type f | \
-		xargs sed -i \
+		xargs -r sed -i \
 		     -e "s|$$build_topdir_abs|$$build_topdir|g" \
 		     -e "s|$$build_topdir|%{BUILD_TOPDIR}|g"
 	
@@ -457,14 +458,14 @@ binary-install-devel: binary-install-client
 	build_topdir=$(BUILD_TOPDIR); \
 	build_topdir_abs=$$(realpath $(BUILD_TOPDIR)); \
 	find dummy.la $(devel)$(LIBDIR) -type f -name \*.la | \
-		xargs sed -i \
+		xargs -r sed -i \
 		     -e "s|$$build_topdir_abs|$$build_topdir|g" \
 		     -e "s|$$build_topdir|%{BUILD_TOPDIR}|g" \
-		     -e "/dependency_libs=/s| $(AMLIBDIR)/| %{DESTDIR}$(AMLIBDIR)/|g"
+		     -e "/dependency_libs=/s| $(AMLIBDIR)/| %{DESTDIR}$(AMLIBDIR)/|g" \
 		     -e "/libdir=/s|$(AMLIBDIR)|%{DESTDIR}$(AMLIBDIR)|g"
 	
 	find dummy.la $(devel)$(LIBDIR) -type f -name \*.la | \
-		xargs chmod uog-x
+		xargs -r chmod uog-x
 	rm -f dummy.la
 	#
 	# confirm no paths are left
@@ -481,9 +482,9 @@ perm-install-devel: binary-install
 	# dh_testroot
 	chown -R root:root $(devel)
 	find $(devel) -type f | \
-		xargs chmod 0644
+		xargs -r chmod 0644
 	find $(devel) -type d | \
-		xargs chmod 0755
+		xargs -r chmod 0755
 	# ---------------------- ASSESS PERMISSIONS NOW IF NEEDED ----------
 	cd $(devel); find . -printf "chmod %m %p; chown %u:%g %p\n" > $(devel).install-perms.sh
 
@@ -496,7 +497,6 @@ binary-install-stamp:
 	LD_PRELOAD= \
 	LD_LIBRARY_PATH= \
 	    $(MAKE) -f $(THIS_MAKEFILE) \
-                PATH=$(BUILD_PATH) \
 		binary-install-client \
 		binary-install-devel
 	#
@@ -528,15 +528,11 @@ final-install:
 	# dh_shlibdeps $(dhpkg) -v \
 	#	-l"$(SHLIBDIR):$(AMLIBDIR)"
 	#
-	# no platform for clients and only check backup_client for perl details (perl version/base deps only)
-	#
 	# dh_perl $(dhpkg) -v $(AMPERLDIR)
 	# dh_installdeb
 	# dh_gencontrol
 	# dh_md5sums
 	# dh_builddeb
-	# for i in $$(ls 2>/dev/null sun-pkg/*.pkg sun-pkg/*.p5p ); do mv $$i $${i/./-$(AMVER)-$(GNU_TRIPLET).}; done
-	# { ls 2>/dev/null sun-pkg/*.pkg sun-pkg/*.p5p | xargs mv -t "$(SRCDIR)"; } || true
 
 clean:
 	# dh_testdir
