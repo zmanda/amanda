@@ -27,30 +27,30 @@ do_rpm_package() {
 
 set -e
 
-case "$buildtype,$mach,$BUILDVER" in
-   both,x86_64,*)
-        do_rpm_package "amanda${BUILDVER}.spec" \
+case "$buildtype,$mach" in
+   both,x86_64)
+        do_rpm_package "amanda.spec" \
               "${DEFINES[@]}" \
               --define "subpkg server"
         #
-        do_rpm_package "amanda-client${BUILDVER}.spec" \
+        do_rpm_package "amanda-client.spec" \
               --define "subpkg client"
         ;;
 
-   server,x86_64,*)
-        do_rpm_package "amanda${BUILDVER}.spec" \
+   server,x86_64)
+        do_rpm_package "amanda.spec" \
               "${DEFINES[@]}" \
               --define "subpkg server"
 
         ;;
 
-   client,*,*) ;&  both,*,*)
-	do_rpm_package "amanda-client${BUILDVER}.spec" \
+   client,*) ;&  both,*)
+	do_rpm_package "amanda-client.spec" \
               --define "subpkg client"
 
         ;;
 
-   *) echo "ERROR: cannot build combination of $buildtype-$mach-${BUILDVER:-3.6}" >&2; exit -1 ;;
+   *) echo "ERROR: cannot build combination of $buildtype-$mach" >&2; exit -1 ;;
 esac
 
 true

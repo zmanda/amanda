@@ -99,7 +99,7 @@
 # only has time if not a tagged release..
 %define branch_time_version  %(A="%%PKG_REV%%";       A="${A%%.git.*}"; echo "${A%%.tag.*}" )
 %define target_version       %(A="%%VERSION%%"; echo "${A%%[^0-9.]*}")
-%define build_date %%DATE%%
+%define build_date %(A="%%DATE%%"; echo "${A}")
 
 # Define amanda_version using the value determined by
 # packaging/common/substitute.pl.
@@ -267,9 +267,7 @@ Requires: /etc/xinetd.d
 Requires: tar >= %{tarver}
 Requires: %glib2_pkg_name >= %glib2_build
 Requires: /etc/services
-
 Provides: amanda-backup-server = %{amanda_version}
-Conflicts: amanda-backup-server
 Conflicts: amanda-backup_client, amanda-backup_server
 Conflicts: amanda, amanda-server, amanda-client, amanda-backup-client
 
@@ -288,11 +286,11 @@ Amanda Documentation is available at: http://wiki.zmanda.com/
 ################  BACKUP-DEVEL #####################
 #####################################
 %package -n amanda-backup-server-devel
-Release: %{rpm_release}.%{subpkg}
+Release: %{rpm_release}.server
 Summary: Amanda Backup and Archiving Server [%{disttag}]
 Group: %{rpm_group}
 
-%description server-devel
+%description -n amanda-backup-server-devel
 Amanda is the leading Open-Source Backup and Archiving software.
 
 This package contains the Amanda server development files.
@@ -300,17 +298,15 @@ This package contains the Amanda server development files.
 #####################################
 ################  BACKUP-TEST #####################
 #####################################
-%package server-tests
-Release: %{rpm_release}.%{subpkg}
-Summary: Amanda Enterprise Backup and Archiving Server Tests [%{disttag}]
+%package -n amanda-backup-server-tests
+Release: %{rpm_release}.server
+Summary: Amanda Community Backup and Archiving Server Tests [%{disttag}]
 Group: %{rpm_group}
-Provides: amanda_enterprise-server = %{amanda_version}
 
-%description server-tests
-Amanda Enterprise Edition is the leading Open-Source Backup and
-Archiving software with Enterprise support.
+%description -n amanda-backup-server-tests
+Amanda is the leading Open-Source Backup and Archiving software.
 
-This package contains the Amanda enterprise server test files.
+This package contains the Amanda server test files.
 
 # --- Directory setup ---
 
@@ -355,7 +351,6 @@ This package contains the Amanda enterprise server test files.
 %global __python3 	%(command -v python3)
 %global __perl 		%(command -v perl)
 %global __build_shell   %(command -v bash)
-%global __build_shell   %(command -v bash)
 %define INSTALL_CONFDIR %{SYSCONFDIR}
 # [must usable for ALL Debian paths too]
 %define INSTALL_UNITDIR %{_unitdir_compat}
@@ -370,10 +365,12 @@ This package contains the Amanda enterprise server test files.
 %define ROOT_AMCONFDIR          %{buildroot}%{AM_CONFDIR}
 %define ROOT_AMANDAHOMEDIR      %{buildroot}%{AMANDAHOMEDIR}
 %define ROOT_AMLIBDIR           %{buildroot}%{AMLIBDIR}
+%define ROOT_AMDATADIR          %{buildroot}%{AMDATADIR}
 %define ROOT_MANDIR             %{buildroot}%{MANDIR}
 %define ROOT_LOGDIR             %{buildroot}%{LOGDIR}
 %define ROOT_AMHOMEDIR          %{buildroot}%{AMHOMEDIR}
 %define ROOT_AMLIBEXECDIR       %{buildroot}%{AMLIBEXECDIR}
+%define ROOT_AMINCDIR           %{buildroot}%{AMINCDIR}
 
 # --- Unpack ---
 # --- Unpack ---
@@ -528,6 +525,8 @@ export GCC_TARGET=$(gcc -dumpmachine | tr -d '\n')
         --${systemd_with}-systemd \
 
 make -j`nproc`
+make -j1 -C installcheck amrecover
+make -j1 -C installcheck 
 
 # --- Install to buildroot ---
 
@@ -550,7 +549,9 @@ rm -rf %{buildroot}
 
 ################################################ perform source make-install
 . ./rpm-env.sh   # last time...
-make -j1 DESTDIR=%{buildroot} install
+make -o config.status -o config/config.h -j1 DESTDIR=%{buildroot} install
+
+mkdir -p %{ROOT_INSTALLDIR}
 ################################################ done with source make-install
 
 # to hold a space in case we need the path /usr/lib64 added!
@@ -707,7 +708,7 @@ echo 'cd $(dirname $0);' >> %{ROOT_AMDATADIR}/tests/run.sh
     sed -i -e '/-flush$/d' "%{ROOT_AMDATADIR}/tests/.all-tests"
 
     cp -vt %{ROOT_AMDATADIR}/tests \
-       %{__builddir}/packaging/scripts/run-installcheck.sh
+       %{__builddir}/packaging/common/run-installcheck.sh
 
 )
 
@@ -763,19 +764,7 @@ true
 # pre installation
 #
 ##########################################
-%{script_vars}
 logger "Preinstall for %{name}-%{amanda_version_info} on $(date -R)"
-
-# all owned by root
-#[ ! -e /usr/bin/bash -a -x /bin/bash ] &&
-#   ln -sf /bin/bash /usr/bin/bash
-#[ ! -e /usr/bin/sh -a -x /bin/sh ] &&
-#   ln -sf /bin/sh /usr/bin/sh
-#[ ! -e /usr/lib64 -a -d /lib64 ] &&
-#   ln -sf /lib64 /usr/lib64
-#[ ! -e /lib/systemd/system -a -d /usr/lib/systemd/system ] &&
-#   ln -sf /usr/lib/systemd /lib
-# must block use of /usr/lib/systemd/system because its not universal enough
 
 # ------------ Library of functions --------------
 %%COMMON_FUNCTIONS%%
@@ -806,12 +795,11 @@ xargs -r -n1 systemctl -q stop <<<"${_my_systemd_units}" 2>/dev/null || true
 
 logger "Preinstall done."
 
-echo "Amanda preinstall logs can be found in '$LOGFILE'."
+echo "Amanda preinstall logs can be found in 'INSTALL_LOG'."
 
 ##########################################
 %posttrans -n amanda-backup-server
 #!/bin/bash
-set +o posix
 ##########################################
 #
 # post installation
@@ -819,8 +807,6 @@ set +o posix
 # post installation
 #
 ##########################################
-
-%{script_vars}
 # ---------- Library of functions ------------
 %%COMMON_FUNCTIONS%%
 %%POST_INST_FUNCTIONS%%
@@ -887,7 +873,6 @@ true
 ##########################################
 %preun -n amanda-backup-server
 #!/bin/bash
-set +o posix
 ##########################################
 #
 # pre un-installation
@@ -895,7 +880,9 @@ set +o posix
 # pre un-installation
 #
 ##########################################
-%{script_vars}
+# ---------- Library of functions ------------
+%%PRE_RM_FUNCTIONS%%
+# ---------- End Library of functions ------------
 
 set +e
 # NOTE: do not remove amandauser here
@@ -931,7 +918,6 @@ true
 ##########################################
 %postun -n amanda-backup-server
 #!/bin/bash
-set +o posix
 ##########################################
 #
 # post un-installation
@@ -939,9 +925,7 @@ set +o posix
 # post un-installation
 #
 ##########################################
-%{script_vars}
 # ------------ Library of functions --------------
-%%COMMON_FUNCTIONS%%
 %%POST_RM_FUNCTIONS%%
 # ---------- End Library of functions ------------
 
@@ -1208,7 +1192,7 @@ true
 %{AMANDAHOMEDIR}/amanda-config
 
 ######################################################
-%files server-tests
+%files -n amanda-backup-server-tests
 ######################################################
 %defattr(-,%{amanda_user},%{amanda_group},0755)
 %{AMDATADIR}/tests
