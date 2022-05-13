@@ -69,7 +69,7 @@ use Socket;
 require Exporter;
 
 our @ISA = qw(Exporter);
-our @EXPORT = qw( $srcdir );
+our @EXPORT = qw( $srcdir $abs_srcdir );
 
 use Amanda::Util;
 
@@ -77,6 +77,7 @@ our $TMP = "$AMANDA_TMPDIR/installchecks";
 
 # the Makefile provides srcdir to us in most cases; if not, assume it's "."
 our $srcdir = $ENV{'srcdir'} || '.';
+our $abs_srcdir = readlink("/proc/self/cwd");
 
 # run this just before the script actually executes
 # (not during syntax checks)

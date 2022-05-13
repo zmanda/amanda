@@ -34,6 +34,21 @@ use Installcheck::Config;
 use Installcheck::Run;
 use IPC::Open3;
 
+if ( "@CLIENT_LOGIN@" eq getpwuid($>) ) {
+    local $/;
+    my $secfile;
+
+    unless( open(F,"@DEFAULT_SECURITY_FILE@") &&
+		($secfile = <F>) && 
+		($secfile =~ m{\nrestore_by_amanda_user=yes\n}) ) {
+	SKIP: {
+	    skip("Restores by amanda user need restore_by_amanda_user=yes in security.conf", Test::More->builder->expected_tests);
+	}
+	exit 0;
+    }
+    close(F);
+}
+
 Amanda::Debug::dbopen("installcheck");
 Installcheck::log_test_output();
 my $debug = !exists $ENV{'HARNESS_ACTIVE'};
