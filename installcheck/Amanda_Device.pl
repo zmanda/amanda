@@ -36,7 +36,7 @@ use Amanda::Xfer qw( :constants );
 use Amanda::Header qw( :constants );
 use Amanda::Paths;
 use Amanda::Constants;
-use Amanda::Util;
+use Amanda::Util qw( :constants );
 use Amanda::MainLoop;
 use IO::Socket;
 
@@ -992,12 +992,15 @@ my $run_devpay_tests = defined $DEVPAY_SECRET_KEY &&
     defined $DEVPAY_ACCESS_KEY && $DEVPAY_USER_TOKEN;
 
 my $s3_make_device_count = 7;
-sub s3_make_device($$) {
-    my ($dev_name, $kind) = @_;
+sub s3_make_device($$@) {
+    my ($dev_name, $kind, @opts) = @_;
     $dev = Amanda::Device->new($dev_name);
     is($dev->status(), $DEVICE_STATUS_SUCCESS,
        "$dev_name: create successful")
         or diag($dev->error_or_status());
+
+    $dev->property_set("NB_THREADS_BACKUP", 2);
+    $dev->property_set("NB_THREADS_RECOVERY", 2);
 
     my @s3_props = ( 's3_access_key', 's3_secret_key' );
     push @s3_props, 's3_user_token' if ($kind eq "devpay");
@@ -1039,6 +1042,18 @@ sub s3_make_device($$) {
             or diag($dev->error_or_status());
     } else {
         croak("didn't recognize the device kind, so no credentials were set");
+    }
+
+    if (grep { lc($_) eq "verbose"; } @opts) {
+        $dev->property_set('VERBOSE', '1') or diag($dev->error_or_status());
+    }
+
+    if (grep { lc($_) eq "chunked"; } @opts) {
+        is($dev->property_set('CHUNKED', '1'), undef,
+           "set CHUNKED to test chunked mode");
+    } elsif (grep { lc($_) eq "multi-part"; } @opts) {
+        is($dev->property_set('S3_MULTI_PART_UPLOAD', '1'), undef,
+           "set S3_MULTI_PART_UPLOAD to test multi-part mode");
     }
     return $dev;
 }
@@ -1132,7 +1147,7 @@ SKIP: {
 
     my $hostname  = hostname();
     $hostname =~ s/\./-/g;
-    $base_name = "$S3_ACCESS_KEY-installcheck-$hostname";
+    $base_name = lc("$S3_ACCESS_KEY-TEST-$hostname");
     # strip $base_name too long
     if (length($base_name)> 52) {
 	$base_name =~ s/buildbot/bb/g;
@@ -1416,7 +1431,7 @@ SKIP: {
     SKIP: {
 	skip "SSL not supported; can't check SSL_CA_INFO", 4
 	    unless $dev->property_get('S3_SSL');
-	is($dev->property_set('SSL_CA_INFO', "$srcdir/data/aws-bundle.crt"), undef,
+	is($dev->property_set('SSL_CA_INFO', "$abs_srcdir/data/aws-bundle.crt"), undef,
 	   "set our own SSL/TLS CA certificate bundle")
 	    or diag($dev->error_or_status());
 
@@ -1472,9 +1487,9 @@ SKIP: {
        "status is DEVICE_STATUS_DEVICE_ERROR")
         or diag($dev->error_or_status());
     my $error_msg = $dev->error_or_status();
-    ok(($dev->error_or_status() == "While creating new S3 bucket: The specified location-constraint is not valid (Unknown) (HTTP 400)"),
+    ok(($error_msg =~ m{^While creating new S3 bucket: The specified location-constraint is not valid \(InvalidLocationConstraint\) \(HTTP 400\)}),
        "invalid location-constraint")
-       or diag("bad error: " . $dev->error_or_status());
+       or diag("bad error: $error_msg");
 
     $dev_name = "s3:TESTCONF-s3_eu_2";
     $dev = s3_make_device($dev_name, "s3");
