@@ -31,6 +31,7 @@
 
 #include "device.h"
 #include "s3.h"
+#include "s3-util.h"
  /* Type checking and casting macros
  */
 #define TYPE_S3_DEVICE	(s3_device_get_type())
@@ -46,149 +47,26 @@ extern DevicePropertyBase device_property_s3_access_key;
 extern DevicePropertyBase device_property_s3_secret_key;
 #define PROPERTY_S3_SECRET_KEY (device_property_s3_secret_key.ID)
 #define PROPERTY_S3_ACCESS_KEY (device_property_s3_access_key.ID)
+
+/* Maximum key length as specified in the S3 documentation
+ * (*excluding* null terminator) */
+#define S3_MAX_KEY_LENGTH 1024
+
+/* Note: for compatability, min can only be decreased and max increased */
+// minimum allows 64k * 10000 == 640M > 512MB uploads
+#define S3_DEVICE_MIN_BLOCK_SIZE 0x10000      
+// maximum allows 512MiB * 10,000 == 5.36TB > 5.0TB max for AWS (a.k.a 4.88TiB) 
+#define S3_DEVICE_MAX_BLOCK_SIZE (512 * 1024 * 1024)
+#define S3_DEVICE_DEFAULT_BLOCK_SIZE BUFFER_SIZE_MAX_DEFAULT
+
+#define GCP_COMPOSE_COUNT 31
 /*
  * Main object structure
  */
 typedef struct _S3MetadataFile S3MetadataFile;
 typedef struct _S3Device S3Device;
-
 typedef struct _S3_by_thread S3_by_thread;
-struct _S3_by_thread {
-    S3Handle            *s3;
-    CurlBuffer           curl_buffer;
-    guint                buffer_len;
-    int                  idle;
-    int                  eof;
-    int                  done;
-    char                *filename;
-    char		*uploadId;
-    int			 partNumber;
-    guint64		 range_min;
-    guint64		 range_max;
-    DeviceStatusFlags    errflags;	/* device_status */
-    char                *errmsg;	/* device error message */
-    GMutex		*now_mutex;
-    guint64		 dlnow, ulnow;
-    time_t		 timeout;
-};
-
-struct _S3Device {
-    Device __parent__;
-
-    char *catalog_filename;
-    char *catalog_label;
-    char *catalog_header;
-
-    /* The "easy" curl handle we use to access Amazon S3 */
-    S3_by_thread *s3t;
-
-    /* S3 access information */
-    char *bucket;
-    char *prefix;
-
-    /* The S3 access information. */
-    char *secret_key;
-    char *access_key;
-    char *session_token;
-    char *user_token;
-
-    /* The Openstack swift information. */
-    char *swift_account_id;
-    char *swift_access_key;
-
-    char *username;
-    char *password;
-    char *tenant_id;
-    char *tenant_name;
-    char *project_name;
-    char *domain_name;
-
-    char *bucket_location;
-    char *storage_class;
-    char *host;
-    char *service_path;
-    char *server_side_encryption;
-    char *proxy;
-
-    char *ca_info;
-
-    /* a cache for unsuccessful reads (where we get the file but the caller
-     * doesn't have space for it or doesn't want it), where we expect the
-     * next call will request the same file.
-     */
-    char *cached_buf;
-    char *cached_key;
-    int cached_size;
-
-    /* Produce verbose output? */
-    gboolean verbose;
-
-    /* create the bucket? */
-    gboolean create_bucket;
-
-    /* Use SSL? */
-    gboolean use_ssl;
-    S3_api s3_api;
-
-    /* Throttling */
-    guint64 max_send_speed;
-    guint64 max_recv_speed;
-
-    gboolean leom;
-    guint64 volume_bytes;
-    guint64 volume_limit;
-    gboolean enforce_volume_limit;
-    gboolean use_subdomain;
-    gboolean use_s3_multi_delete;
-    gboolean set_s3_multi_delete;
-    char        *uploadId;
-    GTree       *part_etag;
-    char        *filename;
-
-    int          nb_threads;
-    int          nb_threads_backup;
-    int          nb_threads_recovery;
-    gboolean     use_s3_multi_part_upload;
-    GThreadPool *thread_pool_delete;
-    GThreadPool *thread_pool_write;
-    GThreadPool *thread_pool_read;
-    GCond       *thread_idle_cond;
-    GMutex      *thread_idle_mutex;
-    gint64	 last_byte_read;
-    gint64	 next_block_to_read;
-    gint64	 next_byte_to_read;
-    GSList      *objects;
-    guint64	 object_size;
-    gboolean	 bucket_made;
-
-    guint64      dltotal;
-    guint64      ultotal;
-
-    /* google OAUTH2 */
-    char        *client_id;
-    char        *client_secret;
-    char        *refresh_token;
-    char        *project_id;
-
-    gboolean	 reuse_connection;
-    gboolean	 chunked;
-
-    gboolean	 read_from_glacier;
-    int		 transition_to_glacier;
-    long	 timeout;
-
-    /* CAStor */
-    char        *reps;
-    char        *reps_bucket;
-};
-
-/*
- * Class definition
- */
-typedef struct _S3DeviceClass S3DeviceClass;
-struct _S3DeviceClass {
-    DeviceClass __parent__;
-};
+typedef const struct _S3DeviceClass S3DeviceClass;
 
 #endif
 

@@ -25,6 +25,12 @@
 #include <glib.h>
 #include <curl/curl.h>
 
+
+// NOTE: kept identical to s3-util.h
+typedef guint64 objbytes_t;
+typedef guint64 xferbytes_t;
+typedef gint64 signed_xferbytes_t;
+
 /*
  * Data types
  */
@@ -47,16 +53,18 @@ typedef enum {
    S3_SC_STANDARD,
    S3_SC_STANDARD_IA,
    S3_SC_REDUCED_REDUNDANCY,
-   S3_SC_GLACIER
+   S3_SC_GLACIER,
+   S3_SC_DEEP_ARCHIVE
 } StorageClass;
 
 /* An opaque handle.  S3Handles should only be accessed from a single
  * thread at any given time, although it is fine to use different handles
  * in different threads simultaneously. */
 typedef struct S3Handle S3Handle;
+typedef struct s3_head_t s3_head_t;
 
 /* Callback function to read data to upload
- * 
+ *
  * @note this is the same as CURLOPT_READFUNCTION
  *
  * @param data: The pointer to write data to
@@ -97,7 +105,7 @@ typedef GByteArray* (*s3_md5_func)(void *data);
 typedef void (*s3_reset_func)(void *data);
 
 /* Callback function to write data that's been downloaded
- * 
+ *
  * @note this is the same as CURLOPT_WRITEFUNCTION
  *
  * @param data: The pointer to read data from
@@ -127,12 +135,33 @@ typedef size_t (*s3_write_func)(void *data, size_t size, size_t nmemb, void *str
  */
 typedef curl_progress_callback s3_progress_func;
 
+/**
+ * Callback function to track progress
+ *
+ * @note this is the same as CURLOPT_XFERINFOFUNCTION
+ *
+ * @param data: The progress_data
+ * @param dltotal: The total number of bytes to downloaded
+ * @param dlnow: The current number of bytes downloaded
+ * @param ultotal: The total number of bytes to downloaded
+ * @param ulnow: The current number of bytes downloaded
+ *
+ * @return CURL_PROGRESSSFUNC_CONTINUE to continue, non-zero to abort.
+ */
+typedef curl_xferinfo_callback s3_xferinfo_func;
+
 /*
  * Constants
  */
 
 /* These are assumed to be already URL-escaped. */
 # define STS_BASE_URL "https://ls.amazonaws.com/"
+
+# define AMZ_TOP_DOMAIN "s3.amazonaws.com"
+# define GCP_TOP_DOMAIN ".googleapis.com"
+
+# define S3_MULTIPART_UPLOAD_MAX   10000
+
 # define STS_PRODUCT_TOKEN "{ProductToken}AAAGQXBwVGtu4geoGybuwuk8VEEPzJ9ZANpu0yzbf9g4Gs5Iarzff9B7qaDBEEaWcAzWpcN7zmdMO765jOtEFc4DWTRNkpPSzUnTdkHbdYUamath73OreaZtB86jy/JF0gsHZfhxeKc/3aLr8HNT//DsX3r272zYHLDPWWUbFguOwqNjllnt6BshYREx59l8RrWABLSa37dyJeN+faGvz3uQxiDakZRn3LfInOE6d9+fTFl50LPoP08LCqI/SJfpouzWix7D/cep3Jq8yYNyM1rgAOTF7/wh7r8OuPDLJ/xZUDLfykePIAM="
 
 /* This preprocessor magic will enumerate constants named S3_ERROR_XxxYyy for
@@ -239,6 +268,15 @@ typedef enum {
 #undef S3_ERROR
 } s3_error_code_t;
 
+typedef enum {
+    S3_RESULT_RETRY_AUTH = -3,
+    S3_RESULT_RETRY_BACKOFF = -2,
+    S3_RESULT_RETRY = -1,
+    S3_RESULT_FAIL = 0,
+    S3_RESULT_OK = 1,
+    S3_RESULT_NOTIMPL = 2
+} s3_result_t;
+
 /*
  * Functions
  */
@@ -271,7 +309,7 @@ s3_curl_location_compat(void);
  * @returns: true if the bucket name is compatible
  */
 gboolean
-s3_bucket_location_compat(const char *bucket);
+s3_bucket_name_compat(const char *bucket);
 
 /* Initialize S3 operation
  *
@@ -318,7 +356,7 @@ s3_open(const char * access_key, const char *secret_key,
 	const char *client_secret,
 	const char *refresh_token,
 	const gboolean reuse_connection,
-	const gboolean read_from_glacier,
+	const gboolean read_from_glacier G_GNUC_UNUSED,
 	const long timeout,
         const char *reps,
         const char *reps_bucket);
@@ -401,7 +439,7 @@ s3_use_ssl(S3Handle *hdl, gboolean use_ssl);
  * @returns: true if the setting is valid
  */
 gboolean
-s3_set_max_send_speed(S3Handle *hdl, guint64 max_send_speed);
+s3_set_max_send_speed(S3Handle *hdl, objbytes_t max_send_speed);
 
 /* Control the throttling of S3 downloads.  Only supported with curl >= 7.15.5.
  *
@@ -410,7 +448,7 @@ s3_set_max_send_speed(S3Handle *hdl, guint64 max_send_speed);
  * @returns: true if the setting is valid
  */
 gboolean
-s3_set_max_recv_speed(S3Handle *hdl, guint64 max_recv_speed);
+s3_set_max_recv_speed(S3Handle *hdl, objbytes_t max_recv_speed);
 
 /* Get the error information from the last operation on this handle,
  * formatted as a string.
@@ -490,6 +528,31 @@ s3_part_upload(S3Handle *hdl,
           s3_progress_func progress_func,
           gpointer progress_data);
 
+
+/* Perform a part upload.
+ *
+ * When this function returns, KEY and BUFFER remain the
+ * responsibility of the caller.
+ *
+ * @param hdl: the S3Handle object
+ * @param bucket: the bucket to which the upload should be made
+ * @param key: the key to which the upload should be made
+ * @param uploadId: the UploadId
+ * @param partNumber: the part number
+ * @param etag: return the resulting etag.
+ * @param sourcekey: the key used for the new part
+ *
+ * @returns: false if an error ocurred
+ */
+s3_result_t
+s3_copypart_upload(S3Handle *hdl,
+          const char *bucket,
+          const char *key,
+	  const char *uploadID,
+	  int         partNumber,
+	  char      **etag,
+          const char *sourcekey);
+
 /* Initiate a multi part upload.
  *
  * @param hdl: the S3Handle object
@@ -525,46 +588,23 @@ s3_complete_multi_part_upload(
     s3_md5_func md5_func,
     gpointer read_data);
 
+s3_result_t
+ s3_compose_append_upload(
+    S3Handle *hdl,
+    const char *bucket,
+    const char *key,
+    s3_read_func read_func,
+    s3_reset_func reset_func,
+    s3_size_func size_func,
+    s3_md5_func md5_func,
+    gpointer read_data);
+
 gboolean
 s3_abort_multi_part_upload(
     S3Handle *hdl,
     const char *bucket,
     const char *key,
     const char *uploadId);
-
-typedef struct {
-    char    *key;
-    char    *uploadId;
-    char    *prefix;
-    guint64  size;
-    StorageClass storage_class;
-} s3_object;
-void free_s3_object(gpointer part);
-
-typedef struct {
-    char *key;
-    char *x_amz_expiration;
-    char *x_amz_restore;
-} s3_head_t;
-void free_s3_head(s3_head_t *head);
-
-typedef struct lifecycle_action {
-    gint  days;
-    char *date;
-    char *storage_class;
-} lifecycle_action;
-
-typedef struct lifecycle_rule {
-    char *id;
-    char *filter;
-    char *prefix;
-    char *status;
-    lifecycle_action *transition;
-    lifecycle_action *expiration;
-} lifecycle_rule;
-
-void free_lifecycle_rule(gpointer data);
-void free_lifecycle(GSList *lifecycle);
 
 
 /* List all of the files matching the pseudo-glob C{PREFIX*DELIMITER*},
@@ -586,8 +626,9 @@ s3_list_keys(S3Handle *hdl,
               const char *subresource,
               const char *prefix,
               const char *delimiter,
+              size_t limit,
               GSList **list,
-              guint64 *total_size);
+              objbytes_t *total_size);
 
 /* Init a restore from s3 for an object
  *
@@ -655,13 +696,14 @@ gboolean
 s3_read_range(S3Handle *hdl,
         const char *bucket,
         const char *key,
-	const guint64 range_begin,
-	const guint64 range_end,
+	const objbytes_t range_begin,
+	const objbytes_t range_end,
         s3_write_func write_func,
         s3_reset_func reset_func,
         gpointer write_data,
         s3_progress_func progress_func,
-        gpointer progress_data);
+        gpointer progress_data,
+        objbytes_t *object_size);
 
 /* Delete a file.
  *
@@ -683,7 +725,7 @@ s3_delete(S3Handle *hdl,
  * @returns: 0 on sucess, 1 if multi_delete is not supported, 2 if an error
  *           occurs; a non-existent file is I{not} considered an error.
  */
-int
+s3_result_t
 s3_multi_delete(S3Handle *hdl,
                 const char *bucket,
                 GSList *objects);
@@ -723,112 +765,40 @@ gboolean
 s3_delete_bucket(S3Handle *hdl,
                  const char *bucket);
 
-/* Attempt a RefreshAWSSecurityToken on a token; if it succeeds, the old
- * token will be freed and replaced by the new. If it fails, the old
- * token is left unchanged and FALSE is returned. */
-gboolean sts_refresh_token(char ** token, const char * directory);
 
-/* These functions are for if you want to use curl on your own. You get more
- * control, but it's a lot of work that way:
- */
-/* There is two use, simple buffer and circle buffer
- */
-/* simple buffer
- * buffer: pointer to the buffer
- * buffer_len: size of the allocated buffer
- * buffer_pos: size use in the buffer (from buffer to buffer+buffer_pos)
- * max_buffer_size: maximum size the buffer can be reallocated.
- * end_of_buffer: unused
- * mutex: NULL
- * cond: unused
- */
-/* circle buffer (use for chunked transfer-encodig)
- * buffer: pointer to the buffer
- * buffer_len: indice of the last byte+1 use in the buffer
- * buffer_pos: indice of the first byte use in the buffer
- * max_buffer_size: allocated size of the buffer
- * end_of_buffer: TRUE once reach end of data.
- * mutex: !NULL
- * cond: !NULL
- *
- * buffer_len == buffer_pos: buffer is empty
- * The data in use are
- *     buffer_len > buffer_pos: from buffer_pos to buffer_len
- *     buffer_len < buffer_pos: from buffer_pos to max_buffer_size
- *                          and from 0 to buffer_len
- */
 typedef struct {
-    char *buffer;
-    guint buffer_len;
-    guint buffer_pos;
-    guint max_buffer_size;
-    gboolean end_of_buffer;
-    GMutex   *mutex;
-    GCond    *cond;
-} CurlBuffer;
+    char        *key;
+    char        *mp_uploadId;
+    char        *prefix;
+    objbytes_t   size;
+    StorageClass storage_class;
+} s3_object;
 
-#define S3_BUFFER_READ_FUNCS s3_buffer_read_func, s3_buffer_reset_func, s3_buffer_size_func, s3_buffer_md5_func
+typedef struct s3_head_t {
+    char *key;
+    char *x_amz_expiration;
+    char *x_amz_restore;
+} s3_head_t;
 
-#define S3_BUFFER_WRITE_FUNCS s3_buffer_write_func, s3_buffer_reset_func
+typedef struct lifecycle_action {
+    gint  days;
+    char *date;
+    char *storage_class;
+} lifecycle_action;
 
-/* a CURLOPT_READFUNCTION to read data from a buffer. */
-size_t
-s3_buffer_read_func(void *ptr, size_t size, size_t nmemb, void * stream);
+typedef struct lifecycle_rule {
+    char *id;
+    char *filter;
+    char *prefix;
+    char *status;
+    lifecycle_action *transition;
+    lifecycle_action *expiration;
+} lifecycle_rule;
 
-size_t
-s3_buffer_size_func(void *stream);
-
-GByteArray*
-s3_buffer_md5_func(void *stream);
-
-void
-s3_buffer_reset_func(void *stream);
-
-#define S3_EMPTY_READ_FUNCS s3_empty_read_func, NULL, s3_empty_size_func, s3_empty_md5_func
-
-/* a CURLOPT_WRITEFUNCTION to write data to a buffer. */
-size_t
-s3_buffer_write_func(void *ptr, size_t size, size_t nmemb, void *stream);
-
-/* a CURLOPT_READFUNCTION that writes nothing. */
-size_t
-s3_empty_read_func(void *ptr, size_t size, size_t nmemb, void * stream);
-
-size_t
-s3_empty_size_func(void *stream);
-
-GByteArray*
-s3_empty_md5_func(void *stream);
-
-#define S3_COUNTER_WRITE_FUNCS s3_counter_write_func, s3_counter_reset_func
-
-/* a CURLOPT_WRITEFUNCTION to write data that just counts data.
- * s3_write_data should be NULL or a pointer to an gint64.
- */
-size_t
-s3_counter_write_func(void *ptr, size_t size, size_t nmemb, void *stream);
-
-void
-s3_counter_reset_func(void *stream);
-
-#ifdef _WIN32
-/* a CURLOPT_READFUNCTION to read data from a file. */
-size_t
-s3_file_read_func(void *ptr, size_t size, size_t nmemb, void * stream);
-
-size_t
-s3_file_size_func(void *stream);
-
-GByteArray*
-s3_file_md5_func(void *stream);
-
-size_t
-s3_file_reset_func(void *stream);
-
-/* a CURLOPT_WRITEFUNCTION to write data to a file. */
-size_t
-s3_file_write_func(void *ptr, size_t size, size_t nmemb, void *stream);
-#endif
+void free_lifecycle_rule(gpointer data);
+void free_lifecycle(GSList *lifecycle);
+void free_s3_object(gpointer part);
+void free_s3_head(s3_head_t *head);
 
 gboolean
 s3_get_lifecycle(S3Handle *hdl, const char *bucket, GSList **lifecycle);
@@ -836,7 +806,12 @@ s3_get_lifecycle(S3Handle *hdl, const char *bucket, GSList **lifecycle);
 gboolean
 s3_put_lifecycle(S3Handle *hdl, const char *bucket, GSList *lifecycle);
 
-/* Adds a null termination to a buffer. */
-void terminate_buffer(CurlBuffer *);
+int
+s3_curl_debug_message(CURL *curl G_GNUC_UNUSED,
+           curl_infotype type,
+           char *s,
+           size_t len,
+           void *unused G_GNUC_UNUSED);
 
-#endif
+
+#endif /* __S3_H__ */
