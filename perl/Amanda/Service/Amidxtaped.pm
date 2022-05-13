@@ -1013,7 +1013,7 @@ sub start_msg {
     $self->{'ctl_src'}->set_callback( sub {
 	my $b;
 	my $n_read = POSIX::read($self->rfd($self->{'ctl_stream'}), $b, 1);
-	if (!defined $n_read) {
+	if (!defined $n_read || $n_read<0) { # neg fd returns -1
 	    debug("Failure to read ctl_stream: $!");
 	    $self->{'ctl_src'}->remove();
 	    $self->{'ctl_src'} = undef;

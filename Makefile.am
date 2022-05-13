@@ -43,9 +43,8 @@ SUBDIRS = . \
 	perl \
 	po \
 	man \
-	example
-
-#	installcheck
+	example \
+	installcheck
 
 pkgdata_DATA = \
 	ReleaseNotes	\
