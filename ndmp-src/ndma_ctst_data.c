@@ -92,18 +92,19 @@ ndmca_op_test_data (struct ndm_session *sess)
 {
 	struct ndm_control_agent *ca = &sess->control_acb;
 	struct ndmconn *	conn;
-	int			(*save_call) (struct ndmconn *conn,
-						struct ndmp_xa_buf *xa);
+	// int			(*save_call) (struct ndmconn *conn,
+	//					struct ndmp_xa_buf *xa);
 	int			rc;
 
 	rc = ndmca_connect_data_agent(sess);
 	if (rc) {
-		ndmconn_destruct (sess->plumb.data);
+		ndmconn_close (sess->plumb.data);
+		ndmconn_destruct (&sess->plumb.data);
 		return rc;
 	}
 
 	conn = sess->plumb.data;
-	save_call = conn->call;
+	// save_call = conn->call;
 	conn->call = ndma_call_no_tattle;
 
 	/* perform query to find out about TCP and LOCAL support */

@@ -19,6 +19,7 @@
  * Contact information: Zmanda Inc., 465 N Mathlida Ave, Suite 300
  * Sunnyvale, CA 94085, or: http://www.zmanda.com
  */
+#pragma once
 
 /* An interface for devices that support direct-tcp access to a the device */
 

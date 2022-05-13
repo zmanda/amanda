@@ -110,6 +110,6 @@ extern int	ndmp_9to2_name_vec (
 			ndmp2_name *name2,
 			unsigned n_name);
 
-extern struct reqrep_xlate		ndmp2_reqrep_xlate_table[];
+extern reqrep_xlate_t		ndmp2_reqrep_xlate_table[];
 
 #endif /* !NDMOS_OPTION_NO_NDMP2 */

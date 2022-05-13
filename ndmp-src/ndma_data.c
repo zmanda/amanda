@@ -107,7 +107,7 @@ ndmda_belay (struct ndm_session *sess)
  */
 
 static int
-add_env (struct ndm_env_table *envtab, char *cmd)
+add_env (ref_ndm_env_table_t envtab, char *cmd)
 {
 	char		buf[1024];
 	int		i;
@@ -124,7 +124,7 @@ add_env (struct ndm_env_table *envtab, char *cmd)
 }
 
 static int
-add_nlist (struct ndm_nlist_table *nlisttab, char *cmd)
+add_nlist (ref_ndm_nlist_table_t nlisttab, char *cmd)
 {
 	char		buf[32];
 	int		i;
@@ -156,9 +156,9 @@ ndmda_data_start_backup (struct ndm_session *sess)
 	strcpy (cmd, "wrap_");
 	strcat (cmd, da->bu_type);
 
-	if (sess->param.log_level > 0) {
+	if (sess->pparam->log_level > 0) {
 	    char tmpbuf[40];
-	    sprintf(tmpbuf, "-d%d", sess->param.log_level);
+	    sprintf(tmpbuf, "-d%d", sess->pparam->log_level);
 	    ndmda_add_to_cmd (cmd, tmpbuf);
 	}
 
@@ -191,9 +191,9 @@ ndmda_data_start_recover (struct ndm_session *sess)
 	strcpy (cmd, "wrap_");
 	strcat (cmd, da->bu_type);
 
-	if (sess->param.log_level > 0) {
+	if (sess->pparam->log_level > 0) {
 	    char tmpbuf[40];
-	    sprintf(tmpbuf, "-d%d", sess->param.log_level);
+	    sprintf(tmpbuf, "-d%d", sess->pparam->log_level);
 	    ndmda_add_to_cmd (cmd, tmpbuf);
 	}
 
@@ -819,39 +819,27 @@ ndmda_copy_environment (struct ndm_session *sess,
   ndmp9_pval *env, unsigned n_env)
 {
 	struct ndm_data_agent *	da = &sess->data_acb;
-	int			i;
-	unsigned int		j;
-	ndmp9_pval *		src_pv;
-	ndmp9_pval *		dst_pv;
+	unsigned int		i;
 
-	for (j = 0; j < n_env; j++) {
-		src_pv = &env[j];
-		dst_pv = &da->env_tab.env[da->env_tab.n_env];
+	for (i = 0; i < n_env; i++) {
+            ENV_ARRAY_APPEND(&da->env_tab, env[i].name, env[i].value);
 
-		dst_pv->name  = NDMOS_API_STRDUP (src_pv->name);
-		dst_pv->value = NDMOS_API_STRDUP (src_pv->value);
-
-		if (!dst_pv->name || !dst_pv->value)
-			goto fail;
-
-		da->env_tab.n_env++;
+            if ( !da->env_tab.env[da->env_tab.n_env-1].name ) 
+                goto fail;
+            if ( !da->env_tab.env[da->env_tab.n_env-1].value ) 
+                goto fail;
 	}
 
 	return 0;
 
   fail:
 	for (i = 0; i < da->env_tab.n_env; i++) {
-		char *		p;
-
-		dst_pv = &da->env_tab.env[da->env_tab.n_env];
-
-		if ((p = dst_pv->name) != 0)
-			NDMOS_API_FREE (p);
-
-		if ((p = dst_pv->value) != 0)
-			NDMOS_API_FREE (p);
+                env_value_t    *dst_pv = &da->env_tab.env[da->env_tab.n_env];
+                NDMOS_API_FREE (dst_pv->name);
+                NDMOS_API_FREE (dst_pv->value);
 	}
-	da->env_tab.n_env = 0;
+
+        ENV_ARRAY_CLEAR(&da->env_tab);
 
 	return -1;
 }
@@ -908,7 +896,7 @@ ndmda_purge_environment (struct ndm_session *sess)
 		pv->name = 0;
 		pv->value = 0;
 	}
-	da->env_tab.n_env = 0;
+        ENV_ARRAY_CLEAR(&da->env_tab);
 }
 
 
@@ -918,27 +906,13 @@ ndmda_copy_nlist (struct ndm_session *sess,
 {
 	struct ndm_data_agent *	da = &sess->data_acb;
 	unsigned int		i;
-	int			j;
-	ndmp9_name *		src_nl;
-	ndmp9_name *		dst_nl;
 
 	for (i = 0; i < n_nlist; i++) {
-		j = da->nlist_tab.n_nlist;
-		src_nl = &nlist[i];
-		dst_nl = &da->nlist_tab.nlist[j];
+		char *orig = nlist[i].original_path;
+		char *dest = nlist[i].destination_path;
+                ndmp9_valid_u_quad fh = nlist[i].fh_info;
 
-		dst_nl->original_path =
-			NDMOS_API_STRDUP (src_nl->original_path);
-		dst_nl->destination_path =
-			NDMOS_API_STRDUP (src_nl->destination_path);
-		dst_nl->fh_info = src_nl->fh_info;
-		da->nlist_tab.result_err[j] = NDMP9_UNDEFINED_ERR;
-		da->nlist_tab.result_count[j] = 0;
-
-		if (!dst_nl->original_path || !dst_nl->destination_path)
-			return -1;	/* no mem */
-
-		da->nlist_tab.n_nlist++;
+                NLIST_ARRAY_APPEND(&da->nlist_tab, orig, dest, fh);
 	}
 
 	/* TODO: sort */
@@ -998,8 +972,8 @@ ndmda_count_invalid_fh_info_pending (struct ndm_session *sess)
 	for (i = 0; i < da->nlist_tab.n_nlist; i++) {
 		nl = &da->nlist_tab.nlist[i];
 
-		if (da->nlist_tab.result_err[i] == NDMP9_UNDEFINED_ERR
-		 && nl->fh_info.valid != NDMP9_VALIDITY_VALID) {
+		// if (da->nlist_tab.result_err[i] == NDMP9_UNDEFINED_ERR
+		if (nl->fh_info.valid != NDMP9_VALIDITY_VALID) {
 			count++;
 		}
 	}

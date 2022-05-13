@@ -1,4 +1,4 @@
-
+#pragma once
 
 #define WRAP_INVALID_FHINFO	(-1ull)
 #define WRAP_MAX_PATH		(1024+512)

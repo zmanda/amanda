@@ -105,7 +105,7 @@ ndmca_op_recover_files (struct ndm_session *sess)
 	if (rc == 0) {
 	    if (ca->recover_log_file_count > 0) {
 		struct ndm_control_agent *ca = &sess->control_acb;
-		int		    n_nlist = ca->job.nlist_tab.n_nlist;
+		int		    n_nlist = ca->pjob->nlist_tab.n_nlist;
 
 		ndmalogf (sess, 0, 0,
 			  "LOG_FILE messages: %d OK, %d ERROR, total %d of %d",
@@ -122,8 +122,8 @@ ndmca_op_recover_files (struct ndm_session *sess)
 	    }
 	}
 
-	if(!ca->job.tape_tcp)
-		ndmca_media_tattle (sess);
+	if(!ca->pjob->tape_tcp)
+               ndmca_media_tattle (sess);
 
 	return rc;
 }
@@ -186,7 +186,7 @@ ndmca_monitor_backup (struct ndm_session *sess)
 	ndmp9_mover_state	ms;
 	char *estb;
 
-	if (ca->job.tape_tcp) {
+	if (ca->pjob->tape_tcp) {
 		return ndmca_monitor_backup_tape_tcp(sess);
 	}
 
@@ -326,7 +326,7 @@ ndmca_monitor_backup_tape_tcp (struct ndm_session *sess)
 	int			count;
 	ndmp9_data_state	ds;
 	char *estb;
-	struct ndmlog *		ixlog = &ca->job.index_log;
+	struct ndmlog *		ixlog = &ca->pjob->index_log;
 	char *			pname = get_pname();
 
 	ndmalogf (sess, 0, 3, "Monitoring backup");
@@ -380,7 +380,7 @@ int
 ndmca_monitor_get_post_backup_env (struct ndm_session *sess)
 {
 	struct ndm_control_agent *ca = &sess->control_acb;
-	struct ndmlog *		ixlog = &ca->job.index_log;
+	struct ndmlog *		ixlog = &ca->pjob->index_log;
 	int			rc, i;
 	ndmp9_pval *		pv;
 
@@ -394,8 +394,8 @@ ndmca_monitor_get_post_backup_env (struct ndm_session *sess)
 		return -1;
 	}
 
-	for (i = 0; i < ca->job.result_env_tab.n_env; i++) {
-		pv = &ca->job.result_env_tab.env[i];
+	for (i = 0; i < ca->pjob->result_env_tab.n_env; i++) {
+		pv = &ca->pjob->result_env_tab.env[i];
 
 		ndmlogf (ixlog, "DE", 0, "%s=%s", pv->name, pv->value);
 	}
@@ -413,7 +413,7 @@ ndmca_monitor_recover (struct ndm_session *sess)
 	char *estb;
 	int last_state_print = 0;
 
-	if (ca->job.tape_tcp) {
+	if (ca->pjob->tape_tcp) {
 		return (ndmca_monitor_recover_tape_tcp(sess));
 	}
 
@@ -491,7 +491,7 @@ ndmca_monitor_recover (struct ndm_session *sess)
 
 			if (((pr == NDMP9_MOVER_PAUSE_EOF) ||
 			     (pr == NDMP9_MOVER_PAUSE_SEEK))
-			    && (ca->cur_media_ix+1 == ca->job.media_tab.n_media)) {
+			    && (ca->cur_media_ix+1 == ca->pjob->media_tab.n_media)) {
 				/*
 				 * Last tape consumed by tape agent.
 				 * The DATA agent may be just shy
@@ -639,23 +639,25 @@ ndmca_backreco_startup (struct ndm_session *sess)
 	struct ndm_control_agent *ca = &sess->control_acb;
 	int			rc = 0;
 
-	if (!ca->job.tape_tcp)
+	if (!ca->pjob->tape_tcp)
 		rc = ndmca_op_robot_startup (sess, 1);
 	if (rc) return rc;
 
 	rc = ndmca_connect_data_agent(sess);
 	if (rc) {
-		ndmconn_destruct (sess->plumb.data);
+		ndmconn_close (sess->plumb.data);
+		ndmconn_destruct (&sess->plumb.data);
 		return rc;
 	}
 
-	if (ca->job.tape_tcp) {
+	if (ca->pjob->tape_tcp) {
 		return 0;
 	}
 
 	rc = ndmca_connect_tape_agent(sess);
 	if (rc) {
-		ndmconn_destruct (sess->plumb.tape);
+		ndmconn_close (sess->plumb.tape);
+		ndmconn_destruct (&sess->plumb.tape);
 		return rc;
 	}
 
@@ -711,7 +713,7 @@ ndmca_monitor_startup (struct ndm_session *sess)
 
 	ndmalogf (sess, 0, 3, "Waiting for operation to start");
 
-	if (ca->job.tape_tcp)
+	if (ca->pjob->tape_tcp)
 		return 0;
 
 	for (count = 0; count < 10; count++) {
@@ -719,7 +721,7 @@ ndmca_monitor_startup (struct ndm_session *sess)
 		    break;
 
 		ds = ca->data_state.state;
-		if (!ca->job.tape_tcp)
+		if (!ca->pjob->tape_tcp)
 			ms = ca->mover_state.state;
 		else
 			ms = NDMP9_MOVER_STATE_ACTIVE;
@@ -765,7 +767,7 @@ ndmca_monitor_shutdown (struct ndm_session *sess)
 	int			count;
 	int			finish;
 
-	if (ca->job.tape_tcp) {
+	if (ca->pjob->tape_tcp) {
 		return ndmca_monitor_shutdown_tape_tcp(sess);
 	}
 	ndmalogf (sess, 0, 3, "Waiting for operation to halt");
@@ -957,11 +959,11 @@ ndmca_monitor_get_states (struct ndm_session *sess)
 
 	if (ndmca_data_get_state (sess) < 0)
 	    rc = -1;
-	if (!ca->job.tape_tcp) {
-	    if (ndmca_mover_get_state (sess) < 0)
-		rc = -1;
-	    ndmca_tape_get_state_no_tattle (sess);
-	}
+
+	// NOTE: allowing probes even with tape_tcp .. to keep cxn alive
+        if (ndmca_mover_get_state (sess) < 0)
+            rc = -1;
+        ndmca_tape_get_state_no_tattle (sess);
 
 	return rc;
 }

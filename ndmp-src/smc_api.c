@@ -83,10 +83,11 @@ smc_scsi_xa (struct smc_ctrl_block *smc)
 			cmd = smc->scsi_req.cmd[0];
 
 			sprintf (smc->errmsg,
-				"SCSI attn s0=%x asq=%x,%x cmd=%x info=%lx",
+				"SCSI attn s0=%x asq=%x,%x,%x cmd=%x info=%lx",
 				sense_data[0],
-				asc, ascq, cmd, info);
+				asc, ascq, asq, cmd, info);
 
+                        (void) valid;
 			rc = 1;
 		} else {
 			strcpy (smc->errmsg, "SCSI check condition");

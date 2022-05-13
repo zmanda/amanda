@@ -44,7 +44,7 @@
 
 
 int
-ndmjr_none_apply (struct ndm_job_param *job, char *reason)
+ndmjr_none_apply (ref_ndm_job_param_t job, char *reason)
 {
 	return 0;
 }

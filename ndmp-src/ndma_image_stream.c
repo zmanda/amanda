@@ -58,6 +58,7 @@
 
 
 
+#include "stream.h"
 
 #include "ndmagents.h"
 
@@ -780,7 +781,7 @@ int
 ndmis_tcp_listen (struct ndm_session *sess, struct ndmp9_addr *listen_addr)
 {
 	struct ndm_image_stream *is = &sess->plumb.image_stream;
-	ndmp9_tcp_addr *	tcp_addr = &listen_addr->ndmp9_addr_u.tcp_addr;
+	ndmp9_tcp_addr *	listen_tcp_addr = &listen_addr->ndmp9_addr_u.tcp_addr;
 	struct ndmconn *	conn;
 	struct sockaddr		c_sa;
 	struct sockaddr		l_sa;
@@ -842,12 +843,20 @@ ndmis_tcp_listen (struct ndm_session *sess, struct ndmp9_addr *listen_addr)
 
 	/* c_sa is a sockaddr_in for the IP address to use */
 
+        /* only get a security-approved random port */
 	what = "socket";
-	listen_sock = socket (AF_INET, SOCK_STREAM, 0);
+        listen_sock = stream_server(AF_INET, &listen_tcp_addr->port, 0, STREAM_BUFSIZE, 0);
 	if (listen_sock < 0) goto fail;
 
-	/* could bind() to more restrictive addr based on c_sa */
-	NDMOS_MACRO_SET_SOCKADDR(&l_sa, 0, 0);
+        l_sa.sa_family = AF_UNSPEC;
+        if (connect(listen_sock, &l_sa, sizeof l_sa) < 0) goto fail; // un-listen the socket state
+
+        // stack to stack copy
+        l_sa = c_sa;
+
+	sin = (struct sockaddr_in *) &l_sa;
+        sin->sin_port = htons(listen_tcp_addr->port); // use new port
+
 	what = "bind";
 	if (bind (listen_sock, &l_sa, sizeof l_sa) < 0) goto fail;
 
@@ -866,15 +875,8 @@ ndmis_tcp_listen (struct ndm_session *sess, struct ndmp9_addr *listen_addr)
 	 */
 
 	listen_addr->addr_type = NDMP9_ADDR_TCP;
-	tcp_addr = &listen_addr->ndmp9_addr_u.tcp_addr;
-
-	/* IP addr from CONTROL connection, or where ever c_sa came from */
-	sin = (struct sockaddr_in *) &c_sa;
-	tcp_addr->ip_addr = ntohl (sin->sin_addr.s_addr);
-
-	/* port from the bind() and getsockname() above */
-	sin = (struct sockaddr_in *) &l_sa;
-	tcp_addr->port = ntohs (sin->sin_port);
+	listen_tcp_addr->ip_addr = ntohl (sin->sin_addr.s_addr);
+	listen_tcp_addr->port = ntohs (sin->sin_port);
 
 	/*
 	 * Start the listen channel

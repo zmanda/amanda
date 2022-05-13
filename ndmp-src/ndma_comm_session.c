@@ -45,7 +45,7 @@
 int
 ndma_client_session (struct ndm_session *sess)
 {
-	struct ndm_job_param *	job = &sess->control_acb.job;
+	ref_ndm_job_param_t 	job = sess->control_acb.pjob;
 	int			rc;
 
 	rc = ndma_job_audit (job, 0, 0);
@@ -123,7 +123,7 @@ ndma_server_session (struct ndm_session *sess, int control_sock)
 
 	ndmos_condition_control_socket (sess, control_sock);
 
-	ndmconn_set_snoop (conn, &sess->param.log, sess->param.log_level);
+	ndmconn_set_snoop (conn, &sess->pparam->log, sess->pparam->log_level);
 	ndmconn_accept (conn, control_sock);
 
 	conn->call = ndma_call;
@@ -145,7 +145,7 @@ ndma_server_session (struct ndm_session *sess, int control_sock)
 	}
 #endif
 
-	ndmconn_destruct (conn);
+	ndmconn_destruct (&sess->plumb.control);
 
 	ndma_session_decommission (sess);
 
@@ -203,8 +203,12 @@ ndma_daemon_session (struct ndm_session *sess, int port, int is_test_daemon)
 
 	    /* and exit when our stdin goes away */
 	    g_debug("will exit on EOF from stdin");
-	    g_thread_init(NULL);
-	    g_thread_create(exit_on_stdin_eof_thread, NULL, FALSE, NULL);
+#if (GLIB_MAJOR_VERSION < 2 || (GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION <= 28))
+            g_thread_init(NULL);
+            g_thread_create(exit_on_stdin_eof_thread, NULL, FALSE, NULL);
+#else
+            g_thread_new("exit_on_stdin_eof",exit_on_stdin_eof_thread, NULL);
+#endif
 	}
 
 	for (;;) {
@@ -359,7 +363,7 @@ ndma_session_quantum (struct ndm_session *sess, int max_delay_secs)
 	/*
 	 * Tattle for debug
 	 */
-	if (sess->param.log_level > 7) {
+	if (sess->pparam->log_level > 7) {
 		for (i = 0; i < n_chtab; i++) {
 			struct ndmchan *	ch = chtab[i];
 			char			buf[80];
@@ -460,6 +464,11 @@ ndma_session_decommission (struct ndm_session *sess)
 #ifndef NDMOS_OPTION_NO_ROBOT_AGENT
 	ndmra_decommission (sess);
 #endif /* !NDMOS_OPTION_NO_ROBOT_AGENT */
+
+        // send connect_close as needed
+	ndmconn_close(sess->plumb.data);
+	ndmconn_close(sess->plumb.tape);
+	ndmconn_close(sess->plumb.robot);
 
 	return 0;
 }

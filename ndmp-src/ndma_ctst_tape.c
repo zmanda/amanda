@@ -1029,10 +1029,11 @@ ndmca_test_tape_open (struct ndm_session *sess, ndmp9_error expect_err,
 #ifndef NDMOS_OPTION_NO_NDMP2
 	case NDMP2VER:
 	    NDMC_WITH (ndmp2_tape_open, NDMP2VER)
+                (void) reply;
 		if (device)
 			request->device.name = device;
 		else
-			request->device.name = ca->job.tape_device;
+			request->device.name = ca->pjob->tape_device;
 		if (mode != -1)
 			request->mode = mode;
 		else
@@ -1044,10 +1045,11 @@ ndmca_test_tape_open (struct ndm_session *sess, ndmp9_error expect_err,
 #ifndef NDMOS_OPTION_NO_NDMP3
 	case NDMP3VER:
 	    NDMC_WITH (ndmp3_tape_open, NDMP3VER)
+                (void) reply;
 		if (device)
 			request->device = device;
 		else
-			request->device = ca->job.tape_device;
+			request->device = ca->pjob->tape_device;
 		if (mode != -1)
 			request->mode = mode;
 		else
@@ -1059,10 +1061,11 @@ ndmca_test_tape_open (struct ndm_session *sess, ndmp9_error expect_err,
 #ifndef NDMOS_OPTION_NO_NDMP4
 	case NDMP4VER:
 	    NDMC_WITH (ndmp4_tape_open, NDMP4VER)
+                (void) reply;
 		if (device)
 			request->device = device;
 		else
-			request->device = ca->job.tape_device;
+			request->device = ca->pjob->tape_device;
 		if (mode != -1)
 			request->mode = mode;
 		else
@@ -1207,6 +1210,7 @@ ndmca_test_tape_read_2cnt (struct ndm_session *sess, ndmp9_error expect_err,
 #ifndef NDMOS_OPTION_NO_NDMP2
 	case NDMP2VER:
 	    NDMC_WITH(ndmp2_tape_read, NDMP2VER)
+                (void) reply;
 		request->count = count;
 		rc = NDMTEST_CALL(conn);
 		if (rc == 0 && expect_err == NDMP9_NO_ERR) {
@@ -1224,6 +1228,7 @@ ndmca_test_tape_read_2cnt (struct ndm_session *sess, ndmp9_error expect_err,
 #ifndef NDMOS_OPTION_NO_NDMP3
 	case NDMP3VER:
 	    NDMC_WITH(ndmp3_tape_read, NDMP3VER)
+                (void) reply;
 		request->count = count;
 		rc = NDMTEST_CALL(conn);
 		if (rc == 0 && expect_err == NDMP9_NO_ERR) {
@@ -1241,6 +1246,7 @@ ndmca_test_tape_read_2cnt (struct ndm_session *sess, ndmp9_error expect_err,
 #ifndef NDMOS_OPTION_NO_NDMP4
 	case NDMP4VER:
 	    NDMC_WITH(ndmp4_tape_read, NDMP4VER)
+                (void) reply;
 		request->count = count;
 		rc = NDMTEST_CALL(conn);
 		if (rc == 0 && expect_err == NDMP9_NO_ERR) {

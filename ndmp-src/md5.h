@@ -1,5 +1,6 @@
 /* MD5.H - header file for MD5C.C
  */
+#pragma once
 
 /* Copyright (C) 1991-2, RSA Data Security, Inc. Created 1991. All
 rights reserved.

@@ -139,6 +139,7 @@ ndmscsi_open (struct ndmconn *conn, char *dev_name)
 	int		rc;
 
 	NDMC_WITH(ndmp9_scsi_open, NDMP9VER)
+                (void) reply;
 		request->device = dev_name;
 		rc = NDMC_CALL(conn);
 	NDMC_ENDWITH
@@ -152,6 +153,7 @@ ndmscsi_close (struct ndmconn *conn)
 	int		rc;
 
 	NDMC_WITH_VOID_REQUEST(ndmp9_scsi_close, NDMP9VER)
+                (void) reply;
 		rc = NDMC_CALL(conn);
 	NDMC_ENDWITH
 
@@ -181,6 +183,7 @@ ndmscsi_set_target (struct ndmconn *conn, struct ndmscsi_target *targ)
 	int		rc;
 
 	NDMC_WITH(ndmp9_scsi_set_target, NDMP9VER)
+                (void) reply;
 		request->device = targ->dev_name;
 		request->target_controller = targ->controller;
 		request->target_id = targ->sid;

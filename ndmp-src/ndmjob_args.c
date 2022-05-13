@@ -56,7 +56,7 @@ char *help_text[] = {
 #ifndef NDMOS_EFFECT_NO_SERVER_AGENTS
 	"  -o daemon      -- launch session for incoming connections",
 	"  -o test-daemon -- launch session for incoming connections, exit when stdin is closed",
-	"  -o tape-size=SIZE -- specify the length, in bytes of the simulated tape",
+	"  -o tape-limit=SIZE -- [only ndmjob] specify the length, in bytes of the simulated tape",
 #endif /* !NDMOS_EFFECT_NO_SERVER_AGENTS */
 #ifndef NDMOS_OPTION_NO_CONTROL_AGENT
 	"  -o rewind      -- rewind tape in drive, need -T and -f",
@@ -141,9 +141,37 @@ char *help_text[] = {
 	0
 };
 
+static int add_file_arg(ref_ndm_nlist_table_t args, char *toadd) 
+{
+    // detect an explicit destination path (lhs) before '=' and original path
+    char *mid = strchrnul(toadd, '=');
+    char *lhs = alloca(mid-toadd+2);   // up to '=' + 1 more
+    char *rhs = alloca(strlen(mid)+2); // maybe nul string + 1 more
+
+    if ( toadd[0] == '/' ) toadd++; 
+
+    // decodes %-<hex><hex> encoding (shrinks if needed)
+    strcpy(lhs,"/");
+    ndmcstr_to_str(toadd, lhs+1, mid-toadd+1);
+
+    ndmp9_valid_u_quad fh = { .valid=NDMP9_VALIDITY_INVALID, .value=0ULL };
+
+    if ( ! *mid++ ) {
+        NLIST_ARRAY_APPEND(args,lhs,NULL,fh);
+        return args->n_nlist;
+    }
+
+    if ( *mid == '/' ) mid++;
+
+    // decodes %-<hex><hex> encoding (shrinks if needed)
+    strcpy(rhs,"/");
+    ndmcstr_to_str(mid, rhs+1, strlen(mid)+1);
+    NLIST_ARRAY_APPEND(args,rhs,lhs,fh);  // right is original, left is destination
+    return args->n_nlist;
+}
 
 int
-process_args (int argc, char *argv[])
+process_args (int argc, char *argv[], ref_ndm_nlist_table_t nlist, ref_ndm_env_table_t env)
 {
 	int		c;
 	char		options[100];
@@ -154,7 +182,7 @@ process_args (int argc, char *argv[])
 	int		ac = 0;
 
 	progname = argv[0];
-	av = malloc((argc+1000) * sizeof(char *));
+	av = alloca((argc+1000) * sizeof(char *));
 
 	if (argc == 2 && strcmp (argv[1], "-help") == 0) {
 		help();
@@ -190,7 +218,7 @@ process_args (int argc, char *argv[])
 	*op++ = ':';
 	*op = 0;
 
-	ac = copy_args_expanding_macros (argc, argv, av, G_N_ELEMENTS(av));
+	ac = copy_args_expanding_macros (argc, argv, av, argc+argc);
 
 	while ((c = getopt (ac, av, options)) != EOF) {
 	    switch (c) {
@@ -276,21 +304,19 @@ process_args (int argc, char *argv[])
 
 #ifndef NDMOS_OPTION_NO_CONTROL_AGENT
 	    case 'E':	/* -E NAME=VAL  -- add to data agent environment */
-		if (n_E_environment >= NDM_MAX_ENV) {
-			error_byebye ("too many of -E");
-		}
 		{
 			char *		p;
 
-			p = optarg;
-			E_environment[n_E_environment].name = p;
-			while (*p && *p != '=') p++;
+			for ( p = optarg ; *p && *p != '=' ; p++ )
+                            {  }
 			if (*p != '=') {
-				error_byebye ("missing value in -E");
+                            error_byebye ("missing value in -E");
 			}
 			*p++ = 0;
-			E_environment[n_E_environment].value = p;
-			n_E_environment++;
+                        ENV_ARRAY_APPEND(env, optarg, p); // owned by argv
+                        if ( !env->env[env->n_env-1].name || !env->env[env->n_env-1].value ) {
+                            error_byebye ("too many of -E");
+                        }
 		}
 		break;
 
@@ -302,21 +328,7 @@ process_args (int argc, char *argv[])
 		break;
 
 	    case 'F':	/* -F FILE -- add to list of files */
-		if (n_file_arg >= MAX_FILE_ARG) {
-			error_byebye ("too many FILE args");
-		}
-		if (strchr(optarg, '=')) {
-		    char *p = strchr(optarg, '=');
-		    *p++ = 0;
-		    file_arg[n_file_arg] = p;
-		    file_arg_new[n_file_arg] = optarg;
-		    n_file_arg++;
-		} else {
-		    file_arg[n_file_arg] = optarg;
-		    file_arg_new[n_file_arg] = 0;
-		    n_file_arg++;
-		}
-
+                add_file_arg(nlist, optarg);
 		break;
 
 	    case 'f':	/* -f TAPE  -- tape drive device name */
@@ -428,37 +440,12 @@ process_args (int argc, char *argv[])
 
 #ifndef NDMOS_OPTION_NO_CONTROL_AGENT
 	for (c = optind; c < ac; c++) {
-		if (n_file_arg >= MAX_FILE_ARG) {
-			error_byebye ("too many file args");
-		}
-		if (strchr(av[c], '=')) {
-		    char *p = strchr(av[c], '=');
-		    *p++ = 0;
-		    file_arg[n_file_arg] = p;
-		    file_arg_new[n_file_arg] = av[c];
-		} else {
-		    file_arg[n_file_arg] = av[c];
-		    file_arg_new[n_file_arg] = 0;
-		}
-		n_file_arg++;
+            add_file_arg(nlist, av[c]);
 	}
 
 	if (o_load_files_file) {
 	    char buf[2048];
 	    FILE *fp;
-	    static struct load_file_entry {
-		struct load_file_entry *next;
-		char name[1];
-	    } *load_files_list = 0;
-
-	    /* clean up old load_files_list */
-	    while (load_files_list) {
-		struct load_file_entry *p;
-		p = load_files_list;
-		load_files_list = p->next;
-		p->next = 0;
-		free(p);
-	    }
 
 	    fp = fopen(o_load_files_file, "r");
 	    if (!fp) {
@@ -468,59 +455,17 @@ process_args (int argc, char *argv[])
 		/* no return */
 	    }
 	    while (fgets (buf, sizeof buf, fp) != NULL) {
-		char *bp = buf, *p, *ep;
-		int len, slen;
-		struct load_file_entry *lfe;
-
-		bp = buf;
-		while (*bp && isspace(*bp))
-		    bp++;
+		char *bp, *ep;
+		for ( bp = buf ; isspace(*bp) ; bp++ )
+                    {  }
 		ep = bp;
-		while (*ep && (*ep != '\n') && (*ep != '\r'))
-		    ep++;
+		for ( ep = bp ; *ep && (*ep != '\n') && (*ep != '\r') ; ep++ )
+                    {  }
 		*ep = 0;
 		if (bp >= ep)
-		    continue;
+		    continue; // skip empty lines
 
-		if (n_file_arg >= MAX_FILE_ARG) {
-		    error_byebye ("too many FILE args");
-		}
-
-		/* allocate memory */
-		slen = (ep-bp)+2;
-		len = sizeof(struct load_file_entry)+(ep-bp)+1;
-		lfe = malloc(len);
-		if (lfe == 0) {
-		    error_byebye ("can't allocate entry for load_files file line %s",
-				  bp);
-		    /* no return */
-		}
-		lfe->next = 0;
-
-		/* see if we have destination */
-		if ((p = strchr(bp, '=')) != 0) {
-		    int plen;
-		    char ch = *p;
-		    *p = 0;
-
-		    /* double conversion -- assume the strings shrink */
-		    plen = (p-bp);
-		    ndmcstr_to_str(p, &lfe->name[plen+2], slen-plen-2);
-		    ndmcstr_to_str(bp, lfe->name, plen+1);
-		    file_arg[n_file_arg] = &lfe->name[plen+2];
-		    file_arg_new[n_file_arg] = lfe->name;
-		    *p = ch;
-		} else {
-		    /* simple conversion copy */
-		    ndmcstr_to_str(bp, lfe->name, slen-1);
-		    file_arg[n_file_arg] = lfe->name;
-		    file_arg_new[n_file_arg] = 0;
-		}
-		n_file_arg++;
-
-		/* link into list */
-		lfe->next = load_files_list;
-		load_files_list = lfe;
+                add_file_arg(nlist, bp);
 	    }
 
 	    fclose (fp);
@@ -555,7 +500,7 @@ process_args (int argc, char *argv[])
 	return 0;
 }
 
-struct ndmp_enum_str_table	mode_long_name_table[] = {
+ndmp_enum_str_table_t	mode_long_name_table[] = {
 #ifndef NDMOS_OPTION_NO_CONTROL_AGENT
 	{ "init-labels",	NDM_JOB_OP_INIT_LABELS },
 	{ "test-tape",		NDM_JOB_OP_TEST_TAPE },
@@ -622,6 +567,7 @@ handle_long_option (char *str)
 		/* value part ignored */
 		o_swap_connect++;
 	} else if (strcmp (name, "time-limit") == 0) {
+                // currently ignored
 		if (!value) {
 			o_time_limit = 5*60;
 		} else {
@@ -779,7 +725,7 @@ ndmjob_version_info (void)
 
 
 void
-dump_settings (void)
+dump_settings (ref_ndm_nlist_table_t nlist, ref_ndm_env_table_t env)
 {
 	int		i;
 	char		buf[100];
@@ -870,17 +816,17 @@ dump_settings (void)
 		printf ("  %2d: %s\n", i, e_exclude_pattern[i]);
 	}
 
-	printf ("%d environment values\n", n_E_environment);
-	for (i = 0; i < n_E_environment; i++) {
+	printf ("%d environment values\n", env->n_env);
+	for (i = 0; i < env->n_env; i++) {
 		printf ("  %2d: %s=%s\n", i,
-			E_environment[i].name, E_environment[i].value);
+			env->env[i].name, env->env[i].value);
 	}
 
-	printf ("%d files\n", n_file_arg);
-	for (i = 0; i < n_file_arg; i++) {
-		printf ("  %2d: @%-8lld %s\n", i,
-			nlist[i].fh_info.valid ? nlist[i].fh_info.value : NDMP9_INVALID_U_QUAD,
-			file_arg[i]);
+	printf ("%d files\n", nlist->n_nlist);
+	for (i = 0; i < nlist->n_nlist; i++) {
+		printf ("  %2d: @%#-8llx %s -> %s\n", i,
+			nlist->nlist[i].fh_info.valid ? nlist->nlist[i].fh_info.value : NDMP9_INVALID_U_QUAD,
+			nlist->nlist[i].original_path, nlist->nlist[i].destination_path);
 	}
 #endif /* !NDMOS_OPTION_NO_CONTROL_AGENT */
 

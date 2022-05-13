@@ -114,6 +114,6 @@ extern int	ndmp_9to4_name_vec (
 			ndmp4_name *name4,
 			unsigned n_name);
 
-extern struct reqrep_xlate		ndmp4_reqrep_xlate_table[];
+extern reqrep_xlate_t		ndmp4_reqrep_xlate_table[];
 
 #endif /* !NDMOS_OPTION_NO_NDMP4 */

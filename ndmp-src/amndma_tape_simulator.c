@@ -196,7 +196,8 @@ simu_back_one (struct ndm_session *sess, int over_file_mark)
 
 	cur_pos = lseek (ta->tape_fd, (off_t)0, 1);
 	lseek (ta->tape_fd, 0, 0);
-return 0;
+        (void) cur_pos;
+        return 0;
 }
 
 int
@@ -206,7 +207,8 @@ simu_forw_one (struct ndm_session *sess, int over_file_mark)
 	off_t			cur_pos;
 
 	cur_pos = lseek (ta->tape_fd, (off_t)0, 1);
-return 0;
+        (void) cur_pos;
+        return 0;
 
 }
 
@@ -228,7 +230,6 @@ ndmos_tape_mtio (struct ndm_session *sess,
   ndmp9_tape_mtio_op op, u_long count, u_long *resid)
 {
 	struct ndm_tape_agent *	ta = &sess->tape_acb;
-	int			rc;
 
 	*resid = 0;
 
@@ -335,6 +336,8 @@ ndmos_tape_write (struct ndm_session *sess,
 
 	ta->weof_on_close = 1;
 
+        (void) rc;
+        (void) prev_size;
 	return err;
 }
 
@@ -366,6 +369,7 @@ ndmos_tape_wfm (struct ndm_session *sess)
 
 	lseek (ta->tape_fd, cur_pos, 0);
 
+        (void) rc;
 	return err;
 }
 

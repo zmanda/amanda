@@ -45,7 +45,7 @@ int
 ndmca_op_init_labels (struct ndm_session *sess)
 {
 	struct ndm_control_agent *ca = &sess->control_acb;
-	struct ndm_job_param *	job = &ca->job;
+	ref_ndm_job_param_t	job = ca->pjob;
 	struct ndm_media_table *mtab = &job->media_tab;
 	int			n_media = mtab->n_media;
 	struct ndmmedia *	me;
@@ -77,7 +77,8 @@ ndmca_op_init_labels (struct ndm_session *sess)
 
 	rc = ndmca_connect_tape_agent (sess);
 	if (rc) {
-		ndmconn_destruct (sess->plumb.tape);
+		ndmconn_close (sess->plumb.tape);
+		ndmconn_destruct (&sess->plumb.tape);
 		return rc;	/* already tattled */
 	}
 
@@ -108,7 +109,7 @@ int
 ndmca_op_list_labels (struct ndm_session *sess)
 {
 	struct ndm_control_agent *ca = &sess->control_acb;
-	struct ndm_job_param *	job = &ca->job;
+	ref_ndm_job_param_t	job = ca->pjob;
 	struct ndm_media_table *mtab = &job->media_tab;
 	int			n_media;
 	char			labbuf[NDMMEDIA_LABEL_MAX];
@@ -135,7 +136,8 @@ ndmca_op_list_labels (struct ndm_session *sess)
 	}
 
 	if ((rc = ndmca_connect_tape_agent (sess)) != 0) {
-		ndmconn_destruct (sess->plumb.tape);
+		ndmconn_close (sess->plumb.tape);
+		ndmconn_destruct (&sess->plumb.tape);
 		return rc;	/* already tattled */
 	}
 

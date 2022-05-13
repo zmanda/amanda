@@ -44,7 +44,7 @@
 int
 ndmca_op_robot_remedy (struct ndm_session *sess)
 {
-	struct ndm_job_param *	job = &sess->control_acb.job;
+	ref_ndm_job_param_t	job = sess->control_acb.pjob;
 	int			rc;
 
 	if (!job->have_robot)
@@ -72,7 +72,7 @@ ndmca_op_robot_remedy (struct ndm_session *sess)
 int
 ndmca_op_robot_startup (struct ndm_session *sess, int verify_media_flag)
 {
-	struct ndm_job_param *	job = &sess->control_acb.job;
+	ref_ndm_job_param_t	job = sess->control_acb.pjob;
 	int			rc;
 
 	if (!job->have_robot)
@@ -136,7 +136,8 @@ ndmca_op_mtio (struct ndm_session *sess, ndmp9_tape_mtio_op mtio_op)
 
 	rc = ndmca_connect_tape_agent (sess);
 	if (rc) {
-		ndmconn_destruct (sess->plumb.tape);
+		ndmconn_close (sess->plumb.tape);
+		ndmconn_destruct (&sess->plumb.tape);
 		return rc;	/* already tattled */
 	}
 
@@ -165,7 +166,7 @@ int
 ndmca_op_move_tape (struct ndm_session *sess)
 {
 	struct ndm_control_agent *ca = &sess->control_acb;
-	struct ndm_job_param *	job = &ca->job;
+	ref_ndm_job_param_t	job = ca->pjob;
 	int			src_addr = job->from_addr;
 	int			dst_addr = job->to_addr;
 	int			rc;
@@ -192,7 +193,7 @@ int
 ndmca_op_import_tape (struct ndm_session *sess)
 {
 	struct ndm_control_agent *ca = &sess->control_acb;
-	struct ndm_job_param *	job = &ca->job;
+	ref_ndm_job_param_t	job = ca->pjob;
 	struct smc_ctrl_block *	smc = &ca->smc_cb;
 	int			src_addr;
 	int			dst_addr = job->to_addr;
@@ -226,7 +227,7 @@ int
 ndmca_op_export_tape (struct ndm_session *sess)
 {
 	struct ndm_control_agent *ca = &sess->control_acb;
-	struct ndm_job_param *	job = &ca->job;
+	ref_ndm_job_param_t	job = ca->pjob;
 	struct smc_ctrl_block *	smc = &ca->smc_cb;
 	int			src_addr = job->from_addr;
 	int			dst_addr;
@@ -260,7 +261,7 @@ int
 ndmca_op_load_tape (struct ndm_session *sess)
 {
 	struct ndm_control_agent *ca = &sess->control_acb;
-	struct ndm_job_param *	job = &ca->job;
+	ref_ndm_job_param_t	job = ca->pjob;
 	struct smc_ctrl_block *	smc = &ca->smc_cb;
 	int			src_addr = job->from_addr;
 	int			dst_addr;
@@ -292,6 +293,7 @@ ndmca_op_load_tape (struct ndm_session *sess)
 	 * We just did it to be sure it would succeed
 	 */
 
+        (void) dst_addr;
 	rc = ndmca_robot_load (sess, src_addr);
 	if (rc) return rc;	/* already tattled */
 
@@ -302,7 +304,7 @@ int
 ndmca_op_unload_tape (struct ndm_session *sess)
 {
 	struct ndm_control_agent *ca = &sess->control_acb;
-	struct ndm_job_param *	job = &ca->job;
+	ref_ndm_job_param_t	job = ca->pjob;
 	struct smc_ctrl_block *	smc = &ca->smc_cb;
 	int			src_addr = job->from_addr;
 	int			dst_addr;

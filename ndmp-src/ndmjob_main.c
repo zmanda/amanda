@@ -41,6 +41,12 @@
 #include "amutil.h"
 #include "conffile.h"
 
+// assigned only here
+static ndm_session_t      the_session;
+static ndm_session_param_t	the_param;
+static ndm_job_param_t	the_job;
+
+ref_ndm_session_param_t const the_logpparams = &the_param;
 
 int
 main (int ac, char *av[])
@@ -52,6 +58,10 @@ main (int ac, char *av[])
 	config_init(0, NULL);
 
 	NDMOS_MACRO_ZEROFILL(&the_session);
+#ifndef NDMOS_OPTION_NO_CONTROL_AGENT
+        the_session.control_acb.pjob = &the_job;
+#endif
+        the_session.pparam = &the_param;
 	d_debug = -1;
 
 	/* ready the_param early so logging works during process_args() */
@@ -69,7 +79,7 @@ main (int ac, char *av[])
 	p_ndmp_port = NDMPPORT;
 #endif /* !NDMOS_OPTION_NO_CONTROL_AGENT */
 
-	process_args (ac, av);
+        process_args(ac, av, &the_job.nlist_tab, &the_job.env_tab);
 
 	if (the_param.log_level < d_debug)
 		the_param.log_level = d_debug;
@@ -78,13 +88,11 @@ main (int ac, char *av[])
 	the_param.config_file_name = o_config_file;
 
 	if (the_mode == NDM_JOB_OP_DAEMON || the_mode == NDM_JOB_OP_TEST_DAEMON) {
-		the_session.param = the_param;
 
 		if (n_noop) {
-			dump_settings();
+			dump_settings(&the_job.nlist_tab, &the_job.env_tab);
 			return 0;
 		}
-
 		ndma_daemon_session (&the_session, p_ndmp_port, the_mode == NDM_JOB_OP_TEST_DAEMON);
 		return 0;
 	}
@@ -92,13 +100,10 @@ main (int ac, char *av[])
 #ifndef NDMOS_OPTION_NO_CONTROL_AGENT
 	the_session.control_acb.swap_connect = (o_swap_connect != 0);
 
-	build_job();		/* might not return */
-
-	the_session.param = the_param;
-	the_session.control_acb.job = the_job;
+	build_job(the_session.control_acb.pjob);		/* might not return */
 
 	if (n_noop) {
-		dump_settings();
+                dump_settings(&the_job.nlist_tab, &the_job.env_tab);
 		return 0;
 	}
 

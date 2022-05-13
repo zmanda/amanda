@@ -108,7 +108,7 @@ ndmos_sync_config_info (struct ndm_session *sess)
 	sess->config_info.revision_number = revbuf;
 
 	/* best effort; note that this loads scsi and tape config */
-	ndmcfg_load (sess->param.config_file_name, &sess->config_info);
+	ndmcfg_load (sess->pparam->config_file_name, &sess->config_info);
 }
 #endif /* NDMOS_COMMON_SYNC_CONFIG_INFO */
 
@@ -427,7 +427,7 @@ ndmos_dispatch_request (struct ndm_session *sess,
  * #undef NDMOS_COMMON_DISPATCH_REQUEST.
  */
 
-extern struct ndm_dispatch_version_table ndmos_dispatch_version_table[];
+extern ndm_dispatch_version_table_t ndmos_dispatch_version_table[];
 
 int
 ndmos_dispatch_request (struct ndm_session *sess,
@@ -477,30 +477,30 @@ ndmos_dispatch_request (struct ndm_session *sess,
  ****************************************************************
  */
 
-struct ndm_dispatch_request_table ndmos_dispatch_request_table_v0[] = {
+ndm_dispatch_request_table_t ndmos_dispatch_request_table_v0[] = {
    {0}
 };
 
 #ifndef NDMOS_OPTION_NO_NDMP2
-struct ndm_dispatch_request_table ndmos_dispatch_request_table_v2[] = {
+ndm_dispatch_request_table_t ndmos_dispatch_request_table_v2[] = {
    {0}
 };
 #endif /* !NDMOS_OPTION_NO_NDMP2 */
 
 #ifndef NDMOS_OPTION_NO_NDMP3
-struct ndm_dispatch_request_table ndmos_dispatch_request_table_v3[] = {
+ndm_dispatch_request_table_t ndmos_dispatch_request_table_v3[] = {
    {0}
 };
 #endif /* !NDMOS_OPTION_NO_NDMP3 */
 
 #ifndef NDMOS_OPTION_NO_NDMP4
-struct ndm_dispatch_request_table ndmos_dispatch_request_table_v4[] = {
+ndm_dispatch_request_table_t ndmos_dispatch_request_table_v4[] = {
    {0}
 };
 #endif /* !NDMOS_OPTION_NO_NDMP4 */
 
 
-struct ndm_dispatch_version_table ndmos_dispatch_version_table[] = {
+ndm_dispatch_version_table_t ndmos_dispatch_version_table[] = {
 	{ 0,		ndmos_dispatch_request_table_v0 },
 #ifndef NDMOS_OPTION_NO_NDMP2
 	{ NDMP2VER,	ndmos_dispatch_request_table_v2 },

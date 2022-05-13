@@ -42,14 +42,14 @@ ndmalogf (struct ndm_session *sess, char *tag, int level, char *fmt, ...)
 {
 	va_list		ap;
 
-	if (sess->param.log_level < level)
+	if (sess->pparam->log_level < level)
 		return;
 
-	if (!tag) tag = sess->param.log_tag;
+	if (!tag) tag = sess->pparam->log_tag;
 	if (!tag) tag = "???";
 
 	va_start (ap, fmt);
-	ndmlogfv (&sess->param.log, tag, level, fmt, ap);
+	ndmlogfv (&sess->pparam->log, tag, level, fmt, ap);
 	va_end (ap);
 }
 
@@ -58,13 +58,13 @@ void
 ndmalogfv (struct ndm_session *sess, char *tag,
   int level, char *fmt, va_list ap)
 {
-	if (sess->param.log_level < level)
+	if (sess->pparam->log_level < level)
 		return;
 
-	if (!tag) tag = sess->param.log_tag;
+	if (!tag) tag = sess->pparam->log_tag;
 	if (!tag) tag = "???";
 
-	ndmlogfv (&sess->param.log, tag, level, fmt, ap);
+	ndmlogfv (&sess->pparam->log, tag, level, fmt, ap);
 }
 
 

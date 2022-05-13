@@ -25,6 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+#pragma once
 
 /*
  * Project:  NDMJOB
@@ -113,10 +114,11 @@
  * The search stops with the first match.
  */
 
+typedef
 struct enum_conversion {
 	int	enum_x;
 	int	enum_9;
-};
+} enum_conversion_t;
 
 #define END_ENUM_CONVERSION_TABLE		{ -1, -1 }
 #define IS_END_ENUM_CONVERSION_TABLE(EC) \
@@ -150,6 +152,7 @@ convert_strdup (char *src, char **dstp);
  ****************************************************************
  */
 
+typedef
 struct reqrep_xlate {
 	int		vx_message;
 	ndmp9_message	v9_message;
@@ -164,14 +167,15 @@ struct reqrep_xlate {
 	int		(*free_reply_xto9) (/* void *v9body */);
 	int		(*free_reply_9tox) (/* void *vxbody */);
 
-};
+} reqrep_xlate_t;
 
+typedef
 struct reqrep_xlate_version_table {
 	int				protocol_version;
 	struct reqrep_xlate *		reqrep_xlate_table;
-};
+} reqrep_xlate_version_table_t;
 
-extern struct reqrep_xlate_version_table	reqrep_xlate_version_table[];
+extern reqrep_xlate_version_table_t	reqrep_xlate_version_table[];
 
 extern struct reqrep_xlate *reqrep_xlate_lookup_version (
 				struct reqrep_xlate_version_table *rrvt,

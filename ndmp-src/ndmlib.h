@@ -25,6 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+#pragma once
 
 /*
  * Project:  NDMJOB
@@ -35,13 +36,11 @@
  */
 
 
-#ifndef _NDMLIB_H_
-#define _NDMLIB_H_
-
 #include "ndmos.h"
 
-#include "ndmprotocol.h"
+#include "ndmprotocol.h"  // ndmp9 types
 #include "ndmp_msg_buf.h"
+// #include "ndmagents.h"
 #include "ndmp_translate.h"
 
 /* Probably unnecessary, yet prudent. Compilers/debuggers sometimes goof. */
@@ -52,8 +51,9 @@
 /* boring forward reference stuff */
 struct ndmagent;
 
-
-
+struct ndm_nlist_table;
+// typedef struct ndm_nlist_args *ref_ndm_nlist_args_t;
+// typedef struct ndm_nlist_table *ref_ndm_nlist_table_t;
 
 /*
  * NDMLOG
@@ -72,10 +72,11 @@ struct ndmagent;
  * granularity.
  */
 
+typedef
 struct ndmlog {
 	void	(*deliver)(struct ndmlog *log, char *tag, int lev, char *msg);
 	void *	cookie;
-};
+} ndmlog_t;
 extern char *	ndmlog_time_stamp (void);
 extern void	ndmlogf (struct ndmlog *log, char *tag,
 					int level, char *fmt, ...);
@@ -122,6 +123,7 @@ extern int		ndmnmb_set_reply_error (struct ndmp_msg_buf *nmb,
  * bracket the valid data. When the end of the buffer is reached,
  * the remaining valid data is moved to the begining.
  */
+typedef
 struct ndmchan {
 	char *		name;		/* short name, helps debugging */
 
@@ -139,7 +141,7 @@ struct ndmchan {
 	unsigned	end_ix;		/* relative to ->data */
 	char *		data;		/* data buffer (READ/WRITE/RESIDENT) */
 	unsigned	data_size;	/* size of data buffer */
-};
+} ndmchan_t;
 #define NDMCHAN_MODE_IDLE	0	/* not doing anything */
 #define NDMCHAN_MODE_RESIDENT	1	/* resident, within this process */
 #define NDMCHAN_MODE_READ	2	/* read from ->fd into ->data */
@@ -231,10 +233,11 @@ extern int	ndmos_chan_poll (struct ndmchan *chtab[],
 #define NDMCONN_CALL_STATUS_REPLY_LATE	2
 
 
+typedef
 struct ndmconn {
 	struct sockaddr	sa;
 
-	struct ndmchan	chan;
+	ndmchan_t	chan;
 
 	char		conn_type;
 	char		protocol_version;
@@ -259,7 +262,7 @@ struct ndmconn {
 
 	int		(*call) (struct ndmconn *conn, struct ndmp_xa_buf *xa);
 
-	struct ndmp_xa_buf call_xa_buf;
+	ndmp_xa_buf_t call_xa_buf;
 
 	int		last_message;
 	int		last_call_status;
@@ -269,10 +272,10 @@ struct ndmconn {
 	long   		sent_time;
 	long		received_time;
 	long            time_limit;
-};
+} ndmconn_t;
 
 extern struct ndmconn *	ndmconn_initialize (struct ndmconn *aconn, char *name);
-extern void		ndmconn_destruct (struct ndmconn *conn);
+extern void		ndmconn_destruct (struct ndmconn **conn);
 extern int		ndmconn_connect_agent (struct ndmconn *conn,
 				struct ndmagent *agent);
 extern int		ndmconn_connect_host_port (struct ndmconn *conn,
@@ -460,7 +463,7 @@ extern char *		ndmconn_get_err_msg (struct ndmconn *conn);
  * NDMAGENT -- "Address" of agent
  ****************************************************************
  *
- * A struct ndmagent contains the information necessary
+ * A ndmagent_t contains the information necessary
  * to establish a connection with an NDMP agent (server).
  * An agent can be remote (NDMCONN_TYPE_REMOTE) or resident
  * (...._RESIDENT).
@@ -470,6 +473,7 @@ extern char *		ndmconn_get_err_msg (struct ndmconn *conn);
 #define NDMAGENT_ACCOUNT_MAX	15
 #define NDMAGENT_PASSWORD_MAX	32
 
+typedef
 struct ndmagent {
 	char		conn_type;	/* NDMCONN_TYPE_... (see above) */
 	char		protocol_version; /* 0->best, 2->v2 3->v3 */
@@ -482,7 +486,7 @@ struct ndmagent {
 #else
 	int		auth_type;
 #endif
-};
+} ndmagent_t;
 extern int	ndmagent_from_str (struct ndmagent *agent, char *str);
 extern int	ndmhost_lookup (char *hostname, struct sockaddr_in *sin);
 extern int	ndmagent_to_sockaddr_in (struct ndmagent *agent,
@@ -496,14 +500,16 @@ extern int	ndmagent_to_sockaddr_in (struct ndmagent *agent,
  ****************************************************************
  */
 
+typedef
 struct ndmscsi_target {
 	char		dev_name[PATH_MAX];
 	int		controller;
 	int		sid;
 	int		lun;
-};
+} ndmscsi_target_t;
 
 #define NDMSCSI_MAX_SENSE_DATA	127
+typedef
 struct ndmscsi_request {
 	unsigned char	completion_status;
 	unsigned char	status_byte;
@@ -519,7 +525,7 @@ struct ndmscsi_request {
 
 	unsigned char	n_sense_data;
 	unsigned char	sense_data[NDMSCSI_MAX_SENSE_DATA];
-};
+} ndmscsi_request_t;
 
 #define NDMSCSI_CS_GOOD	0
 #define NDMSCSI_CS_FAIL	1
@@ -554,6 +560,7 @@ extern int		ndmscsi_execute (struct ndmconn *conn,
 
 #define NDMMEDIA_LABEL_MAX	31
 
+typedef
 struct ndmmedia {
 	NDM_FLAG_DECL(valid_label)	/* ->label[] valid */
 	NDM_FLAG_DECL(valid_filemark)	/* ->file_mark_skip valid */
@@ -590,7 +597,7 @@ struct ndmmedia {
 
 	/* scratch pad */
 	unsigned long long begin_offset, end_offset;
-};
+} ndmmedia_t;
 
 extern int	ndmmedia_from_str (struct ndmmedia *me, char *str);
 extern int	ndmmedia_to_str (struct ndmmedia *me, char *str);
@@ -609,6 +616,7 @@ extern long long ndmmedia_strtoll (char *str, char **tailp, int defbase);
  * from DATA to CONTROL using NDMP?_FH_ADD_.... requests/posts.
  */
 
+typedef
 struct ndmfhheap {
 	int		fhtype;
 	int		entry_size;
@@ -624,12 +632,13 @@ struct ndmfhheap {
 
 	void *		heap_top;
 	void *		heap_bot;
-};
+} ndmfhheap_t;
 
+typedef
 struct ndmfhh_generic_table {
 	u_int	table_len;
 	void *	table_val;
-};
+} ndmfhh_generic_table_t;
 
 #define NDMFHH_RET_OK		(0)
 #define NDMFHH_RET_OVERFLOW	(-1)
@@ -708,7 +717,7 @@ extern int	ndmmd5_ok_digest (char challenge[NDMP_MD5_CHALLENGE_LENGTH],
  * order. This is the default order of sort(1).
  */
 
-extern int ndmbstf_first (FILE *fp, char *key, char *buf, unsigned max_buf);
+extern int ndmbstf_first (FILE *fp, char *key, char *buf, unsigned max_buf, void **cache);
 extern int ndmbstf_next (FILE *fp, char *key, char *buf, unsigned max_buf);
 extern int ndmbstf_first_with_bounds (FILE *fp, char *key,
 	    char *buf, unsigned max_buf, off_t lower_bound, off_t upper_bound);
@@ -764,11 +773,13 @@ extern int	ndmcfg_loadfp (FILE *fp, ndmp9_config_info *config_info);
  * containing the corresponding object, is retreived from the index.
  */
 
+typedef
 struct ndmfhdb {
 	FILE *			fp;
 	int			use_dir_node;
 	unsigned long long	root_node;
-};
+        void                  **fpcachep; // actual hook ptr elsewhere
+} ndmfhdb_t;
 
 extern int	ndmfhdb_add_file (struct ndmlog *ixlog, int tagc,
 			char *raw_name, ndmp9_file_stat *fstat);
@@ -779,10 +790,12 @@ extern int	ndmfhdb_add_node (struct ndmlog *ixlog, int tagc,
 			ndmp9_u_quad node, ndmp9_file_stat *fstat);
 extern int	ndmfhdb_add_dirnode_root (struct ndmlog *ixlog, int tagc,
 			ndmp9_u_quad root_node);
+extern void    *ndmfhdb_create_cache();
+extern void     ndmfhdb_clear_cache(void **fpcache);
 
-extern int	ndmfhdb_add_fh_info_to_nlist (FILE *fp,
-			ndmp9_name *nlist, int n_nlist);
-extern int	ndmfhdb_open (FILE *fp, struct ndmfhdb *fhcb);
+extern int	ndmfhdb_add_fh_info_to_nlist (FILE *fp, struct ndm_nlist_table *nlist, void **fpcache);
+extern int	ndmfhdb_open (FILE *fp, struct ndmfhdb *fhcb, void **fpcache);
+
 extern int	ndmfhdb_lookup (struct ndmfhdb *fhcb, char *path,
 			ndmp9_file_stat *fstat);
 extern int	ndmfhdb_dirnode_root (struct ndmfhdb *fhcb);
@@ -799,6 +812,3 @@ extern int	ndmfhdb_file_lookup (struct ndmfhdb *fhcb, char *path,
 			ndmp9_file_stat *fstat);
 extern char *	ndm_fstat_to_str (ndmp9_file_stat *fstat, char *buf);
 extern int	ndm_fstat_from_str (ndmp9_file_stat *fstat, char *buf);
-
-
-#endif /* _NDMLIB_H_ */

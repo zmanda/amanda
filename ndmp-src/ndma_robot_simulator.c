@@ -148,23 +148,25 @@ ndmos_scsi_reset_bus (struct ndm_session *sess)
 #define IS_DTE_ADDR(a) ((a) >= DTE_FIRST && (a) < DTE_FIRST+DTE_COUNT)
 #define IS_STORAGE_ADDR(a) ((a) >= STORAGE_FIRST && (a) < STORAGE_FIRST+STORAGE_COUNT)
 
+typedef
 struct element_state {
 	int full;
 	int medium_type;
 	int source_element;
 	char pvoltag[32];
 	char avoltag[32];
-};
+} element_state_t;
 
+typedef
 struct robot_state {
-	struct element_state mte[MTE_COUNT];
-	struct element_state storage[STORAGE_COUNT];
-	struct element_state ie[IE_COUNT];
-	struct element_state dte[DTE_COUNT];
-};
+	element_state_t mte[MTE_COUNT];
+	element_state_t storage[STORAGE_COUNT];
+	element_state_t ie[IE_COUNT];
+	element_state_t dte[DTE_COUNT];
+} robot_state_t;
 
 static void
-robot_state_init(struct robot_state *rs)
+robot_state_init(robot_state_t *rs)
 {
 	int i;
 
@@ -175,13 +177,13 @@ robot_state_init(struct robot_state *rs)
 	/* (nothing to do for MTEs) */
 
 	for (i = 0; i < STORAGE_COUNT; i++) {
-		struct element_state *es = &rs->storage[i];
+		element_state_t *es = &rs->storage[i];
 		es->full = 1;
 
 		es->medium_type = 1; /* data */
 		es->source_element = 0;
-		snprintf(es->pvoltag, sizeof(es->pvoltag), "PTAG%02XXX                        ", i);
-		snprintf(es->avoltag, sizeof(es->avoltag), "ATAG%02XXX                        ", i);
+		snprintf(es->pvoltag, sizeof(es->pvoltag), "PTAG%02XXX                     ", i);
+		snprintf(es->avoltag, sizeof(es->avoltag), "ATAG%02XXX                     ", i);
 	}
 
 	/* (i/e are all empty) */
@@ -190,7 +192,7 @@ robot_state_init(struct robot_state *rs)
 }
 
 static void
-robot_state_load(struct ndm_session *sess, struct robot_state *rs)
+robot_state_load(struct ndm_session *sess, robot_state_t *rs)
 {
 	int fd;
 	char filename[PATH_MAX];
@@ -214,7 +216,7 @@ robot_state_load(struct ndm_session *sess, struct robot_state *rs)
 }
 
 static int
-robot_state_save(struct ndm_session *sess, struct robot_state *rs)
+robot_state_save(struct ndm_session *sess, robot_state_t *rs)
 {
 	int fd;
 	char filename[PATH_MAX];
@@ -236,12 +238,12 @@ robot_state_save(struct ndm_session *sess, struct robot_state *rs)
 }
 
 static int
-robot_state_move(struct ndm_session *sess, struct robot_state *rs, int src, int dest)
+robot_state_move(struct ndm_session *sess, robot_state_t *rs, int src, int dest)
 {
 	char src_filename[PATH_MAX];
-	struct element_state *src_elt;
+	element_state_t *src_elt;
 	char dest_filename[PATH_MAX];
-	struct element_state *dest_elt;
+	element_state_t *dest_elt;
 	struct stat st;
 	char pos[PATH_MAX];
 
@@ -382,11 +384,6 @@ execute_cdb_test_unit_ready (struct ndm_session *sess,
   ndmp9_execute_cdb_request *request,
   ndmp9_execute_cdb_reply *reply)
 {
-	unsigned char *cdb = (unsigned char *)request->cdb.cdb_val;
-	char *response;
-	int response_len;
-	char *p;
-
 	if (request->cdb.cdb_len != 6)
 		return scsi_fail_with_sense_code(sess, reply,
 		    SCSI_STATUS_CHECK_CONDITION,
@@ -517,7 +514,7 @@ execute_cdb_read_element_status (struct ndm_session *sess,
   ndmp9_execute_cdb_reply *reply)
 {
 	unsigned char *cdb = (unsigned char *)request->cdb.cdb_val;
-	struct robot_state rs;
+	robot_state_t rs;
 	int min_addr, max_elts;
 	char *response;
 	int response_len;
@@ -591,7 +588,7 @@ execute_cdb_read_element_status (struct ndm_session *sess,
 		struct {
 			int first, count, have_voltags, eltype;
 			int empty_flags, full_flags;
-			struct element_state *es;
+			element_state_t *es;
 		} page[4] = {
 			{ IE_FIRST, IE_COUNT, 1, 3, 0x38, 0x39, &rs.ie[0] },
 			{ MTE_FIRST, MTE_COUNT, 0, 1, 0x00, 0x01, &rs.mte[0] },
@@ -675,7 +672,7 @@ execute_cdb_move_medium (struct ndm_session *sess,
   ndmp9_execute_cdb_reply *reply)
 {
 	unsigned char *cdb = (unsigned char *)request->cdb.cdb_val;
-	struct robot_state rs;
+	robot_state_t rs;
 	int mte, src, dest;
 
 	if (request->cdb.cdb_len != 12)

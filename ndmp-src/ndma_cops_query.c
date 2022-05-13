@@ -53,7 +53,7 @@ ndmca_op_query (struct ndm_session *sess)
 int
 ndmca_opq_data (struct ndm_session *sess)
 {
-	struct ndm_job_param *	job = &sess->control_acb.job;
+	ref_ndm_job_param_t	job = sess->control_acb.pjob;
 	int			rc;
 
 	if (job->data_agent.conn_type == NDMCONN_TYPE_NONE)
@@ -61,7 +61,8 @@ ndmca_opq_data (struct ndm_session *sess)
 
 	rc = ndmca_connect_data_agent (sess);
 	if (rc) {
-		ndmconn_destruct (sess->plumb.data);
+		ndmconn_close (sess->plumb.data);
+		ndmconn_destruct (&sess->plumb.data);
 		return rc;	/* already tattled */
 	}
 
@@ -89,7 +90,7 @@ ndmca_opq_data (struct ndm_session *sess)
 int
 ndmca_opq_tape (struct ndm_session *sess)
 {
-	struct ndm_job_param *	job = &sess->control_acb.job;
+	ref_ndm_job_param_t	job = sess->control_acb.pjob;
 	int			rc;
 
 	if (job->tape_agent.conn_type == NDMCONN_TYPE_NONE)
@@ -97,7 +98,8 @@ ndmca_opq_tape (struct ndm_session *sess)
 
 	rc = ndmca_connect_tape_agent (sess);
 	if (rc) {
-		ndmconn_destruct (sess->plumb.tape);
+		ndmconn_close (sess->plumb.tape);
+		ndmconn_destruct (&sess->plumb.tape);
 		return rc;	/* already tattled */
 	}
 
@@ -127,7 +129,7 @@ ndmca_opq_tape (struct ndm_session *sess)
 int
 ndmca_opq_robot (struct ndm_session *sess)
 {
-	struct ndm_job_param *	job = &sess->control_acb.job;
+	ref_ndm_job_param_t	job = sess->control_acb.pjob;
 	int			rc;
 
 	if (job->robot_agent.conn_type == NDMCONN_TYPE_NONE
@@ -431,16 +433,16 @@ ndmca_opq_get_butype_attr (struct ndm_session *sess, struct ndmconn *conn)
 #ifndef NDMOS_OPTION_NO_NDMP2
 	case NDMP2VER:
 	    NDMC_WITH(ndmp2_config_get_butype_attr, NDMP2VER)
-		request->name = sess->control_acb.job.bu_type;
+		request->name = sess->control_acb.pjob->bu_type;
 		rc = NDMC_CALL(conn);
 		if (rc) {
 			ndmalogqr (sess, "  get_butype_attr '%s' failed",
-					sess->control_acb.job.bu_type);
+					sess->control_acb.pjob->bu_type);
 			return rc;
 		}
 
 		ndmalogqr (sess, "  Backup type attributes of %s format",
-			sess->control_acb.job.bu_type);
+			sess->control_acb.pjob->bu_type);
 		ndmalogqr (sess, "    backup-filelist   %s",
 			(reply->attrs&NDMP2_NO_BACKUP_FILELIST) ? "no":"yes");
 		ndmalogqr (sess, "    backup-fhinfo     %s",
@@ -537,6 +539,35 @@ ndmca_opq_get_butype_attr (struct ndm_session *sess, struct ndmconn *conn)
 				buti->butype_name);
 		    ndmalogqr (sess, "    attrs      0x%lx",
 				buti->attrs);
+
+		    ndmalogqr (sess, "      backup-filelist   %s",
+			       (buti->attrs&NDMP4_BUTYPE_BACKUP_FILELIST) ? "yes":"no");
+		    ndmalogqr (sess, "      recover-filelist   %s",
+			       (buti->attrs&NDMP4_BUTYPE_RECOVER_FILELIST) ? "yes":"no");
+		    ndmalogqr (sess, "      backup-direct   %s",
+			       (buti->attrs&NDMP4_BUTYPE_BACKUP_DIRECT) ? "yes":"no");
+		    ndmalogqr (sess, "      recover-direct   %s",
+			       (buti->attrs&NDMP4_BUTYPE_RECOVER_DIRECT) ? "yes":"no");
+		    ndmalogqr (sess, "      backup-incremental   %s",
+			       (buti->attrs&NDMP4_BUTYPE_BACKUP_INCREMENTAL) ? "yes":"no");
+		    ndmalogqr (sess, "      recover-incremental   %s",
+			       (buti->attrs&NDMP4_BUTYPE_RECOVER_INCREMENTAL) ? "yes":"no");
+		    ndmalogqr (sess, "      backup-utf8   %s",
+			       (buti->attrs&NDMP4_BUTYPE_BACKUP_UTF8) ? "yes":"no");
+		    ndmalogqr (sess, "      recover-utf8   %s",
+			       (buti->attrs&NDMP4_BUTYPE_RECOVER_UTF8) ? "yes":"no");
+		    ndmalogqr (sess, "      recover-file-history   %s",
+			       (buti->attrs&NDMP4_BUTYPE_RECOVER_FILEHIST) ? "yes":"no");
+
+		    ndmalogqr (sess, "      backup-creates-add-file-fh   %s",
+			       (buti->attrs&NDMP4_BUTYPE_BACKUP_FH_FILE) ? "yes":"no");
+		    ndmalogqr (sess, "      backup-creates-add-dir-node-fh   %s",
+			       (buti->attrs&NDMP4_BUTYPE_BACKUP_FH_DIR) ? "yes":"no");
+		    ndmalogqr (sess, "      recover-format-supports-file-fh   %s",
+			       (buti->attrs&NDMP4_BUTYPE_RECOVER_FH_FILE) ? "yes":"no");
+		    ndmalogqr (sess, "      recover-format-supports-dir-node-fh   %s",
+			       (buti->attrs&NDMP4_BUTYPE_RECOVER_FH_DIR) ? "yes":"no");
+
 		    for (j = 0; j < buti->default_env.default_env_len; j++) {
 			ndmalogqr (sess, "    set        %s=%s",
 				buti->default_env.default_env_val[j].name,

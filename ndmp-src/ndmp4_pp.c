@@ -101,7 +101,7 @@ ndmp4_pp_request (ndmp4_message msg, void *data, int lineno, char *buf)
 
     switch (msg) {
     default:
-	strcpy (buf, "<<INVALID MSG>>");
+	sprintf (buf, "<<INVALID MSG #%#x>>", msg);
 	return -1;
 
     case NDMP4_CONNECT_OPEN:
@@ -143,6 +143,8 @@ ndmp4_pp_request (ndmp4_message msg, void *data, int lineno, char *buf)
     case NDMP4_CONFIG_GET_SERVER_INFO:
     case NDMP4_CONFIG_GET_TAPE_INFO:
     case NDMP4_CONFIG_GET_SCSI_INFO:
+    case NDMP4_CONFIG_GET_BUTYPE_INFO:
+    case NDMP4_CONFIG_GET_FS_INFO:
     case NDMP4_SCSI_CLOSE:
     case NDMP4_SCSI_GET_STATE:
     case NDMP4_SCSI_RESET_DEVICE:
@@ -649,7 +651,7 @@ ndmp4_pp_reply (ndmp4_message msg, void *data, int lineno, char *buf)
 
     switch (msg) {
     default:
-	strcpy (buf, "<<INVALID MSG>>");
+	sprintf (buf, "<<INVALID MSG #%#x>>", msg);
 	return -1;
 
     case NDMP4_CONNECT_OPEN:
@@ -719,10 +721,11 @@ ndmp4_pp_reply (ndmp4_message msg, void *data, int lineno, char *buf)
       NDMP_PP_ENDWITH
       break;
 
-
     case NDMP4_CONFIG_GET_SERVER_INFO:
     case NDMP4_CONFIG_GET_TAPE_INFO:
     case NDMP4_CONFIG_GET_SCSI_INFO:
+    case NDMP4_CONFIG_GET_FS_INFO:
+    case NDMP4_CONFIG_GET_BUTYPE_INFO:
 	strcpy (buf, "<<unimplemented pp>>");
       break;
 

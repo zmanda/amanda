@@ -25,6 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+#pragma once
 
 /*
  * Project:  NDMJOB
@@ -122,13 +123,26 @@
 #define NDMJOBLIB_VERSION	1
 #define NDMJOBLIB_RELEASE	2
 
+#define ARRAY_APPEND(fld,ptr,val)   ( (ptr)->fld[ (ptr)->n_##fld++ ] = (val) )
 
+extern int ndm_resize_dyn_array(void **hook, void **array, int len, int eltsize);
 
+#define ENV_ARRAY_APPEND(ptr,nm,val) \
+   { \
+      ndm_resize_dyn_array(&(ptr)->hook, (void**)&(ptr)->env, (ptr)->n_env+1, sizeof(env_value_t)); \
+      (ptr)->env[ (ptr)->n_env++ ] = (env_value_t) { .name = NDMOS_API_STRDUP(nm), .value= NDMOS_API_STRDUP(val) }; \
+   }
+#define ENV_ARRAY_CLEAR(ptr)   ( ndm_resize_dyn_array(&(ptr)->hook, (void**)&(ptr)->env, 0, sizeof(env_value_t)) )
 
-struct ndm_session;		/* forward decl */
+#define NLIST_ARRAY_APPEND(ptr,orig,dest,fh) \
+   { \
+      ndm_resize_dyn_array(&(ptr)->hook, (void**)&(ptr)->nlist, (ptr)->n_nlist+1, sizeof(name_value_t)); \
+      (ptr)->nlist[ (ptr)->n_nlist++ ] = (name_value_t) \
+          { .original_path=NDMOS_API_STRDUP(orig), .destination_path=NDMOS_API_STRDUP(dest), .fh_info=((ndmp9_valid_u_quad)(fh)) }; \
+   }
+#define NLIST_ARRAY_CLEAR(ptr)   ( ndm_resize_dyn_array(&(ptr)->hook, (void**)&(ptr)->nlist, 0, sizeof(name_value_t)) )
 
-
-
+typedef struct ndm_session ndm_session_t, *ref_ndm_session_t;
 
 /*
  * NDM_ENV_TABLE and NDM_NLIST_TABLE
@@ -136,23 +150,47 @@ struct ndm_session;		/* forward decl */
  * Used by DATA and CONTROL agents
  */
 #ifndef NDM_MAX_ENV
-#define NDM_MAX_ENV		1024
+// #define NDM_MAX_ENV		1024
 #endif
+
+typedef ndmp9_pval    env_value_t;
+typedef env_value_t   *env_array_t, **ref_env_array_t;
+
+typedef
 struct ndm_env_table {
 	int			n_env;
-	ndmp9_pval		env[NDM_MAX_ENV];
-};
+	env_array_t		env;
+        void *                  hook;
+} ndm_env_table_t, *ref_ndm_env_table_t;
 
-#ifndef NDM_MAX_NLIST
-#define NDM_MAX_NLIST		10240
-#endif
+// #ifndef NDM_MAX_NLIST
+// #define NDM_MAX_NLIST		99000
+// #endif
+
+typedef ndmp9_name    name_value_t;
+
+typedef name_value_t    *nlist_array_t;
+
+// typedef name_value_t    (nlist_array_t)[NDM_MAX_NLIST], *ref_nlist_array_t;
+// typedef char         *(nlist_str_array_t)[NDM_MAX_NLIST], *ref_nlist_str_array_t;
+// typedef ndmp9_error   (nlist_err_array_t)[NDM_MAX_NLIST], *ref_nlist_err_array_t;
+// typedef unsigned      (nlist_r_array_t)[NDM_MAX_NLIST], *ref_nlist_r_array_t;
+
+typedef 
+struct ndm_nlist_args {
+	int			n_nlist;
+	nlist_array_t		nlist;
+        void *                  hook;
+} ndm_nlist_args_t, *ref_ndm_nlist_args_t;
+
+typedef
 struct ndm_nlist_table {
 	int			n_nlist;
-	ndmp9_name		nlist[NDM_MAX_NLIST];
-	ndmp9_name		nlist_new[NDM_MAX_NLIST];
-	ndmp9_error		result_err[NDM_MAX_NLIST];
-	unsigned		result_count[NDM_MAX_NLIST];
-};
+	nlist_array_t		nlist;
+        void *                  hook;
+	// nlist_err_array_t	result_err;
+	// nlist_r_array_t	result_count;
+} ndm_nlist_table_t, *ref_ndm_nlist_table_t;
 
 
 
@@ -170,10 +208,11 @@ struct ndm_nlist_table {
 #define NDM_MAX_MEDIA		40
 #endif
 
+typedef
 struct ndm_media_table {
 	int			n_media;
 	struct ndmmedia		media[NDM_MAX_MEDIA];
-};
+} ndm_media_table_t;
 
 
 #define NDM_JOB_OP_BACKUP	(0x100 | 'c')
@@ -203,28 +242,29 @@ struct ndm_media_table {
 #define NDM_JOB_OP_DAEMON 'd'
 #define NDM_JOB_OP_TEST_DAEMON 'D'
 
+typedef
 struct ndm_job_param {
 	int			operation;	/* NDM_JOB_OP_... */
         int                     time_limit;	/* command timeout, 0 is off */
 
-	struct ndmagent		data_agent;	/* DATA AGENT host/pw */
+	ndmagent_t		data_agent;	/* DATA AGENT host/pw */
 	char *			bu_type;	/* e.g. "tar" */
-	struct ndm_env_table	env_tab;	/* for BACKUP+RECOVER ops */
-	struct ndm_nlist_table	nlist_tab;	/* for RECOVER ops */
-	struct ndm_env_table	result_env_tab;	/* after BACKUP */
-	struct ndmlog		index_log;	/* to log NDMP_FH_ADD_... */
+	ndm_env_table_t	        env_tab;	/* for BACKUP+RECOVER ops */
+	ndm_nlist_table_t	nlist_tab;	/* for RECOVER ops */
+	ndm_env_table_t	        result_env_tab;	/* after BACKUP */
+	ndmlog_t		index_log;	/* to log NDMP_FH_ADD_... */
 
-	struct ndmagent		tape_agent;	/* TAPE AGENT host/pw */
+	ndmagent_t		tape_agent;	/* TAPE AGENT host/pw */
 	char *			tape_device;	/* eg "/dev/rmt0" */
 	unsigned		tape_timeout;	/* secs total to retry open */
 	unsigned		record_size;	/* in bytes, 10k typical */
         unsigned long long	last_w_offset;	/* last window offset sent */
-	struct ndmscsi_target	tape_target;	/* unused for now */
+	ndmscsi_target_t	tape_target;	/* unused for now */
 	char *			tape_tcp;	/* tcp direct */
 	NDM_FLAG_DECL(use_eject)		/* eject upon close (unload) */
 
-	struct ndmagent		robot_agent;	/* ROBOT AGENT host/pw */
-	struct ndmscsi_target	robot_target;	/* SCSI coord of robot */
+	ndmagent_t		robot_agent;	/* ROBOT AGENT host/pw */
+	ndmscsi_target_t	robot_target;	/* SCSI coord of robot */
 	unsigned		robot_timeout;	/* secs total to retry move */
 	NDM_FLAG_DECL(have_robot)		/* yes, we have robot, today */
 	NDM_FLAG_DECL(auto_remedy)		/* if drive loaded, unload */
@@ -237,26 +277,26 @@ struct ndm_job_param {
 	unsigned		to_addr;	/* for MOVE and IMPORT */
 						/* use move for many I/E */
 
-	struct ndm_media_table	media_tab;	/* media to use, params */
-	struct ndm_media_table	result_media_tab; /* results after job */
+	ndm_media_table_t	media_tab;	/* media to use, params */
+	ndm_media_table_t	result_media_tab; /* results after job */
 
 	unsigned long		n_file_entry;
 	unsigned long		n_dir_entry;
 	unsigned long		n_node_entry;
 	unsigned long long	root_node;
-};
+} ndm_job_param_t, *ref_ndm_job_param_t;
 
 /* ndma_job.c */
-extern int	ndma_job_audit (struct ndm_job_param *job,
+extern int	ndma_job_audit (ref_ndm_job_param_t job,
 				char *errbuf, int errskip);
-extern int	ndma_job_media_audit (struct ndm_job_param *job,
+extern int	ndma_job_media_audit (ref_ndm_job_param_t job,
 				char *errbuf, int errskip);
-extern void	ndma_job_auto_adjust (struct ndm_job_param *job);
+extern void	ndma_job_auto_adjust (ref_ndm_job_param_t job);
 
-
+typedef
 struct ndm_control_agent {
 	/* The JOB, see immediately above */
-	struct ndm_job_param	job;
+	ref_ndm_job_param_t pjob;
 	NDM_FLAG_DECL(swap_connect)
 	NDM_FLAG_DECL(has_tcp_addr)
 	NDM_FLAG_DECL(has_local_addr)
@@ -291,7 +331,7 @@ struct ndm_control_agent {
 	NDM_FLAG_DECL(is_label_op)
 
 	/* ROBOT Agent */
-	struct smc_ctrl_block	smc_cb;
+	smc_ctrl_block_t	smc_cb;
 	unsigned		drive_addr;
 
 	/* when testing */
@@ -315,7 +355,7 @@ struct ndm_control_agent {
 #ifdef NDMOS_MACRO_CONTROL_AGENT_ADDITIONS
 	NDMOS_MACRO_CONTROL_AGENT_ADDITIONS
 #endif /* NDMOS_MACRO_CONTROL_AGENT_ADDITIONS */
-};
+} ndm_control_agent_t;
 
 
 /* ndma_control.c */
@@ -612,10 +652,11 @@ extern int	ndmda_butype_dump_attach (struct ndm_session *sess);
 
 
 
+typedef
 struct ndm_data_recovery_interval {
 	ndmp9_u_quad	offset;
 	ndmp9_u_quad	length;
-};
+} ndm_data_recovery_interval_t;
 
 enum ndm_data_recovery_access_method {
 	NDMDA_RECO_ACCESS_SEQUENTIAL = 1,
@@ -645,13 +686,13 @@ enum ndm_data_recovery_disposition {
 	NDMDA_RECO_DISPOSITION_DISCARD,
 };
 
-
+typedef
 struct ndm_data_agent {
 	int			protocol_version;
 
 	char			bu_type[32];
-	struct ndm_env_table	env_tab;
-	struct ndm_nlist_table	nlist_tab;
+	ndm_env_table_t	env_tab;
+	ndm_nlist_table_t	nlist_tab;
 
 	NDM_FLAG_DECL(enable_hist)
 	unsigned long long	pass_resid;
@@ -659,22 +700,22 @@ struct ndm_data_agent {
 	ndmp9_data_get_state_reply data_state;
 	int			data_notify_pending;
 
-	struct ndmchan		formatter_image;	/* stdin/out */
-	struct ndmchan		formatter_error;	/* stderr */
-	struct ndmchan		formatter_wrap;		/* fd=3 */
+	ndmchan_t		formatter_image;	/* stdin/out */
+	ndmchan_t		formatter_error;	/* stderr */
+	ndmchan_t		formatter_wrap;		/* fd=3 */
 	int			formatter_pid;
 
 	char			fmt_image_buf[NDMDA_N_FMT_IMAGE_BUF];
 	char			fmt_error_buf[NDMDA_N_FMT_ERROR_BUF];
 	char			fmt_wrap_buf[NDMDA_N_FMT_WRAP_BUF];
 
-	struct ndmfhheap	fhh;
+	ndmfhheap_t	fhh;
 	unsigned long		fhh_buf[NDMDA_N_FHH_BUF];
 
 #ifdef NDMOS_MACRO_DATA_AGENT_ADDITIONS
 	NDMOS_MACRO_DATA_AGENT_ADDITIONS
 #endif /* NDMOS_MACRO_DATA_AGENT_ADDITIONS */
-};
+} ndm_data_agent_t;
 
 
 
@@ -724,7 +765,7 @@ extern int		ndmda_interpret_boolean_value (char *value_str,
 extern void		ndmda_purge_environment (struct ndm_session *sess);
 
 extern int		ndmda_copy_nlist (struct ndm_session *sess,
-				ndmp9_name *nlist, unsigned n_nlist);
+				name_value_t *nlist, unsigned n_nlist);
 extern void		ndmda_purge_nlist (struct ndm_session *sess);
 extern int		ndmda_count_invalid_fh_info (struct ndm_session *sess);
 extern int		ndmda_count_invalid_fh_info_pending
@@ -802,6 +843,7 @@ extern int		ndmda_add_to_cmd_allow_file_wildcards (char *cmd,
  ****************************************************************
  */
 
+typedef
 struct ndm_tape_agent {
 	int			protocol_version;
 
@@ -826,7 +868,7 @@ struct ndm_tape_agent {
 #ifdef NDMOS_MACRO_TAPE_AGENT_ADDITIONS
 	NDMOS_MACRO_TAPE_AGENT_ADDITIONS
 #endif /* NDMOS_MACRO_DATA_AGENT_ADDITIONS */
-};
+} ndm_tape_agent_t;
 
 #define NDMTA_TAPE_IS_WRITABLE(TA) \
 	(   (TA)->tape_state.open_mode == NDMP9_TAPE_RDWR_MODE \
@@ -872,6 +914,7 @@ extern void		ndmta_mover_send_notice (struct ndm_session *sess);
  ****************************************************************
  */
 
+typedef
 struct ndm_robot_agent {
 	int			protocol_version;
 
@@ -880,7 +923,7 @@ struct ndm_robot_agent {
 #ifdef NDMOS_MACRO_ROBOT_AGENT_ADDITIONS
 	NDMOS_MACRO_ROBOT_AGENT_ADDITIONS
 #endif /* NDMOS_MACRO_ROBOT_AGENT_ADDITIONS */
-};
+} ndm_robot_agent_t;
 
 extern int		ndmra_initialize (struct ndm_session *sess);
 extern int		ndmra_commission (struct ndm_session *sess);
@@ -914,34 +957,37 @@ enum ndmis_connect_status {
 };
 typedef enum ndmis_connect_status	ndmis_connect_status;
 
+typedef
 struct ndmis_end_point {
 	char *			name;
 	ndmis_connect_status	connect_status;
 	int			transfer_mode;
 	ndmp9_addr_type		addr_type;
-};
+} ndmis_end_point_t;
 
+typedef
 struct ndmis_remote {
 	ndmis_connect_status	connect_status;
 	int			transfer_mode;
 	ndmp9_addr		local_addr;
 	ndmp9_addr		peer_addr;
 	ndmp9_addr		listen_addr;
-	struct ndmchan		listen_chan;
-	struct ndmchan		sanity_chan;
-};
+	ndmchan_t		listen_chan;
+	ndmchan_t		sanity_chan;
+} ndmis_remote_t;
 
+typedef
 struct ndm_image_stream {
-	struct ndmis_end_point	data_ep;
-	struct ndmis_end_point	tape_ep;
+	ndmis_end_point_t	data_ep;
+	ndmis_end_point_t	tape_ep;
 
-	struct ndmis_remote	remote;
+	ndmis_remote_t	remote;
 
 	/* transfer stuff */
 	int			transfer_mode;
-	struct ndmchan		chan;
+	ndmchan_t		chan;
 	char			buf[NDM_N_IMAGE_STREAM_BUF];
-};
+} ndm_image_stream_t;
 
 extern int		ndmis_initialize (struct ndm_session *sess);
 extern int		ndmis_commission (struct ndm_session *sess);
@@ -1032,14 +1078,15 @@ extern int		ndmis_tcp_green_light (struct ndm_session *sess,
  ****************************************************************
  */
 
+typedef
 struct ndm_plumbing {
 	struct ndmconn *	control;
 	struct ndmconn *	data;
 	struct ndmconn *	tape;
 	struct ndmconn *	robot;
 
-	struct ndm_image_stream image_stream;
-};
+	ndm_image_stream_t image_stream;
+} ndm_plumbing_t;
 
 
 
@@ -1049,30 +1096,33 @@ struct ndm_plumbing {
  ****************************************************************
  */
 
+typedef
 struct ndm_session_param {
-	struct ndmlog		log;
+	ndmlog_t		log;
 	char *			log_tag;
 	int			log_level;
 	char *			config_file_name;
-};
+} ndm_session_param_t, *ref_ndm_session_param_t;
 
+// forward-declared
+// typedef
 struct ndm_session {
 #ifndef NDMOS_OPTION_NO_CONTROL_AGENT
-	struct ndm_control_agent control_acb;
+	ndm_control_agent_t control_acb;
 #endif /* !NDMOS_OPTION_NO_CONTROL_AGENT */
 #ifndef NDMOS_OPTION_NO_DATA_AGENT
-	struct ndm_data_agent	data_acb;
+	ndm_data_agent_t	data_acb;
 #endif /* !NDMOS_OPTION_NO_DATA_AGENT */
 #ifndef NDMOS_OPTION_NO_TAPE_AGENT
-	struct ndm_tape_agent	tape_acb;
+	ndm_tape_agent_t	tape_acb;
 #endif /* !NDMOS_OPTION_NO_TAPE_AGENT */
 #ifndef NDMOS_OPTION_NO_ROBOT_AGENT
-	struct ndm_robot_agent	robot_acb;
+	ndm_robot_agent_t	robot_acb;
 #endif /* !NDMOS_OPTION_NO_ROBOT_AGENT */
 
-	struct ndm_plumbing	plumb;
+	ndm_plumbing_t	plumb;
 
-	struct ndm_session_param param;
+	struct ndm_session_param *pparam;
 
 	/* scratch pad stuff */
 	ndmp9_config_info	config_info;
@@ -1087,7 +1137,9 @@ struct ndm_session {
 #ifdef NDMOS_MACRO_SESSION_ADDITIONS
 	NDMOS_MACRO_SESSION_ADDITIONS
 #endif /* NDMOS_MACRO_SESSION_ADDITIONS */
-};
+}
+// ndm_session_t, *ref_ndm_session_t
+;
 
 
 /* ndma_session.c */
@@ -1119,6 +1171,7 @@ extern void	ndmalogfv (struct ndm_session *sess, char *tag,
  ****************************************************************
  */
 
+typedef
 struct ndm_dispatch_request_table {
 	unsigned short	message;
 	unsigned short	flags;
@@ -1126,12 +1179,13 @@ struct ndm_dispatch_request_table {
 				struct ndm_session *sess,
 				struct ndmp_xa_buf *xa,
 				struct ndmconn *ref_conn);
-};
+} ndm_dispatch_request_table_t;
 
+typedef
 struct ndm_dispatch_version_table {
 	int					protocol_version;
 	struct ndm_dispatch_request_table *	dispatch_request_table;
-};
+} ndm_dispatch_version_table_t;
 
 #define NDM_DRT_FLAG_OK_NOT_CONNECTED		0x0001
 #define NDM_DRT_FLAG_OK_NOT_AUTHORIZED		0x0002
