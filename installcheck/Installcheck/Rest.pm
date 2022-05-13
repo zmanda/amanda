@@ -102,7 +102,7 @@ sub new {
     while ($retcode != 0) {
 	$curl->setopt(CURLOPT_HEADER, 0);
 	$curl->setopt(CURLOPT_URL, "http://localhost:5001/amanda/h1/v1.0");
-	$curl->setopt(CURLOPT_POST, 0);
+	$curl->setopt(CURLOPT_POST, 0); # implies GET
 
 	my $response_body;
 	$curl->setopt(CURLOPT_WRITEDATA,\$response_body);
@@ -140,7 +140,7 @@ sub get {
 
     $self->{'curl'}->setopt(CURLOPT_HEADER, 0);
     $self->{'curl'}->setopt(CURLOPT_URL, $url);
-    $self->{'curl'}->setopt(CURLOPT_POST, 0);
+    $self->{'curl'}->setopt(CURLOPT_POST, 0); # implies GET
 
     my $response_body;
     $self->{'curl'}->setopt(CURLOPT_WRITEDATA,\$response_body);
