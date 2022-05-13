@@ -1,6 +1,6 @@
 /* Provide a replacement for the POSIX nanosleep function.
 
-   Copyright (C) 1999-2000, 2002, 2004-2016 Free Software Foundation, Inc.
+   Copyright (C) 1999-2000, 2002, 2004-2020 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -13,7 +13,7 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+   along with this program.  If not, see <https://www.gnu.org/licenses/>.  */
 
 /* written by Jim Meyering
    and Bruno Haible for the native Windows part */
@@ -86,7 +86,7 @@ nanosleep (const struct timespec *requested_delay,
   }
 }
 
-#elif (defined _WIN32 || defined __WIN32__) && ! defined __CYGWIN__
+#elif defined _WIN32 && ! defined __CYGWIN__
 /* Native Windows platforms.  */
 
 # define WIN32_LEAN_AND_MEAN
@@ -194,7 +194,7 @@ static sig_atomic_t volatile suspended;
 
 /* Handle SIGCONT. */
 
-static void
+static _GL_ASYNC_SAFE void
 sighandler (int sig)
 {
   suspended = 1;

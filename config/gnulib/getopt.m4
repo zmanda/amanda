@@ -1,5 +1,5 @@
-# getopt.m4 serial 44
-dnl Copyright (C) 2002-2006, 2008-2016 Free Software Foundation, Inc.
+# getopt.m4 serial 47
+dnl Copyright (C) 2002-2006, 2008-2020 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -32,9 +32,16 @@ AC_DEFUN([gl_FUNC_GETOPT_POSIX],
 # getopt_long_only.
 AC_DEFUN([gl_FUNC_GETOPT_GNU],
 [
+  dnl Set the variable gl_getopt_required, so that all invocations of
+  dnl gl_GETOPT_CHECK_HEADERS in the scope of the current configure file
+  dnl will check for getopt with GNU extensions.
+  dnl This means that if one gnulib-tool invocation requests getopt-posix
+  dnl and another gnulib-tool invocation requests getopt-gnu, it is as if
+  dnl both had requested getopt-gnu.
   m4_divert_text([INIT_PREPARE], [gl_getopt_required=GNU])
 
-  AC_REQUIRE([gl_FUNC_GETOPT_POSIX])
+  dnl No need to invoke gl_FUNC_GETOPT_POSIX here; this is automatically
+  dnl done through the module dependency getopt-gnu -> getopt-posix.
 ])
 
 # Determine whether to replace the entire getopt facility.
@@ -295,8 +302,10 @@ dnl is ambiguous with environment values that contain newlines.
            ]])],
         [gl_cv_func_getopt_gnu=yes],
         [gl_cv_func_getopt_gnu=no],
-        [dnl Cross compiling. Assume the worst, even on glibc platforms.
-         gl_cv_func_getopt_gnu="guessing no"
+        [dnl Cross compiling.
+         dnl Assume the worst, even on glibc platforms.
+         dnl But obey --enable-cross-guesses.
+         gl_cv_func_getopt_gnu="$gl_cross_guess_normal"
         ])
        case $gl_had_POSIXLY_CORRECT in
          exported) ;;
@@ -354,15 +363,19 @@ dnl is ambiguous with environment values that contain newlines.
 
 AC_DEFUN([gl_GETOPT_SUBSTITUTE_HEADER],
 [
-  GETOPT_H=getopt.h
+  AC_CHECK_HEADERS_ONCE([sys/cdefs.h])
+  if test $ac_cv_header_sys_cdefs_h = yes; then
+    HAVE_SYS_CDEFS_H=1
+  else
+    HAVE_SYS_CDEFS_H=0
+  fi
+  AC_SUBST([HAVE_SYS_CDEFS_H])
+
   AC_DEFINE([__GETOPT_PREFIX], [[rpl_]],
     [Define to rpl_ if the getopt replacement functions and variables
      should be used.])
+  GETOPT_H=getopt.h
+  GETOPT_CDEFS_H=getopt-cdefs.h
   AC_SUBST([GETOPT_H])
-])
-
-# Prerequisites of lib/getopt*.
-AC_DEFUN([gl_PREREQ_GETOPT],
-[
-  AC_CHECK_DECLS_ONCE([getenv])
+  AC_SUBST([GETOPT_CDEFS_H])
 ])

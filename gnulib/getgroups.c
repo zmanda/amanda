@@ -1,6 +1,6 @@
 /* provide consistent interface to getgroups for systems that don't allow N==0
 
-   Copyright (C) 1996, 1999, 2003, 2006-2016 Free Software Foundation, Inc.
+   Copyright (C) 1996, 1999, 2003, 2006-2020 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -13,7 +13,7 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+   along with this program.  If not, see <https://www.gnu.org/licenses/>.  */
 
 /* written by Jim Meyering */
 
@@ -58,8 +58,8 @@ int posix_getgroups (int, gid_t []) __asm ("_getgroups");
 #  define getgroups posix_getgroups
 # endif
 
-/* On at least Ultrix 4.3 and NextStep 3.2, getgroups (0, NULL) always
-   fails.  On other systems, it returns the number of supplemental
+/* On at least NeXTstep 3.2, getgroups (0, NULL) always fails.
+   On other systems, it returns the number of supplemental
    groups for the process.  This function handles that special case
    and lets the system-provided function handle all others.  However,
    it can fail with ENOMEM if memory is tight.  It is unspecified

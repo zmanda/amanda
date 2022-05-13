@@ -1,14 +1,18 @@
-# stdio_h.m4 serial 46
-dnl Copyright (C) 2007-2016 Free Software Foundation, Inc.
+# stdio_h.m4 serial 49
+dnl Copyright (C) 2007-2020 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
 
 AC_DEFUN([gl_STDIO_H],
 [
-  dnl For __USE_MINGW_ANSI_STDIO
-  AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS])
-
+  AH_VERBATIM([MINGW_ANSI_STDIO],
+[/* Use GNU style printf and scanf.  */
+#ifndef __USE_MINGW_ANSI_STDIO
+# undef __USE_MINGW_ANSI_STDIO
+#endif
+])
+  AC_DEFINE([__USE_MINGW_ANSI_STDIO])
   AC_REQUIRE([gl_STDIO_H_DEFAULTS])
   gl_NEXT_HEADERS([stdio.h])
 
@@ -24,7 +28,7 @@ AC_DEFUN([gl_STDIO_H],
        /* For non-mingw systems, compilation will trivially succeed.
           For mingw, compilation will succeed for older mingw (system
           printf, "I64d") and fail for newer mingw (gnu printf, "lld"). */
-       #if ((defined _WIN32 || defined __WIN32__) && ! defined __CYGWIN__) && \
+       #if (defined _WIN32 && ! defined __CYGWIN__) && \
          (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 4))
        extern char PRIdMAX_probe[sizeof PRIdMAX == sizeof "I64d" ? 1 : -1];
        #endif

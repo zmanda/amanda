@@ -158,6 +158,7 @@ endif
 	mkdir ${DESTDIR}/include/perl
 	mkdir ${DESTDIR}/include/perl/amglue
 	mkdir ${DESTDIR}/include/gnulib
+	mkdir ${DESTDIR}/include/gnulib/netinet
 	mkdir ${DESTDIR}/include/gnulib/arpa
 	mkdir ${DESTDIR}/include/gnulib/glthread
 	mkdir ${DESTDIR}/include/gnulib/sys
