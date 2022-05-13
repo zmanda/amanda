@@ -25,7 +25,7 @@
 use Getopt::Long;
 use Time::Local;
 use File::Copy;
-use Socket (:addrinfo);   # for gethostbyname
+use Socket;   # for gethostbyname
 
 my $confdir="@CONFIG_DIR@";
 my $tmpdir="@AMANDA_DBGDIR@";
@@ -35,7 +35,7 @@ my $localstatedir="@localstatedir@";
 my $amandahomedir="$localstatedir/lib/amanda";
 
 my $amanda_user="@CLIENT_LOGIN@";
-my $amanda_group="@SETUID_GROUP@";
+my $amanda_group="disk";
 my $def_root_user="root";
 my $def_dumptype="user-tar";
 
@@ -242,12 +242,13 @@ print STDOUT "Logging to $logfile\n";
 
 my $lhost=`hostname`;
 chomp($lhost);
+# get our own canonical name, if possible (we don't sweat the IPv6 stuff here)
+my $host=(gethostbyname($lhost))[0];
 
-# get our own canonical name, if possible
-$host = (getaddrinfo($lhost, undef, { flags => AI_CANONNAME }))[1]
-$host &&= ${host}->{canonname};
-# in case of error
-$host ||= $lhost;
+unless ( $host ) {
+    $host = $lhost;  #gethostbyname() failed, go with hostname output
+}
+
 
 my $found=0;
 my $fhs;
