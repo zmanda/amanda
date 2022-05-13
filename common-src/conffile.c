@@ -2100,11 +2100,18 @@ read_conffile(
     current_filename = get_seen_filename(filename);
     amfree(filename);
 
+    if (!save_filename) { current_line_num = 0; }
+
     if ((current_file = fopen(current_filename, "r")) == NULL) {
-	if (!missing_ok || errno != ENOENT)
-	    conf_parserror(_("could not open conf file '%s': %s"),
-		    current_filename, strerror(errno));
-	goto finish;
+        if (missing_ok && errno == ENOENT)
+            goto finish;
+        if (save_filename) {
+            conf_parserror(_("could not include conf file '%s' from '%s': %s"),
+                current_filename, save_filename, strerror(errno));
+        }
+        conf_parserror(_("could not open conf file '%s': %s"),
+                current_filename, strerror(errno));
+        goto finish;
     }
     g_debug("reading config file %s", current_filename);
 
@@ -6476,7 +6483,7 @@ init_defaults(
     conf_init_identlist(&conf_data[CNF_STORAGE]              , NULL);
     conf_init_identlist(&conf_data[CNF_VAULT_STORAGE]        , NULL);
     conf_init_str      (&conf_data[CNF_CMDFILE]              , "command_file");
-    conf_init_int      (&conf_data[CNF_REST_API_PORT]        , CONF_UNIT_NONE, 0);
+    conf_init_int      (&conf_data[CNF_REST_API_PORT]        , CONF_UNIT_NONE, 5000);
     conf_init_str      (&conf_data[CNF_REST_SSL_CERT]        , NULL);
     conf_init_str      (&conf_data[CNF_REST_SSL_KEY]         , NULL);
     conf_init_bool     (&conf_data[CNF_USETIMESTAMPS]        , 1);

@@ -268,6 +268,18 @@ json_parse_number(
 	(*i)++;
 	c = s[*i];
     }
+    /* This section is to accomodate number such as 3.0. It is an unsigned number
+    * but still '.' is added.
+    * */
+    if (c == '.') {
+        (*i)++;
+        c = s[*i];
+        while (c == '0') {
+            (*i)++;
+            c = s[*i];
+        }
+    }
+    /* Section End to accomodate number such as 3.0 */
     (*i)--;
     if (negate)
 	return -result;
@@ -387,7 +399,6 @@ parse_json_hash(
     (*i)++;
     for (; *i < len && s[*i] != '\0'; (*i)++) {
 	char c =  s[*i];
-
 	switch (c) {
 	    case '[':
 		if (key) {

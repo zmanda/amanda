@@ -30,6 +30,11 @@
 #include "simpleprng.h"
 #include "sockaddr-util.h"
 
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+
 /* Having tests repeat exactly is an advantage, so we use a hard-coded
  * random seed. */
 #define RANDOM_SEED 0xf00d
@@ -497,6 +502,12 @@ source_listen_thread(
     if (sock < 0) {
 	error("socket(): %s", strerror(errno));
     }
+
+    // attempt to set long-ping-distance-tolerant congestion setting
+#ifdef TCP_CONGESTION
+    setsockopt(sock, IPPROTO_TCP, TCP_CONGESTION, "bbr", sizeof("bbr"));
+#endif
+
     if (connect(sock, (struct sockaddr *)addrs, SS_LEN(addrs)) < 0) {
 	error("connect(): %s", strerror(errno));
     }
@@ -1350,6 +1361,12 @@ dest_connect_thread(
     if (sock < 0) {
 	error("socket(): %s", strerror(errno));
     }
+
+    // attempt to set long-ping-distance-tolerant congestion setting
+#ifdef TCP_CONGESTION
+    setsockopt(sock, IPPROTO_TCP, TCP_CONGESTION, "bbr", sizeof("bbr"));
+#endif
+
     if (connect(sock, (struct sockaddr *)&addr, SS_LEN(&addr)) < 0) {
 	error("connect(): %s", strerror(errno));
     }

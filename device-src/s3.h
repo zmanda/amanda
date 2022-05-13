@@ -78,6 +78,8 @@ typedef struct s3_head_t s3_head_t;
  * Return 0 only if there's no more data to be uploaded.
  */
 typedef size_t (*s3_read_func)(void *data, size_t size, size_t nmemb, void *stream);
+//chandu
+//typedef size_t read_callback(char *buffer, size_t size, size_t nitems, void *userdata);
 
 /* This function is called to get size of the upload data
  *
@@ -765,6 +767,82 @@ gboolean
 s3_delete_bucket(S3Handle *hdl,
                  const char *bucket);
 
+<<<<<<< HEAD
+=======
+/* Attempt a RefreshAWSSecurityToken on a token; if it succeeds, the old
+ * token will be freed and replaced by the new. If it fails, the old
+ * token is left unchanged and FALSE is returned. */
+gboolean sts_refresh_token(char ** token, const char * directory);
+
+/* These functions are for if you want to use curl on your own. You get more
+ * control, but it's a lot of work that way:
+ */
+/* There is two use, simple buffer and circle buffer
+ */
+/* simple buffer
+ * buffer: pointer to the buffer
+ * buffer_len: size of the allocated buffer
+ * buffer_pos: size use in the buffer (from buffer to buffer+buffer_pos)
+ * max_buffer_size: maximum size the buffer can be reallocated.
+ * end_of_buffer: unused
+ * mutex: NULL
+ * cond: unused
+ */
+/* circle buffer (use for chunked transfer-encodig)
+ * buffer: pointer to the buffer
+ * buffer_len: indice of the last byte+1 use in the buffer
+ * buffer_pos: indice of the first byte use in the buffer
+ * max_buffer_size: allocated size of the buffer
+ * end_of_buffer: TRUE once reach end of data.
+ * mutex: !NULL
+ * cond: !NULL
+ *
+ * buffer_len == buffer_pos: buffer is empty
+ * The data in use are
+ *     buffer_len > buffer_pos: from buffer_pos to buffer_len
+ *     buffer_len < buffer_pos: from buffer_pos to max_buffer_size
+ *                          and from 0 to buffer_len
+ */
+typedef struct {
+    char *buffer;
+    guint64 buffer_len;
+    guint64 buffer_pos;
+    guint64 max_buffer_size;
+    gboolean end_of_buffer;
+    GMutex   *mutex;
+    GCond    *cond;
+} CurlBuffer;
+
+#define S3_BUFFER_READ_FUNCS s3_buffer_read_func, s3_buffer_reset_func, s3_buffer_size_func, s3_buffer_md5_func
+
+#define S3_BUFFER_WRITE_FUNCS s3_buffer_write_func, s3_buffer_reset_func
+
+/* a CURLOPT_READFUNCTION to read data from a buffer. */
+size_t
+s3_buffer_read_func(void *ptr, size_t size, size_t nmemb, void * stream);
+
+size_t
+s3_buffer_size_func(void *stream);
+
+GByteArray*
+s3_buffer_md5_func(void *stream);
+
+void
+s3_buffer_reset_func(void *stream);
+
+#define S3_EMPTY_READ_FUNCS s3_empty_read_func, NULL, s3_empty_size_func, s3_empty_md5_func
+
+/* a CURLOPT_WRITEFUNCTION to write data to a buffer. */
+size_t
+s3_buffer_write_func(void *ptr, size_t size, size_t nmemb, void *stream);
+
+/* a CURLOPT_READFUNCTION that writes nothing. */
+size_t
+s3_empty_read_func(void *ptr, size_t size, size_t nmemb, void * stream);
+
+size_t
+s3_empty_size_func(void *stream);
+>>>>>>> remotes/origin/3_5-c-file-fixes
 
 typedef struct {
     char        *key;

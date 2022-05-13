@@ -80,8 +80,8 @@ char *  str_sockaddr_no_port_r(sockaddr_union *sa, char *strsockaddr,
  * @param addr_only: if true, ignore port, flow info, etc.
  * @returns: -1, 0, or 1 for <, ==, >, respectively
  */
-int     cmp_sockaddr(sockaddr_union *su1,
-		     sockaddr_union *su2,
+int     cmp_sockaddr(const sockaddr_union *su1,
+		     const sockaddr_union *su2,
 		     int addr_only);
 
 /* Parse a string into a sockaddr.  This will try all available address

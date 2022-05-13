@@ -44,8 +44,8 @@ int main(void)
     fprintf(sec_file,"# use customized system commands.  If multiple PATH is     #\n");
     fprintf(sec_file,"# necessary, please put them in different lines.           #\n");
     fprintf(sec_file,"# e.g.:                                                    #\n");
-    fprintf(sec_file,"# amgtar:GNUTAR_PATH=/usr/bin/tar                          #\n");
-    fprintf(sec_file,"# amgtar:GNUTAR_PATH=/usr/bin/tar-1.28                     #\n");
+    fprintf(sec_file,"# amgtar:GNUTAR_PATH=/bin/tar                              #\n");
+    fprintf(sec_file,"# amgtar:GNUTAR_PATH=/bin/tar-1.28                         #\n");
     fprintf(sec_file,"#                                                          #\n");
     fprintf(sec_file,"# Only binary listed are allowed to be run as root.        #\n");
     fprintf(sec_file,"#                                                          #\n");

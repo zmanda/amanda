@@ -33,6 +33,11 @@
 #include "mem-ring.h"
 #include "shm-ring.h"
 
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+
 /*
  * Instance definition
  */
@@ -307,6 +312,12 @@ do_directtcp_connect(
 	    "socket(): %s", strerror(errno));
 	goto cancel_wait;
     }
+
+    // attempt to set long-ping-distance-tolerant congestion setting
+#ifdef TCP_CONGESTION
+    setsockopt(sock, IPPROTO_TCP, TCP_CONGESTION, "bbr", sizeof("bbr"));
+#endif
+
     if (connect(sock, (struct sockaddr *)&addr, SS_LEN(&addr)) < 0) {
 	xfer_cancel_with_error(elt,
 	    "connect(): %s", strerror(errno));

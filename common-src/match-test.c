@@ -300,10 +300,10 @@ test_match_glob(void)
 
 	{ "(){}+.^$|", "(){}+.^$|", TRUE },
 
-	{ "/usr/bin/*", "/usr/bin/tar", TRUE },
-	{ "/usr/bin/*", "/usr/bin/local/tar", FALSE },
-	{ "/usr/bin/*", "/usr/sbin/tar", FALSE },
-	{ "/usr/bin/*", "/opt/usr/bin/tar", FALSE },
+	{ "/bin/*", "/bin/tar", TRUE },
+	{ "/bin/*", "/bin/local/tar", FALSE },
+	{ "/bin/*", "/sbin/tar", FALSE },
+	{ "/bin/*", "/opt/bin/tar", FALSE },
 
 	{ "/usr?bin", "/usr/bin", FALSE },
 	{ "/usr*bin", "/usr/bin", FALSE },
@@ -372,10 +372,10 @@ test_match_tar(void)
 
 	{ "(){}+.^$|", "(){}+.^$|", TRUE },
 
-	{ "/usr/bin/*", "/usr/bin/tar", TRUE },
-	{ "/usr/bin/*", "/usr/bin/local/tar", TRUE }, /* different from match_glob */
-	{ "/usr/bin/*", "/usr/sbin/tar", FALSE },
-	{ "/usr/bin/*", "/opt/usr/bin/tar", FALSE },
+	{ "/bin/*", "/bin/tar", TRUE },
+	{ "/bin/*", "/bin/local/tar", TRUE }, /* different from match_glob */
+	{ "/bin/*", "/sbin/tar", FALSE },
+	{ "/bin/*", "/opt/bin/tar", FALSE },
 
 	{ "/usr?bin", "/usr/bin", FALSE },
 	{ "/usr*bin", "/usr/bin", TRUE }, /* different from match_glob */

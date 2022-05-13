@@ -28,7 +28,7 @@
 
 /* PROPERTY:
  *
- * BSDTAR-PATH     (default /usr/bin/tar))
+ * BSDTAR-PATH     (default /bin/tar))
  * STATE-DIR       (default $AMSTATDIR/bsdtar)
  * TARGET (DIRECTORY)  (no default, if set, the backup will be from that
  *			directory instead of from the --device)
