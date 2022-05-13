@@ -31,6 +31,21 @@ use Installcheck::Application;
 use IO::File;
 use Data::Dumper;
 
+if ( "@CLIENT_LOGIN@" eq getpwuid($>) ) {
+    local $/;
+    my $secfile;
+
+    unless( open(F,"@DEFAULT_SECURITY_FILE@") &&
+		($secfile = <F>) && 
+		($secfile =~ m{\nrestore_by_amanda_user=yes\n}) ) {
+	SKIP: {
+	    skip("Restores by amanda user need restore_by_amanda_user=yes in security.conf", Test::More->builder->expected_tests);
+	}
+	exit 0;
+    }
+    close(F);
+}
+
 unless ($Amanda::Constants::STAR and -x $Amanda::Constants::STAR) {
     SKIP: {
         skip("Star is not available", Test::More->builder->expected_tests);

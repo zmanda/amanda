@@ -31,6 +31,21 @@ use Installcheck::Application;
 use IO::File;
 use Data::Dumper;
 
+if ( "@CLIENT_LOGIN@" eq getpwuid($>) ) {
+    local $/;
+    my $secfile;
+
+    unless( open(F,"@DEFAULT_SECURITY_FILE@") &&
+		($secfile = <F>) && 
+		($secfile =~ m{\nrestore_by_amanda_user=yes\n}) ) {
+	SKIP: {
+	    skip("Restores by amanda user need restore_by_amanda_user=yes in security.conf", Test::More->builder->expected_tests);
+	}
+	exit 0;
+    }
+    close(F);
+}
+
 unless ($Amanda::Constants::GNUTAR and -x $Amanda::Constants::GNUTAR) {
     SKIP: {
         skip("GNU tar is not available", Test::More->builder->expected_tests);
@@ -159,6 +174,9 @@ ok(chdir($rest_dir), "changed working directory (for restore)");
 
 my $restore = $app->restore('objects' => ['./foo', './bar'], 'data' => $backup->{'data'});
 is($restore->{'exit_status'}, 0, "error status ok");
+
+warn("Have you added 'restore_by_amanda_user=yes'?") 
+	if ( $restore->{'exit_status'} );
 
 ok(chdir($orig_cur_dir), "changed working directory (back to original)");
 

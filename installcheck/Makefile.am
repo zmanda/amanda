@@ -43,6 +43,7 @@ server_tests = \
 	Amanda_Disklist \
 	Amanda_DB_Catalog \
 	Amanda_Device \
+	Amanda_S3_Debug \
 	Amanda_Holding \
 	Amanda_Logfile \
 	Amanda_Process \
@@ -294,7 +295,7 @@ installcheck-build: $(SCRIPTS_PERL) $(SCRIPTS_SHELL)
 	for i in amcat*; do chmod a+x $$i; done
 	[ -x amcat-error-no-exec ] && chmod a-x amcat-error-no-exec || true
 	[ -O . ] && chmod a+w . || true
-	ls -1 $(tests) 2>/dev/null | xargs chmod a-x
+	for f in $(tests); do [ -x $$f ] || chmod a-x $$f; true; done
 
 .PHONY: clobber_my_config_is_ok
 clobber_my_config_is_ok: installcheck-build
