@@ -24,24 +24,52 @@
  * user-specified bucket.  Data is stored in the form of numbered (large)
  * blocks.
  */
+#ifdef HAVE_CONFIG_H
+#include "../config/config.h"
+/* use a relative path here to avoid conflicting with Perl's config.h. */
+#endif
 
 #include "s3-device.h"
 #include "s3.h"
 #include "s3-util.h"
 
-#include "amanda.h"
-#include "amutil.h"
 #include "conffile.h"
 #include "device.h"
+
+#ifdef HAVE_UTIL_H
+#include "amutil.h"
+#endif
+#ifdef HAVE_AMANDA_H
+#include "amanda.h"
+#include "sockaddr-util.h"
+#endif
+#include "amjson.h"
+
 #include <string.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
-#include <dirent.h>
+
+#ifdef HAVE_REGEX_H
 #include <regex.h>
+#endif
+#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_STAT_H
+#include <sys/stat.h>
+#endif
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+#ifdef HAVE_DIRENT_H
+#include <dirent.h>
+#endif
+#ifdef HAVE_TIME_H
 #include <time.h>
+#endif
 #include <curl/curl.h>
-#include <openssl/md5.h>
+
+#ifdef HAVE_STDINT_H
+#include <stdint.h>
+#endif
 
 #ifdef HAVE_OPENSSL_HMAC_H
 # include <openssl/hmac.h>
@@ -54,6 +82,12 @@
 #  endif
 # endif
 #endif
+
+#ifdef HAVE_TIME_H
+#include <regex.h>
+#endif
+
+#include <openssl/md5.h>
 
 // arbitrarily copied from linux 3.10.0 headers
 #define TMPFS_MAGIC   0x01021994
@@ -790,7 +824,7 @@ static void s3_thread_write_session(gpointer thread_data,
 
 static void s3_thread_delete_session( gpointer thread_data, gpointer data );
 
-static s3_result_t s3_thread_multi_delete(Device *pself, S3_by_thread *s3t, GSList *volatile *d_objectsp);
+static s3_result_t s3_thread_multi_delete(Device *pself, S3_by_thread *s3t, GSList **d_objectsp);
 
 
 static int s3_thread_xferinfo_func( void *thread_data,
@@ -1892,7 +1926,7 @@ delete_all_files(S3Device *self)
 }
 
 static s3_result_t 
-s3_thread_multi_delete(Device *pself, S3_by_thread *s3t, GSList *volatile *d_objectsp)
+s3_thread_multi_delete(Device *pself, S3_by_thread *s3t, GSList **d_objectsp)
 {
     S3Handle *hndlN = s3t->s3;
     const S3Device *self = S3_DEVICE_CONST(pself);
@@ -1987,7 +2021,7 @@ s3_thread_delete_session(
     s3_result_t result = S3_RESULT_OK;
     s3_object *object;
     GSList *d_objects = NULL; // multi-
-    GSList *volatile *objlistp = &((S3Device*)self)->delete_objlist;
+    GSList **objlistp = &((S3Device*)self)->delete_objlist;
 
     {
         char *tname = g_strdup_printf("d#%lx",s3t - self->s3t);
@@ -5715,7 +5749,7 @@ s3_thread_write_session(gpointer thread_data, gpointer data)
     }
 
     // cleared if it was owned
-    g_atomic_pointer_compare_and_exchange((volatile void**)&self->xfer_s3t, s3t, NULL);
+    g_atomic_pointer_compare_and_exchange((void**)&self->xfer_s3t, s3t, NULL);
 
     {
         g_mutex_lock(self->thread_list_mutex);
@@ -7024,7 +7058,7 @@ s3_thread_read_session(gpointer thread_data, gpointer data)
     }
 
     // cleared if it was owned
-    g_atomic_pointer_compare_and_exchange((volatile void**)&self->xfer_s3t, s3t, NULL);
+    g_atomic_pointer_compare_and_exchange((void**)&self->xfer_s3t, s3t, NULL);
 
     // use the objsize found if non-empty
     if ( s3t->xfer_end == self->end_xbyte && s3t->xfer_end >= s3t->object_offset + objsize )
