@@ -457,13 +457,8 @@ authenticate_request(S3Handle *hdl,
                      const char *md5_hash,
                      const char *data_SHA256Hash,
                      const char *content_type,
-<<<<<<< HEAD
                      const char *project_id,
                      const char *copy_source);
-=======
-                     const char *project_id);
-
->>>>>>> remotes/origin/3_5-c-file-fixes
 
 
 /* Interpret the response to an S3 operation, assuming CURL completed its request
@@ -913,12 +908,8 @@ authenticate_request(S3Handle *hdl,
                      const char *md5_hash,
                      const char *data_SHA256Hash,
                      const char *content_type,
-<<<<<<< HEAD
                      const char *project_id,
                      const char *copy_source)
-=======
-                     const char *project_id)
->>>>>>> remotes/origin/3_5-c-file-fixes
 {
     // parameters that must be moved to the subresource string for AWS v2, but not for Google
     static const char *const amz_subrsrc_params[] = {
@@ -1001,7 +992,6 @@ authenticate_request(S3Handle *hdl,
             }
             break;
 
-<<<<<<< HEAD
         case S3_API_SWIFT_2:
             if (bucket) {
                 buf = g_strdup_printf("X-Auth-Token: %s", hdl->x_auth_token);
@@ -1038,92 +1028,6 @@ authenticate_request(S3Handle *hdl,
                 headers = curl_slist_append(headers, buf);
                 g_free(buf);
             }
-=======
-            /* set object replicas in lifepoint */
-            buf = g_strdup_printf("lifepoint: [] reps=%s", reps);
-            headers = curl_slist_append(headers, buf);
-            g_free(buf);
-            g_free(reps);
-        }
-    } else if (hdl->s3_api == S3_API_AWS4) {
-	/* http://docs.aws.amazon.com/AmazonS3/latest/API/sig-v4-authenticating-requests.html */
-	/* http://docs.aws.amazon.com/AmazonS3/latest/API/sigv4-auth-using-authorization-header.html */
-
-	GString *strSignedHeaders = g_string_new("");
-	GString *string_to_sign;
-	char *canonical_hash = NULL;
-	unsigned char *strSecretKey = NULL;
-	unsigned char *signkey1 = NULL;
-	unsigned char *signkey2 = NULL;
-	unsigned char *signkey3 = NULL;
-	unsigned char *signingKey = NULL;
-	unsigned char *signature = NULL;
-	unsigned char *signatureHex = NULL;
-
-	/* verb */
-	auth_string = g_string_new(verb);
-	g_string_append(auth_string, "\n");
-
-	/* CanonicalizedResource */
-	g_string_append(auth_string, "/");
-
-	if (hdl->use_subdomain) {
-	    if (key) {
-		char *esc_key = s3_uri_encode(key, 0);
-		g_string_append(auth_string, esc_key);
-		g_free(esc_key);
-	    }
-	} else {
-	    g_string_append(auth_string, bucket);
-	    if (key) {
-		char *esc_key = s3_uri_encode(key, 0);
-		g_string_append(auth_string, "/");
-		g_string_append(auth_string, esc_key);
-		g_free(esc_key);
-	    }
-	}
-	g_string_append(auth_string, "\n");
-
-	if (query) {
-	    gboolean sub_done = !subresource;
-	    gboolean first = TRUE;
-	    const char **q;
-	    for (q = query; *q != NULL; q++) {
-		if (!first) {
-		    g_string_append_c(auth_string, '&');
-		}
-		if (!sub_done && strcmp(subresource, *q) < 0) {
-		    g_string_append(auth_string, subresource);
-		    g_string_append_c(auth_string, '=');
-		    g_string_append_c(auth_string, '&');
-		    sub_done = TRUE;
-		}
-		g_string_append(auth_string, *q);
-		first = FALSE;
-	    }
-	    if (!sub_done) {
-		g_string_append_c(auth_string, '&');
-		g_string_append(auth_string, subresource);
-		g_string_append_c(auth_string, '=');
-	    }
-	} else if (subresource) {
-	    g_string_append(auth_string, subresource);
-	    g_string_append(auth_string, "=");
-	}
-	g_string_append(auth_string, "\n");
-
-    if (subresource && strcmp(subresource, "lifecycle") == 0 && md5_hash && '\0' != md5_hash[0]) {
-    	g_string_append(auth_string, "content-md5:");
-    	g_string_append(auth_string, md5_hash);
-    	g_string_append(auth_string, "\n");
-
-        buf = g_strdup_printf("Content-MD5: %s", md5_hash);
-        headers = curl_slist_append(headers, buf);
-
-        g_string_append(strSignedHeaders, "content-md5;");
-        g_free(buf);
-    }
->>>>>>> remotes/origin/3_5-c-file-fixes
 
 	    buf = g_strdup_printf("x-goog-api-version: 2");
 	    headers = curl_slist_append(headers, buf);
@@ -1328,16 +1232,7 @@ authenticate_request(S3Handle *hdl,
 
             signkey3 = EncodeHMACSHA256(signkey2, 32, "s3", 2);
 
-<<<<<<< HEAD
             signingKey = EncodeHMACSHA256(signkey3, 32, "aws4_request", 12);
-=======
-    if (md5_hash && '\0' != md5_hash[0]) {
-        buf = g_strdup_printf("Content-MD5: %s", md5_hash);
-        headers = curl_slist_append(headers, buf);
-        g_free(buf);
-    }
->>>>>>> remotes/origin/3_5-c-file-fixes
-
             signature = EncodeHMACSHA256(signingKey, 32, string_to_sign->str, (int)string_to_sign->len);
             signatureHex = s3_tohex(signature, 32);
 
@@ -2049,7 +1944,6 @@ record_response(S3Handle *hdl,
 		if (get_json_type(json_token) != JSON_HASH) break;
 		if (get_json_type(json_catalog) != JSON_ARRAY) break;
 
-<<<<<<< HEAD
 		json_token_id = get_json_hash_from_key(json_token, "id");
 		json_token_expires = get_json_hash_from_key(json_token, "expires");
 
@@ -2071,86 +1965,6 @@ record_response(S3Handle *hdl,
 		if (!thunk.service_public_url) break;
 
 		hdl->expires = thunk.expires;
-=======
-/* a CURLOPT_READFUNCTION to read data from a buffer. */
-size_t
-s3_buffer_read_func(void *ptr, size_t size, size_t nmemb, void * stream)
-{
-    CurlBuffer *data = stream;
-    size_t bytes_desired = size * nmemb;
-    size_t tocopy;
-    size_t nextbytes = 0;
-    size_t buffmax = ( data->max_buffer_size ? data->max_buffer_size : data->buffer_len );
-    size_t unwritten = data->buffer_len % buffmax; // first unreadable byte
-
-    // WARNING: zero-length write is ambiguous with full-buffer!
-
-    // don't ask for anything crazy plz...
-    bytes_desired = min(bytes_desired, buffmax);
-    tocopy = bytes_desired;
-
-    if (! bytes_desired) {
-        return 0;
-    }
-
-    // buffer_len is 'buffer-ring end' and buffer_pos is 'buffer-ring start'
-
-    if (data->mutex) { /* chunked transfer */
-	g_mutex_lock(data->mutex);
-    }
-
-    for(;;) {
-        size_t avail; // amount incl circular buffer
-        //
-        // total up circular bytes readable... (unsigned math!)
-        //
-        // index-distance from first-byte index to last-byte index
-        // in the circle-buffer...
-        // (unwritten is index-after last byte)
-        avail = buffmax - data->buffer_pos + unwritten-1;
-        avail %= buffmax; // circle-back into buffer
-        ++avail; // count last byte too (at least 1 byte)
-
-        // find next contiguous bytes copy
-        nextbytes = min(data->buffer_pos + avail, buffmax);
-        nextbytes -= data->buffer_pos; // (note: don't underflow)
-        nextbytes = min(nextbytes, tocopy);
-
-        g_debug("s3_buffer_read_func avail (before). . %#lx [%#lx-%#lx] %#lx more",
-           nextbytes, data->buffer_pos, data->buffer_pos + nextbytes, tocopy - nextbytes);
-
-        memcpy((char *)ptr, &data->buffer[data->buffer_pos], nextbytes);
-
-        // shift read point
-        data->buffer_pos += nextbytes;
-        data->buffer_pos %= buffmax; // roll around to bottom again if needed
-
-        // shift next write point
-        ptr = (char*) ptr + nextbytes;
-        tocopy -= nextbytes;
-
-        // tocopy is done ...
-        if (!tocopy)
-            break;
-        // or next-byte index is same as unwritten-byte index?
-        if (data->buffer_pos == unwritten && data->end_of_buffer)
-           break;
-
-        if (data->mutex) {
-            g_debug("s3_buffer_read_func BLOCKING START (avail:%#lx missing %#lx bytes)", avail, tocopy - avail);
-            g_cond_wait(data->cond, data->mutex); // wait on writer to permit more
-        }
-    }
-
-    if (data->mutex) {
-	/* signal to add more data to the buffer */
-	g_cond_broadcast(data->cond);
-	g_mutex_unlock(data->mutex);
-    }
-
-    return bytes_desired - tocopy; // note if less than desired
-}
->>>>>>> remotes/origin/3_5-c-file-fixes
 
 		if (!hdl->x_auth_token) {
 		    hdl->x_auth_token = thunk.token_id;
@@ -2175,20 +1989,10 @@ s3_buffer_read_func(void *ptr, size_t size, size_t nmemb, void * stream)
 	    } while(FALSE);
 	    goto swift_json_fallback;
 
-<<<<<<< HEAD
         case MIX_API_AND_CONTENT(S3_API_SWIFT_3,CONTENT_JSON):
 	    do {
 		amjson_t *json;
 		amjson_t *json_token, *json_catalog, *json_expires_at;
-=======
-/* a CURLOPT_WRITEFUNCTION to write data to a buffer. */
-size_t
-s3_buffer_write_func(void *ptr, size_t size, size_t nmemb, void *stream)
-{
-    CurlBuffer * data = stream;
-    size_t new_bytes = size * nmemb;
-    size_t bytes_needed = data->buffer_pos + new_bytes;
->>>>>>> remotes/origin/3_5-c-file-fixes
 
 		if (!hdl->getting_swift_3_token) break;
 
@@ -2196,46 +2000,10 @@ s3_buffer_write_func(void *ptr, size_t size, size_t nmemb, void *stream)
 
 		if (get_json_type(json) != JSON_HASH) break;
 
-<<<<<<< HEAD
 		json_token = get_json_hash_from_key(json, "token");
 
 		if (!json_token) break;
 		if (get_json_type(json_token) != JSON_HASH) break;
-=======
-	// Check for enough space in the buffer
-	while (1) {
-	    size_t avail;
-	    if (data->buffer_len == data->buffer_pos) {
-		avail =  data->max_buffer_size;
-	    } else if (data->buffer_len > data->buffer_pos) {
-		avail = data->buffer_pos + data->max_buffer_size - data->buffer_len;
-	    } else {
-		avail = data->buffer_pos - data->buffer_len;
-	    }
-	    if (avail > new_bytes) {
-		break;
-	    }
-	    g_cond_wait(data->cond, data->mutex);
-	}
-
-	// Copy the new data to the buffer
-	if (data->buffer_len > data->buffer_pos) {
-	    size_t count_end = data->max_buffer_size - data->buffer_len;
-	    size_t count_begin;
-	    if (count_end > new_bytes)
-		count_end = new_bytes;
-	    memcpy(data->buffer + data->buffer_len, ptr, count_end);
-	    data->buffer_len += count_end;
-	    count_begin = new_bytes - count_end;
-	    if (count_begin > 0) {
-		memcpy(data->buffer, ptr + count_end, count_begin);
-		data->buffer_len = count_begin;
-	    }
-	} else {
-	    memcpy(data->buffer + data->buffer_len, ptr, new_bytes);
-	    data->buffer_len += new_bytes;
-	}
->>>>>>> remotes/origin/3_5-c-file-fixes
 
 		json_catalog = get_json_hash_from_key(json_token, "catalog");
 		json_expires_at = get_json_hash_from_key(json_token, "expires_at");
@@ -2250,23 +2018,8 @@ s3_buffer_write_func(void *ptr, size_t size, size_t nmemb, void *stream)
 		// token.expires_at
 		thunk.expires = rfc3339_date(get_json_string(json_expires_at));
 
-<<<<<<< HEAD
 		if (!thunk.expires && thunk.service_public_url) break;
 		if (!thunk.service_public_url) break;
-=======
-    /* reallocate if necessary. We use exponential sizing to make this
-     * happen less often. */
-    if (bytes_needed > data->buffer_len) {
-        size_t new_size = MAX(bytes_needed, data->buffer_len * 2);
-        if (data->max_buffer_size) {
-            new_size = MIN(new_size, data->max_buffer_size);
-        }
-        data->buffer = g_realloc(data->buffer, new_size);
-        data->buffer_len = new_size;
-    }
-    if (!data->buffer)
-        return 0; /* returning zero signals an error to libcurl */
->>>>>>> remotes/origin/3_5-c-file-fixes
 
 		hdl->expires = ( thunk.expires ? : hdl->expires );
 
@@ -2385,7 +2138,6 @@ s3_curl_debug_message(CURL *curl G_GNUC_UNUSED,
             lineprefix="Hdr Out: ";
             break;
 
-<<<<<<< HEAD
         case CURLINFO_DATA_IN:
             if (len > 3000) return 0;
             for (i=0;i<len;i++) {
@@ -2405,27 +2157,6 @@ s3_curl_debug_message(CURL *curl G_GNUC_UNUSED,
             }
             lineprefix="Data Out: ";
             break;
-=======
-    case CURLINFO_DATA_IN:
-	if (len > 3000) return 0;
-	for (i=0;i<len;i++) {
-	    if ( s[i] < 0 || (g_ascii_iscntrl(s[i]) && ! g_ascii_isspace(s[i])) ) {
-		return 0;
-	    }
-	}
-        lineprefix="Data In: ";
-        break;
-
-    case CURLINFO_DATA_OUT:
-	if (len > 3000) return 0;
-	for (i=0;i<len;i++) {
-	    if ( s[i] < 0 || (g_ascii_iscntrl(s[i]) && ! g_ascii_isspace(s[i])) ) {
-		return 0;
-	    }
-	}
-        lineprefix="Data Out: ";
-        break;
->>>>>>> remotes/origin/3_5-c-file-fixes
 
         default:
             /* ignore data in/out -- nobody wants to see that in the
@@ -2576,29 +2307,17 @@ perform_request(S3Handle *hdl,
     /* libcurl may behave strangely if these are not set correctly */
     if (g_str_has_prefix(verb, "PUT")) {
         curlopt_methodopt = CURLOPT_UPLOAD;
-<<<<<<< HEAD
         curlopt_setsizeopt = CURLOPT_INFILESIZE;   // dangerous for large sizes!
 #if LIBCURL_VERSION_NUM > 0x070b00
         curlopt_setsizeopt = CURLOPT_INFILESIZE_LARGE;
-=======
-        curlopt_setsizeopt = CURLOPT_INFILESIZE_LARGE;
-#if LIBCURL_VERSION_NUM < 0x070b00
-        curlopt_setsizeopt = CURLOPT_INFILESIZE;   // dangerous for large sizes!
->>>>>>> remotes/origin/3_5-c-file-fixes
 #endif
     } else if (g_str_has_prefix(verb, "GET")) {
         curlopt_methodopt = CURLOPT_HTTPGET;
     } else if (g_str_has_prefix(verb, "POST")) {
         curlopt_methodopt = CURLOPT_POST;
-<<<<<<< HEAD
         curlopt_setsizeopt = CURLOPT_POSTFIELDSIZE; // dangerous for large sizes!
 #if LIBCURL_VERSION_NUM > 0x070b00
         curlopt_setsizeopt = CURLOPT_POSTFIELDSIZE_LARGE;
-=======
-        curlopt_setsizeopt = CURLOPT_POSTFIELDSIZE_LARGE;
-#if LIBCURL_VERSION_NUM < 0x070b00
-        curlopt_setsizeopt = CURLOPT_POSTFIELDSIZE; // dangerous for large sizes!
->>>>>>> remotes/origin/3_5-c-file-fixes
 #endif
     } else if (g_str_has_prefix(verb, "HEAD")) {
         curlopt_methodopt = CURLOPT_NOBODY;
@@ -2699,12 +2418,8 @@ perform_request(S3Handle *hdl,
 
         /* set up the request */
         headers = authenticate_request(hdl, verb, bucket, key, subresource, query,
-<<<<<<< HEAD
 		    md5_hash_b64, sha256_hash_hex,
 		    content_type, project_id, amzCopySource);
-=======
-            md5_hash_b64, data_SHA256Hash, content_type, project_id);
->>>>>>> remotes/origin/3_5-c-file-fixes
 
 	/* add user header to headers */
 	for (header = user_headers; header != NULL; header = header->next) {
@@ -2727,11 +2442,7 @@ perform_request(S3Handle *hdl,
 
         if (hdl->verbose) {
         if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_DEBUGFUNCTION,
-<<<<<<< HEAD
                           s3_curl_debug_message)))
-=======
-                          curl_debug_message)))
->>>>>>> remotes/origin/3_5-c-file-fixes
                 goto curl_error;
         }
         if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_ERRORBUFFER,
@@ -2772,7 +2483,6 @@ perform_request(S3Handle *hdl,
         if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_PROGRESSDATA, progress_data)))
             goto curl_error;
 
-<<<<<<< HEAD
         // set expected body size.. [may be zero]
         if (!chunked && curlopt_setsizeopt) {
             if ((curl_code=curl_easy_setopt(hdl->curl, curlopt_setsizeopt, (curl_off_t)request_body_size)))
@@ -2791,20 +2501,6 @@ perform_request(S3Handle *hdl,
             buffsize = max(hdl->max_send_speed*5,CURL_MAX_READ_SIZE);
             if (request_body_size)
                 buffsize = min(request_body_size,buffsize);
-=======
-        if (!chunked && size_func && curlopt_setsizeopt) 
-        {   
-            guint64 buffsize;
-
-            if ((curl_code=curl_easy_setopt(hdl->curl, 
-                                            curlopt_setsizeopt,
-                                            (curl_off_t)request_body_size)))
-                goto curl_error;
-
-#if LIBCURL_VERSION_NUM >= 0x073e00
-            buffsize = max(hdl->max_send_speed*5,CURL_MAX_READ_SIZE);
-            buffsize = min(request_body_size,buffsize);
->>>>>>> remotes/origin/3_5-c-file-fixes
             buffsize = (buffsize |(0x1000-1)) + 1;
 
             if ((curl_code=curl_easy_setopt(hdl->curl, CURLOPT_UPLOAD_BUFFERSIZE, buffsize)))
@@ -2813,7 +2509,6 @@ perform_request(S3Handle *hdl,
         }
 
 #if LIBCURL_VERSION_NUM >= 0x073e00
-<<<<<<< HEAD
         if (! curlopt_setsizeopt && write_data && size_func)
         {
 	    // some overwrite of data found! need oversized buffer.
@@ -2827,16 +2522,6 @@ perform_request(S3Handle *hdl,
 
             // 512K
             if ((curl_code=curl_easy_setopt(hdl->curl, CURLOPT_BUFFERSIZE, buffsize)))
-=======
-	if (chunked) 
-        {
-            guint64 buffsize;
-            buffsize = max(hdl->max_send_speed*5,CURL_MAX_READ_SIZE);
-            buffsize = (buffsize |(0x1000-1)) + 1;
-
-            // 512K
-            if ((curl_code=curl_easy_setopt(hdl->curl, CURLOPT_UPLOAD_BUFFERSIZE, buffsize)))
->>>>>>> remotes/origin/3_5-c-file-fixes
                 goto curl_error;
         }
 #endif
@@ -2852,11 +2537,7 @@ perform_request(S3Handle *hdl,
 	    if (hdl->max_recv_speed)
 		if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_MAX_RECV_SPEED_LARGE, (curl_off_t)hdl->max_recv_speed)))
 		    goto curl_error;
-<<<<<<< HEAD
         }
-=======
-            }
->>>>>>> remotes/origin/3_5-c-file-fixes
 #endif
 
         // perform only one call [*mandatory*] to set httpreq
@@ -2871,10 +2552,6 @@ perform_request(S3Handle *hdl,
             goto curl_error;
         }
 
-<<<<<<< HEAD
-=======
-
->>>>>>> remotes/origin/3_5-c-file-fixes
         if (curlopt_setsizeopt) {
             if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_READFUNCTION, read_func)))
                 goto curl_error;
@@ -2902,12 +2579,7 @@ perform_request(S3Handle *hdl,
 		(long)(! hdl->reuse_connection? 1 : 0)))) {
 	    goto curl_error;
 	}
-<<<<<<< HEAD
 	if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_TIMEOUT, (long)hdl->timeout))) {
-=======
-	if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_TIMEOUT,
-              	(long)hdl->timeout))) {
->>>>>>> remotes/origin/3_5-c-file-fixes
 	    goto curl_error;
 	}
 
@@ -3780,21 +3452,7 @@ s3_free(S3Handle *hdl)
 static void
 http_response_reset(S3Handle *hdl)
 {
-<<<<<<< HEAD
     if (!hdl) return;
-=======
-    if (hdl) {
-        /* We don't call curl_easy_reset here, because doing that in curl
-         * < 7.16 blanks the default CA certificate path, and there's no way
-         * to get it back. */
-#if LIBCURL_VERSION_NUM >= 0x071000
-        if ( hdl->curl ) curl_easy_reset(hdl->curl);
-#endif
-        if (hdl->last_message) {
-            g_free(hdl->last_message);
-            hdl->last_message = NULL;
-        }
->>>>>>> remotes/origin/3_5-c-file-fixes
 
     g_free(hdl->last_message);
     g_free(hdl->last_response_body); // response buffer from previous perform_request()

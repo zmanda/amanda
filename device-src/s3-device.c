@@ -236,7 +236,7 @@ struct _S3Device {
     GMutex      *thread_list_mutex;
     GCond       _thread_list_cond_store;
     GMutex      _thread_list_mutex_store;
-    GSList      *volatile delete_objlist;
+    GSList      *delete_objlist;
 
     objbytes_t	 next_xbyte;  // next byte to copy full bytes through..
     objbytes_t	 next_ahead_byte; // next byte to prepare a thread for
