@@ -731,13 +731,14 @@ amstar_selfcheck(
 	    message = amstar_print_message(check_file_message(star_path, X_OK));
 	    if (message && message_get_severity(message) <= MSG_INFO) {
 		char *star_version;
+                char line[1025];
 		GPtrArray *argv_ptr = g_ptr_array_new();
 
 		g_ptr_array_add(argv_ptr, star_realpath);
 		g_ptr_array_add(argv_ptr, "--version");
 		g_ptr_array_add(argv_ptr, NULL);
 
-		star_version = get_first_line(argv_ptr);
+		star_version = get_first_line(line,sizeof(line),argv_ptr);
 
 		if (star_version) {
 		    char *sv, *sv1;
@@ -759,8 +760,6 @@ amstar_selfcheck(
 			"device", argument->dle.device,
 			"hostname", argument->host)));
 		}
-		g_ptr_array_free(argv_ptr, TRUE);
-		amfree(star_version);
 	    }
 	    if (message)
 		delete_message(message);
