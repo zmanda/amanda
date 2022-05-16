@@ -219,8 +219,6 @@ AC_CHECK_HEADERS(
 	time.h \
 	unistd.h \
 )
-AC_DEFINE([HAVE_AMANDA_H], 1, [Define to 1 if you have the "amanda.h" header file.])
-AC_DEFINE([HAVE_UTIL_H], 1, [Define to 1 if you have the "util.h" header file.])
 
 AC_DEFINE([USE_GETTEXT], 1, [Define to 1 if files will be processed with gettextize])
 

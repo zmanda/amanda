@@ -78,8 +78,6 @@ typedef struct s3_head_t s3_head_t;
  * Return 0 only if there's no more data to be uploaded.
  */
 typedef size_t (*s3_read_func)(void *data, size_t size, size_t nmemb, void *stream);
-//chandu
-//typedef size_t read_callback(char *buffer, size_t size, size_t nitems, void *userdata);
 
 /* This function is called to get size of the upload data
  *
