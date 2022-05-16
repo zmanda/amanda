@@ -25,14 +25,12 @@
 /* use a relative path here to avoid conflicting with Perl's config.h. */
 #include "../config/config.h"
 #endif
+
 #include "s3-util.h"
+#include "amanda.h"
 
 #ifdef HAVE_REGEX_H
-#include <sys/types.h>
 #include <regex.h>
-#endif
-#ifdef HAVE_AMANDA_H
-#include "amanda.h"
 #endif
 
 #include <curl/curl.h>
@@ -43,6 +41,7 @@
 #include <openssl/bio.h>
 #include <openssl/evp.h>
 #include <openssl/bn.h>
+#include <sys/types.h>
 
 #ifdef HAVE_REGEX_H
 int
@@ -96,15 +95,6 @@ s3_regexec_wrap(regex_t *regex,
     }
     g_match_info_free(match_info);
     return ret;
-}
-#endif
-
-#ifndef HAVE_AMANDA_H
-char*
-find_regex_substring(const char* base_string, const regmatch_t match)
-{
-    g_assert(match.rm_eo >= match.rm_so);
-    return g_strndup(base_string+match.rm_so, match.rm_eo - match.rm_so);
 }
 #endif
 
