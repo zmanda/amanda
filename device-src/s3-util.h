@@ -87,12 +87,6 @@ s3_regexec_wrap(regex_t *regex,
            regmatch_t pmatch[],
            int eflags);
 
-#ifndef HAVE_AMANDA_H
-char*
-find_regex_substring(const char* base_string,
-           const regmatch_t match);
-#endif
-
 /*
  * Encode bytes using hexadecimal
  *

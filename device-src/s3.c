@@ -20,9 +20,10 @@
  * Broomfield, CO 80021 or: http://www.zmanda.com
  */
 
-/* TODO
- * - collect speed statistics
- * - debugging mode
+/* An S3 device uses Amazon's S3 service (http://www.amazon.com/s3) to store
+ * data.  It stores data in keys named with a user-specified prefix, inside a
+ * user-specified bucket.  Data is stored in the form of numbered (large)
+ * blocks.
  */
 #ifdef HAVE_CONFIG_H
 #include "../config/config.h"
@@ -33,16 +34,12 @@
 #include "s3-device.h"
 #include "s3-util.h"
 
-#ifdef HAVE_UTIL_H
-#include "amutil.h"
-#endif
-#ifdef HAVE_AMANDA_H
-#include "amanda.h"
-#include "sockaddr-util.h"
-#endif
 #include "amjson.h"
+#include "amutil.h"
+#include "sockaddr-util.h"
 
-#include <string.h>
+#include "amanda.h"
+
 
 #ifdef HAVE_REGEX_H
 #include <regex.h>
@@ -93,6 +90,7 @@
 #include <openssl/ssl.h>
 #include <openssl/md5.h>
 #include <glib.h>
+#include <string.h>
 
 char *S3_name[] = {
    "UNKNOWN",
@@ -1233,6 +1231,7 @@ authenticate_request(S3Handle *hdl,
             signkey3 = EncodeHMACSHA256(signkey2, 32, "s3", 2);
 
             signingKey = EncodeHMACSHA256(signkey3, 32, "aws4_request", 12);
+
             signature = EncodeHMACSHA256(signingKey, 32, string_to_sign->str, (int)string_to_sign->len);
             signatureHex = s3_tohex(signature, 32);
 
