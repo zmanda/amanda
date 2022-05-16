@@ -15,8 +15,8 @@
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
  *
- * Contact information: Carbonite Inc., 756 N Pastoria Ave
- * Sunnyvale, CA 94085, or: http://www.zmanda.com
+ * Contact information: BETSOL - 10901 W 120th Ave #235,
+ * Broomfield, CO 80021 or: http://www.zmanda.com
  */
 
 /* An S3 device uses Amazon's S3 service (http://www.amazon.com/s3) to store
@@ -35,17 +35,14 @@
 
 #include "conffile.h"
 #include "device.h"
-
-#ifdef HAVE_UTIL_H
-#include "amutil.h"
-#endif
-#ifdef HAVE_AMANDA_H
-#include "amanda.h"
-#include "sockaddr-util.h"
-#endif
 #include "amjson.h"
+#include "amutil.h"
+#include "sockaddr-util.h"
 
-#include <string.h>
+#include "amanda.h"
+
+#include <curl/curl.h>
+#include <openssl/md5.h>
 
 #ifdef HAVE_REGEX_H
 #include <regex.h>
@@ -83,11 +80,7 @@
 # endif
 #endif
 
-#ifdef HAVE_TIME_H
-#include <regex.h>
-#endif
-
-#include <openssl/md5.h>
+#include <string.h>
 
 // arbitrarily copied from linux 3.10.0 headers
 #define TMPFS_MAGIC   0x01021994
