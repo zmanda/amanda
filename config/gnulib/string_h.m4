@@ -28,7 +28,7 @@ AC_DEFUN([gl_HEADER_STRING_H_BODY],
   gl_WARN_ON_USE_PREPARE([[#include <string.h>
     ]],
     [ffsl ffsll memmem mempcpy memrchr rawmemchr stpcpy stpncpy strchrnul
-     strdup strncat strndup strnlen strpbrk strsep strcasestr strtok_r
+     strdup strdupa strncat strndup strnlen strpbrk strsep strcasestr strtok_r
      strerror_r strsignal strverscmp])
 ])
 
