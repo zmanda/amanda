@@ -722,17 +722,20 @@ ambsdtar_selfcheck(
 	    if (message && message_get_severity(message) <= MSG_INFO) {
 	    } else {
 		char *bsdtar_version;
+                char line[1025];
 		GPtrArray *argv_ptr = g_ptr_array_new();
 
 		g_ptr_array_add(argv_ptr, bsdtar_realpath);
 		g_ptr_array_add(argv_ptr, "--version");
 		g_ptr_array_add(argv_ptr, NULL);
 
-		bsdtar_version = get_first_line(argv_ptr);
+		bsdtar_version = get_first_line(line,sizeof(line),argv_ptr);
 		if (bsdtar_version) {
 		    char *tv, *bv;
-		    for (tv = bsdtar_version; *tv && !g_ascii_isdigit(*tv); tv++);
-		    for (bv = tv; *bv && *bv != ' '; bv++);
+		    for (tv = bsdtar_version; *tv && !g_ascii_isdigit(*tv); tv++)
+                       { }
+		    for (bv = tv; *bv && *bv != ' '; bv++)
+                       { }
 		    if (*bv) *bv = '\0';
 		    delete_message(ambsdtar_print_message(build_message(
 			AMANDA_FILE, __LINE__, 3702002, MSG_INFO, 4,
@@ -748,9 +751,6 @@ ambsdtar_selfcheck(
 			"device", argument->dle.device,
 			"hostname", argument->host)));
 		}
-
-		g_ptr_array_free(argv_ptr, TRUE);
-		amfree(bsdtar_version);
 	    }
 	    if (message)
 		delete_message(message);

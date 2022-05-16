@@ -1036,16 +1036,18 @@ amgtar_selfcheck(
 	    message = amgtar_print_message(check_file_message(gnutar_path, X_OK));
 	    if (message && message_get_severity(message) <= MSG_INFO) {
 		char *gtar_version;
+                char line[1025];
 		GPtrArray *argv_ptr = g_ptr_array_new();
 
 		g_ptr_array_add(argv_ptr, gnutar_path);
 		g_ptr_array_add(argv_ptr, "--version");
 		g_ptr_array_add(argv_ptr, NULL);
 
-		gtar_version = get_first_line(argv_ptr);
+		gtar_version = get_first_line(line,sizeof(line),argv_ptr);
 		if (gtar_version) {
 		    char *gv;
-		    for (gv = gtar_version; *gv && !g_ascii_isdigit(*gv); gv++);
+		    for (gv = gtar_version; *gv && !g_ascii_isdigit(*gv); gv++)
+                        { }
 		    delete_message(amgtar_print_message(build_message(
 			AMANDA_FILE, __LINE__, 3700002, MSG_INFO, 4,
 			"gtar-version", gv,
@@ -1060,9 +1062,6 @@ amgtar_selfcheck(
 			"device", argument->dle.device,
 			"hostname", argument->host)));
 		}
-
-		g_ptr_array_free(argv_ptr, TRUE);
-		amfree(gtar_version);
 	    }
 	    if (message)
 		delete_message(message);
@@ -2233,13 +2232,13 @@ amgtar_get_incrname(
 	    dbprintf("%s\n", errmsg);
 	    aclose(outfd);
 	    amfree(incrname);
-	    amfree(errmsg);
 	    dbprintf("%s\n", errmsg);
 	    if (command == CMD_ESTIMATE) {
 		fprintf(mesgstream, "ERROR %s\n", errmsg);
 	    } else {
 		fprintf(mesgstream, "sendbackup: error [%s]\n", errmsg);
 	    }
+	    amfree(errmsg);
 	    exit(1);
 	}
 	if (close(outfd) != 0) {
@@ -2247,13 +2246,13 @@ amgtar_get_incrname(
 			         incrname, strerror(errno));
 	    dbprintf("%s\n", errmsg);
 	    amfree(incrname);
-	    amfree(errmsg);
 	    dbprintf("%s\n", errmsg);
 	    if (command == CMD_ESTIMATE) {
 		fprintf(mesgstream, "ERROR %s\n", errmsg);
 	    } else {
 		fprintf(mesgstream, "sendbackup: error [%s]\n", errmsg);
 	    }
+	    amfree(errmsg);
 	    exit(1);
 	}
 
@@ -2373,12 +2372,13 @@ GPtrArray *amgtar_build_argv(
 	    char  *gv;
 	    int    major;
 	    int    minor;
+            char line[1025];
 	    GPtrArray *version_ptr = g_ptr_array_new();
 
 	    g_ptr_array_add(version_ptr, gnutar_path);
 	    g_ptr_array_add(version_ptr, "--version");
 	    g_ptr_array_add(version_ptr, NULL);
-	    gtar_version = get_first_line(version_ptr);
+	    gtar_version = get_first_line(line,sizeof(line),version_ptr);
 	    if (gtar_version) {
 		for (gv = gtar_version; *gv && !g_ascii_isdigit(*gv); gv++);
 		minor_version = index(gtar_version, '.');
@@ -2396,8 +2396,6 @@ GPtrArray *amgtar_build_argv(
 		    }
 		}
 	    }
-	    g_ptr_array_free(version_ptr, TRUE);
-	    amfree(gtar_version);
 	}
 	if (gnutar_sparse) {
 	    g_ptr_array_add(argv_ptr, g_strdup("--sparse"));
