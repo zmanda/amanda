@@ -119,16 +119,20 @@ detect_pkgdirs_top() {
     local topcall_dir="${topcall%/*}"
     declare -g buildpkg_dir="${buildpkg_dir:-${topcall_dir}}"
 
+    d=${buildpkg_dir}
+
     # script is real but not a clear directory location
-    # top common_z directory is based on packaging repo common dir ... 
+    # top common directory is based on packaging repo common dir ... 
     # correct pkgdirs_top is just below it
-    [ ! -L $buildpkg_dir/../common_z -a -d $buildpkg_dir/../common_z ] && d=$buildpkg_dir/..
-    [ ! -L $buildpkg_dir/../../common_z -a -d $buildpkg_dir/../../common_z ] && d=$buildpkg_dir/../..
-    [ ! -L $buildpkg_dir/../../../common_z -a -d $buildpkg_dir/../../common_z ] && d=$buildpkg_dir/../../..
+    [ ! -L $buildpkg_dir/../common -a -d $buildpkg_dir/../common ] && d=$buildpkg_dir/..
+    [ ! -L $buildpkg_dir/../../common -a -d $buildpkg_dir/../../common ] && d=$buildpkg_dir/../..
+    [ ! -L $buildpkg_dir/../../../common -a -d $buildpkg_dir/../../../common ] && d=$buildpkg_dir/../../..
 
     # if called from within common or scripts ... just use "packaging" as top
     [ $d -ef $d/../common ] && d+=/..
     [ $d -ef $d/../scripts ] && d+=/..
+
+    [ -e "$d/.git" ] && d="${d%/..}" # take back one level to keep project directory...
 
     # narrow choices with calling script.s path, if possible
     declare -g pkgdirs_top="$(realpath -e $d)"
@@ -181,7 +185,8 @@ detect_build_dirs() {
 	 pkgconf_dir \
 	 buildpkg_dir \
 	 pkg_bldroot \
-	 repo_name && return;   # already have it all known!
+	 repo_name && 
+      return;   # already have it all known!
 
     [ -n "$pkg_type" ] || die "cannot determine package type to use upon build"
 
@@ -351,9 +356,11 @@ get_version() {
 }
 
 gen_pkg_build_config() {
-    local buildparm_dir
+    local buildparm_dir=$1
 
-    buildparm_dir=$1
+    detect_package_vars  # in case it wasn't run
+
+    buildparm_dir="${buildparm_dir:-${buildpkg_dir}}"  # in case it wasnt provided
 
     [ -d "$buildparm_dir" ] ||
 	die "ERROR: gen_pkg_build_config() \"$buildparm_dir\" bad setup directory"
@@ -775,6 +782,13 @@ set_zmanda_version() {
 detect_package_vars() {
     local localpkg_suffix=
     local pkgdirs_top_top=
+
+    declare >&/dev/null -p pkgconf_dir \
+          buildpkg_dir \
+          pkg_bldroot \
+          pkg_name_pkgtime \
+          pkgdirs_top && 
+      return 0
 
     # check every time ...
     if ! detect_pkgdirs_top; then
