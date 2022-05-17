@@ -24,7 +24,7 @@ export PKG_DIR=$(realpath .)
 mach=`uname -m`
 
 do_deb_package() {
-    gen_pkg_build_config $@
+    gen_pkg_build_config "$@"
     gen_pkg_environ
     do_package "${PKG_NAME_VER}"
 }
