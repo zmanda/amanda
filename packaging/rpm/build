@@ -18,9 +18,6 @@ do_rpm_package() {
     # take the spec/spec.src files and make a tarfile
     gen_top_environ
     tar -czvf rpmbuild/SOURCES/${PKG_NAME_VER}.tar.gz po/stamp-po
-    #
-    #
-    #
     do_top_package "$@"
 }
 
