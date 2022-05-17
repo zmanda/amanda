@@ -52,8 +52,8 @@ LIBARCHDIR=lib/amd64
 BINARCHDIR=bin/amd64
 endif
 
-HOST_GNU_TYPE   = $(GCC_TARGET)
-BUILD_GNU_TYPE  = $(GCC_TARGET)
+export HOST_GNU_TYPE   = $(GCC_TARGET)
+export BUILD_GNU_TYPE  = $(GCC_TARGET)
 
 
 # These are variables that the user can override.  They get used in various
@@ -533,6 +533,8 @@ final-install:
 	# dh_gencontrol
 	# dh_md5sums
 	# dh_builddeb
+	tar -czvf $$(basename $(buildroot))-$(AMVER)-${BUILD_GNU_TYPE%%-*}.tar.gz -C $(buildroot) .
+	tar -czvf $$(basename $(devel))-$(AMVER)-${BUILD_GNU_TYPE%%-*}.tar.gz -C $(devel) .
 
 clean:
 	# dh_testdir
@@ -550,5 +552,5 @@ binary: final-install
 .PHONY: build clean binary-install binary-install-client binary-install-devel binary-install-platform
 .PHONY: final-install perm-install-client perm-install-devel
 
-# vim:ft=gmake
+# vim:ft=make
 
