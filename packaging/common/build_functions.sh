@@ -11,7 +11,7 @@ rpmbuild_opts='--rpmfcdebug '
 unset CDPATH
 unset git
 setopt=$-
-# set +xv
+set +xv
 set +o posix
 
 die() {
@@ -105,6 +105,7 @@ detect_pkgdirs_top() {
     local calldepth=$(( ${#BASH_SOURCE[@]} - 1 ))
     local topcall=${BASH_SOURCE[${calldepth}]}
     local pkgsdirs_toptest=
+    local d=
 
     # try a smart default for a standard autochk dir
     declare -g pkgdirs_top=$src_root/packaging
@@ -119,12 +120,11 @@ detect_pkgdirs_top() {
     declare -g buildpkg_dir="${buildpkg_dir:-${topcall_dir}}"
 
     # script is real but not a clear directory location
-    d="$buildpkg_dir"
-
-    # top common directory is based on packaging repo common dir ... 
+    # top common_z directory is based on packaging repo common dir ... 
     # correct pkgdirs_top is just below it
-    [ ! -L $d/../../common -a -d $d/../../common ] && d+=/../..
-    [ ! -L $d/../common -a -d $d/../common ] && d+=/..
+    [ ! -L $buildpkg_dir/../common_z -a -d $buildpkg_dir/../common_z ] && d=$buildpkg_dir/..
+    [ ! -L $buildpkg_dir/../../common_z -a -d $buildpkg_dir/../../common_z ] && d=$buildpkg_dir/../..
+    [ ! -L $buildpkg_dir/../../../common_z -a -d $buildpkg_dir/../../common_z ] && d=$buildpkg_dir/../../..
 
     # if called from within common or scripts ... just use "packaging" as top
     [ $d -ef $d/../common ] && d+=/..
@@ -142,7 +142,7 @@ detect_pkgdirs_top() {
             pkg_type=${pkg_type%%/*}
         ;;
        # in case buildpkg dir is above type dir
-       */rpm/|*/deb/|*/sun-pkg/|*/whl/|*/tar/)
+       */rpm/|*/deb/|*/sun-pkg/|*/whl/)
             pkg_type=${buildpkg_dir:$n}
             pkg_type=${pkg_type%/}
             pkg_type=${pkg_type##*/}
@@ -173,6 +173,15 @@ detect_pkgdirs_top() {
 detect_build_dirs() {
     local presets
     local path_buildpkg_dir="$(readlink -e $buildpkg_dir)"
+
+    # dont re-discover if already set
+    declare >&/dev/null -p \
+	 pkg_name \
+	 pkg_type \
+	 pkgconf_dir \
+	 buildpkg_dir \
+	 pkg_bldroot \
+	 repo_name && return;   # already have it all known!
 
     [ -n "$pkg_type" ] || die "cannot determine package type to use upon build"
 
@@ -421,7 +430,7 @@ gen_top_environ() {
 	(*/rpmbuild)
             rm -rf BUILD/$PKG_NAME_VER
 	    ln -sf $(realpath ..) BUILD/$PKG_NAME_VER || die "could not create symlink"
-        # gzip -c < $VERSION_TAR > SOURCES/${PKG_NAME_VER}.tar.gz
+            # gzip -c < $VERSION_TAR > SOURCES/${PKG_NAME_VER}.tar.gz
 	    ;;
 	(*/???build)
 	    # simulate the top directory as the build one...
@@ -550,6 +559,7 @@ do_top_package() {
             build_srcdir="$ctxt"
 
             [ -d $pkgconf_dir ] || die "missing call to gen_pkg_build_config"
+            # erase old one if a distinct dir...
             [ $build_srcdir/$pkgconf_dir/. -ef $build_srcdir/. ] || 
                rm -rf $build_srcdir/$pkgconf_dir
             mv $pkgconf_dir $build_srcdir/. ||
@@ -596,6 +606,7 @@ do_top_package() {
                     $MAKE -f $pkgconf_dir/makefile.build clean || die "failed during $pkgconf_dir/makefile.build clean"
                     $MAKE -f $pkgconf_dir/makefile.build build || die "failed during $pkgconf_dir/makefile.build build"
                     $MAKE -f $pkgconf_dir/makefile.build binary || die "failed during $pkgconf_dir/makefile.build build"
+                    ls 2>/dev/null *.tar.gz | xargs -r mv -fv -t ${PKG_DIR}
                     echo "$pkgconf_dir package(s) from $build_srcdir ---------------------------------------";
                     ;;
             esac
@@ -703,6 +714,7 @@ do_package() {
                     $MAKE -f $pkgconf_dir/makefile.build clean || die "failed during $pkgconf_dir/makefile.build clean"
                     $MAKE -f $pkgconf_dir/makefile.build build || die "failed during $pkgconf_dir/makefile.build build"
                     $MAKE -f $pkgconf_dir/makefile.build binary || die "failed during $pkgconf_dir/makefile.build build"
+                    ls 2>/dev/null *.tar.gz | xargs -r mv -fv -t ${PKG_DIR}
                     echo "$pkgconf_dir package(s) from $build_srcdir ---------------------------------------";
                     ;;
             esac
@@ -762,11 +774,10 @@ set_zmanda_version() {
 # detect missing variables from calling script location
 detect_package_vars() {
     local localpkg_suffix=
+    local pkgdirs_top_top=
 
     # check every time ...
-    if detect_pkgdirs_top; then
-        :
-    else
+    if ! detect_pkgdirs_top; then
         # use a default for pkg_type plus pkgdirs_top
         if [ -z "$pkg_type" -a -x $pkgdirs_top/common/substitute.pl ]; then
             localpkg_suffix=$(cd $src_root; $pkgdirs_top/common/substitute.pl <(echo %%PKG_SUFFIX%%) /dev/stdout);
@@ -778,14 +789,6 @@ detect_package_vars() {
         [ -d $pkgdirs_top/. -a -d $buildpkg_dir ] || exit 1
     fi
 
-    # dont re-discover if already set
-    declare >&/dev/null -p \
-         pkg_name \
-         pkg_type \
-         pkgconf_dir \
-         buildpkg_dir \
-         pkg_bldroot \
-         ||
    detect_build_dirs
 
     if ! declare >&/dev/null -p pkg_name_pkgtime; then
@@ -810,7 +813,7 @@ detect_package_vars() {
       pkgdirs_top
 }
 
-detect_package_vars
+# detect_package_vars
 
 set -${setopt/s}
 # End Build functions
