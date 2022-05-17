@@ -240,7 +240,7 @@ normalize_lo(const sockaddr_union *sa, sockaddr_union *tmp)
 #else
 /* nothing to do if no IPv6 */
 #define unmap_v4mapped(sa, tmp) ((void)tmp, sa)
-#define normalize_lo(sa, tmp) ((void)tmp, (void)sa)
+#define normalize_lo(sa, tmp) ((void)tmp, sa)
 #endif
 
 int
