@@ -10,6 +10,7 @@
 #set -x
 
 selfdir=$(dirname ${BASH_SOURCE[0]})
+src_root=$(git rev-parse --show-toplevel)
 if [ "$(type -t get_yearly_tag)" != "function" ]; then
     . ${selfdir}/build_functions.sh
 fi
@@ -389,8 +390,8 @@ save_version() {
 }
 
 # Fall back to previous build (or dist build?)?
-if ! [ -e .git ]; then
-    [ -f FULL_VERSION -a -f PKG_REV ] && exit 0
+if ! [ -e $src_root/.git ]; then
+    [ -f $src_root/FULL_VERSION -a -f $src_root/PKG_REV ] && exit 0
     echo "Error: $(pwd): No subversion or git info available!"   #### ERROR
     exit 1
 fi
