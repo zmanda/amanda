@@ -14,57 +14,36 @@
 
 selfdir=$(readlink -e ${BASH_SOURCE[0]})
 selfdir=$(dirname ${selfdir})
+src_root=$(git rev-parse --show-toplevel)
 if [ "$(type -t get_yearly_tag)" != "function" ]; then
     . ${selfdir}/build_functions.sh
 fi
 
-[ -x "$(command -v gsed)" ] && eval "sed() { command gsed \"\$@\"; }"
-[ -x "$(command -v gmake)" ] && eval "make() { command gmake \"\$@\"; }"
-[ -x "$(command -v ggrep)" ] && eval "grep() { command ggrep \"\$@\"; }"
-
-sed --version | grep -i 'GNU sed' >/dev/null || exit 1;
-
-
 # Fall back to previous build (or dist build?)?
-if ! [ -e .git ]; then
-    [ -f FULL_VERSION -a -f PKG_REV ] && exit 0
-    echo "Error: $(pwd): No subversion or git info available!"   #### ERROR
-    exit 1
-fi
+[ ! -e $src_root/.git -a -s $src_root/FULL_VERSION -a -s $src_root/PKG_REV ] && 
+   exit 0
+
+[ -e $src_root/.git ] ||
+    die "Error: $(pwd): No subversion or git info available!"   #### ERROR
 
 git remote -v show > vcs_repo.info
 git --no-pager log --max-count=1 >> vcs_repo.info
 
-# call the version...
+# call the version setup
 set_zmanda_version $gitref
-# eval "$(get_version_evalstr $gitref)"
-#printf "$VERSION" > FULL_VERSION
-#printf "$BUILD_VERSION" > BUILD_VERSION
-#printf "$LONG_BRANCH" > LONG_BRANCH
-#printf "$REV" > REV
-#printf "$PKG_REV" > PKG_REV
 
 if [[ "$VERSION_TAR" == /tmp/*/*.tar ]] && [ -f "$VERSION_TAR" ]; then
     rm -rf ${VERSION_TAR%/*}
 fi
 
-echo "git_rev : $REV"
-echo "git_branch : $BRANCH"
-echo "git_long_branch : $LONG_BRANCH"
-
 ## Generate version from repository data.
-if [ -z "${BRANCH}${REV}" ]; then
-    # uhoh, we couldn't set the version!
-    echo "Couldn't set FULL_VERSION or PKG_REV!"   #### ERROR
-    exit 1
-fi
+[ -n "${BRANCH}${REV}" ] ||
+    die "Couldn't set FULL_VERSION or PKG_REV!"   #### ERROR
 
 # Amanda makes it easy to "force" a version string: just set FULL_VERSION
 # *after* running autogen
-echo "..version substitution"
 echo "set version : $VERSION"
-
-# Write out LONG_VERSION for installer build script.
+echo "set branch : $BRANCH"
 echo "set branch (long) : $LONG_BRANCH"
 
 # Write out REV for installer build script.
