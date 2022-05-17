@@ -1,7 +1,6 @@
 #!/bin/bash
 
 DEFINES=
-ODEFINES="${DEFINES[@]}"
 
 buildtype=${1:-both}
 shift
@@ -18,10 +17,7 @@ do_rpm_package() {
     gen_pkg_build_config $buildpkg_dir
     # take the spec/spec.src files and make a tarfile
     gen_pkg_environ
-    [ -s rpmbuild/SOURCES/${PKG_NAME_VER}.tar.gz ] || {
-            echo >&2 "missing rpmbuild/SOURCES/${PKG_NAME_VER}.tar.gz file version=$PKG_NAME_VER in ${PWD}"
-            exit 1
-          }
+    tar -czvf rpmbuild/SOURCES/${PKG_NAME_VER}.tar.gz po/stamp-po
     do_package "$@"
 }
 
@@ -41,13 +37,11 @@ case "$buildtype,$mach" in
         do_rpm_package "amanda.spec" \
               "${DEFINES[@]}" \
               --define "subpkg server"
-
         ;;
 
    client,*) ;&  both,*)
 	do_rpm_package "amanda-client.spec" \
               --define "subpkg client"
-
         ;;
 
    *) echo "ERROR: cannot build combination of $buildtype-$mach" >&2; exit -1 ;;

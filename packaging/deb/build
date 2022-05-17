@@ -7,36 +7,33 @@ shift
 
 # set the var buildpkg_dir as well
 . ./packaging/common/build_functions.sh
-
 . ./packaging/common/set_zmanda_version
+detect_package_vars
 
-BUILDVER=${BUILDVER:-4.0}
+# . ./packaging/common/set_zmanda_version
+
 export PKG_DIR=$(realpath .)
 mach=`uname -m`
 
 do_deb_package() {
     gen_pkg_build_config "$@"
-    #
     gen_top_environ
-    #
-    #
-    #
     do_top_package "${PKG_NAME_VER}"
 }
 
 set -e
 
-case "$buildtype,$mach,$BUILDVER" in
-#   both,x86_64,*)
-#        do_deb_package "$buildpkg_dir/server${BUILDVER}"
-#        do_deb_package "$buildpkg_dir/client${BUILDVER}"
-#        ;;
+case "$buildtype,$mach" in
+   both,*)
+        do_deb_package "$buildpkg_dir/server${BUILDVER}"
+        do_deb_package "$buildpkg_dir/client${BUILDVER}"
+        ;;
 
    server,x86_64,*)
         do_deb_package "$buildpkg_dir/server${BUILDVER}"
         ;;
 
-   client,*,*) ;&  both,*,*)
+   client,*,*)
         do_deb_package "$buildpkg_dir/client${BUILDVER}"
         ;;
 
