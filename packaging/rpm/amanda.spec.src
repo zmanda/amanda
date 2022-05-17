@@ -514,14 +514,14 @@ export GCC_TARGET=$(gcc -dumpmachine | tr -d '\n')
         --with-assertions \
         --with-debugging=%{LOGDIR} \
         --with-failure-code \
-        \
-	--with-libcurl=%{PREFIX} \
+        --with-gnuplot \
+	--with-libcurl \
         --enable-s3-device \
         --disable-installperms \
 	--disable-syntax-checks \
         --enable-manpage-build \
 	--enable-rpath        \
-        --with-xsltproc=$(command -v xsltproc) \
+        --with-xsltproc       \
         --${systemd_with}-systemd \
 
 make -j`nproc`
