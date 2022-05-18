@@ -22,19 +22,19 @@ set -e
 
 case "$buildtype" in
    both)
-        do_deb_package "$buildpkg_dir/server${BUILDVER}"
-        do_deb_package "$buildpkg_dir/client${BUILDVER}"
+        do_deb_package "$buildpkg_dir/server"
+        do_deb_package "$buildpkg_dir/client"
         ;;
 
    server)
-        do_deb_package "$buildpkg_dir/server${BUILDVER}"
+        do_deb_package "$buildpkg_dir/server"
         ;;
 
    client)
-        do_deb_package "$buildpkg_dir/client${BUILDVER}"
+        do_deb_package "$buildpkg_dir/client"
         ;;
 
-   *) echo "ERROR: cannot build combination of $buildtype-$mach-${BUILDVER:-3.6}" >&2; exit -1 ;;
+   *) echo "ERROR: cannot build combination of $buildtype" >&2; exit -1 ;;
 esac
 
 true
