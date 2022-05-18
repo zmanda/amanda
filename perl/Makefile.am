@@ -725,11 +725,9 @@ EXTRA_DIST += Amanda/Application/Zfs.pm
 ../genversion.h Amanda/Constants.pm.in: $(top_builddir)/config.status Amanda/Constants.pm.in.src
 	-rm -f ../common-src/genversion.h ../common-src/genversion.h.new
 	echo '#define CC "$(CC)"' > ../common-src/genversion.h.new
-	#
 	echo '#define BUILT_DATE "$(GENDATE)"' >> ../common-src/genversion.h.new
 	echo '#define BUILT_MACH "@build@"' >> ../common-src/genversion.h.new
 	mv ../common-src/genversion.h.new ../common-src/genversion.h
-	#
 	sed 's/^\$$BUILT_DATE.*$$/\$$BUILT_DATE = "$(GENDATE)";/' \
 	      $(srcdir)/Amanda/Constants.pm.in.src \
 	      > $(srcdir)/Amanda/Constants.pm.in
