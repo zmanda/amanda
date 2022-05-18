@@ -101,6 +101,27 @@ SWIG_OPTIONS=-perl5 -proxy -DSWIG_TYPE_TABLE=SWIG_TYPES_Amanda -I$(srcdir)
 %.i : %.swg $(AMGLUE_SWG)
 	$(SWIG) $(SWIG_OPTIONS) -E $(top_srcdir)/perl/$< >$@
 
+PerlLibdir = $(amperldir)
+PerlLib_DATA = JSON.pm
+
+PerlJSONLibdir = $(amperldir)/JSON
+PerlJSONLib_DATA = \
+    JSON/MaybeXS.pm		\
+    JSON/PP.pm
+
+#    JSON/backportPP.pm
+
+PerlJSONPPLibdir = $(amperldir)/JSON/PP
+PerlJSONPPLib_DATA = \
+    JSON/PP/Boolean.pm
+
+#PerlJSONbackportPPLibdir = $(amperldir)/JSON/backportPP
+#PerlJSONbackportPPLib_DATA = \
+#    JSON/backportPP/Boolean.pm	\
+#    JSON/backportPP/Compat5005.pm  \
+#    JSON/backportPP/Compat5006.pm
+#
+
 ###
 ### Packages
 ###
