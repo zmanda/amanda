@@ -1,0 +1,16 @@
+amanda-backup-server: binary-or-shlib-defines-rpath usr/lib/amanda/*
+amanda-backup-server: binary-or-shlib-defines-rpath usr/libexec/amanda/*
+amanda-backup-server: binary-or-shlib-defines-rpath usr/sbin/am*
+amanda-backup-server: binary-without-manpage amoldrecover
+amanda-backup-server: manpage-has-bad-whatis-entry
+amanda-backup-server: file-in-unusual-dir usr/libexec/amanda/*
+amanda-backup-server: non-standard-dir-in-usr usr/libexec
+amanda-backup-server: non-standard-dir-perm var/lib/amanda/gnutar-lists
+amanda-backup-server: non-standard-dir-perm var/log/amanda 
+amanda-backup-server: package-name-doesnt-match-sonames
+amanda-backup-server: setuid-binary usr/libexec/amanda/calcsize 
+amanda-backup-server: setuid-binary usr/libexec/amanda/dumper 
+amanda-backup-server: setuid-binary usr/libexec/amanda/killgrp 
+amanda-backup-server: setuid-binary usr/libexec/amanda/planner 
+amanda-backup-server: setuid-binary usr/libexec/amanda/rundump 
+amanda-backup-server: setuid-binary usr/libexec/amanda/runtar

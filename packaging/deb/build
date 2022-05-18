@@ -1,7 +1,5 @@
 #!/bin/bash
 
-DEFINES=
-
 buildtype=${1:-both}
 shift
 
@@ -13,7 +11,6 @@ detect_package_vars
 # . ./packaging/common/set_zmanda_version
 
 export PKG_DIR=$(realpath .)
-mach=`uname -m`
 
 do_deb_package() {
     gen_pkg_build_config "$@"
@@ -23,17 +20,17 @@ do_deb_package() {
 
 set -e
 
-case "$buildtype,$mach" in
-   both,*)
+case "$buildtype" in
+   both)
         do_deb_package "$buildpkg_dir/server${BUILDVER}"
         do_deb_package "$buildpkg_dir/client${BUILDVER}"
         ;;
 
-   server,x86_64,*)
+   server)
         do_deb_package "$buildpkg_dir/server${BUILDVER}"
         ;;
 
-   client,*,*)
+   client)
         do_deb_package "$buildpkg_dir/client${BUILDVER}"
         ;;
 
