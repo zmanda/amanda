@@ -112,9 +112,9 @@ define CONFIG_FLAGS_COMMON
 --with-debugging=$(LOGDIR) \
 --enable-manpage-build \
 --disable-syntax-checks \
---disable-installperms \
 --with-xsltproc \
---disable-static
+--disable-static \
+--disable-installperms
 endef
 # NOTE: disable-installperms or install conflicts with chown/chmod later
 
@@ -122,8 +122,8 @@ endef
 # subpackage paths
 #
 # used to narrow the dh_ tools focus
-dhpkg           =  --package=amanda-backup-client
-#r=$(SRCDIR)/debian/tmp
+dhpkg          =   --package=amanda-backup-client
+# r=$(SRCDIR)/debian/tmp
 # buildroot_server  =  $(SRCDIR)/debian/amanda-backup-server
 buildroot      =   $(SRCDIR)/debian/amanda-backup-client
 devel          =   $(SRCDIR)/debian/amanda-backup-client-devel
@@ -133,6 +133,15 @@ log            =   $(SRCDIR)/debian/dpkg.log
 build: build-stamp
 build-stamp:
 	dh_testdir
+	( \
+	    PYTHON=$$(command -v python3); \
+	    \
+	    CFLAGS="-g -pipe -O2 -std=c11"
+	    LDFLAGS="-Wl,--disable-new-dtags -Wl,-rpath -Wl,$(AMLIBDIR)"'; \
+	    PKG_CONFIG_PATH+=""; \
+	    declare -p PYTHON CFLAGS LDFLAGS PKG_CONFIG_PATH >> ./build-env.sh \
+	)
+	
 	# annoying.. but it forces inclusion of all the needed perl
 	sed -i -e 's,^if *WANT_SERVER,if WANT_CLIENT,' perl/Makefile.am
 	
@@ -144,7 +153,7 @@ build-stamp:
 	echo -------------------
 	
 	# no need for LDPATH, PATH (for perl/python)
-	set -x; \
+	set -x; . ./build-env.sh; \
 	./configure \
 		$(CONFIG_FLAGS_COMMON) \
 		--without-server \
@@ -209,7 +218,7 @@ binary-install-client: build-stamp
 	# needed directories
 	##################
 	# install -D -m 644 /dev/null \
-        #          $(buildroot)$(SYS_LDSOCONFDIR)/amanda.conf
+        #         $(buildroot)$(SYS_LDSOCONFDIR)/amanda.conf
 	install -D -m 644 system-scripts/amanda-logrotate \
                  $(buildroot)$(SYS_LOGROTATEDIR)/amanda
 	
@@ -247,11 +256,11 @@ binary-install-client: build-stamp
 perm-install-client: binary-install
 	dh_testroot
 	dh_fixperms -v
-
+	
 	install -o root -g root -m 0644 debian/lintian \
-	    $(buildroot)/usr/share/lintian/overrides/amanda-backup-client
+            $(buildroot)/usr/share/lintian/overrides/amanda-backup-client
 	chown -R root:root $(buildroot)$(AMLIBEXECDIR)
-
+        
 	chown -R $(AMANDAUSER):$(AMANDAGROUP) \
 	    $(buildroot)$(AMANDAHOMEDIR) \
 	    $(buildroot)$(SYSCONFDIR)/amanda \
@@ -270,7 +279,7 @@ perm-install-client: binary-install
 	    $(buildroot)$(AMLIBEXECDIR)/killpgrp \
 	    $(buildroot)$(AMLIBEXECDIR)/rundump \
 	    $(buildroot)$(AMLIBEXECDIR)/runtar
-
+	
 	chmod -R u=rwX,g=rX,o=rX $(buildroot)$(AMLIBEXECDIR) 
 
 	chmod 0755 \
@@ -461,17 +470,17 @@ perm-install-devel: binary-install
 binary-install: binary-install-stamp
 binary-install-stamp:
 	    $(MAKE) -f $(THIS_MAKEFILE) \
-               binary-install-client \
-               binary-install-devel 
+                    binary-install-client \
+                    binary-install-devel
 	#
 	dh_installdocs -v
 	#
 	#dh_installexamples -v $(buildroot)$(AMANDAHOMEDIR)/example
 	dh_installchangelogs -v ChangeLog
-	# 
+	#
 
 	dh_strip --dbg-package=amanda-backup-client-dbg
-
+	
 	dh_compress
 	# need external dependencies
 	LD_PRELOAD= /usr/bin/touch $@
@@ -484,8 +493,8 @@ final-install:
 	#    if perms were remembered from these chmod/chown calls
 	env -- $(MAKE) -f $(THIS_MAKEFILE) \
 	   GCC_TARGET=$(GCC_TARGET) \
-              perm-install-client \
-              perm-install-devel
+                perm-install-client \
+                perm-install-devel
 	#
 	dh_makeshlibs -v
 	dh_shlibdeps $(dhpkg) -v \
