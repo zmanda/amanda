@@ -2492,11 +2492,11 @@ perform_request(S3Handle *hdl,
         }
 
         // set upload body buffer.. [may be zero]
+#if LIBCURL_VERSION_NUM >= 0x073e00
         if (curlopt_setsizeopt)
         {
             xferbytes_t buffsize;
 
-#if LIBCURL_VERSION_NUM >= 0x073e00
             buffsize = max(hdl->max_send_speed*5,CURL_MAX_READ_SIZE);
             if (request_body_size)
                 buffsize = min(request_body_size,buffsize);
@@ -2504,8 +2504,8 @@ perform_request(S3Handle *hdl,
 
             if ((curl_code=curl_easy_setopt(hdl->curl, CURLOPT_UPLOAD_BUFFERSIZE, buffsize)))
                 goto curl_error;
-#endif
         }
+#endif
 
 #if LIBCURL_VERSION_NUM >= 0x073e00
         if (! curlopt_setsizeopt && write_data && size_func)
@@ -2797,15 +2797,26 @@ s3_internal_write_func(void *ptr, size_t size, size_t nmemb, void * stream)
     if (!hdl->last_response_body) 
     {
 	curl_off_t content_len = MAX_ERROR_RESPONSE_LEN;
+	curl_off_t content_len_dbl = (float) MAX_ERROR_RESPONSE_LEN;
+
+#if LIBCURL_VERSION_NUM >= 0x073700
 
 	// NOTE: only as an upper limit.. as transfer-encoding may contract [or expand?] actual bytes?
 	(void) curl_easy_getinfo(hdl->curl, CURLINFO_CONTENT_LENGTH_DOWNLOAD_T, &content_len);
+        (void) content_len_dbl;
+#else
+
+	// NOTE: only as an upper limit.. as transfer-encoding may contract [or expand?] actual bytes?
+	(void) curl_easy_getinfo(hdl->curl, CURLINFO_CONTENT_LENGTH_DOWNLOAD, &content_len_dbl);
+        content_len = content_len_dbl;
+#endif
 
         if (content_len < 0)
             content_len = MAX_ERROR_RESPONSE_LEN; // be gracious in case its needed
 
 	if (hdl->transfer_encoding && hdl->verbose)
-	   g_debug("%s: [%p] [%p] transfer encoding may overestimate length=%#lx",__FUNCTION__, &data->dup_buffer, data->write_data, content_len);
+	   g_debug("%s: [%p] [%p] transfer encoding may overestimate length=%#lx",__FUNCTION__, 
+                 &data->dup_buffer, data->write_data, (curl_off_t) content_len);
 
 	// may set response_code.  will set data->bodytype
         s3_internal_header_func(NULL, 0, 0, data);
@@ -2814,7 +2825,7 @@ s3_internal_write_func(void *ptr, size_t size, size_t nmemb, void * stream)
 	if (data->bodytype == CONTENT_BINARY)
 	    s3_buffer_load_string(&data->dup_buffer, g_strdup("[binary/octet-string]"), hdl->verbose);
 	else
-	    s3_buffer_init(&data->dup_buffer, min(MAX_ERROR_RESPONSE_LEN,content_len), hdl->verbose);
+	    s3_buffer_init(&data->dup_buffer, min(MAX_ERROR_RESPONSE_LEN,(curl_off_t) content_len), hdl->verbose);
 
 	hdl->last_response_body = s3_buffer_data_func(s3buf_dup);
 	hdl->last_response_body_size = s3_buffer_lsize_func(s3buf_dup);
@@ -3380,8 +3391,16 @@ s3_new_curl(
             curl_easy_setopt(hdl->curl, CURLOPT_UNRESTRICTED_AUTH, 1);
             curl_easy_setopt(hdl->curl, CURLOPT_MAXREDIRS, 5);
             curl_easy_setopt(hdl->curl, CURLOPT_POSTREDIR, CURL_REDIR_POST_ALL);
-            curl_easy_setopt(hdl->curl, CURLOPT_HTTP_VERSION,
-					CURL_HTTP_VERSION_2TLS);
+#if LIBCURL_VERSION_NUM >= 0x072f00
+            // default is the same later on anyway...
+            curl_easy_setopt(hdl->curl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_2TLS);
+#elif LIBCURL_VERSION_NUM >= 0x072100
+            // default is the same later on anyway...
+            curl_easy_setopt(hdl->curl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_2_0);
+#else
+            // default is the same later on anyway...
+            curl_easy_setopt(hdl->curl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
+#endif
             if (hdl->username)
 		 curl_easy_setopt(hdl->curl, CURLOPT_USERNAME, hdl->username);
             if (hdl->password)
