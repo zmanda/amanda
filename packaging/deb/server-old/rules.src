@@ -145,7 +145,7 @@ build-stamp:
 	)
 
 	# annoying.. but it forces inclusion of all the needed perl
-	sed -i -e 's,^if *WANT_CLIENT,if WANT_SERVER,' perl/Makefile.am
+# 	sed -i -e 's,^if *WANT_CLIENT,if WANT_SERVER,' perl/Makefile.am
 
 	# all must be done if configure is not set already
 	[ -f ./configure ] || ./autogen

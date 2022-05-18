@@ -193,7 +193,7 @@ build-stamp:
         #   export LDFLAGS="-Wl,--disable-new-dtags -Wl,-rpath -Wl,$(AMLIBDIR)"'
 	
 	# annoying.. but it forces inclusion of all the needed perl
-	sed -i -e 's,^if *WANT_SERVER,if WANT_CLIENT,' perl/Makefile.am
+# 	sed -i -e 's,^if *WANT_SERVER,if WANT_CLIENT,' perl/Makefile.am
 	
 	# all must be done if configure is not set already
 	[ -f ./configure ] || ./autogen
