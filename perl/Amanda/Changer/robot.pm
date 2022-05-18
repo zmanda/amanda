@@ -2193,6 +2193,9 @@ sub _get_state {
 		if (defined $label and defined $tl_label and
 		    $label ne $tl_label) {
 		    debug("MISMATCH label for barcode  state ($label)   tapelist ($tl_label) for barcode $info->{'barcode'}");
+                    return $self->make_error("failed", $params{'res_cb'},
+		           reason => "device",
+		           message => "MISMATCH drive label for barcode  state ($label)   tapelist ($tl_label) for barcode $info->{'barcode'}");
 		}
 		if (!defined $label && defined $tl_label) {
 		    if (defined $info->{'state'} and
@@ -2347,6 +2350,9 @@ sub _get_state {
 
 		if (defined $label and defined $tl_label) {
 		    debug("WARNING: MISMATCH drive label for barcode  state ($label)   tapelist ($tl_label) for barcode $info->{'barcode'}");
+                    return $self->make_error("failed", $params{'res_cb'},
+		           reason => "device",
+		           message => "MISMATCH drive label for barcode  state ($label)   tapelist ($tl_label) for barcode $info->{'barcode'}");
 		}
 		if (!defined $label && defined $tl_label) {
 		    $label = $tl_label;
