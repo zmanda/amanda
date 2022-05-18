@@ -230,8 +230,8 @@ build-stamp:
 	   CFLAGS="-g -pipe -O2 -std=c11"; \
 	   LDFLAGS=""; \
 	   PKG_CONFIG_PATH+=""; \
-	   declare -p PYTHON CFLAGS LDFLAGS PKG_CONFIG_PATH >> ./build-env.sh \
-	   declare -p PATH >> ./build-env.sh \
+	   declare -p PYTHON CFLAGS LDFLAGS PKG_CONFIG_PATH >> ./build-env.sh; \
+	   declare -p PATH >> ./build-env.sh; \
 	)
 	
 	# annoying.. but it forces inclusion of all the needed perl
