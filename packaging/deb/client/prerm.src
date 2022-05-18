@@ -20,19 +20,19 @@ bash -c 'read -t10 delay < <(/usr/sbin/amcleanup -vk  --note "second critical sh
 set +e
 ################################## halt old services ###################################
 ( set -x; systemctl -q disable --no-reload \
-       __sub-amanda-client.socket ) || true
+       amanda-client.socket ) || true
 ( set -x; systemctl -q stop \
-       __sub-amanda-client.socket ) || true
+       amanda-client.socket ) || true
 
 for i in {0..9}; do
    systemctl is-active --quiet \
-       __sub-amanda-client.socket || break
+       amanda-client.socket || break
    sleep 1;
 done
 
 ( set -x; systemctl -q reset-failed ) || true
 
-units="$(systemctl -a --no-legend --no-pager list-units '__sub-amanda-client@*' ) "
+units="$(systemctl -a --no-legend --no-pager list-units 'amanda-client@*' ) "
 units="$(sed <<<"$units" -e 's,^[^a-z_]*,,' -e 's, .*,,' )"
 xargs -tr systemctl stop <<<"$units" || true
 

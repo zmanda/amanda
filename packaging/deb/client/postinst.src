@@ -14,9 +14,9 @@
 
 ################################## halt old services ###################################
 ( set -x; systemctl -q disable --no-reload \
-       __sub-amanda-client.socket 2>/dev/null ) || true
+       amanda-client.socket 2>/dev/null ) || true
 ( set -x; systemctl -q stop \
-       __sub-amanda-client.socket 2>/dev/null ) || true
+       amanda-client.socket 2>/dev/null ) || true
 ################################## halt old services ###################################
 
 
