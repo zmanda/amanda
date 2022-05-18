@@ -37,6 +37,8 @@ SRCDIR := $(realpath $(PWD))
 
 AMVER=%%VERSION%%
 
+export GNU_TRIPLET ?= $(shell $(SHELL) config/config.guess)
+
 AMPREFIX=%%INSTALL_TOPDIR%%
 AMANDAHOMEDIR=%%AMANDAHOMEDIR%%
 BUILD_TOPDIR=$(SRCDIR)
@@ -55,7 +57,6 @@ ifeq ($(FAKEROOTKEY),)
 GCC_TARGET := $(shell $(CC) -dumpmachine)
 GCC_TARGET := $(strip $(GCC_TARGET))
 endif
-FAKEROOT_PATH=/opt/csw/gnu:/opt/csw/bin
 
 LIBARCHDIR=lib
 BINARCHDIR=bin
@@ -68,7 +69,7 @@ endif
 
 CSWLIBDIR=/opt/csw/$(LIBARCHDIR)
 ROOTLIBDIR=/usr/lib
-export PKG_CONFIG_PATH="$(SRCDIR)/sun-pkg:$(ROOTLIBDIR)/pkgconfig:$(CSWLIBDIR)/pkgconfig"
+export PKG_CONFIG_PATH="$(SRCDIR)/PKGBUILD:$(ROOTLIBDIR)/pkgconfig:$(CSWLIBDIR)/pkgconfig"
 
 #
 # - gnu-only bin dirs (2.10 and 2.11)
@@ -92,16 +93,30 @@ PATH_DIRS = \
     /usr/s$(BINARCHDIR) /usr/s$(BIN) \
     /usr/ccs/$(BINARCHDIR) /usr/ccs/$(BIN)
 
+# SHARED_DIRS = \
+#     opt var usr \
+#     usr/sbin \
+#     usr/share usr/share/man \
+#     usr/share/man/man[0-9] \
+#     var/svc var/svc/manifest var/svc/manifest/network \
+#     var/log
+# usr/share usr/share/man
+# usr/share/man/man[0-9]
+
+
 SHARED_DIRS = \
-    opt var usr \
-    usr/sbin \
-    usr/share usr/share/man \
-    usr/share/man/man[0-9] \
-    var/svc var/svc/manifest var/svc/manifest/network \
-    var/log
+    /opt \
+    $(LOCALSTATEDIR) \
+    /usr \
+    $(SBINDIR) \
+    $(LOCALSTATEDIR)/svc \
+    $(LOCALSTATEDIR)/svc/manifest \
+    $(LOCALSTATEDIR)/svc/manifest/network
+
 
 BUILD_PATH = $(shell IFS=:; set -- $(PATH_DIRS); echo "$$*")
 
+FAKEROOT_PATH=/opt/csw/gnu:/opt/csw/bin
 export PATH=$(BUILD_PATH)
 
 XSLTPROC_PATH   = $(wildcard /opt/csw/bin/xsltproc)
@@ -216,10 +231,10 @@ endef
 #
 # used to narrow the dh_ tools focus
 #dhpkg              =  --package=amanda-backup-client
-# r=$(SRCDIR)/sun-pkg/tmp
-# buildroot_server  =  $(SRCDIR)/sun-pkg/amanda-backup-server
-buildroot           =  $(SRCDIR)/sun-pkg/amanda-backup-client
-devel               =  $(SRCDIR)/sun-pkg/amanda-backup-client-devel
+# r=$(SRCDIR)/PKGBUILD/tmp
+# buildroot_server  =  $(SRCDIR)/PKGBUILD/amanda-backup-server
+buildroot           =  $(SRCDIR)/PKGBUILD/amanda-backup-client
+devel               =  $(SRCDIR)/PKGBUILD/amanda-backup-client-devel
 
 build: build-stamp
 build-stamp:
@@ -304,7 +319,7 @@ binary-install-client: build-stamp
 	#
 	# write release file with version
 	echo "Amanda Community Edition - version $(AMVER)" \
-                        > $(buildroot)$(AMANDAHOMEDIR)/amanda-release
+			> $(buildroot)$(AMANDAHOMEDIR)/amanda-release
 	[ -s $(SRCDIR)/LONG_BRANCH ] && echo "ref=$$(cat $(SRCDIR)/LONG_BRANCH)" >> $(buildroot)/$(AMANDAHOMEDIR)/amanda-release
 	
 	##################
@@ -336,8 +351,8 @@ perm-install-client: binary-install
 	# dh_testroot
 	# dh_fixperms -v
 	
-        # NOTE: USE SINGLE LINES FOR CHOWN.  MUST ACCOMODATE OLDER CHOWN WITH FAKEROOT SETUP
-	# install -o root -g root -m 0644 sun-pkg/lintian \
+	# NOTE: USE SINGLE LINES FOR CHOWN.  MUST ACCOMODATE OLDER CHOWN WITH FAKEROOT SETUP
+	# install -o root -g root -m 0644 PKGBUILD/lintian \
 	# 	$(buildroot)/usr/share/lintian/overrides/amanda-backup-client
 	chown -R root:root $(buildroot)$(AMLIBEXECDIR)
 
@@ -359,9 +374,9 @@ perm-install-client: binary-install
 	chown root:$(AMANDACLIGROUP) $(buildroot)$(AMLIBEXECDIR)/killpgrp
 	chown root:$(AMANDACLIGROUP) $(buildroot)$(AMLIBEXECDIR)/rundump
 	chown root:$(AMANDACLIGROUP) $(buildroot)$(AMLIBEXECDIR)/runtar
-
+	
 	chmod -R u=rwX,g=rX,o=rX $(buildroot)$(AMLIBEXECDIR) 
-
+	
 	chmod 0755 \
            $(buildroot)$(AMLIBEXECDIR)/*
 	chmod 0755 $(buildroot)$(AMLIBEXECDIR)/application/*
@@ -560,9 +575,9 @@ binary-install-stamp:
 	LD_PRELOAD= \
 	LD_LIBRARY_PATH= \
 	    $(MAKE) -f $(THIS_MAKEFILE) \
-                PATH=$(BUILD_PATH) \
-	        binary-install-client \
-	        binary-install-devel
+		PATH=$(BUILD_PATH) \
+		binary-install-client \
+		binary-install-devel
 	#
 	# dh_installdocs -v
 	#
@@ -575,6 +590,7 @@ binary-install-stamp:
 	#dh_compress
 	# need external dependencies
 	LD_PRELOAD= /usr/bin/touch $@
+
 
 ifdef BUILDROOT 
 
@@ -610,6 +626,7 @@ create_p5m: $(BUILDROOT).p5p
 	pkgrecv -s $*.repo -a -d $@ \*
 endif
 
+
 #
 # bottleneck after completed all permissions resets
 #
@@ -620,8 +637,8 @@ final-install:
 	   PATH=$(FAKEROOT_PATH) \
 	   SHELL=/opt/csw/bin/bash \
 	   GCC_TARGET=$(GCC_TARGET) \
-	        perm-install-devel \
-	        perm-install-client
+		perm-install-devel \
+		perm-install-client
 	#
 	# dh_makeshlibs -v
 	# dh_shlibdeps $(dhpkg) -v \
@@ -635,14 +652,14 @@ final-install:
 	# dh_md5sums
 	# dh_builddeb
 
-	cd sun-pkg; [ -f depend ] || { [ -f depend-$(GNU_TRIPLET) ] && cp -f depend-$(GNU_TRIPLET) depend; }
+	cd PKGBUILD; [ -f depend ] || { [ -f depend-$(GNU_TRIPLET) ] && cp -f depend-$(GNU_TRIPLET) depend; }
 	#
-	$(MAKE) -f $(THIS_MAKEFILE) -C sun-pkg BUILDROOT=$(buildroot) create_pkg
-	$(MAKE) -f $(THIS_MAKEFILE) -C sun-pkg BUILDROOT=$(devel) create_pkg
-	[ ! -x /bin/pkg ] || $(MAKE) -f $(THIS_MAKEFILE) -C sun-pkg BUILDROOT=$(buildroot) create_p5m
-	[ ! -x /bin/pkg ] || $(MAKE) -f $(THIS_MAKEFILE) -C sun-pkg BUILDROOT=$(devel) create_p5m
-	for i in $$(ls 2>/dev/null sun-pkg/*.pkg sun-pkg/*.p5p ); do mv $$i $${i/./-$(AMVER)-$(GNU_TRIPLET).}; done
-	{ ls 2>/dev/null sun-pkg/*.pkg sun-pkg/*.p5p | xargs mv -t "$(SRCDIR)"; } || true
+	$(MAKE) -f $(THIS_MAKEFILE) -C PKGBUILD BUILDROOT=$(buildroot) create_pkg
+	$(MAKE) -f $(THIS_MAKEFILE) -C PKGBUILD BUILDROOT=$(devel) create_pkg
+	[ ! -x /bin/pkg ] || $(MAKE) -f $(THIS_MAKEFILE) -C PKGBUILD BUILDROOT=$(buildroot) create_p5m
+	[ ! -x /bin/pkg ] || $(MAKE) -f $(THIS_MAKEFILE) -C PKGBUILD BUILDROOT=$(devel) create_p5m
+	for i in $$(ls 2>/dev/null PKGBUILD/*.pkg PKGBUILD/*.p5p ); do mv $$i $${i/./-$(AMVER)-$(GNU_TRIPLET).}; done
+	{ ls 2>/dev/null PKGBUILD/*.pkg PKGBUILD/*.p5p | xargs mv -t "$(SRCDIR)"; } || true
 
 clean:
 	# dh_testdir
