@@ -33,7 +33,7 @@ check_user_group "%%AMANDAGROUP%%" ||
    add_group "%%AMANDAGROUP%%"
 
 systemctl -q disable --no-reload \
-       __sub-amanda-client.socket 2>/dev/null || true
+       amanda-client.socket 2>/dev/null || true
 
 # for upgrade or for install... shut it all down for preinstall
 xargs -r     systemctl -q stop <<<"${_my_systemd_units}" 2>/dev/null || true

@@ -171,7 +171,7 @@ fi
 #rm -f /etc/xinetd.d/zmrecover
 # systemctl reload xinetd 2>/dev/null || true  # if it exists?
 
-# port="$(grep -m1 '^ListenStream *= *[0-9]\+$' /usr/lib/systemd/system/__sub-amanda-client.socket)"
+# port="$(grep -m1 '^ListenStream *= *[0-9]\+$' /usr/lib/systemd/system/amanda-client.socket)"
 # port="${port##*=}"
 # port="$(printf %%04x $port)"
 
@@ -187,7 +187,7 @@ fi
 #
 # systemd setup
 #
-# systemctl enable /usr/lib/systemd/system/__sub-amanda-client.*
+# systemctl enable /usr/lib/systemd/system/amanda-client.*
 # (no more units)
 # (no more units)
 # (no more units)

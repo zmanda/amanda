@@ -38,9 +38,9 @@ AMANDATES=%%AMANDAHOMEDIR%%/amandates
 ################################## halt old services ###################################
 backup_smf amandaclient   # for Solaris
 #( set -x; systemctl -q disable --no-reload \
-#       __sub-amanda-client.socket 2>/dev/null ) || true
+#       amanda-client.socket 2>/dev/null ) || true
 #( set -x; systemctl -q stop \
-#       __sub-amanda-client.socket 2>/dev/null ) || true
+#       amanda-client.socket 2>/dev/null ) || true
 ################################## halt old services ###################################
 
 # copy forward older backup-sets (keeping same group ideally)
@@ -85,13 +85,13 @@ add_service_ports
 ##########################################
 install_smf amandaclient;  # for Solaris
 #units=(\
-#       __sub-amanda-client.socket)
+#       amanda-client.socket)
 #units=(${units[@]/#//usr/lib/systemd/system/})
 #( set -x; systemctl enable "${units[@]}" )
 #
-#shutdown_xinetd_socket __sub-amanda-client.socket
+#shutdown_xinetd_socket amanda-client.socket
 #
-#( set -x; systemctl restart __sub-amanda-client.socket )
+#( set -x; systemctl restart amanda-client.socket )
 ##########################################
 
 logger "Amanda Client installation complete."
