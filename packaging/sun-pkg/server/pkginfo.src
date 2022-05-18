@@ -11,7 +11,7 @@ INTONLY=1
 NAME="Amanda Backup Server from Zmanda"
 DESC="Amanda is the leading Open-Source Backup and Archiving software.
 
-This package contains the Amanda client and server.
+This package contains the Amanda server and server.
 The amanda-backup_server package needs to be installed on every
 server system.
 

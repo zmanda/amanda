@@ -2,8 +2,8 @@ P SUNWcslr              SUNWcslr Core Solaris Libraries (Root)
 P SUNWlibmsr            SUNWcslr Core Solaris Libraries (Root)
 P SUNWcsu               Core Solaris (usr)
 P SUNWsshcu             SSH Common (usr)
-P SUNWesu               Extended System Utilities
 P SUNWgzip              The GNU Zip (gzip) compression utility
+P SUNWesu               Extended System Utilities
 P SUNWgtar              gtar - GNU tape archiver
 P SUNWgnome-base-libs   GNOME base GUI libraries - platform dependent files, /usr filesystem
 P SUNWflexruntime       Flex Lexer (Runtime Libraries)
