@@ -20,25 +20,25 @@ bash -c 'read -t10 delay < <(/usr/sbin/amcleanup -vk  --note "second critical sh
 set +e
 ################################## halt old services ###################################
 ( set -x; systemctl -q disable --no-reload \
-       __sub-amanda-server.socket \
-       __sub-amanda-lserver-unix.socket \
-       __sub-amanda-rest-server.service ) || true
+       amanda-server.socket \
+       amanda-lserver-unix.socket \
+       amanda-rest-server.service ) || true
 ( set -x; systemctl -q stop \
-       __sub-amanda-server.socket \
-       __sub-amanda-lserver-unix.socket \
-       __sub-amanda-rest-server.service ) || true
+       amanda-server.socket \
+       amanda-lserver-unix.socket \
+       amanda-rest-server.service ) || true
 
 for i in {0..9}; do
    systemctl is-active --quiet \
-       __sub-amanda-server.socket \
-       __sub-amanda-lserver-unix.socket \
-       __sub-amanda-rest-server.service || break
+       amanda-server.socket \
+       amanda-lserver-unix.socket \
+       amanda-rest-server.service || break
    sleep 1;
 done
 
 ( set -x; systemctl -q reset-failed ) || true
 
-units="$(systemctl -a --no-legend --no-pager list-units '__sub-amanda-lserver-unix@*' '__sub-amanda-server@*' ) "
+units="$(systemctl -a --no-legend --no-pager list-units 'amanda-lserver-unix@*' 'amanda-server@*' ) "
 units="$(sed <<<"$units" -e 's,^[^a-z_]*,,' -e 's, .*,,' )"
 xargs -tr systemctl stop <<<"$units" || true
 
