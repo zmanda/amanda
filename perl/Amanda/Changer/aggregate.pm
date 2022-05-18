@@ -106,7 +106,7 @@ sub new {
     if (!defined $state_filename) {
 	$state_filename = $Amanda::Paths::CONFIG_DIR . '/' . $config->{'name'} . ".state";
     }
-    debug("chg-aggragte: Using statefile '$state_filename'");
+    debug("chg-aggregate: Using statefile '$state_filename'");
 
     my $self = {
 	config => $config,

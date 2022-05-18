@@ -684,7 +684,7 @@ write_random_to_device(guint32 seed, size_t length, Device *device) {
 	size_t to_write = min(block_size, length);
 
 	simpleprng_fill_buffer(&prng, buf, to_write);
-	if (device_write_block(device, (guint)block_size, buf) != WRITE_SUCCEED) {
+	if (device_write_block(device, (guint)to_write, buf) != WRITE_SUCCEED) {
 	    g_free(buf);
 	    return FALSE;
 	}
