@@ -20,8 +20,8 @@ SRCDIR := $(realpath $(PWD))
 # dh_testdir
 # dh_testroot
 # dh_clean -d -v  # build dirs only
-# dh_prep --package=amanda-backup-client
-# dh_installdirs -v --package=amanda-backup-client
+# dh_prep --package=amanda-backup-server
+# dh_installdirs -v --package=amanda-backup-server
 # dh_installdocs -v
 # dh_installchangelogs -v ChangeLog
 # dh_install -v --list-missing
@@ -154,7 +154,7 @@ CONFIG_FILES = \
     $(AMANDAHOMEDIR)/.profile \
     $(AMANDAHOMEDIR)/.ssh/.* \
     $(AMANDAHOMEDIR)/amandates \
-    $(AMCONFDIR)/amanda-client.conf \
+    $(AMCONFDIR)/amanda-server.conf \
     $(AMCONFDIR)/amanda-security.conf \
     $(AMCONFDIR)/amanda.conf \
     $(SYSCONFDIR)/amanda-security.conf
@@ -229,11 +229,11 @@ endef
 # subpackage paths
 #
 # used to narrow the dh_ tools focus
-#dhpkg              =  --package=amanda-backup-client
+#dhpkg              =  --package=amanda-backup-server
 # r=$(SRCDIR)/PKGBUILD/tmp
-# buildroot_server  =  $(SRCDIR)/PKGBUILD/amanda-backup-server
-buildroot           =  $(SRCDIR)/PKGBUILD/amanda-backup-client
-devel               =  $(SRCDIR)/PKGBUILD/amanda-backup-client-devel
+# buildroot_client  =  $(SRCDIR)/PKGBUILD/amanda-backup-client
+buildroot           =  $(SRCDIR)/PKGBUILD/amanda-backup-server
+devel               =  $(SRCDIR)/PKGBUILD/amanda-backup-server-devel
 
 build: build-stamp
 build-stamp:
@@ -288,7 +288,7 @@ DEVEL_INCLUDE_FILES =  \
 ##################
 ################################ architecture-dependent files here
 ##################
-binary-install-client: build-stamp
+binary-install-server: build-stamp
 	#dh_testdir
 	rm -rf $(buildroot)
 	mkdir -p $(buildroot)
@@ -305,7 +305,7 @@ binary-install-client: build-stamp
 	
 	# rm -f $(buildroot)$(SYS_UNITDIR)/__sub-amanda-server*
 	#
-	# rm -f $(buildroot)$(AMANDAHOMEDIR)/example/inetd.conf.amandaclient
+	# rm -f $(buildroot)$(AMANDAHOMEDIR)/example/inetd.conf.amandaserver
 	# rm -f $(buildroot)$(AMANDAHOMEDIR)/example/inetd.conf.amandaserver
 	
 	##################
@@ -317,8 +317,8 @@ binary-install-client: build-stamp
 	#          $(buildroot)$(SYS_LOGROTATEDIR)/amanda
 	
 	# only for solaris...
-	install -D $(buildroot)$(AMANDAHOMEDIR)/example/amandaclient.xml \
-			$(buildroot)/var/svc/manifest/network/amandaclient.xml
+	install -D $(buildroot)$(AMANDAHOMEDIR)/example/amandaserver.xml \
+			$(buildroot)/var/svc/manifest/network/amandaserver.xml
 	#
 	# write release file with version
 	echo "Amanda Community Edition - version $(AMVER)" \
@@ -335,7 +335,7 @@ binary-install-client: build-stamp
 	umask 027; touch $(buildroot)$(AMANDAHOMEDIR)/.am_passphrase
 	
 	mkdir -p $(buildroot)$(LOGDIR)
-	mkdir -p $(buildroot)$(LOGDIR)/client
+	mkdir -p $(buildroot)$(LOGDIR)/server
 	
 	install -m 640 /dev/null $(buildroot)$(AMANDATES)
 	
@@ -348,15 +348,15 @@ binary-install-client: build-stamp
 
 
 ##################
-################################ permissions for backup-client
+################################ permissions for backup-server
 ##################
-perm-install-client: binary-install
+perm-install-server: binary-install
 	# dh_testroot
 	# dh_fixperms -v
 	
 	#
 	# install -o root -g root -m 0644 PKGBUILD/lintian \
-	# 	$(buildroot)/usr/share/lintian/overrides/amanda-backup-client
+	# 	$(buildroot)/usr/share/lintian/overrides/amanda-backup-server
 	chown -R root:root $(buildroot)$(AMLIBEXECDIR)
 	
 	chown -R $(AMANDAUSER):$(AMANDAGROUP) \
@@ -455,7 +455,7 @@ perm-install-client: binary-install
 #    -rw-r-----    1 amandabaamandaba                   56 Nov 16 22:05 /var/lib/amanda
 #
 #    drwxrwx---    2 amandabaamandaba                    0 Nov 16 22:05 /var/log/amanda
-#    drwxr-x---    2 amandabaamandaba                    0 Nov 16 22:05 /var/log/amanda/client
+#    drwxr-x---    2 amandabaamandaba                    0 Nov 16 22:05 /var/log/amanda/server
 #
 #    drwxrwx---    2 amandabaamandaba                    0 Nov 16 22:05 /var/lib/amanda/gnutar-lists
 #
@@ -483,9 +483,9 @@ perm-install-client: binary-install
 #    -r--r--r--    1 root    root                     1508 Nov 16 22:05 /usr/share/
 
 ##################
-################################ install for backup-client-devel
+################################ install for backup-server-devel
 ##################
-binary-install-devel: binary-install-client
+binary-install-devel: binary-install-server
 	# dh_testdir
 	rm -rf $(devel)
 	mkdir -p $(devel)
@@ -500,7 +500,7 @@ binary-install-devel: binary-install-client
 	
 	echo "Amanda Community Edition - version $(AMVER)" > $(devel)$(AMANDAHOMEDIR)/amanda-release
 	
-	rm -f $(devel)$(AMANDAHOMEDIR)/amanda-client-config
+	rm -f $(devel)$(AMANDAHOMEDIR)/amanda-config
 	
 	cp -a ./config.status ./config.status.save
 	sed -i -e ':redo' -e '/"\\$$/{N;s,"\\\n",,;b redo}' ./config.status.save
@@ -513,7 +513,7 @@ binary-install-devel: binary-install-client
 		 -e "s|$$build_topdir_abs|$$build_topdir|g" \
 		 -e "s|$$build_topdir|%{BUILD_TOPDIR}|g" \
 		 -e "s| $(AMLIBDIR)/| %{DESTDIR}$(AMLIBDIR)/|g" \
-	     >$(devel)$(AMANDAHOMEDIR)/amanda-client-config
+	     >$(devel)$(AMANDAHOMEDIR)/amanda-config
 	
 	cp -a $(addprefix config/,$(DEVEL_CONFIG_COPIED)) $(devel)$(AMANDAHOMEDIR)/amanda-autoconf
 	
@@ -553,7 +553,7 @@ binary-install-devel: binary-install-client
 
 
 ##################
-################################ permissions for backup-client-devel
+################################ permissions for backup-server-devel
 ##################
 perm-install-devel: binary-install
 	# dh_testroot
@@ -579,7 +579,7 @@ binary-install-stamp:
 	LD_LIBRARY_PATH= \
 	    $(MAKE) -f $(THIS_MAKEFILE) \
 		PATH=$(BUILD_PATH) \
-		binary-install-client \
+		binary-install-server \
 		binary-install-devel
 	#
 	# dh_installdocs -v
@@ -640,14 +640,14 @@ final-install:
 	   PATH=$(FAKEROOT_PATH) \
 	   SHELL=/opt/csw/bin/bash \
 	   GCC_TARGET=$(GCC_TARGET) \
-		perm-install-client \
+		perm-install-server \
 		perm-install-devel
 	#
 	# dh_makeshlibs -v
 	# dh_shlibdeps $(dhpkg) -v \
 	#	-l"$(SHLIBDIR):$(AMLIBDIR)"
 	#
-	# no platform for clients and only check backup_client for perl details (perl version/base deps only)
+	# no platform for servers and only check backup_server for perl details (perl version/base deps only)
 	#
 	# dh_perl $(dhpkg) -v $(AMPERLDIR)
 	# dh_installdeb
@@ -677,7 +677,7 @@ clean:
 	# dh_clean -d -v  # build dirs only
 
 binary: final-install
-.PHONY: build clean binary-install binary-install-client binary-install-devel binary-install-platform
-.PHONY: final-install perm-install-client perm-install-devel
+.PHONY: build clean binary-install binary-install-server binary-install-devel binary-install-platform
+.PHONY: final-install perm-install-server perm-install-devel
 
 # vim: filetype=make
