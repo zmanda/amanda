@@ -37,7 +37,8 @@ BINDIR=$(PREFIX)/bin
 SBINDIR=$(PREFIX)/sbin
 
 LIBDIR=$(PREFIX)/lib
-LIBEXECDIR=$(PREFIX)/lib
+#LIBEXECDIR=$(PREFIX)/lib
+LIBEXECDIR=$(PREFIX)/libexec
 AMLIBEXECDIR=$(LIBEXECDIR)/amanda
 # must be architecture-specific ...
 SHLIBDIR=$(PREFIX)/$(LIBARCHDIR)
@@ -48,16 +49,10 @@ MANDIR=$(PREFIX)/share/man
 DOCDIR=$(PREFIX)/share/doc
 SYSCONFDIR=%%SYSCONFDIR%%
 AMCONFDIR=$(SYSCONFDIR)/amanda
+#
 AMANDATES=$(AMANDAHOMEDIR)/amandates
 LOCALSTATEDIR=/var
 LOGDIR=%%LOGDIR%%
-
-# Extract the perl directory.  This is used to install amanda's perl 
-# libs. If configure finds a different install or you specify a different path using
-# --with-amperldir= make sure you change this variable in the config dirs.m4 as well.
-# NOTE: perl -V:varname emits a final ";".   Don't let it match to make ";;".
-# PERLVENDORARCH=$(shell eval "$$(perl -V:installvendorarch)"; echo $$installvendorarch)
-# PERLSITEARCH=$(shell eval "$$(perl -V:installsitearch)"; echo $$installsitearch)
 
 # for Debian.. most reliable is this
 SYS_UNITDIR_SYSD=$(lastword $(filter-out %.late,$(shell systemctl show -p UnitPath)))
@@ -100,6 +95,7 @@ LDFLAGS="$${LDFLAGS}" \
 --with-group=$(AMANDAGROUP) \
 --with-fqdn \
 --with-tmpdir=$(AMANDAHOMEDIR)/tmp \
+--enable-s3-device \
 --with-bsd-security \
 --with-bsdtcp-security \
 --with-bsdudp-security \
@@ -142,6 +138,7 @@ build-stamp:
 	   LDFLAGS="-Wl,--disable-new-dtags -Wl,-rpath -Wl,$(AMLIBDIR)"; \
 	   PKG_CONFIG_PATH+=""; \
 	   declare -p PYTHON CFLAGS LDFLAGS PKG_CONFIG_PATH >> ./build-env.sh; \
+	   \
 	)
 	
 	# annoying.. but it forces inclusion of all the needed perl
@@ -164,9 +161,10 @@ build-stamp:
 	touch missing
 	
 	# remake once to make sure
-	set -x; $(MAKE) -j1 ./config.status VERBOSE=1
+	set -x; . ./build-env.sh; \
+	   $(MAKE) -j1 ./config.status VERBOSE=1
 	# perform real build
-	set -x; \
+	set -x; . ./build-env.sh; \
 	    $(MAKE) -j`nproc` VERBOSE=1
 	
 	touch $@
@@ -240,6 +238,7 @@ binary-install-server: build-stamp
 	umask 027; touch $(buildroot)$(AMANDAHOMEDIR)/.ssh/{id_rsa_amrecover,id_rsa_amdump}{,.pub};
 	umask 027; touch $(buildroot)$(AMANDAHOMEDIR)/.am_passphrase
 	
+	mkdir -p $(buildroot)$(AMCONFDIR)
 	mkdir -p $(buildroot)$(LOGDIR)
 	mkdir -p $(buildroot)$(LOGDIR)/server
 	
@@ -397,7 +396,6 @@ binary-install-devel: binary-install-server
 	
 	# snip off $(buildroot) from start ... to dup the path
 	mkdir -p $(devel)$(AMLIBDIR)
-	mkdir -p $(devel)$(AMLIBEXECDIR)
 	ls -1 $(buildroot)$(SHLIBDIR)/*.{a,la,so} $(buildroot)$(SHLIBDIR)/*.so.* 2>/dev/null | xargs -r cp -a -t $(devel)$(SHLIBDIR)
 	mkdir -p $(devel)$(AMANDAHOMEDIR)/amanda-autoconf
 	mkdir -p $(devel)/usr/include/amanda
@@ -515,6 +513,7 @@ final-install:
 	dh_gencontrol
 	dh_md5sums
 	dh_builddeb
+
 	{ ls 2>/dev/null *.deb; } || true
 
 clean:
