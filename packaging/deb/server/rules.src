@@ -10,7 +10,7 @@ export DH_VERBOSE=1
 
 AMVER=%%VERSION%%
 
-AMANDAHOMEDIR=$(LOCALSTATEDIR)/lib/amanda
+AMANDAHOMEDIR=%%AMANDAHOMEDIR%%
 BUILD_TOPDIR=$(SRCDIR)
 # Comment this to disable silent make.
 #MAKEFLAGS+=s LIBTOOLFLAGS=--silent
@@ -112,18 +112,18 @@ define CONFIG_FLAGS_COMMON
 --with-debugging=$(LOGDIR) \
 --enable-manpage-build \
 --disable-syntax-checks \
-\
 --with-xsltproc \
---disable-static
+--disable-static \
+--disable-installperms
 endef
-
+# NOTE: disable-installperms or install conflicts with chown/chmod later
 
 #
 # subpackage paths
 #
 # used to narrow the dh_ tools focus
 dhpkg          =   --package=amanda-backup-server
-#r=$(SRCDIR)/debian/tmp
+# r=$(SRCDIR)/debian/tmp
 # buildroot_client  =  $(SRCDIR)/debian/amanda-backup-client
 buildroot      =   $(SRCDIR)/debian/amanda-backup-server
 devel          =   $(SRCDIR)/debian/amanda-backup-server-devel
@@ -133,9 +133,18 @@ log            =   $(SRCDIR)/debian/dpkg.log
 build: build-stamp
 build-stamp:
 	dh_testdir
+	( \
+	    PYTHON=$$(command -v python3); \
+	    \
+	    CFLAGS="-g -pipe -O2 -std=c11"
+	    LDFLAGS="-Wl,--disable-new-dtags -Wl,-rpath -Wl,$(AMLIBDIR)"'; \
+	    PKG_CONFIG_PATH+=""; \
+	    declare -p PYTHON CFLAGS LDFLAGS PKG_CONFIG_PATH >> ./build-env.sh \
+	)
+	
 	# annoying.. but it forces inclusion of all the needed perl
 	sed -i -e 's,^if *WANT_CLIENT,if WANT_SERVER,' perl/Makefile.am
-
+	
 	# all must be done if configure is not set already
 	[ -f ./configure ] || ./autogen
 	
@@ -144,11 +153,11 @@ build-stamp:
 	echo -------------------
 	
 	# no need for LDPATH, PATH (for perl/python)
-	set -x; \
-	    ./configure \
+	set -x; . ./build-env.sh; \
+	./configure \
 		$(CONFIG_FLAGS_COMMON) \
-		    \
-                    --enable-rpath
+		\
+                --enable-rpath
 
 	touch missing
 	
@@ -216,7 +225,7 @@ binary-install-server: build-stamp
 	#
 	# write release file with version
 	echo "Amanda Community Edition - version $(AMVER)" \
-                          > $(buildroot)$(AMANDAHOMEDIR)/amanda-release
+                    > $(buildroot)$(AMANDAHOMEDIR)/amanda-release
 	[ -s $(SRCDIR)/LONG_BRANCH ] && echo "ref=$$(cat $(SRCDIR)/LONG_BRANCH)" >> $(buildroot)/$(AMANDAHOMEDIR)/amanda-release
 	
 	##################
@@ -249,9 +258,9 @@ perm-install-server: binary-install
 	dh_fixperms -v
 	
 	install -o root -g root -m 0644 debian/lintian \
-		$(buildroot)/usr/share/lintian/overrides/amanda-backup-server
+            $(buildroot)/usr/share/lintian/overrides/amanda-backup-server
 	chown -R root:root $(buildroot)$(AMLIBEXECDIR)
-	
+        
 	chown -R $(AMANDAUSER):$(AMANDAGROUP) \
 	    $(buildroot)$(AMANDAHOMEDIR) \
 	    $(buildroot)$(SYSCONFDIR)/amanda \
@@ -270,7 +279,7 @@ perm-install-server: binary-install
 	    $(buildroot)$(AMLIBEXECDIR)/killpgrp \
 	    $(buildroot)$(AMLIBEXECDIR)/rundump \
 	    $(buildroot)$(AMLIBEXECDIR)/runtar
-
+	
 	chmod -R u=rwX,g=rX,o=rX $(buildroot)$(AMLIBEXECDIR) 
 
 	chmod 0755 \
@@ -461,8 +470,8 @@ perm-install-devel: binary-install
 binary-install: binary-install-stamp
 binary-install-stamp:
 	    $(MAKE) -f $(THIS_MAKEFILE) \
-		binary-install-server \
-		binary-install-devel
+                    binary-install-server \
+                    binary-install-devel
 	#
 	dh_installdocs -v
 	#
@@ -484,8 +493,8 @@ final-install:
 	#    if perms were remembered from these chmod/chown calls
 	env -- $(MAKE) -f $(THIS_MAKEFILE) \
 	   GCC_TARGET=$(GCC_TARGET) \
-		perm-install-server \
-		perm-install-devel
+                perm-install-server \
+                perm-install-devel
 	#
 	dh_makeshlibs -v
 	dh_shlibdeps $(dhpkg) -v \
