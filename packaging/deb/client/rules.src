@@ -17,7 +17,8 @@ BUILD_TOPDIR=$(SRCDIR)
 
 CC := $(shell command -v gcc)
 
-GCC_TARGET := $(shell $(CC) -dumpmachine | tr -d '\n')
+GCC_TARGET := $(shell $(CC) -dumpmachine)
+GCC_TARGET := $(strip $(GCC_TARGET))
 
 LIBARCHDIR=lib/$(GCC_TARGET)
 
@@ -69,7 +70,8 @@ AMANDAGROUP=%%AMANDAGROUP%%
 AMANDACLIGROUP=%%AMANDACLIGROUP%%
 
 define CONFIG_FLAGS_COMMON
-\
+CFLAGS="$${CFLAGS}" \
+LDFLAGS="$${LDFLAGS}" \
 \
 \
 --enable-as-needed \
@@ -122,24 +124,24 @@ endef
 # subpackage paths
 #
 # used to narrow the dh_ tools focus
-dhpkg          =   --package=amanda-backup-client
+dhpkg               =  --package=amanda-backup-client
 # r=$(SRCDIR)/debian/tmp
 # buildroot_server  =  $(SRCDIR)/debian/amanda-backup-server
-buildroot      =   $(SRCDIR)/debian/amanda-backup-client
-devel          =   $(SRCDIR)/debian/amanda-backup-client-devel
-log            =   $(SRCDIR)/debian/dpkg.log
+buildroot           =  $(SRCDIR)/debian/amanda-backup-client
+devel               =  $(SRCDIR)/debian/amanda-backup-client-devel
+log                 =   $(SRCDIR)/debian/dpkg.log
 
 
 build: build-stamp
 build-stamp:
 	dh_testdir
 	( \
-	    PYTHON=$$(command -v python3); \
-	    \
-	    CFLAGS="-g -pipe -O2 -std=c11"
-	    LDFLAGS="-Wl,--disable-new-dtags -Wl,-rpath -Wl,$(AMLIBDIR)"'; \
-	    PKG_CONFIG_PATH+=""; \
-	    declare -p PYTHON CFLAGS LDFLAGS PKG_CONFIG_PATH >> ./build-env.sh \
+	   PYTHON=$$(command -v python3); \
+	   \
+	   CFLAGS="-g -pipe -O2 -std=c11"; \
+	   LDFLAGS="-Wl,--disable-new-dtags -Wl,-rpath -Wl,$(AMLIBDIR)"; \
+	   PKG_CONFIG_PATH+=""; \
+	   declare -p PYTHON CFLAGS LDFLAGS PKG_CONFIG_PATH >> ./build-env.sh; \
 	)
 	
 	# annoying.. but it forces inclusion of all the needed perl
@@ -164,7 +166,7 @@ build-stamp:
 	# remake once to make sure
 	set -x; $(MAKE) -j1 ./config.status VERBOSE=1
 	# perform real build
-	set -x; \
+	set -x; . ./build-env.sh; \
 	    $(MAKE) -j`nproc` VERBOSE=1
 	
 	touch $@
@@ -206,7 +208,8 @@ binary-install-client: build-stamp
 	
 	echo ------------------- START INSTALL
 	################################################ perform source make-install
-	set -x; $(MAKE) -j1 install DESTDIR=$(buildroot)
+	set -x; . ./build-env.sh; \
+            $(MAKE) -j1 install DESTDIR=$(buildroot)
 	################################################ done with source make-install
 	
 	rm -f $(buildroot)$(SYS_UNITDIR)/__sub-amanda-server*
@@ -218,14 +221,14 @@ binary-install-client: build-stamp
 	# needed directories
 	##################
 	# install -D -m 644 /dev/null \
-        #         $(buildroot)$(SYS_LDSOCONFDIR)/amanda.conf
+	#         $(buildroot)$(SYS_LDSOCONFDIR)/amanda.conf
 	install -D -m 644 system-scripts/amanda-logrotate \
-                 $(buildroot)$(SYS_LOGROTATEDIR)/amanda
+	          $(buildroot)$(SYS_LOGROTATEDIR)/amanda
 	
 	#
 	# write release file with version
 	echo "Amanda Community Edition - version $(AMVER)" \
-                    > $(buildroot)$(AMANDAHOMEDIR)/amanda-release
+                        > $(buildroot)$(AMANDAHOMEDIR)/amanda-release
 	[ -s $(SRCDIR)/LONG_BRANCH ] && echo "ref=$$(cat $(SRCDIR)/LONG_BRANCH)" >> $(buildroot)/$(AMANDAHOMEDIR)/amanda-release
 	
 	##################
@@ -257,12 +260,13 @@ perm-install-client: binary-install
 	dh_testroot
 	dh_fixperms -v
 	
+        #
 	install -o root -g root -m 0644 debian/lintian \
             $(buildroot)/usr/share/lintian/overrides/amanda-backup-client
 	chown -R root:root $(buildroot)$(AMLIBEXECDIR)
-        
+
 	chown -R $(AMANDAUSER):$(AMANDAGROUP) \
-	    $(buildroot)$(AMANDAHOMEDIR) \
+            $(buildroot)$(AMANDAHOMEDIR) \
 	    $(buildroot)$(SYSCONFDIR)/amanda \
 	    $(buildroot)$(LOGDIR) \
 	    $(buildroot)/usr/sbin/*
@@ -288,7 +292,7 @@ perm-install-client: binary-install
 	# chmod 0755 $(buildroot)$(AMLIBEXECDIR)/rest-server/bin/*
 	
 	# touching these afterward removes the critical setuid bit
-	chmod 04755  \
+	chmod 04755 \
 	    $(buildroot)$(AMLIBEXECDIR)/ambind \
 	    $(buildroot)$(AMLIBEXECDIR)/application/amgtar \
 	    $(buildroot)$(AMLIBEXECDIR)/application/amstar \
@@ -302,6 +306,7 @@ perm-install-client: binary-install
 	rm -f $(buildroot)$(AMLIBEXECDIR)/amplot.awk
 	rm -f $(buildroot)$(AMLIBEXECDIR)/amplot.g
 	rm -f $(buildroot)$(AMLIBEXECDIR)/amplot.gp
+	rm -f $(buildroot)$(ROOTLIBDIR)/charset.alias  # from gnulib somehow
 	
 	##################
 	# internal executible files
@@ -392,7 +397,6 @@ binary-install-devel: binary-install-client
 	
 	# snip off $(buildroot) from start ... to dup the path
 	mkdir -p $(devel)$(AMLIBDIR)
-	mkdir -p $(devel)$(AMLIBEXECDIR)
 	ls -1 $(buildroot)$(SHLIBDIR)/*.{a,la,so} $(buildroot)$(SHLIBDIR)/*.so.* 2>/dev/null | xargs -r cp -a -t $(devel)$(SHLIBDIR)
 	mkdir -p $(devel)$(AMANDAHOMEDIR)/amanda-autoconf
 	mkdir -p $(devel)/usr/include/amanda
@@ -470,8 +474,9 @@ perm-install-devel: binary-install
 binary-install: binary-install-stamp
 binary-install-stamp:
 	    $(MAKE) -f $(THIS_MAKEFILE) \
-                    binary-install-client \
-                    binary-install-devel
+                \
+	        binary-install-client \
+	        binary-install-devel
 	#
 	dh_installdocs -v
 	#
@@ -492,9 +497,11 @@ final-install:
 	# (now: dpkg-buildpackage instead) fakeroot can [could] remain entirely within this MAKE only, 
 	#    if perms were remembered from these chmod/chown calls
 	env -- $(MAKE) -f $(THIS_MAKEFILE) \
+	   \
+	   \
 	   GCC_TARGET=$(GCC_TARGET) \
-                perm-install-client \
-                perm-install-devel
+	        perm-install-client \
+	        perm-install-devel
 	#
 	dh_makeshlibs -v
 	dh_shlibdeps $(dhpkg) -v \
