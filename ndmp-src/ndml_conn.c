@@ -55,7 +55,9 @@
 #endif /* !NDMOS_OPTION_NO_NDMP3 */
 #endif /* !NDMOS_OPTION_NO_NDMP4 */
 
-
+#ifndef SOL_TCP
+#define SOL_TCP IPPROTO_TCP
+#endif
 
 /*
  * INITIALIZE AND DESTRUCT
