@@ -210,8 +210,8 @@ binary-install-server: build-stamp
             $(MAKE) -j1 install DESTDIR=$(buildroot)
 	################################################ done with source make-install
 	
-	rm -f $(buildroot)$(SYS_UNITDIR)/__sub-amanda-client*
-	# rm -f $(buildroot)$(SYS_UNITDIR)/__sub-amanda-server*
+	rm -f $(buildroot)$(SYS_UNITDIR)/amanda-client*
+	# rm -f $(buildroot)$(SYS_UNITDIR)/amanda-server*
 	rm -f $(buildroot)$(AMANDAHOMEDIR)/example/inetd.conf.amandaclient
 	rm -f $(buildroot)$(AMANDAHOMEDIR)/example/inetd.conf.amandaserver
 	
