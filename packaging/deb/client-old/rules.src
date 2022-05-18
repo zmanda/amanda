@@ -37,6 +37,7 @@ DEB_BUILD_GNU_TYPE  ?= $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
 PREFIX=/usr
 BINDIR=$(PREFIX)/bin
 SBINDIR=$(PREFIX)/sbin
+
 LIBDIR=$(PREFIX)/lib
 LIBEXECDIR=$(LIBDIR)
 AMLIBEXECDIR=$(LIBEXECDIR)/amanda
@@ -131,15 +132,14 @@ log             =  $(SRCDIR)/debian/dpkg.log
 build: build-stamp
 build-stamp:
 	dh_testdir
-	echo 'unset CONFIG_LDPATH ' > ./build-env.sh
 	( \
 	    PERL=$$(command -v perl); \
 	    PYTHON=$$(command -v python3); \
 	    \
-	    \
+	    CFLAGS="-g -pipe -O2 -std=c11"
 	    LDFLAGS="-Wl,--disable-new-dtags -Wl,-rpath -Wl,$(AMLIBDIR)"'; \
 	    PKG_CONFIG_PATH+=""; \
-	    declare -p PERL PYTHON LDFLAGS PKG_CONFIG_PATH >> ./build-env.sh \
+	    declare -p PERL PYTHON CFLAGS LDFLAGS PKG_CONFIG_PATH >> ./build-env.sh \
 	)
 	
 	# annoying.. but it forces inclusion of all the needed perl
@@ -147,7 +147,7 @@ build-stamp:
 	
 	# all must be done if configure is not set already
 	[ -f ./configure ] || ./autogen
-
+	
 	echo -------------------
 	echo "CONFIG_FLAGS_COMMON set to $(CONFIG_FLAGS_COMMON)"
 	echo -------------------
@@ -240,14 +240,15 @@ perm-install-client: binary-install
 	dh_fixperms -v
 	
 	install -o root -g root -m 0644 debian/lintian \
-	 	$(buildroot)/usr/share/lintian/overrides/amanda-backup-client
+	    $(buildroot)/usr/share/lintian/overrides/amanda-backup-client
 	chown -R root:root $(buildroot)$(AMLIBEXECDIR)
-	
+
 	chown -R $(AMANDAUSER):$(AMANDAGROUP) \
 	    $(buildroot)$(AMANDAHOMEDIR) \
 	    $(buildroot)$(SYSCONFDIR)/amanda \
 	    $(buildroot)$(LOGDIR) \
 	    $(buildroot)/usr/sbin/*
+
 	chown root:root \
 	    $(buildroot)$(AMLIBDIR)/lib*.so \
 	    $(buildroot)$(SYSCONFDIR)/amanda-security.conf
@@ -262,6 +263,7 @@ perm-install-client: binary-install
 	    $(buildroot)$(AMLIBEXECDIR)/runtar
 	
 	chmod -R u=rwX,g=rX,o=rX $(buildroot)$(AMLIBEXECDIR) 
+
 	chmod 0755 \
 	    $(buildroot)$(AMLIBEXECDIR)/* \
 	    $(buildroot)$(AMLIBEXECDIR)/application/*
@@ -276,7 +278,7 @@ perm-install-client: binary-install
 	    $(buildroot)$(AMLIBEXECDIR)/killpgrp \
 	    $(buildroot)$(AMLIBEXECDIR)/rundump \
 	    $(buildroot)$(AMLIBEXECDIR)/runtar
-
+	
 	chmod 0444  $(buildroot)$(AMLIBEXECDIR)/amcat.awk
 	
 	rm -f $(buildroot)$(AMLIBEXECDIR)/amplot.awk
