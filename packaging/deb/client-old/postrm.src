@@ -1,0 +1,92 @@
+#!/bin/bash
+
+if [[ $DPKG_MAINTSCRIPT_PACKAGE == *-server ]]; then
+    pkg_variant=server
+    pkg_opp_variant=client
+elif [[ $DPKG_MAINTSCRIPT_PACKAGE == *-client ]]; then
+    pkg_variant=client
+    pkg_opp_variant=server
+fi
+
+LOGFILE=`mktemp /tmp/amanda_remove.log.XXXXXXXXXXX`
+if [ $? -ne 0 ]; then
+	echo "Unable to create log file!"
+	exit 1
+fi
+
+# Variables assumed by common and post_inst functions
+AMANDAHOMEDIR=%%AMANDAHOMEDIR%%
+dist=%%DISTRO%%
+LOGDIR=%%LOGDIR%%
+
+# ---------- Included functions ------------
+%%COMMON_FUNCTIONS%%
+%%POST_RM_FUNCTIONS%%
+
+# -------- End Included functions ----------
+remove() {
+    if check_xinetd "amanda${pkg_variant}"; then
+        rm_xinetd "amanda${pkg_variant}" || { \
+            logger "Warning: Did not successfully remove amanda${pkg_variant} from xinetd.";
+            exit 1; 
+        }
+        check_superserver_running "xinetd" && reload_xinetd
+    fi
+}
+
+purge() {
+    if [ -d ${SYSCONFDIR}/amanda ]; then
+        logger "Removing ${SYSCONFDIR}/amanda if empty..."
+        rmdir ${SYSCONFDIR}/amanda 2> /dev/null || true
+    fi
+    if [ -d ${LOGDIR} ]; then
+        logger "Removing ${LOGDIR}..."
+        rm -rf ${LOGDIR}
+    fi
+    if [ -d %%AMANDAHOMEDIR%%/gnutar-lists ]; then
+        rm -rf %%AMANDAHOMEDIR%%/gnutar-lists
+    fi
+    if ! rmdir $AMANDAHOMEDIR; then
+        logger "Message: $AMANDAHOMEDIR was not empty, and was not deleted: Contents are often backupsets. "
+    fi
+    if [ -f ${SYSCONFDIR}/amandates ]; then
+        logger "Removing ${SYSCONFDIR}/amandates..."
+        rm -rf ${SYSCONFDIR}/amandates
+    fi
+    # Remove ${amanda_user} from sensitive groups.
+    if which deluser >/dev/null 2>&1 ; then
+        for group in %%AMANDACLIGROUP%%; do
+            # only call deluser when %%AMANDAUSER%% is in $group
+            if getent group "$group" |
+                awk -F: '{ print $4 }' |
+                awk -F, '{ for (i=1; i <= NF; i++ ) print $i }' |
+                grep "^${amanda_user}$" > /dev/null; then
+                    deluser ${amanda_user} $group || true
+            fi
+        done
+    fi
+}
+
+case "$1" in
+  purge|abort-install)
+    remove
+    purge
+  ;;
+  remove|upgrade|deconfigure)
+    remove
+  ;;
+
+  failed-upgrade|abort-upgrade)
+    check_xinetd "amanda${pkg_variant}" || {
+	install_xinetd
+        check_superserver_running "xinetd" && reload_xinetd
+    }
+  ;;
+
+  *)
+        echo "unknown argument --> $1" >&2
+        exit 0
+  ;;
+esac
+
+logger "Amanda removed."
