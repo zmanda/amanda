@@ -16,13 +16,13 @@ server_reset_tools
 
 ################################## halt old services ###################################
 ( set -x; systemctl -q disable --no-reload \
-       __sub-amanda-server.socket \
-       __sub-amanda-lserver-unix.socket \
-       __sub-amanda-rest-server.service 2>/dev/null ) || true
+       amanda-server.socket \
+       amanda-lserver-unix.socket \
+       amanda-rest-server.service 2>/dev/null ) || true
 ( set -x; systemctl -q stop \
-       __sub-amanda-server.socket \
-       __sub-amanda-lserver-unix.socket \
-       __sub-amanda-rest-server.service 2>/dev/null ) || true
+       amanda-server.socket \
+       amanda-lserver-unix.socket \
+       amanda-rest-server.service 2>/dev/null ) || true
 ################################## halt old services ###################################
 
 
@@ -49,22 +49,22 @@ add_service_ports
 
 ( set -x; systemctl -q daemon-reload ) || true
 ( set -x; systemctl -q disable --now \
-       __sub-amanda-server.socket \
-       __sub-amanda-lserver-unix.socket \
-       __sub-amanda-rest-server.service ) || true
+       amanda-server.socket \
+       amanda-lserver-unix.socket \
+       amanda-rest-server.service ) || true
 
-shutdown_xinetd_socket __sub-amanda-server.socket
+shutdown_xinetd_socket amanda-server.socket
 
 ( set -x; systemctl preset \
-       __sub-amanda-server.socket \
-       __sub-amanda-lserver-unix.socket \
-       __sub-amanda-rest-server.service ) || true
+       amanda-server.socket \
+       amanda-lserver-unix.socket \
+       amanda-rest-server.service ) || true
 
 # only restart those already running...
 ( set -x; systemctl try-restart \
-       __sub-amanda-server.socket \
-       __sub-amanda-lserver-unix.socket \
-       __sub-amanda-rest-server.service )
+       amanda-server.socket \
+       amanda-lserver-unix.socket \
+       amanda-rest-server.service )
 
 logger "Amanda Server installation complete."
 

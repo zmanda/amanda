@@ -52,7 +52,7 @@ bash -c 'read -t10 delay < <(/usr/sbin/amcleanup -vk  --note "second critical sh
 #   xargs -r systemctl disable 2>/dev/null || true
 
 # just in case...
-#rm -f /usr/lib/systemd/system/__sub-amanda-client@.service
+#rm -f /usr/lib/systemd/system/amanda-client@.service
 
 if [ -r /etc/inet/amandaclient ]; then
     rm -f /etc/inetd/amandaclient
