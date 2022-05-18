@@ -142,6 +142,7 @@ build-stamp:
 	   LDFLAGS="-Wl,--disable-new-dtags -Wl,-rpath -Wl,$(AMLIBDIR)"; \
 	   PKG_CONFIG_PATH+=""; \
 	   declare -p PYTHON CFLAGS LDFLAGS PKG_CONFIG_PATH >> ./build-env.sh; \
+	   \
 	)
 	
 	# annoying.. but it forces inclusion of all the needed perl
@@ -228,7 +229,7 @@ binary-install-client: build-stamp
 	#
 	# write release file with version
 	echo "Amanda Community Edition - version $(AMVER)" \
-                        > $(buildroot)$(AMANDAHOMEDIR)/amanda-release
+			> $(buildroot)$(AMANDAHOMEDIR)/amanda-release
 	[ -s $(SRCDIR)/LONG_BRANCH ] && echo "ref=$$(cat $(SRCDIR)/LONG_BRANCH)" >> $(buildroot)/$(AMANDAHOMEDIR)/amanda-release
 	
 	##################
@@ -260,13 +261,13 @@ perm-install-client: binary-install
 	dh_testroot
 	dh_fixperms -v
 	
-        #
+	#
 	install -o root -g root -m 0644 debian/lintian \
             $(buildroot)/usr/share/lintian/overrides/amanda-backup-client
 	chown -R root:root $(buildroot)$(AMLIBEXECDIR)
-
+	
 	chown -R $(AMANDAUSER):$(AMANDAGROUP) \
-            $(buildroot)$(AMANDAHOMEDIR) \
+	    $(buildroot)$(AMANDAHOMEDIR) \
 	    $(buildroot)$(SYSCONFDIR)/amanda \
 	    $(buildroot)$(LOGDIR) \
 	    $(buildroot)/usr/sbin/*
@@ -474,9 +475,9 @@ perm-install-devel: binary-install
 binary-install: binary-install-stamp
 binary-install-stamp:
 	    $(MAKE) -f $(THIS_MAKEFILE) \
-                \
-	        binary-install-client \
-	        binary-install-devel
+		\
+		binary-install-client \
+		binary-install-devel
 	#
 	dh_installdocs -v
 	#
@@ -500,8 +501,8 @@ final-install:
 	   \
 	   \
 	   GCC_TARGET=$(GCC_TARGET) \
-	        perm-install-client \
-	        perm-install-devel
+		perm-install-client \
+		perm-install-devel
 	#
 	dh_makeshlibs -v
 	dh_shlibdeps $(dhpkg) -v \
@@ -514,6 +515,7 @@ final-install:
 	dh_gencontrol
 	dh_md5sums
 	dh_builddeb
+
 	{ ls 2>/dev/null *.deb; } || true
 
 clean:
