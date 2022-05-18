@@ -1,0 +1,15 @@
+etc/amanda
+usr/lib/%%ARCH%%-linux-gnu/
+usr/lib/%%ARCH%%-linux-gnu/amanda/application
+usr/share/lintian/overrides
+usr/share/man/man5
+usr/share/man/man8
+var/amanda
+%%AMANDAHOMEDIR%%
+%%AMANDAHOMEDIR%%/gnutar-lists
+%%AMANDAHOMEDIR%%/example/label-templates
+%%AMANDAHOMEDIR%%/tmp
+%%LOGDIR%%
+%%LOGDIR%%/client
+%%LOGDIR%%/server
+%%LOGDIR%%/amanda-rest-server-log

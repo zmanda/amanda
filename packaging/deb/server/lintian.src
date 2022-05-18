@@ -1,0 +1,17 @@
+amanda-backup-server: binary-or-shlib-defines-rpath usr/lib/%%ARCH%%-linux-gnu/amanda/*
+amanda-backup-server: binary-or-shlib-defines-rpath amoldrecover amrecover
+amanda-backup-server: binary-or-shlib-defines-rpath usr/sbin/am*
+amanda-backup-server: binary-without-manpage amaespipe
+amanda-backup-server: binary-without-manpage amcryp*
+amanda-backup-server: binary-without-manpage amgpgcrypt
+amanda-backup-server: binary-without-manpage amoldrecover
+amanda-backup-server: manpage-has-bad-whatis-entry
+amanda-backup-server: non-standard-dir-in-var %%LOGDIR%%
+amanda-backup-server: non-standard-dir-perm %%AMANDAHOMEDIR%%/gnutar-lists/ 0770 != 0755
+amanda-backup-server: non-standard-dir-perm %%LOGDIR%%
+amanda-backup-server: package-name-doesnt-match-sonames
+amanda-backup-server: setuid-binary usr/lib/%%ARCH%%-linux-gnu/amanda/calcsize 4750 root/%%AMANDAGROUP%%
+amanda-backup-server: setuid-binary usr/lib/%%ARCH%%-linux-gnu/amanda/killgrp 4750 root/%%AMANDAGROUP%%
+amanda-backup-server: setuid-binary usr/lib/%%ARCH%%-linux-gnu/amanda/rundump 4750 root/%%AMANDAGROUP%%
+amanda-backup-server: setuid-binary usr/lib/%%ARCH%%-linux-gnu/amanda/runtar 4750 root/%%AMANDAGROUP%%
+amanda-backup-server: setuid-binary usr/lib/%%ARCH%%-linux-gnu/amanda/ambind 4750 root/%%AMANDAGROUP%%
