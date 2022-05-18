@@ -648,7 +648,7 @@ do_package() {
             rm -rf BUILD/${PKG_NAME_VER}
             tar -xzvf $repo_targz -C BUILD \
                ${PKG_NAME_VER}/./{FULL_VERSION,PKG_REV,REV,LONG_BRANCH,packaging} ||
-		 	die "missing call to gen_pkg_environ() or malformed $repo_targz file"
+             	 die "missing call to gen_pkg_environ() or malformed $repo_targz file"
 
              # NOTE: must be in the BUILD/xxxx dir to subsitute anything correctly
             ( cd BUILD/${PKG_NAME_VER}; find ../../$pkgconf_dir/*.src | while read i; do do_file_subst $i; done; ) ||

@@ -15,7 +15,7 @@ do_rpm_package() {
     gen_pkg_build_config $buildpkg_dir
     # take the spec/spec.src files and make a tarfile
     gen_top_environ
-    tar -czvf rpmbuild/SOURCES/${PKG_NAME_VER}.tar.gz po/stamp-po
+    tar -czvf rpmbuild/SOURCES/${PKG_NAME_VER}.tar.gz -C rpmbuild/BUILD ${PKG_NAME_VER}/po/stamp-po
     do_top_package "$@"
 }
 
