@@ -62,11 +62,11 @@ check_amandahosts_entry root amindexd amidxtaped
 check_amandahosts_entry ${amanda_user} amdump
 check_amandahosts_perms
 create_ssh_key server
-create_ssh_key client
+create_ssh_key server
 # TODO: ssh key for amdump? for amrecover?
 create_profile
 check_profile
-install_client_conf
+install_server_conf
 install_security_conf
 create_amtmp
 
