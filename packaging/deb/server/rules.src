@@ -69,8 +69,8 @@ AMANDAGROUP=%%AMANDAGROUP%%
 AMANDACLIGROUP=%%AMANDACLIGROUP%%
 
 define CONFIG_FLAGS_COMMON
-\
-\
+CFLAGS="$$CFLAGS" \
+LDFLAGS="$$LDFLAGS" \
 \
 --enable-as-needed \
 --enable-shared \
@@ -136,10 +136,10 @@ build-stamp:
 	( \
 	    PYTHON=$$(command -v python3); \
 	    \
-	    CFLAGS="-g -pipe -O2 -std=c11"
-	    LDFLAGS="-Wl,--disable-new-dtags -Wl,-rpath -Wl,$(AMLIBDIR)"'; \
+	    CFLAGS="-g -pipe -O2 -std=c11"; \
+	    LDFLAGS="-Wl,--disable-new-dtags -Wl,-rpath -Wl,$(AMLIBDIR)"; \
 	    PKG_CONFIG_PATH+=""; \
-	    declare -p PYTHON CFLAGS LDFLAGS PKG_CONFIG_PATH >> ./build-env.sh \
+	    declare -p PYTHON CFLAGS LDFLAGS PKG_CONFIG_PATH >> ./build-env.sh; \
 	)
 	
 	# annoying.. but it forces inclusion of all the needed perl

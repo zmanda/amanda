@@ -133,10 +133,9 @@ build: build-stamp
 build-stamp:
 	dh_testdir
 	( \
-	    PERL=$$(command -v perl); \
 	    PYTHON=$$(command -v python3); \
 	    \
-	    CFLAGS="-g -pipe -O2 -std=c11"
+	    CFLAGS="-g -pipe -O2 -std=c11"; \
 	    LDFLAGS="-Wl,--disable-new-dtags -Wl,-rpath -Wl,$(AMLIBDIR)"'; \
 	    PKG_CONFIG_PATH+=""; \
 	    declare -p PERL PYTHON CFLAGS LDFLAGS PKG_CONFIG_PATH >> ./build-env.sh \
