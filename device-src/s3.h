@@ -135,6 +135,7 @@ typedef size_t (*s3_write_func)(void *data, size_t size, size_t nmemb, void *str
  */
 typedef curl_progress_callback s3_progress_func;
 
+#if LIBCURL_VERSION_NUM >= 0x072000
 /**
  * Callback function to track progress
  *
@@ -149,6 +150,7 @@ typedef curl_progress_callback s3_progress_func;
  * @return CURL_PROGRESSSFUNC_CONTINUE to continue, non-zero to abort.
  */
 typedef curl_xferinfo_callback s3_xferinfo_func;
+#endif
 
 /*
  * Constants
