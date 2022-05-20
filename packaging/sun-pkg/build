@@ -13,6 +13,7 @@ shift
 # set the var buildpkg_dir as well
 . ./packaging/common/build_functions.sh
 . ./packaging/common/set_zmanda_version
+detect_package_vars
 
 [ -d /opt/csw/gnu ] && [[ "$PATH" != */opt/csw/gnu* ]] && PATH=/opt/csw/gnu:${PATH}
 [ -d /usr/sfw/bin ] && [[ "$PATH" != */usr/sfw/bin* ]] && PATH=/usr/sfw/bin:${PATH}
