@@ -7,11 +7,11 @@ include $(top_srcdir)/config/automake/installperms.am
 ACLOCAL_AMFLAGS = --force -I config -I . -I config/gettext-macros -I config/gnulib -I config/amanda -I config/macro-archive -I /usr/share/aclocal
 
 if WANT_CLIENT
-CLIENT_SUBDIRS = client-src application-src device-src server-src
+CLIENT_SUBDIRS = client-src application-src
 endif
-if WANT_SERVER
+# always needed
 SERVER_SUBDIRS = device-src server-src
-endif
+
 if WANT_RECOVER
 RECOVER_SUBDIRS = recover-src oldrecover-src
 endif
