@@ -15,18 +15,19 @@ reset_local_scripts() {
 
     [ -d $dir -a -f $spec ] || return 1
 
-    specfile="$(sed -e 's,%%\([A-Z_]\+\)%%,++\1++,g' $spec )"
+    specfile="$(sed -e "s,%%DATE%%,$(date +"%a %b %d %Y"),g" < $spec )"
+    specfile="$(sed -e 's,%%\([A-Z_]\+\)%%,++\1++,g' <<<"$specfile" )"
 
-    rpmspec <<<"$specfile" -q --qf '%{PREIN}' -D "subpkg $type" -D "build_date $(date +"%a %b %d %Y")" /dev/stdin |
+    rpmspec <<<"$specfile" -q --qf '%{PREIN}' /dev/stdin |
        sed -e 's,(none),,g' > $dir/preinst.src
 
-    rpmspec <<<"$specfile" -q --qf '%{POSTTRANS}' -D "subpkg $type" -D "build_date $(date +"%a %b %d %Y")" /dev/stdin |
+    rpmspec <<<"$specfile" -q --qf '%{POSTTRANS}' /dev/stdin |
        sed -e 's,(none),,g' > $dir/postinst.src
 
-    rpmspec <<<"$specfile" -q --qf '%{PREUN}' -D "subpkg $type" -D "build_date $(date +"%a %b %d %Y")" /dev/stdin |
+    rpmspec <<<"$specfile" -q --qf '%{PREUN}' /dev/stdin |
        sed -e 's,(none),,g' > $dir/prerm.src
 
-    rpmspec <<<"$specfile" -q --qf '%{POSTUN}' -D "subpkg $type" -D "build_date $(date +"%a %b %d %Y")" /dev/stdin |
+    rpmspec <<<"$specfile" -q --qf '%{POSTUN}' /dev/stdin |
        sed -e 's,(none),,g' > $dir/postrm.src
 
     sed -i -e 's,++\([A-Z_]\+\)++,%\1%,g' -e 's,%,%%,g' $dir/preinst.src $dir/postinst.src $dir/prerm.src $dir/postrm.src
@@ -35,5 +36,5 @@ reset_local_scripts() {
     return 0
 }
 
-reset_local_scripts client4.0 amanda-client
-reset_local_scripts server4.0 amanda
+reset_local_scripts client amanda-client
+reset_local_scripts server amanda

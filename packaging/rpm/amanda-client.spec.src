@@ -114,6 +114,39 @@
 %define tcpportrange "11000,11040"
 %define low_tcpportrange "800,840"
 
+%define devel_include_files \
+    am_sl.h  \
+    amjson.h  \
+    amanda.h  \
+    amflock.h  \
+    amutil.h  \
+    conffile.h  \
+    config.h  \
+    debug.h  \
+    device.h  \
+    directtcp-connection.h \
+    directtcp.h  \
+    file.h  \
+    fileheader.h  \
+    full-read.h  \
+    full-write.h  \
+    glib-util.h  \
+    property.h  \
+    s3-util.h  \
+    s3.h  \
+    safe-read.h  \
+    sockaddr-util.h
+
+%define devel_config_files \
+	config.rpath \
+	amanda \
+	gnulib \
+	gettext-macros \
+	macro-archive \
+	automake \
+	config.h
+
+
 #####################################
 ################  BUILD PACKAGE DEFINITION
 #####################################
@@ -196,8 +229,6 @@ Requires(pre): %{_ldsoconfdir}
 Requires: /sbin/ldconfig
 Requires: /usr/bin/gpg-agent
 Requires: /usr/bin/gpg2
-# SuSE has no package owner
-# Requires: @{_unitdir_compat}
 Requires: %{_logrotatedir}
 Requires: coreutils
 Requires: gettext
@@ -248,6 +279,37 @@ needs to be installed on every system that is being backed up.
 Amanda Forums is located at: http://forums.zmanda.com/
 Amanda Documentation is available at: http://wiki.zmanda.com/
 
+#####################################
+################  BACKUP-DEVEL #####################
+#####################################
+%package %{pkg_variant}-devel
+Release: %{rpm_release}.%{subpkg}
+Summary: Amanda Enterprise Backup and Archiving Server [%{disttag}]
+Group: %{rpm_group}
+Provides: amanda_enterprise-%{pkg_variant} = %{amanda_version}
+
+%description %{pkg_variant}-devel
+Amanda Enterprise Edition is the leading Open-Source Backup and
+Archiving software with Enterprise support.
+
+This package contains the Amanda enterprise %{pkg_variant} development files.
+
+#####################################
+################  BACKUP-TEST #####################
+#####################################
+%package %{pkg_variant}-tests
+Release: %{rpm_release}.%{subpkg}
+Summary: Amanda Enterprise Backup and Archiving Server Tests [%{disttag}]
+Group: %{rpm_group}
+Provides: amanda_enterprise-%{pkg_variant} = %{amanda_version}
+
+%description %{pkg_variant}-tests
+Amanda Enterprise Edition is the leading Open-Source Backup and
+Archiving software with Enterprise support.
+
+This package contains the Amanda enterprise %{pkg_variant} test files.
+
+
 # --- Directory setup ---
 
 # Configure directories:
@@ -255,6 +317,7 @@ Amanda Documentation is available at: http://wiki.zmanda.com/
 %define EPREFIX         %{PREFIX}
 %define BINDIR          %{EPREFIX}/bin
 %define SBINDIR         %{EPREFIX}/sbin
+%define AMINCDIR        %{EPREFIX}/include/amanda
 %define SHAREDIR         %{PREFIX}/share
 %define SYSCONFDIR      %%SYSCONFDIR%%
 %define LOCALSTATEDIR   /var
@@ -264,6 +327,7 @@ Amanda Documentation is available at: http://wiki.zmanda.com/
 %define AMANDAHOMEDIR   %%AMANDAHOMEDIR%%
 %define AMHOMEDIR       %%AMANDAHOMEDIR%%
 %define AMVARDIR        %{LOCALSTATEDIR}/amanda
+%define AMDATADIR       %{SHAREDIR}/amanda
 
 %ifarch x86_64 s390x
 %define LIBDIR          %{EPREFIX}/lib64
@@ -283,7 +347,7 @@ Amanda Documentation is available at: http://wiki.zmanda.com/
 %define MANDIR          %{SHAREDIR}/man
 %define LOGDIR          %%LOGDIR%%
 
-%define BUILD_TOPDIR	%{_builddir}/%{name}-%{amanda_version}
+%define Bsocket amanda-server\@.UILD_TOPDIR	%{_builddir}/%{name}-%{amanda_version}service
 
 %global __python 	%(command -v python3)
 %global __python3 	%(command -v python3)
@@ -303,10 +367,12 @@ Amanda Documentation is available at: http://wiki.zmanda.com/
 %define ROOT_AMCONFDIR          %{buildroot}%{AM_CONFDIR}
 %define ROOT_AMANDAHOMEDIR      %{buildroot}%{AMANDAHOMEDIR}
 %define ROOT_AMLIBDIR           %{buildroot}%{AMLIBDIR}
+%define ROOT_AMDATADIR          %{buildroot}%{AMDATADIR}
 %define ROOT_MANDIR             %{buildroot}%{MANDIR}
 %define ROOT_LOGDIR             %{buildroot}%{LOGDIR}
 %define ROOT_AMHOMEDIR          %{buildroot}%{AMHOMEDIR}
 %define ROOT_AMLIBEXECDIR       %{buildroot}%{AMLIBEXECDIR}
+%define ROOT_AMINCDIR           %{buildroot}%{AMINCDIR}
 
 # --- Unpack ---
 # --- Unpack ---
@@ -320,7 +386,6 @@ Amanda Documentation is available at: http://wiki.zmanda.com/
 ########################################
 
 %setup -T -b 0
-cd %{BUILD_TOPDIR}
 
 [ -s Makefile ] && make distclean || true
 [ -s Makefile ] && make clean || true
@@ -351,7 +416,7 @@ eval 'LDFLAGS="$(tr -d "\\n")"' <<==========LDFLAGS
     -Wl,--disable-new-dtags
     -Wl,-rpath -Wl,%{INSTALL_LDPATH}
 ==========LDFLAGS
-declare -p >>./rpm-env.sh 2>/dev/null \
+  declare -p >>./rpm-env.sh 2>/dev/null \
     LDFLAGS
 
 
@@ -369,7 +434,6 @@ true
 %build
 #!/bin/bash
 #########################################
-cd %{BUILD_TOPDIR}
 
 #
 # install needed environment
@@ -470,7 +534,6 @@ make -j`nproc`
 %install
 #!/bin/bash
 ########################################
-cd %{BUILD_TOPDIR}
 
 git_toplevel=$(git rev-parse --show-toplevel)
 
@@ -574,32 +637,12 @@ install -D -m 640 %{ROOT_AMANDAHOMEDIR}/example/amandahome-dot-profile     %{ROO
 #########################################
 %clean
 #########################################
-cd %{BUILD_TOPDIR};
 
 [ "$(stat -c '%m' %{buildroot})" = "%{buildroot}" ] &&
    { echo "used mount point %{buildroot}"; exit -1; }
 
 chmod u+rwX -R %{buildroot}
 true
-
-# Define script variables
-%define script_vars \
-    amanda_user=%{amanda_user}; \
-    amanda_group=%{amanda_group}; \
-    AMANDAHOMEDIR=%{AMANDAHOMEDIR}; \
-    os=Linux; \
-    dist=%{dist}; \
-    LOGDIR=%{LOGDIR}; \
-    LOGFILE=$LOGDIR/install.log; \
-    INSTALL_LOG=$LOGDIR/install.log; \
-    SYSCONFDIR=%{SYSCONFDIR}; \
-    SBINDIR=%{SBINDIR}; \
-    AMLIBEXECDIR=%{AMLIBEXECDIR}; \
-    export PYTHON=%{INSTALL_PYTHON}; \
-    export OPATH="${PATH}"; \
-    export PATH="/opt/csw/gnu:${PATH}:/sbin:/usr/sbin:/opt/csw/bin"; \
-    install -m 755 -o %{amanda_user} -g %{amanda_group} -d %{LOGDIR} 2>/dev/null || true; \
-    true
 
 # --- Pre/post (un)installation scripts ---
 
@@ -614,19 +657,7 @@ set +o posix
 # pre installation
 #
 ##########################################
-%{script_vars}
 logger "Preinstall for %{name}-%{amanda_version_info} on $(date -R)"
-
-# all owned by root
-#[ ! -e /usr/bin/bash -a -x /bin/bash ] &&
-#   ln -sf /bin/bash /usr/bin/bash
-#[ ! -e /usr/bin/sh -a -x /bin/sh ] &&
-#   ln -sf /bin/sh /usr/bin/sh
-#[ ! -e /usr/lib64 -a -d /lib64 ] &&
-#   ln -sf /lib64 /usr/lib64
-#[ ! -e /lib/systemd/system -a -d /usr/lib/systemd/system ] &&
-#   ln -sf /usr/lib/systemd /lib
-# must block use of /usr/lib/systemd/system because its not universal enough
 
 # ------------ Library of functions --------------
 %%COMMON_FUNCTIONS%%
@@ -671,7 +702,6 @@ set +o posix
 #
 ##########################################
 
-%{script_vars}
 # ---------- Library of functions ------------
 %%COMMON_FUNCTIONS%%
 %%POST_INST_FUNCTIONS%%
@@ -704,7 +734,7 @@ fi
 restore_saved_configs
 
 # add this path to check for utilities
-fix_security_conf
+fix_security_conf /sbin:/usr/sbin
 
 # needs AMANDAHOMEDIR and amanda_user vars
 create_dynamic_keys
@@ -746,7 +776,7 @@ set +o posix
 # pre un-installation
 #
 ##########################################
-%{script_vars}
+%%PRE_RM_FUNCTIONS%%
 
 set +e
 # NOTE: do not remove amandauser here
@@ -790,7 +820,7 @@ set +o posix
 # post un-installation
 #
 ##########################################
-%{script_vars}
+
 # ------------ Library of functions --------------
 %%COMMON_FUNCTIONS%%
 %%POST_RM_FUNCTIONS%%

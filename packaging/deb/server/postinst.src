@@ -11,9 +11,6 @@
 %%POST_INST_FUNCTIONS%%
 # ---------- End Library of functions ------------
 
-server_init_tools
-server_reset_tools
-
 ################################## halt old services ###################################
 ( set -x; systemctl -q disable --no-reload \
        amanda-server.socket \
@@ -26,12 +23,19 @@ server_reset_tools
 ################################## halt old services ###################################
 
 
-# move these directories with no change
-# if empty or nothing for new config
+# put extra dir directive if no libraries found from /usr/lib64
+#touch /etc/ld.so.conf.d/amanda.conf
+# just in case...
+#ldconfig
+#if ! ldconfig -p | grep -q '=> /usr/lib64/'; then
+#   bash -xc 'install -m 444 <(echo "/usr/lib64") /etc/ld.so.conf.d/amanda.conf'
+#   ( set -x; ldconfig )
+#fi
+
 restore_saved_configs
 
-# use this path to check
-fix_security_conf %%INSTALL_TOPDIR%%/bin
+# add this path to check for utilities
+fix_security_conf
 
 # needs AMANDAHOMEDIR and amanda_user vars
 create_dynamic_keys
@@ -43,9 +47,6 @@ chown -R %%AMANDAUSER%%:%%AMANDAGROUP%% %%SYSCONFDIR%%/amanda
 
 command -v semanage >/dev/null &&
     semanage fcontext -a -f s -t amanda_data_t -r 's0' '/var/lib/amanda/amandad.sock' || true
-
-# for /etc/services edit
-add_service_ports
 
 ( set -x; systemctl -q daemon-reload ) || true
 ( set -x; systemctl -q disable --now \
@@ -66,9 +67,9 @@ shutdown_xinetd_socket amanda-server.socket
        amanda-lserver-unix.socket \
        amanda-rest-server.service )
 
-logger "Amanda Server installation complete."
+logger "Amanda Community Server installation complete."
 
-echo "Amanda Server installation log can be found in '${INSTALL_LOG}'.";
+echo "Amanda Community Server installation log can be found in '${INSTALL_LOG}'.";
 
 true
 

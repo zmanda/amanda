@@ -1,4 +1,5 @@
 #!/bin/bash
+set +o posix
 ##########################################
 #
 # pre un-installation
@@ -6,9 +7,7 @@
 # pre un-installation
 #
 ##########################################
-# ---------- Library of functions ------------
 %%PRE_RM_FUNCTIONS%%
-# ---------- End Library of functions ------------
 
 set +e
 # NOTE: do not remove amandauser here
@@ -40,6 +39,6 @@ xargs -tr systemctl stop <<<"$units" || true
 ( set -x; systemctl -q daemon-reload ) || true
 ################################## halt old services ###################################
 
-true 
+true
 
 ##########################################
