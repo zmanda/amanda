@@ -1,5 +1,4 @@
 #!/bin/bash
-set +o posix
 ##########################################
 #
 # post un-installation
@@ -9,8 +8,8 @@ set +o posix
 ##########################################
 
 # ------------ Library of functions --------------
-%%COMMON_FUNCTIONS%%
 %%POST_RM_FUNCTIONS%%
+%%COMMON_FUNCTIONS%%
 # ---------- End Library of functions ------------
 
 ( set -x; systemctl -q daemon-reload ) || true
