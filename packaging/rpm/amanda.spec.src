@@ -607,7 +607,7 @@ touch %{ROOT_AMANDAHOMEDIR}/.ssh/client_authorized_keys
 touch %{ROOT_AMANDAHOMEDIR}/.am_passphrase
 )
 
-mv %{ROOT_SHAREDIR}/amanda %{ROOT_AMDATADIR}
+# mv %{ROOT_SHAREDIR}/amanda %{ROOT_AMDATADIR}
 %if %{with systemd}
 rm -f %{ROOT_AMANDAHOMEDIR}/example/*inetd*
 %else
