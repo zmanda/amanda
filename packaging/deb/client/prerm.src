@@ -1,5 +1,4 @@
 #!/bin/bash
-set +o posix
 ##########################################
 #
 # pre un-installation
@@ -7,7 +6,9 @@ set +o posix
 # pre un-installation
 #
 ##########################################
+# ---------- Library of functions ------------
 %%PRE_RM_FUNCTIONS%%
+# ---------- End Library of functions ------------
 
 set +e
 # NOTE: do not remove amandauser here

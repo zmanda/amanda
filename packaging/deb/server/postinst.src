@@ -7,8 +7,8 @@
 #
 ##########################################
 # ---------- Library of functions ------------
-%%COMMON_FUNCTIONS%%
 %%POST_INST_FUNCTIONS%%
+%%COMMON_FUNCTIONS%%
 # ---------- End Library of functions ------------
 
 ################################## halt old services ###################################
