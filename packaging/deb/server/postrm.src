@@ -6,8 +6,10 @@
 # post un-installation
 #
 ##########################################
+
 # ------------ Library of functions --------------
 %%POST_RM_FUNCTIONS%%
+%%COMMON_FUNCTIONS%%
 # ---------- End Library of functions ------------
 
 ( set -x; systemctl -q daemon-reload ) || true

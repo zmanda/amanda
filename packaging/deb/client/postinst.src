@@ -1,5 +1,4 @@
 #!/bin/bash
-set +o posix
 ##########################################
 #
 # post installation
@@ -7,10 +6,9 @@ set +o posix
 # post installation
 #
 ##########################################
-
 # ---------- Library of functions ------------
-%%COMMON_FUNCTIONS%%
 %%POST_INST_FUNCTIONS%%
+%%COMMON_FUNCTIONS%%
 # ---------- End Library of functions ------------
 
 ################################## halt old services ###################################
@@ -21,19 +19,10 @@ set +o posix
 ################################## halt old services ###################################
 
 
-# put extra dir directive if no libraries found from /usr/lib64
-#touch /etc/ld.so.conf.d/amanda.conf
-# just in case...
-#ldconfig
-#if ! ldconfig -p | grep -q '=> /usr/lib64/'; then
-#   bash -xc 'install -m 444 <(echo "/usr/lib64") /etc/ld.so.conf.d/amanda.conf'
-#   ( set -x; ldconfig )
-#fi
-
 restore_saved_configs
 
 # add this path to check for utilities
-fix_security_conf
+fix_security_conf /sbin:/usr/sbin
 
 # needs AMANDAHOMEDIR and amanda_user vars
 create_dynamic_keys
