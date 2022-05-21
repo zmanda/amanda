@@ -1,4 +1,5 @@
 #!/bin/bash
+set +o posix
 ##########################################
 #
 # post installation
@@ -6,11 +7,11 @@
 # post installation
 #
 ##########################################
+
 # ---------- Library of functions ------------
 %%COMMON_FUNCTIONS%%
 %%POST_INST_FUNCTIONS%%
 # ---------- End Library of functions ------------
-
 
 ################################## halt old services ###################################
 ( set -x; systemctl -q disable --no-reload \
@@ -21,19 +22,18 @@
 
 
 # put extra dir directive if no libraries found from /usr/lib64
-# touch /etc/ld.so.conf.d/amanda.conf
+#touch /etc/ld.so.conf.d/amanda.conf
 # just in case...
-ldconfig
-# if ! ldconfig -p | grep -q '=> /usr/lib64/'; then
-#    # must create a new execve to effect real change (??)
-#    bash -xc 'install -m 444 <(echo "/usr/lib64") /etc/ld.so.conf.d/amanda.conf'
-#    ( set -x; ldconfig )
-# fi
+#ldconfig
+#if ! ldconfig -p | grep -q '=> /usr/lib64/'; then
+#   bash -xc 'install -m 444 <(echo "/usr/lib64") /etc/ld.so.conf.d/amanda.conf'
+#   ( set -x; ldconfig )
+#fi
 
 restore_saved_configs
 
 # add this path to check for utilities
-fix_security_conf /sbin:/usr/sbin
+fix_security_conf
 
 # needs AMANDAHOMEDIR and amanda_user vars
 create_dynamic_keys
@@ -46,13 +46,22 @@ chown -R %%AMANDAUSER%%:%%AMANDAGROUP%% %%SYSCONFDIR%%/amanda
 command -v semanage >/dev/null &&
     semanage fcontext -a -f s -t amanda_data_t -r 's0' '/var/lib/amanda/amandad.sock' || true
 
+( set -x; systemctl -q daemon-reload ) || true
+( set -x; systemctl -q disable --now \
+       amanda-client.socket ) || true
+
 shutdown_xinetd_socket amanda-client.socket
 
-( set -x; systemctl restart amanda-client.socket )
+( set -x; systemctl preset \
+       amanda-client.socket ) || true
 
-logger "Amanda Client installation complete."
+# only restart those already running...
+( set -x; systemctl try-restart \
+       amanda-client.socket )
 
-echo "Amanda Client installation log can be found in '${INSTALL_LOG}'.";
+logger "Amanda Community Client installation complete."
+
+echo "Amanda Community Client installation log can be found in '${INSTALL_LOG}'.";
 
 true
 

@@ -1,4 +1,5 @@
 #!/bin/bash
+set +o posix
 ##########################################
 #
 # pre installation
@@ -6,20 +7,7 @@
 # pre installation
 #
 ##########################################
-###############################################################
-# needed contents are brought from zmanda-platform-shared
-###############################################################
-
-# all owned by root
-[ ! -e /usr/bin/bash -a -x /bin/bash ] &&
-   ln -sf /bin/bash /usr/bin/bash
-[ ! -e /usr/bin/sh -a -x /bin/sh ] &&
-   ln -sf /bin/sh /usr/bin/sh
-[ ! -e /usr/lib64 -a -d /lib64 ] &&
-   ln -sf /lib64 /usr/lib64
-# [ ! -e /lib/systemd/system -a -d /usr/lib/systemd/system ] &&
-#    ln -sf /usr/lib/systemd /lib
-# must block use of /usr/lib/systemd/system because its not universal enough
+logger "Preinstall for amanda-"Amanda Community Edition - version %%VERSION%%" on $(date -R)"
 
 # ------------ Library of functions --------------
 %%COMMON_FUNCTIONS%%
@@ -31,6 +19,10 @@ logger "Preparing to install: "Amanda Community Edition - version %%VERSION%%" o
 create_user
 check_user_group "%%AMANDAGROUP%%" ||
    add_group "%%AMANDAGROUP%%"
+check_user_supplemental_group "%%AMANDACLIGROUP%%" ||
+   add_group "%%AMANDACLIGROUP%%"
+# check_user_supplemental_group "%%{amanda_tapegroup}" ||
+#    add_group "%%{amanda_tapegroup}"
 
 systemctl -q disable --no-reload \
        amanda-client.socket 2>/dev/null || true
@@ -43,14 +35,8 @@ xargs -r -n1 systemctl -q stop <<<"${_my_systemd_units}" 2>/dev/null || true
 ( set -x; systemctl reset-failed )
 ( set -x; systemctl daemon-reload )
 
-
-check_user_supplemental_group "%%AMANDACLIGROUP%%" ||
-   add_group "%%AMANDACLIGROUP%%"
-# check_user_supplemental_group "%%{amanda_tapegroup}" ||
-#    add_group "%%{amanda_tapegroup}"
-
 logger "Preinstall done."
 
-echo "Amanda preinstall logs can be found in '$INSTALL_LOG'."
+echo "Amanda preinstall logs can be found in '$LOGFILE'."
 
 ##########################################
