@@ -1,4 +1,5 @@
 #!/bin/bash
+set +o posix
 ##########################################
 #
 # post un-installation
@@ -6,15 +7,16 @@
 # post un-installation
 #
 ##########################################
+
 # ------------ Library of functions --------------
+%%COMMON_FUNCTIONS%%
 %%POST_RM_FUNCTIONS%%
 # ---------- End Library of functions ------------
-
 
 ( set -x; systemctl -q daemon-reload ) || true
 /sbin/ldconfig
 
-echo "Amanda removal log can be found in '$INSTALL_LOG'."
+
 true
 
 
