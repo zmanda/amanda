@@ -51,9 +51,9 @@
 %define disttag    %(A="%%PKG_SUFFIX%%"; A="${A#.}"; echo ${A%%%%.*})
 
 #
-# must match the build-OS to be deployed on the same...
+# use the platform to determine it
 #
-%define glib2_build   %%BUILD_GLIB2_VERSION%%
+%define glib2_build   %(pkg-config --modversion glib-2.0)
 
 %define glib2_pkg_name glib2
 %define glib2_devel_pkg_name glib2-devel
@@ -264,9 +264,7 @@ Requires: /etc/xinetd.d
 Requires: tar >= %{tarver}
 Requires: %glib2_pkg_name >= %glib2_build
 Requires: /etc/services
-
 Provides: amanda-backup-client = %{amanda_version}
-Conflicts: amanda-backup-server
 Conflicts: amanda-backup_client, amanda-backup_server
 Conflicts: amanda, amanda-server, amanda-client, amanda-backup-server
 
@@ -274,7 +272,7 @@ Conflicts: amanda, amanda-server, amanda-client, amanda-backup-server
 Amanda is the leading Open-Source Backup and Archiving software.
 
 This package contains the Amanda client.  The amanda-backup-client package
-needs to be installed on every system that is being backed up.
+needs to be installed on every system that is being backed up if no server is present.
 
 Amanda Forums is located at: http://forums.zmanda.com/
 Amanda Documentation is available at: http://wiki.zmanda.com/
@@ -282,33 +280,28 @@ Amanda Documentation is available at: http://wiki.zmanda.com/
 #####################################
 ################  BACKUP-DEVEL #####################
 #####################################
-%package %{pkg_variant}-devel
-Release: %{rpm_release}.%{subpkg}
-Summary: Amanda Enterprise Backup and Archiving Server [%{disttag}]
+%package -n amanda-backup-client-devel
+Release: %{rpm_release}.client
+Summary: Amanda Backup and Archiving Server [%{disttag}]
 Group: %{rpm_group}
-Provides: amanda_enterprise-%{pkg_variant} = %{amanda_version}
 
-%description %{pkg_variant}-devel
-Amanda Enterprise Edition is the leading Open-Source Backup and
-Archiving software with Enterprise support.
+%description -n amanda-backup-server-devel
+Amanda is the leading Open-Source Backup and Archiving software.
 
-This package contains the Amanda enterprise %{pkg_variant} development files.
+This package contains the Amanda client development files.
 
 #####################################
 ################  BACKUP-TEST #####################
 #####################################
-%package %{pkg_variant}-tests
-Release: %{rpm_release}.%{subpkg}
-Summary: Amanda Enterprise Backup and Archiving Server Tests [%{disttag}]
+%package -n amanda-backup-client-tests
+Release: %{rpm_release}.client
+Summary: Amanda Community Backup and Archiving Server Tests [%{disttag}]
 Group: %{rpm_group}
-Provides: amanda_enterprise-%{pkg_variant} = %{amanda_version}
 
-%description %{pkg_variant}-tests
-Amanda Enterprise Edition is the leading Open-Source Backup and
-Archiving software with Enterprise support.
+%description -n amanda-backup-client-tests
+Amanda is the leading Open-Source Backup and Archiving software.
 
-This package contains the Amanda enterprise %{pkg_variant} test files.
-
+This package contains the Amanda server test files.
 
 # --- Directory setup ---
 
@@ -347,7 +340,7 @@ This package contains the Amanda enterprise %{pkg_variant} test files.
 %define MANDIR          %{SHAREDIR}/man
 %define LOGDIR          %%LOGDIR%%
 
-%define Bsocket amanda-server\@.UILD_TOPDIR	%{_builddir}/%{name}-%{amanda_version}service
+%define BUILD_TOPDIR	%{_builddir}/%{name}-%{amanda_version}
 
 %global __python 	%(command -v python3)
 %global __python3 	%(command -v python3)
@@ -516,17 +509,19 @@ export GCC_TARGET=$(gcc -dumpmachine | tr -d '\n')
         --with-debugging=%{LOGDIR} \
         --with-failure-code \
         \
-	--with-libcurl=%{PREFIX} \
+	--with-libcurl \
         --enable-s3-device \
         --disable-installperms \
 	--disable-syntax-checks \
         --enable-manpage-build \
 	--enable-rpath        \
-        --with-xsltproc=$(command -v xsltproc) \
+        --with-xsltproc       \
         --${systemd_with}-systemd \
         --without-server
 
 make -j`nproc`
+make -j1 -C installcheck amrecover
+make -j1 -C installcheck 
 
 # --- Install to buildroot ---
 
@@ -549,6 +544,8 @@ rm -rf %{buildroot}
 
 ################################################ perform source make-install
 . ./rpm-env.sh   # last time...
+make -o config.status -o config/config.h -j1 DESTDIR=%{buildroot} install
+
 make -j1 DESTDIR=%{buildroot} install
 ################################################ done with source make-install
 
@@ -593,8 +590,10 @@ find %{buildroot} -name \*.la -delete -o -name \*.a -delete -o -type l -name \*.
 # install/shift misc files in place
 ##################
 # preserve all these
-mkdir -p %{ROOT_AMANDAHOMEDIR}/{gnutar-lists,.gnupg,.ssh,tmp}
+mkdir -p %{ROOT_AMANDAHOMEDIR}/{gnutar-lists,.gnupg,.ssh}
+mkdir -p %{ROOT_AMANDAHOMEDIR}/tmp
 echo "%{amanda_version_info}" > %{ROOT_AMANDAHOMEDIR}/amanda-client-release
+# mkdir -p @{ROOT_AMANDAHOMEDIR}/{staging,vtapes,disk}
 
 # package-placeholders all filled in upon install only
 ( umask 027;
@@ -604,7 +603,7 @@ touch %{ROOT_AMANDAHOMEDIR}/.ssh/client_authorized_keys
 touch %{ROOT_AMANDAHOMEDIR}/.am_passphrase
 )
 
-mv %{ROOT_SHAREDIR}/amanda %{ROOT_SHAREDIR}/amanda-%{amanda_version}
+mv %{ROOT_SHAREDIR}/amanda %{ROOT_AMDATADIR}
 %if %{with systemd}
 rm -f %{ROOT_AMANDAHOMEDIR}/example/*inetd*
 %else
@@ -631,6 +630,99 @@ install -D -m 600 %{ROOT_AMANDAHOMEDIR}/example/amandahome-dot-amandahosts %{ROO
 install -D -m 600 %{ROOT_AMANDAHOMEDIR}/example/amandahome-dot-amandahosts %{ROOT_AMANDAHOMEDIR}/.amandahosts.default
 install -D -m 640 %{ROOT_AMANDAHOMEDIR}/example/amandahome-dot-profile     %{ROOT_AMANDAHOMEDIR}/.profile
 
+##################
+# install all config/devel files correctly
+##################
+# set the top of the build
+build_topdir=%{BUILD_TOPDIR}
+# set the no-softlink build path...
+build_topdir_abs=$(realpath %{BUILD_TOPDIR})
+
+sed -i -e ':redo' -e '/"\\$/{N;s,"\\\n",,;b redo}' ./config.status
+
+if ./config.status --config 2>/dev/null | grep -q .; then
+    CONFIG="$(./config.status --config)"
+else
+    CONFIG="$(./config.status --version | sed -e '/with options/!d' -e 's,with options ",,' -e 's,"$,,')"
+fi
+
+rm -f %{ROOT_AMANDAHOMEDIR}/amanda-config
+echo "$CONFIG" |
+    sed \
+     -e "s|$build_topdir_abs|$build_topdir|g" \
+     -e "s|$build_topdir|%%{BUILD_TOPDIR}|g" \
+     -e "s| %{AMLIBDIR}/| %%{DESTDIR}%{AMLIBDIR}/|g" \
+   	>%{ROOT_AMANDAHOMEDIR}/amanda-client-config
+
+mkdir -p %{ROOT_AMANDAHOMEDIR}/amanda-autoconf
+f=(%{devel_config_files});
+( cd config; cp -a "${f[@]}" %{ROOT_AMANDAHOMEDIR}/amanda-autoconf; )
+
+mkdir -p %{ROOT_AMINCDIR}
+f=(%{devel_include_files});
+for i in "${f[@]}"; do cp */$i %{ROOT_AMINCDIR}; done
+# cp gnulib/*.h @{ROOT_AMINCDIR}
+
+##################
+# install all test files correctly
+##################
+mkdir -p %{ROOT_AMDATADIR}/tests
+PERL5LIB=%{AMPERLDIR} declare -p PERL5LIB > %{ROOT_AMDATADIR}/tests/run.sh
+echo 'cd $(dirname $0);' >> %{ROOT_AMDATADIR}/tests/run.sh
+
+(
+    set -x
+    unset CDPATH
+    cd %{__builddir}/installcheck
+
+    make --eval=$'cleanfiles-query:\n\t@ls -1 $(CLEANFILES) 2>/dev/null || true' \
+             cleanfiles-query |
+       cpio -dvp %{ROOT_AMDATADIR}/tests || true
+
+    ls -1d *.pm */. | xargs realpaths --relative-to=. | find $(cat) -type f | 
+       cpio -dvp %{ROOT_AMDATADIR}/tests || true
+
+    rm -f %{ROOT_AMDATADIR}/tests/amcat*.??
+
+# tests/catalogs/tapers.cat is executable but has no shebang, removing executable bit
+# tests/amrecover is executable but has no shebang, removing executable bit
+# tests/Amanda_Report.pl is executable but has no shebang, removing executable bit
+
+    for i in common_tests client_tests server_tests full_tests restore_tests ndmp_tests mock_tests all_tests; do
+        make --eval=$'testfiles-query:\n\t@ls -1d $('"$i"') 2>/dev/null || true' \
+           testfiles-query > "%{ROOT_AMDATADIR}/tests/.${i//_/-}"
+    done
+
+    # remove any -flush tests [that always fail] from the all-tests set
+    sed -i -e '/-flush$/d' "%{ROOT_AMDATADIR}/tests/.all-tests"
+
+    cp -vt %{ROOT_AMDATADIR}/tests \
+       %{__builddir}/packaging/common/run-installcheck.sh
+
+)
+
+#
+# these files can't work with old paths in them anyway
+#
+find %{ROOT_AMINCDIR} %{ROOT_AMANDAHOMEDIR} -type f | \
+    xargs --no-run-if-empty sed -i \
+     -e "s|$build_topdir_abs|$build_topdir|g" \
+     -e "s|$build_topdir|%%{BUILD_TOPDIR}|g"
+
+find %{ROOT_AMLIBDIR} -type f -name \*.la | \
+    xargs --no-run-if-empty sed -i \
+     -e "s|$build_topdir_abs|$build_topdir|g" \
+     -e "s|$build_topdir|%%{BUILD_TOPDIR}|g" \
+     -e "/dependency_libs=/s| %{AMLIBDIR}/| %%{DESTDIR}%{AMLIBDIR}/|g" \
+     -e "/libdir=/s|%{AMLIBDIR}|%%{DESTDIR}%{AMLIBDIR}|g"
+
+find %{ROOT_AMLIBDIR} -type f -name \*.la | \
+    xargs --no-run-if-empty chmod uog-x
+
+# double check that no devel files have the local BUILD_TOPDIR paths in them at all!!
+if find %{ROOT_AMINCDIR} %{ROOT_AMANDAHOMEDIR} -type f -exec grep -q %{_builddir} \{} \; -print | grep -q .; then exit -1; fi
+if find %{ROOT_AMLIBDIR} -type f -name \*.la  -exec grep -q %{_builddir} \{} \; -print | grep -q .; then exit -1; fi
+true
 
 # --- Clean up buildroot ---
 
@@ -649,7 +741,6 @@ true
 ##########################################
 %pre -n amanda-backup-client
 #!/bin/bash
-set +o posix
 ##########################################
 #
 # pre installation
@@ -660,8 +751,8 @@ set +o posix
 logger "Preinstall for %{name}-%{amanda_version_info} on $(date -R)"
 
 # ------------ Library of functions --------------
-%%COMMON_FUNCTIONS%%
 %%PRE_INST_FUNCTIONS%%
+%%COMMON_FUNCTIONS%%
 # ---------- End Library of functions ------------
 
 logger "Preparing to install: %{amanda_version_info} on $(date -R)"
@@ -673,6 +764,7 @@ check_user_supplemental_group "%{amanda_cligroup}" ||
    add_group "%{amanda_cligroup}"
 # check_user_supplemental_group "%{amanda_tapegroup}" ||
 #    add_group "%{amanda_tapegroup}"
+
 
 %if %{with systemd}
 systemctl -q disable --no-reload %{_my_systemd_units} 2>/dev/null || true
@@ -688,12 +780,11 @@ xargs -r -n1 systemctl -q stop <<<"${_my_systemd_units}" 2>/dev/null || true
 
 logger "Preinstall done."
 
-echo "Amanda preinstall logs can be found in '$LOGFILE'."
+echo "Amanda preinstall logs can be found in '$INSTALL_LOG'."
 
 ##########################################
 %posttrans -n amanda-backup-client
 #!/bin/bash
-set +o posix
 ##########################################
 #
 # post installation
@@ -701,10 +792,9 @@ set +o posix
 # post installation
 #
 ##########################################
-
 # ---------- Library of functions ------------
-%%COMMON_FUNCTIONS%%
 %%POST_INST_FUNCTIONS%%
+%%COMMON_FUNCTIONS%%
 # ---------- End Library of functions ------------
 
 ################################## halt old services ###################################
@@ -721,15 +811,6 @@ else
     reload_xinetd start
 fi
 %endif
-
-# put extra dir directive if no libraries found from /usr/lib64
-#touch /etc/ld.so.conf.d/amanda.conf
-# just in case...
-#ldconfig
-#if ! ldconfig -p | grep -q '=> /usr/lib64/'; then
-#   bash -xc 'install -m 444 <(echo "/usr/lib64") /etc/ld.so.conf.d/amanda.conf'
-#   ( set -x; ldconfig )
-#fi
 
 restore_saved_configs
 
@@ -768,7 +849,6 @@ true
 ##########################################
 %preun -n amanda-backup-client
 #!/bin/bash
-set +o posix
 ##########################################
 #
 # pre un-installation
@@ -776,7 +856,9 @@ set +o posix
 # pre un-installation
 #
 ##########################################
+# ---------- Library of functions ------------
 %%PRE_RM_FUNCTIONS%%
+# ---------- End Library of functions ------------
 
 set +e
 # NOTE: do not remove amandauser here
@@ -812,7 +894,6 @@ true
 ##########################################
 %postun -n amanda-backup-client
 #!/bin/bash
-set +o posix
 ##########################################
 #
 # post un-installation
@@ -822,8 +903,8 @@ set +o posix
 ##########################################
 
 # ------------ Library of functions --------------
-%%COMMON_FUNCTIONS%%
 %%POST_RM_FUNCTIONS%%
+%%COMMON_FUNCTIONS%%
 # ---------- End Library of functions ------------
 
 %if %{with systemd}
@@ -1025,10 +1106,34 @@ true
 %{MANDIR}/man8/am*
 %{MANDIR}/man8/script-email.8*
 
-%{SHAREDIR}/amanda-%{amanda_version}
+%dir %{AMDATADIR}
+%{AMDATADIR}/[A-Z]*
+
 # one-possibly-removed stub config file
 %{_logrotatedir}/amanda
 # @{_ldsoconfdir}/amanda*
+
+######################################################
+%files -n amanda-backup-client-devel
+######################################################
+##################
+# resource files only
+##################
+%defattr(0644,root,root,0755)
+%{AMINCDIR}
+%{AMLIBDIR}/lib*.so
+%{AMLIBDIR}/lib*.a
+%{AMLIBDIR}/lib*.la
+
+%{AMANDAHOMEDIR}/amanda-autoconf
+%{AMANDAHOMEDIR}/amanda-client-config
+
+######################################################
+%files -n amanda-backup-client-tests
+######################################################
+%defattr(-,%{amanda_user},%{amanda_group},0755)
+%{AMDATADIR}/tests
+
 
 # --- ChangeLog
 

@@ -99,7 +99,7 @@
 # only has time if not a tagged release..
 %define branch_time_version  %(A="%%PKG_REV%%";       A="${A%%.git.*}"; echo "${A%%.tag.*}" )
 %define target_version       %(A="%%VERSION%%"; echo "${A%%[^0-9.]*}")
-%define build_date %(A="%%DATE%%"; echo "${A}")
+%define build_date %%DATE%%
 
 # Define amanda_version using the value determined by
 # packaging/common/substitute.pl.
@@ -231,8 +231,6 @@ Requires(pre): %{_ldsoconfdir}
 Requires: /sbin/ldconfig
 Requires: /usr/bin/gpg-agent
 Requires: /usr/bin/gpg2
-# SuSE has no package owner
-# Requires: @{_unitdir_compat}
 Requires: %{_logrotatedir}
 Requires: coreutils
 Requires: gettext
@@ -325,7 +323,7 @@ This package contains the Amanda server test files.
 %define AMANDAHOMEDIR   %%AMANDAHOMEDIR%%
 %define AMHOMEDIR       %%AMANDAHOMEDIR%%
 %define AMVARDIR        %{LOCALSTATEDIR}/amanda
-%define AMDATADIR       %{SHAREDIR}/amanda-%{amanda_version}
+%define AMDATADIR       %{SHAREDIR}/amanda
 
 %ifarch x86_64 s390x
 %define LIBDIR          %{EPREFIX}/lib64
@@ -345,7 +343,7 @@ This package contains the Amanda server test files.
 %define MANDIR          %{SHAREDIR}/man
 %define LOGDIR          %%LOGDIR%%
 
-%define __builddir	%{_builddir}/%{name}-%{amanda_version}
+%define BUILD_TOPDIR	%{_builddir}/%{name}-%{amanda_version}
 
 %global __python 	%(command -v python3)
 %global __python3 	%(command -v python3)
@@ -640,10 +638,9 @@ install -D -m 640 %{ROOT_AMANDAHOMEDIR}/example/amandahome-dot-profile     %{ROO
 # install all config/devel files correctly
 ##################
 # set the top of the build
-build_topdir=%{__builddir}
+build_topdir=%{BUILD_TOPDIR}
 # set the no-softlink build path...
-build_topdir_abs=$(realpath %{__builddir})
-# no-op substitutions
+build_topdir_abs=$(realpath %{BUILD_TOPDIR})
 
 sed -i -e ':redo' -e '/"\\$/{N;s,"\\\n",,;b redo}' ./config.status
 
@@ -657,7 +654,6 @@ rm -f %{ROOT_AMANDAHOMEDIR}/amanda-config
 echo "$CONFIG" |
     sed \
      -e "s|$build_topdir_abs|$build_topdir|g" \
-     \
      -e "s|$build_topdir|%%{BUILD_TOPDIR}|g" \
      -e "s| %{AMLIBDIR}/| %%{DESTDIR}%{AMLIBDIR}/|g" \
    	>%{ROOT_AMANDAHOMEDIR}/amanda-config
@@ -665,9 +661,6 @@ echo "$CONFIG" |
 mkdir -p %{ROOT_AMANDAHOMEDIR}/amanda-autoconf
 f=(%{devel_config_files});
 ( cd config; cp -a "${f[@]}" %{ROOT_AMANDAHOMEDIR}/amanda-autoconf; )
-
-pkg_root_rev=$(cd $git_toplevel; git submodule status | sed -e 's,^ *\(.........\).*,\1,');
-cp -a ./config.status %{ROOT_AMANDAHOMEDIR}/amanda-autoconf/config.status-$(git_submodule_ref 000-external/packaging)
 
 mkdir -p %{ROOT_AMINCDIR}
 f=(%{devel_include_files});
@@ -684,7 +677,7 @@ echo 'cd $(dirname $0);' >> %{ROOT_AMDATADIR}/tests/run.sh
 (
     set -x
     unset CDPATH
-    cd %{__builddir}/installcheck
+    cd %{BUILD_TOPDIR}/installcheck
 
     make --eval=$'cleanfiles-query:\n\t@ls -1 $(CLEANFILES) 2>/dev/null || true' \
              cleanfiles-query |
@@ -708,7 +701,7 @@ echo 'cd $(dirname $0);' >> %{ROOT_AMDATADIR}/tests/run.sh
     sed -i -e '/-flush$/d' "%{ROOT_AMDATADIR}/tests/.all-tests"
 
     cp -vt %{ROOT_AMDATADIR}/tests \
-       %{__builddir}/packaging/common/run-installcheck.sh
+       %{BUILD_TOPDIR}/packaging/common/run-installcheck.sh
 
 )
 
@@ -734,11 +727,6 @@ find %{ROOT_AMLIBDIR} -type f -name \*.la | \
 if find %{ROOT_AMINCDIR} %{ROOT_AMANDAHOMEDIR} -type f -exec grep -q %{_builddir} \{} \; -print | grep -q .; then exit -1; fi
 if find %{ROOT_AMLIBDIR} -type f -name \*.la  -exec grep -q %{_builddir} \{} \; -print | grep -q .; then exit -1; fi
 true
-
-%if "%{rpmbuild_version}" > "004.015.999"
-# don't need for client
-%py_byte_compile %{__python3} %{ROOT_INSTALLDIR}/python
-%endif
 
 # --- Clean up buildroot ---
 
@@ -767,8 +755,8 @@ true
 logger "Preinstall for %{name}-%{amanda_version_info} on $(date -R)"
 
 # ------------ Library of functions --------------
-%%COMMON_FUNCTIONS%%
 %%PRE_INST_FUNCTIONS%%
+%%COMMON_FUNCTIONS%%
 # ---------- End Library of functions ------------
 
 logger "Preparing to install: %{amanda_version_info} on $(date -R)"
@@ -778,8 +766,9 @@ check_user_group "%{amanda_group}" ||
    add_group "%{amanda_group}"
 check_user_supplemental_group "%{amanda_cligroup}" ||
    add_group "%{amanda_cligroup}"
-check_user_supplemental_group "%{amanda_tapegroup}" ||
-   add_group "%{amanda_tapegroup}"
+# check_user_supplemental_group "%{amanda_tapegroup}" ||
+#    add_group "%{amanda_tapegroup}"
+
 
 %if %{with systemd}
 systemctl -q disable --no-reload %{_my_systemd_units} 2>/dev/null || true
@@ -795,7 +784,7 @@ xargs -r -n1 systemctl -q stop <<<"${_my_systemd_units}" 2>/dev/null || true
 
 logger "Preinstall done."
 
-echo "Amanda preinstall logs can be found in 'INSTALL_LOG'."
+echo "Amanda preinstall logs can be found in '$INSTALL_LOG'."
 
 ##########################################
 %posttrans -n amanda-backup-server
@@ -808,8 +797,8 @@ echo "Amanda preinstall logs can be found in 'INSTALL_LOG'."
 #
 ##########################################
 # ---------- Library of functions ------------
-%%COMMON_FUNCTIONS%%
 %%POST_INST_FUNCTIONS%%
+%%COMMON_FUNCTIONS%%
 # ---------- End Library of functions ------------
 
 ################################## halt old services ###################################
@@ -925,8 +914,10 @@ true
 # post un-installation
 #
 ##########################################
+
 # ------------ Library of functions --------------
 %%POST_RM_FUNCTIONS%%
+%%COMMON_FUNCTIONS%%
 # ---------- End Library of functions ------------
 
 %if %{with systemd}
@@ -1155,6 +1146,7 @@ true
 # resource files only
 ######################
 %defattr(0444,root,root,0555)
+#
 %if %{with systemd}
 %{INSTALL_UNITDIR}/amanda-*
 %{INSTALL_UNITDIR}-preset/*
@@ -1172,6 +1164,7 @@ true
 
 %dir %{AMDATADIR}
 %{AMDATADIR}/[A-Z]*
+
 # one-possibly-removed stub config file
 %{_logrotatedir}/amanda
 # @{_ldsoconfdir}/amanda*
@@ -1196,6 +1189,7 @@ true
 ######################################################
 %defattr(-,%{amanda_user},%{amanda_group},0755)
 %{AMDATADIR}/tests
+
 
 # --- ChangeLog
 
