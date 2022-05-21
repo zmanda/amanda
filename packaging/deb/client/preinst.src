@@ -1,5 +1,4 @@
 #!/bin/bash
-set +o posix
 ##########################################
 #
 # pre installation
@@ -10,8 +9,8 @@ set +o posix
 logger "Preinstall for amanda-"Amanda Community Edition - version %%VERSION%%" on $(date -R)"
 
 # ------------ Library of functions --------------
-%%COMMON_FUNCTIONS%%
 %%PRE_INST_FUNCTIONS%%
+%%COMMON_FUNCTIONS%%
 # ---------- End Library of functions ------------
 
 logger "Preparing to install: "Amanda Community Edition - version %%VERSION%%" on $(date -R)"
@@ -23,6 +22,7 @@ check_user_supplemental_group "%%AMANDACLIGROUP%%" ||
    add_group "%%AMANDACLIGROUP%%"
 # check_user_supplemental_group "%%{amanda_tapegroup}" ||
 #    add_group "%%{amanda_tapegroup}"
+
 
 systemctl -q disable --no-reload \
        amanda-client.socket 2>/dev/null || true
@@ -37,6 +37,6 @@ xargs -r -n1 systemctl -q stop <<<"${_my_systemd_units}" 2>/dev/null || true
 
 logger "Preinstall done."
 
-echo "Amanda preinstall logs can be found in '$LOGFILE'."
+echo "Amanda preinstall logs can be found in '$INSTALL_LOG'."
 
 ##########################################
