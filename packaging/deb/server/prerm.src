@@ -38,7 +38,7 @@ done
 
 ( set -x; systemctl -q reset-failed ) || true
 
-units="$(systemctl -a --no-legend --no-pager list-units 'amanda-lserver-unix@*' 'amanda-server@*' ) "
+units="$(systemctl -a --no-legend --no-pager list-units 'amanda-server@*' 'amanda-lserver-unix@*' ) "
 units="$(sed <<<"$units" -e 's,^[^a-z_]*,,' -e 's, .*,,' )"
 xargs -tr systemctl stop <<<"$units" || true
 
