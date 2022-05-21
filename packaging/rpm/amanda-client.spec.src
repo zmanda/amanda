@@ -584,7 +584,7 @@ rm -f %{ROOT_AMLIBEXECDIR}/amplot.gp
 
 %{?AMLIBEXECDIR_COMPAT: ln -sf %{AMLIBEXECDIR} %{AMLIBEXECDIR_COMPAT}}
 
-find %{buildroot} -name \*.la -delete -o -name \*.a -delete -o -type l -name \*.so -delete
+# find %{buildroot} -name \*.la -delete -o -name \*.a -delete -o -type l -name \*.so -delete
 
 ##################
 # install/shift misc files in place
@@ -673,7 +673,7 @@ echo 'cd $(dirname $0);' >> %{ROOT_AMDATADIR}/tests/run.sh
 (
     set -x
     unset CDPATH
-    cd %{__builddir}/installcheck
+    cd %{BUILD_TOPDIR}/installcheck
 
     make --eval=$'cleanfiles-query:\n\t@ls -1 $(CLEANFILES) 2>/dev/null || true' \
              cleanfiles-query |
@@ -697,7 +697,7 @@ echo 'cd $(dirname $0);' >> %{ROOT_AMDATADIR}/tests/run.sh
     sed -i -e '/-flush$/d' "%{ROOT_AMDATADIR}/tests/.all-tests"
 
     cp -vt %{ROOT_AMDATADIR}/tests \
-       %{__builddir}/packaging/common/run-installcheck.sh
+       %{BUILD_TOPDIR}/packaging/common/run-installcheck.sh
 
 )
 
