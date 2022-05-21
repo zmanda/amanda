@@ -9,15 +9,12 @@ set +o posix
 # post un-installation
 #
 ##########################################
-POST_RM_ARGS=("$@")
 
-# delete any extraneous dead symlinks we would own
-#find /etc /usr/lib/systemd/system /usr/lib/systemd/system /usr/lib/*.d \
-#   -type l -lname %%INSTALL_TOPDIR%%/\* \
-#   -not -exec test -e {} \; -delete
-#
-#( set -x; systemctl -q daemon-reload ) || true
-#/sbin/ldconfig
+# ------------ Library of functions --------------
+%%COMMON_FUNCTIONS%%
+%%POST_RM_FUNCTIONS%%
+# ---------- End Library of functions ------------
+
 
 echo "Amanda removal log can be found in '$LOGFILE'."
 true
