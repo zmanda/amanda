@@ -204,9 +204,9 @@ BuildRequires: ncurses-devel
 %description
 Amanda is the leading Open-Source Backup and Archiving software.
 
-The amanda-backup_server package should be installed on the Amanda server, i.e.
+The amanda-backup-client package should be installed on the Amanda server, i.e.
 the machine attached to backup media (such as a tape drive or disk
-drives) where backups will be written. The amanda-backup_server package
+drives) where backups will be written. The amanda-backup-client package
 includes Amanda client.  The amanda-backup_client package needs
 to be installed on every system that is being backed up.
 
@@ -285,7 +285,7 @@ Release: %{rpm_release}.client
 Summary: Amanda Backup and Archiving Server [%{disttag}]
 Group: %{rpm_group}
 
-%description -n amanda-backup-server-devel
+%description -n amanda-backup-client-devel
 Amanda is the leading Open-Source Backup and Archiving software.
 
 This package contains the Amanda client development files.
