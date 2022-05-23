@@ -144,9 +144,16 @@ char *help_text[] = {
 static int add_file_arg(ref_ndm_nlist_table_t args, char *toadd) 
 {
     // detect an explicit destination path (lhs) before '=' and original path
-    char *mid = strchrnul(toadd, '=');
-    char *lhs = alloca(mid-toadd+2);   // up to '=' + 1 more
-    char *rhs = alloca(strlen(mid)+2); // maybe nul string + 1 more
+    char *mid = strchr(toadd, '=');
+    char *lhs = NULL;
+    char *rhs = NULL;
+
+    mid = ( mid ? : toadd + strlen(toadd) );  // same as strchrnul
+    
+    lhs = alloca(mid-toadd+2);   // up to '=' + 1 more
+    rhs = alloca(strlen(mid)+2); // maybe nul string + 1 more
+
+    mid = ( mid ? mid : toadd + strlen(toadd) );
 
     if ( toadd[0] == '/' ) toadd++; 
 
