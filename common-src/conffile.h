@@ -142,8 +142,14 @@ typedef enum {
 typedef GSList *estimatelist_t;
 
 typedef enum {
+#if WANT_UNSAFE_AUTOLABEL
     AL_OTHER_CONFIG = 1<<0,
     AL_NON_AMANDA   = 1<<1,
+#else
+    AL_NULL = 0,
+#define AL_OTHER_CONFIG  AL_NULL
+#define AL_NON_AMANDA    AL_NULL
+#endif
     AL_VOLUME_ERROR = 1<<2,
     AL_EMPTY        = 1<<3,
 } autolabel_enum_t;
