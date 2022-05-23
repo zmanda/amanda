@@ -844,18 +844,34 @@ ndmis_tcp_listen (struct ndm_session *sess, struct ndmp9_addr *listen_addr)
 	/* c_sa is a sockaddr_in for the IP address to use */
 
         /* only get a security-approved random port */
-	what = "socket";
+	what = "stream_server call";
         listen_sock = stream_server(AF_INET, &listen_tcp_addr->port, 0, STREAM_BUFSIZE, 0);
 	if (listen_sock < 0) goto fail;
 
-        l_sa.sa_family = AF_UNSPEC;
-        if (connect(listen_sock, &l_sa, sizeof l_sa) < 0) goto fail; // un-listen the socket state
+
+        {
+            // re-create a new socket in the same fd
+            int s = socket(AF_INET, SOCK_STREAM, 0);
+
+            what = "re-creation of socket";
+            if (dup2(s,listen_sock) != listen_sock)
+                goto fail;
+
+            if (s != listen_sock)
+               close(s);
+
+            s = 1;
+            s = setsockopt (listen_sock, SOL_SOCKET, SO_REUSEADDR, (void*)&s, sizeof s);
+            what = "reuseaddr";
+            if (s < 0)
+                goto fail;
+        }
 
         // stack to stack copy
         l_sa = c_sa;
 
 	sin = (struct sockaddr_in *) &l_sa;
-        sin->sin_port = htons(listen_tcp_addr->port); // use new port
+	sin->sin_port = htons(listen_tcp_addr->port); // use new port
 
 	what = "bind";
 	if (bind (listen_sock, &l_sa, sizeof l_sa) < 0) goto fail;
