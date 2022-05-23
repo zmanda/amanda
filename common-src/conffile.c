@@ -180,8 +180,11 @@ typedef enum {
     CONF_CUSTOM,
 
     /* autolabel */
-    CONF_AUTOLABEL,		CONF_ANY_VOLUME,	CONF_OTHER_CONFIG,
-    CONF_NON_AMANDA,		CONF_VOLUME_ERROR,	CONF_EMPTY,
+    CONF_AUTOLABEL,		CONF_ANY_VOLUME,
+#if WANT_UNSAFE_AUTOLABEL
+    CONF_OTHER_CONFIG,          CONF_NON_AMANDA,
+#endif
+    CONF_VOLUME_ERROR,	        CONF_EMPTY,
     CONF_META_AUTOLABEL,
 
     /* labelstr */
@@ -1133,12 +1136,16 @@ keytab_t server_keytab[] = {
     { "NOFULL", CONF_NOFULL },
     { "NOINC", CONF_NOINC },
     { "NONE", CONF_NONE },
+#if WANT_UNSAFE_AUTOLABEL
     { "NON_AMANDA", CONF_NON_AMANDA },
+#endif
     { "OPTIONAL", CONF_OPTIONAL },
     { "ORDER", CONF_ORDER },
     { "ORG", CONF_ORG },
     { "OTHER", CONF_OTHER },
+#if WANT_UNSAFE_AUTOLABEL
     { "OTHER_CONFIG", CONF_OTHER_CONFIG },
+#endif
     { "PART_CACHE_DIR", CONF_PART_CACHE_DIR },
     { "PART_CACHE_MAX_SIZE", CONF_PART_CACHE_MAX_SIZE },
     { "PART_CACHE_TYPE", CONF_PART_CACHE_TYPE },
@@ -5096,16 +5103,22 @@ read_autolabel(
 	if (tok == CONF_ANY_VOLUME)
 	    val->v.autolabel.autolabel |= AL_OTHER_CONFIG | AL_NON_AMANDA |
 					  AL_VOLUME_ERROR | AL_EMPTY;
+#if WANT_UNSAFE_AUTOLABEL
 	else if (tok == CONF_OTHER_CONFIG)
 	    val->v.autolabel.autolabel |= AL_OTHER_CONFIG;
 	else if (tok == CONF_NON_AMANDA)
 	    val->v.autolabel.autolabel |= AL_NON_AMANDA;
+#endif
 	else if (tok == CONF_VOLUME_ERROR)
 	    val->v.autolabel.autolabel |= AL_VOLUME_ERROR;
 	else if (tok == CONF_EMPTY)
 	    val->v.autolabel.autolabel |= AL_EMPTY;
 	else {
-	    conf_parserror(_("ANY, NEW-VOLUME, OTHER-CONFIG, NON-AMANDA, VOLUME-ERROR or EMPTY is expected"));
+	    conf_parserror(_("ANY, NEW-VOLUME, "
+#if WANT_UNSAFE_AUTOLABEL
+                           "OTHER-CONFIG, NON-AMANDA, "
+#endif
+                           "VOLUME-ERROR or EMPTY is expected"));
 	}
 	get_conftoken(CONF_ANY);
     }
