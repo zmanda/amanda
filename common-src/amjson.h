@@ -25,6 +25,8 @@
 #ifndef AMJSON_H
 #define AMJSON_H
 
+#include <stdint.h>
+
 typedef enum {
     JSON_STRING,
     JSON_NUMBER,
