@@ -42,6 +42,16 @@
 #include <execinfo.h>
 #endif
 
+#include <glib.h>
+#include <stdio.h>
+#include <pthread.h>
+
+#ifdef __linux__
+#include <sys/syscall.h>
+#include <unistd.h>
+#endif
+
+
 /* Minimum file descriptor on which to keep the debug file.  This is intended
  * to keep the descriptor "out of the way" of other processing.  It's not clear
  * that this is required any longer, but it doesn't hurt anything.
@@ -64,6 +74,7 @@ static time_t open_time;
 int error_exit_status = 1;
 
 /* static function prototypes */
+static char *get_debug_ident(char *buff, guint len);
 static char *get_debug_name(time_t t, int n);
 static void debug_unlink_old(void);
 static void debug_setup_1(char *config, char *subdir);
@@ -81,6 +92,108 @@ static gboolean do_suppress_error_traceback = FALSE;
 
 /* configured amanda_log_handlers */
 static GSList *amanda_log_handlers = NULL;
+
+static pthread_once_t ident_once = { PTHREAD_ONCE_INIT };
+static char ident_argv0[64] = { 0 };
+// static pthread_key_t ident_key;
+
+static void
+init_ident_default(void)
+{
+    FILE *fp = NULL;
+    char *p,*pp,*pend;
+    char c;
+
+    fp = fopen("/proc/self/stat","r");
+    if (fp) {
+        while( (c=fgetc(fp)) != '(' )
+            { if (c == EOF) return; }
+        for( p = ident_argv0 ;
+                p < &ident_argv0[sizeof(ident_argv0)-1] && (c=fgetc(fp)) != ')' ; 
+                   *p++ = c )
+            {
+                if (c == EOF) {
+                    ident_argv0[0] = '\0';
+                    return; 
+                }
+              
+            }
+        *p = '\0';
+        return; // success
+    }
+
+    pend = p = alloca(256);
+    pend += readlink("/proc/self/path/a.out", p, 255);
+    if ( pend > p ) {
+        *pend = '\0';
+        p = ( (pp=strrchr(p,'/')) ? ++pp : p );
+        strncpy(ident_argv0,p,sizeof(ident_argv0));
+        return; // success
+    }
+
+    ident_argv0[0] = '\0'; // nothing found
+}
+
+#if defined(__linux__) && defined(SYS_gettid)
+static char*
+get_debug_ident(char *buff, guint len)
+{
+    pthread_once(&ident_once, &init_ident_default);
+
+    {
+        char idbuff[32] = { 0 };
+        int tidoff = syscall(SYS_gettid) - getpid();
+        static const char *const ctxt_names[CONTEXT_SCRIPTUTIL+1] = {
+               "?\?-", "cli-", "dmn-", "utl-"   
+            };
+
+        if (!tidoff)
+        {
+            g_snprintf(buff,len,"%s%s%s   ",ctxt_names[get_pcontext()], get_pname(), idbuff);
+            return buff;
+        }
+
+        if (tidoff < 0 && 0x8000+tidoff < abs(tidoff) )
+           { tidoff += 0x8000; }
+        if (tidoff < 0 && 0x400000+tidoff < abs(tidoff) )
+           { tidoff += 0x400000; }
+
+        pthread_getname_np(pthread_self(),idbuff,sizeof(idbuff));
+
+        if (!strncmp(idbuff,ident_argv0,sizeof(ident_argv0))) {
+            g_snprintf(buff,len,"%s%s %-+5d",ctxt_names[get_pcontext()], get_pname(), tidoff);
+            return buff;
+        } 
+        g_snprintf(buff,len,"%s-%s %-+5d", get_pname(), idbuff, tidoff);
+        return buff;
+    }
+    return NULL;
+}
+
+#else 
+
+static char*
+get_debug_ident(char *buff, guint len)
+{
+    char idbuff[32] = { 0 }; // only need 16 actually
+    int randid = GPOINTER_TO_INT(g_thread_self()) % 65537;
+    static const char *const ctxt_names[CONTEXT_SCRIPTUTIL+1] = {
+           "?\?-", "cli-", "dmn-", "utl-"   
+        };
+
+    pthread_once(&ident_once, &init_ident_default);
+    // pthread_getname_np(pthread_self(),idbuff,sizeof(idbuff));
+
+    if (!strncmp(idbuff,ident_argv0,sizeof(ident_argv0))) {
+        g_snprintf(buff,len,"%s%s [..%04lx]", ctxt_names[get_pcontext()], get_pname(), randid);
+        return buff;
+    }
+
+    g_snprintf(buff,len,"%s-%s [..%04x]", get_pname(), idbuff, randid);
+    return buff;
+}
+
+#endif
 
 /*
  * Generate a debug file name.  The name is based on the program name,
@@ -475,9 +588,10 @@ debug_setup_2(
 	/*
 	 * Make the first debug log file entry.
 	 */
-	debug_printf(_("pid %ld ruid %ld euid %ld version %s: %s at %s"),
+	debug_printf(_("pid %ld ruid %ld euid %ld ppid %ld version %s: %s at %s"),
 		     (long)getpid(),
 		     (long)getuid(), (long)geteuid(),
+                     (long) getppid(), 
 		     VERSION,
 		     annotation,
 		     ctime(&open_time));
@@ -770,22 +884,27 @@ debug_ressource_usage(void)
 
     getrusage(RUSAGE_SELF, &usage);
 
-    g_debug("ru_utime   : %ld", usage.ru_utime.tv_sec);
-    g_debug("ru_stime   : %ld", usage.ru_stime.tv_sec);
-    g_debug("ru_maxrss  : %ld", usage.ru_maxrss  );
-    g_debug("ru_ixrss   : %ld", usage.ru_ixrss   );
-    g_debug("ru_idrss   : %ld", usage.ru_idrss   );
-    g_debug("ru_isrss   : %ld", usage.ru_isrss   );
-    g_debug("ru_minflt  : %ld", usage.ru_minflt  );
-    g_debug("ru_majflt  : %ld", usage.ru_majflt  );
-    g_debug("ru_nswap   : %ld", usage.ru_nswap   );
-    g_debug("ru_inblock : %ld", usage.ru_inblock );
-    g_debug("ru_oublock : %ld", usage.ru_oublock );
-    g_debug("ru_msgsnd  : %ld", usage.ru_msgsnd  );
-    g_debug("ru_msgrcv  : %ld", usage.ru_msgrcv  );
-    g_debug("ru_nsignals: %ld", usage.ru_nsignals);
-    g_debug("ru_nvcsw   : %ld", usage.ru_nvcsw   );
-    g_debug("ru_nivcsw  : %ld", usage.ru_nivcsw  );
+    // time in user/system mode
+    g_debug("ru_utime   : %fs/%fs total user/system-cpu time", 
+                            ( usage.ru_utime.tv_sec + (1e-6 * usage.ru_utime.tv_usec) ),
+                            ( usage.ru_stime.tv_sec + (1e-6 * usage.ru_stime.tv_usec) ));
+    g_debug("ru_maxrss  : %.3fMB max memory used", usage.ru_maxrss/1024.0  );
+    if (usage.ru_minflt || usage.ru_majflt) {
+        g_debug("ru_minflt  : %ld/%ld x remap/full page fetch", usage.ru_minflt, usage.ru_majflt);
+    }
+    if (usage.ru_inblock  || usage.ru_oublock) {
+	g_debug("ru_inblock : %ld/%ld x fs real reads/writes", usage.ru_inblock, usage.ru_oublock);
+    }
+    g_debug("ru_nvcsw   : %ld/%ld x task context-yields/switches", usage.ru_nvcsw, usage.ru_nivcsw );
+
+    // MOST OF THESE ARE LEFT AS ZERO IN LINUX
+    if ( usage.ru_ixrss ) g_debug("ru_ixrss   : %ld", usage.ru_ixrss   );
+    if ( usage.ru_idrss ) g_debug("ru_idrss   : %ld", usage.ru_idrss   );
+    if ( usage.ru_isrss ) g_debug("ru_isrss   : %ld", usage.ru_isrss   );
+    if ( usage.ru_nswap ) g_debug("ru_nswap   : %ld", usage.ru_nswap   );
+    if ( usage.ru_msgsnd ) g_debug("ru_msgsnd  : %ld", usage.ru_msgsnd  );
+    if ( usage.ru_msgrcv ) g_debug("ru_msgrcv  : %ld", usage.ru_msgrcv  );
+    if ( usage.ru_nsignals ) g_debug("ru_nsignals: %ld", usage.ru_nsignals);
 }
 
 void
@@ -839,24 +958,32 @@ void debug_printf(const char *format, ...)
 	db_file = stderr;
     }
     if(db_file != NULL) {
-	char *prefix;
-	char *text;
-	char *text_out;
-	char timestamp[128];
+	char prefix[100];
+	char *text = &prefix[0];
+	char *textend = &prefix[sizeof(prefix)];
 
-	if (db_file != stderr)
-	    prefix = g_strdup_printf("%s: pid %d: thd-%p: %s:", msg_timestamp(timestamp), (int)getpid(), g_thread_self(), get_pname());
-	else
-	    prefix = g_strdup_printf("%s:", get_pname());
+	if (db_file != stderr) 
+        {
+            char timestamp[128];
+            text += g_snprintf(text,textend-text,"%s: pid %d: ",
+                        msg_timestamp(timestamp), (int)getpid());
+        }
+
+        // append thread identiity
+        {
+            char tident[64];
+            g_snprintf(text,textend-text,"%s: ", 
+                        get_debug_ident(tident,sizeof(tident)));
+        }
+
 	arglist_start(argp, format);
-	text = g_strdup_vprintf(format, argp);
+	g_vasprintf(&text, format, argp);
 	arglist_end(argp);
-	text_out = g_strdup_printf("%s %s", prefix, text);
-	fprintf(db_file, "%s", text_out);
+
+        // write and flush both in a single fprintf operation
+	fprintf(db_file, "%s%s", prefix, text);
 	fflush(db_file);
-	amfree(prefix);
 	amfree(text);
-	amfree(text_out);
     }
     errno = save_errno;
 }
