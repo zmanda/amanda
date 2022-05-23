@@ -519,7 +519,6 @@ clean_old_pid_file(const char *diskdir, pid_t mypid, const char *log_label)
     sprintf(mypid_file_base, "%s/pid.%d",diskdir,mypid);
     pid_file = strdupa(mypid_file_base);
     *strrchr(pid_file,'.') = '\0';
-
     unlink(mypid_file_base);
 
     // found that I own it?   unlink it safely...
@@ -538,12 +537,13 @@ clean_old_pid_file(const char *diskdir, pid_t mypid, const char *log_label)
     deadpid_file_base = alloca(strlen(diskdir) + 20);
     sprintf(deadpid_file_base, "%s/pid.%d",diskdir,pid);
 
-    // *must* be first to clean dead owner base
-    r = unlink(mypid_file_base);
+    // should be first to clean dead owner base and pid itself
+    r = unlink(deadpid_file_base);
 
-    // not first? depend on another to clean it up
-    if (r < 0) {
-        return -1; // blocked by unknown cleaner
+    // XXX: check if no other files exist in directory
+    if (r < 0 && errno == ENOENT) {
+        // not first? grrr. 
+        g_warning(_("race-condition: clearing missing-pair holding pid file: [%s]"), deadpid_file_base);
     }
 
     // return final pid-remove success or something else wrong

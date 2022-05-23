@@ -218,29 +218,30 @@ unmap_v4mapped(
     return tmp;
 }
 
+// NOTE: this is done to help IPv4 only installs
 static const sockaddr_union *
 normalize_lo(const sockaddr_union *sa, sockaddr_union *tmp)
 {
     // only one case to change...
-    if (SU_GET_FAMILY(sa) != AF_INET) 
+    if (SU_GET_FAMILY(sa) != AF_INET6)
         return sa;
-    if (sa->sin.sin_addr.s_addr != htonl(INADDR_LOOPBACK))
+    if (!IN6_IS_ADDR_LOOPBACK(&sa->sin6.sin6_addr))
         return sa;
 
     {
         int port = SU_GET_PORT(sa);
-        // normalize to IPV6 loopback address to prevent ambiguity
-        SU_INIT(tmp, AF_INET6);
+        // normalize to IPV4 loopback address to prevent ambiguity
+        SU_INIT(tmp, AF_INET);
         SU_SET_PORT(tmp, port);
+        tmp->sin.sin_addr.s_addr = INADDR_LOOPBACK;
     }
 
-    tmp->sin6.sin6_addr = in6addr_loopback;
     return tmp;
 }
 #else
 /* nothing to do if no IPv6 */
 #define unmap_v4mapped(sa, tmp) ((void)tmp, sa)
-#define normalize_lo(sa, tmp) ((void)tmp, (void)sa)
+#define normalize_lo(sa, tmp) ((void)tmp, sa)
 #endif
 
 int
