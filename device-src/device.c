@@ -213,7 +213,7 @@ typedef struct {
     PropertySource source;
 } SimpleProperty;
 
-#define selfp (self->private)
+#define P(self) ((self)->private)
 
 /* here are local prototypes, so we can make function pointers. */
 static void device_init (Device * o);
@@ -305,9 +305,9 @@ static void device_finalize(GObject *obj_self) {
 	g_mutex_free(self->device_mutex);
 	self->device_mutex = NULL;
     }
-    amfree(selfp->errmsg);
-    amfree(selfp->statusmsg);
-    g_hash_table_destroy(selfp->simple_properties);
+    amfree(P(self)->errmsg);
+    amfree(P(self)->statusmsg);
+    g_hash_table_destroy(P(self)->simple_properties);
     amfree(self->private);
 }
 
@@ -329,10 +329,10 @@ device_init (Device * self)
     self->max_block_size = SIZE_MAX; /* subclasses *really* should choose something smaller */
     self->block_size = DISK_BLOCK_BYTES;
     self->allow_take_scribe_from = TRUE;
-    selfp->errmsg = NULL;
-    selfp->statusmsg = NULL;
-    selfp->last_status = 0;
-    selfp->simple_properties =
+    P(self)->errmsg = NULL;
+    P(self)->statusmsg = NULL;
+    P(self)->last_status = 0;
+    P(self)->simple_properties =
         g_hash_table_new_full(g_direct_hash,
                               g_direct_equal,
                               NULL,
@@ -581,9 +581,9 @@ device_reset(
     Device *self)
 {
     self->status = DEVICE_STATUS_SUCCESS;
-    amfree(selfp->errmsg);
-    selfp->last_status = DEVICE_STATUS_SUCCESS;
-    amfree(selfp->statusmsg);
+    amfree(P(self)->errmsg);
+    P(self)->last_status = DEVICE_STATUS_SUCCESS;
+    amfree(P(self)->statusmsg);
     self->is_eom = FALSE;
 }
 
@@ -592,8 +592,8 @@ device_error(Device * self)
 {
     if (self == NULL) {
         return device_error_or_status(self);
-    } else if (selfp->errmsg) {
-	return selfp->errmsg;
+    } else if (P(self)->errmsg) {
+	return P(self)->errmsg;
     } else {
         return "Unknown Device error";
     }
@@ -610,10 +610,10 @@ device_status_error(Device * self)
     }
 
     /* reuse a previous statusmsg, if it was for the same status */
-    if (selfp->statusmsg && selfp->last_status == self->status)
-	return selfp->statusmsg;
+    if (P(self)->statusmsg && P(self)->last_status == self->status)
+	return P(self)->statusmsg;
 
-    amfree(selfp->statusmsg);
+    amfree(P(self)->statusmsg);
 
     status_strv = g_flags_nick_to_strv(self->status, DEVICE_STATUS_FLAGS_TYPE);
     g_assert(g_strv_length(status_strv) > 0);
@@ -626,8 +626,8 @@ device_status_error(Device * self)
     }
     g_strfreev(status_strv);
 
-    selfp->statusmsg = statusmsg;
-    selfp->last_status = self->status;
+    P(self)->statusmsg = statusmsg;
+    P(self)->last_status = self->status;
     return statusmsg;
 }
 
@@ -636,8 +636,8 @@ device_error_or_status(Device * self)
 {
     if (self == NULL) {
         return "Device is NULL";
-    } else if (selfp->errmsg) {
-	return selfp->errmsg;
+    } else if (P(self)->errmsg) {
+	return P(self)->errmsg;
     } else {
 	return device_status_error(self);
     }
@@ -658,11 +658,11 @@ device_set_error(Device *self, char *errmsg, DeviceStatusFlags new_flags)
 
     device_name = self->device_name? self->device_name : "(unknown device)";
 
-    if (errmsg && (!selfp->errmsg || !g_str_equal(errmsg, selfp->errmsg)))
+    if (errmsg && (!P(self)->errmsg || !g_str_equal(errmsg, P(self)->errmsg)))
 	g_debug("Device %s error = '%s'", device_name, errmsg);
 
-    amfree(selfp->errmsg);
-    selfp->errmsg = errmsg;
+    amfree(P(self)->errmsg);
+    P(self)->errmsg = errmsg;
 
     if (new_flags != DEVICE_STATUS_SUCCESS) {
 	flags_strv = g_flags_name_to_strv(new_flags, DEVICE_STATUS_FLAGS_TYPE);
@@ -1300,12 +1300,12 @@ device_write_block (Device * self, guint size, gpointer block)
      * guarantee, so we just assert them here */
     g_assert(size <= self->block_size);
     g_assert(self->in_file);
-    g_assert(!selfp->wrote_short_block);
+    g_assert(!P(self)->wrote_short_block);
     g_assert(block != NULL);
     g_assert(IS_WRITABLE_ACCESS_MODE(self->access_mode));
 
     if (size < self->block_size)
-	selfp->wrote_short_block = TRUE;
+	P(self)->wrote_short_block = TRUE;
 
     klass = DEVICE_GET_CLASS(self);
     g_assert(klass->write_block);
@@ -1320,7 +1320,7 @@ device_start_file (Device * self, dumpfile_t * jobInfo) {
     g_assert(!(self->in_file));
     g_assert(jobInfo != NULL);
 
-    selfp->wrote_short_block = FALSE;
+    P(self)->wrote_short_block = FALSE;
 
     klass = DEVICE_GET_CLASS(self);
     g_assert(klass->start_file);
@@ -1810,7 +1810,7 @@ device_set_simple_property(
     simp->surety = surety;
     simp->source = source;
 
-    g_hash_table_insert(selfp->simple_properties,
+    g_hash_table_insert(P(self)->simple_properties,
 			GINT_TO_POINTER(id),
 			simp);
 
@@ -1837,7 +1837,7 @@ device_get_simple_property(
 	PropertySource *source)
 {
     SimpleProperty *simp =
-	g_hash_table_lookup(selfp->simple_properties,
+	g_hash_table_lookup(P(self)->simple_properties,
 			    GINT_TO_POINTER(id));
 
     if (!simp)
