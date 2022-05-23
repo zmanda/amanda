@@ -1,7 +1,8 @@
-#!/bin/bash
-##########################################
+#!/usr/bin/env bash
 bashpath="`command -v bash`"
 [ -x "$bashpath" -a -z "$BASH_VERSION" ] && exec "$bashpath" $0 "$@"
+set +o posix
+##########################################
 #
 # post installation
 # post installation
@@ -20,182 +21,82 @@ AMANDATES=%%AMANDAHOMEDIR%%/amandates
     LOGDIR=%%LOGDIR%%; 
     LOGFILE=$LOGDIR/install.log; 
     INSTALL_LOG=$LOGDIR/install.log; 
-    SYSCONFDIR=/etc; 
+    INSTALL_TOPDIR=%%INSTALL_TOPDIR%%; 
+    SYSCONFDIR=%%SYSCONFDIR%%; 
     SBINDIR=/usr/sbin; 
     AMLIBEXECDIR=/usr/lib64/amanda; 
     export PYTHON=/usr/bin/python3; 
-    export PATH="%%INSTALL_TOPDIR%%/bin:/opt/csw/gnu:${PATH}:/sbin:/usr/sbin:/opt/csw/bin"; 
-    mkdir -p $LOGDIR
+    export OPATH="${PATH}"; 
+    export PATH="/opt/csw/gnu:${PATH}:/sbin:/usr/sbin:/opt/csw/bin"; 
+    install -m 755 -o %%AMANDAUSER%% -g %%AMANDAGROUP%% -d %%LOGDIR%% 2>/dev/null || true
 # ---------- Library of functions ------------
 %%COMMON_FUNCTIONS%%
 %%POST_INST_FUNCTIONS%%
-%%PKG_STATE_FUNCTIONS%%
 # ---------- End Library of functions ------------
 
-# put extra dir directive if no libraries found from /usr/lib64
-touch /etc/ld.so.conf.d/amanda.conf
-# just in case...
-ldconfig
-if ! ldconfig -p | grep -q '=> /usr/lib64/'; then
-   bash -c 'install -m 444 <(echo "/usr/lib64") /etc/ld.so.conf.d/amanda.conf'
-   ldconfig
+
+################################## halt old services ###################################
+backup_smf amandaclient   # for Solaris
+#( set -x; systemctl -q disable --no-reload \
+#       amanda-client.socket 2>/dev/null ) || true
+#( set -x; systemctl -q stop \
+#       amanda-client.socket 2>/dev/null ) || true
+################################## halt old services ###################################
+
+# copy forward older backup-sets (keeping same group ideally)
+if [ -d %%SYSCONFDIR%%/amanda4 -a -d %%SYSCONFDIR%%/amanda.prev/. ]; then
+    find 2>/dev/null %%SYSCONFDIR%%/amanda.prev/. -maxdepth 2 \
+             -name logs -type d -not -empty -printf '%%h\n' | xargs -r cp -avt %%SYSCONFDIR%%/amanda4
+    chmod u+rwX -R %%SYSCONFDIR%%/amanda4
 fi
 
 # all config files in %%files section...
 cfgs=(
-    %%AMANDAHOMEDIR%%/.am_passphrase
     %%AMANDAHOMEDIR%%/.amandahosts
+    %%AMANDAHOMEDIR%%/.am_passphrase
     %%AMANDAHOMEDIR%%/.gnupg/*
     %%AMANDAHOMEDIR%%/.profile
     %%AMANDAHOMEDIR%%/.ssh/*
     %%AMANDAHOMEDIR%%/amandates
-    /etc/amanda/amanda-client.conf
-    /etc/amanda/amanda-security.conf
-    /etc/amanda/amanda.conf
-    /etc/amanda-security.conf
+    %%SYSCONFDIR%%/amanda/amanda-client.conf
+    %%SYSCONFDIR%%/amanda/amanda-security.conf
+    %%SYSCONFDIR%%/amanda/amanda.conf
+    %%SYSCONFDIR%%/amanda-security.conf
 )
 
-mv -f %%AMANDAHOMEDIR%%/.amandahosts %%AMANDAHOMEDIR%%/.amandahosts.default
+restore_saved_configs ZMANae-client "${cfgs[@]}"
 
-#
-# try three different attempts to restore from older version
-# NOTE: all but amandahosts files are zero-length as installed!
-for cfg in "${cfgs[@]}"; do
-    if [ -s "$cfg" ]; then
-        [[ $cfg == *.rpmsave ]] && suff=.rpmsave
-        [[ $cfg == *.rpmnew ]] && suff=.rpmnew
-        [[ $cfg == *.dpkg-old ]] && suff=.dpkg-old
-    else
-        [ -s "$cfg.rpmsave" ] && suff=.rpmsave
-        [ -s "$cfg.rpmnew" ] && suff=.rpmnew
-        [ -s "$cfg.dpkg-old" ] && suff=.dpkg-old
-    fi
+# use this path to check
+fix_security_conf /sbin:/usr/sbin:/usr/sfw/bin
 
-    cfg="${cfg%%$suff}"
-
-    # if no config is present... undo the save and use the preserved one
-    [ ! -s "$cfg" -a -s "$cfg$suff" ] && mv "$cfg$suff" "${cfg}"
-done
-
-#i="${cfg/var\/lib\/amanda\//var\/lib\/amanda-1\/}"
-#[ ! -s "$cfg" -a -s "$i" ] && mv -f "$i" "$cfg"
-
-[ -s %%AMANDAHOMEDIR%%/.amandahosts ] ||
-    mv %%AMANDAHOMEDIR%%/.amandahosts.default %%AMANDAHOMEDIR%%/.amandahosts
-
-fix_security_conf_path() {
-    local cmd=$1
-    local label=$2
-    local path="$(command -v $cmd 2>/dev/null)"
-    [ -x "$path" ]             || return
-    path="$(realpath -e $path)"
-    [ $path -ef /bin/false ] && return
-
-    if ! grep -q "^${label}_path=$path\$" /etc/amanda-security.conf; then
-        sed -i -e "\|^#${label}_path=|s|\$|\n${label}_path=$path|" /etc/amanda-security.conf
-    fi
-}
-#
-# place replacement paths right after standard parts of the *generated* amanda-security.conf file!
-# (if lines were edited out: do NOT add in.. and don't add at end of file)
-
-fix_security_conf_path tar    runtar:gnutar
-fix_security_conf_path gtar   amgtar:gnutar
-fix_security_conf_path star   amstar:star
-fix_security_conf_path bsdtar ambsdtar:bsdtar
-
-#
-# try to comment any allowed paths that dont exist!
-#
-approved=($(sed -e '/^[^#=]\+=/!d' -e 's/^[^=]*=//' /etc/amanda-security.conf))
-for path in ${approved[@]}; do
-    path=$(echo ${path})
-    [[ $path == /* ]] || continue     # dont even try
-    [ -e "$path" ] && continue        # no reason to banish it..
-    # something is wrong...
-    sed -i -e "\,${path}\$,s,^,### INVALID-PATH ###," /etc/amanda-security.conf
-done
-
-#
-# create dynamic keys
-#
-# check if pair is associated and ready
-check_gnupg 2>/dev/null ||
-   rm -f %%AMANDAHOMEDIR%%/.am_passphrase \
-         %%AMANDAHOMEDIR%%/.gnupg/am_key.gpg
-
-# get a random passphrase from 60 bytes of binary into full ASCII85
-[ -s %%AMANDAHOMEDIR%%/.am_passphrase ] ||
-    get_random_ascii_lines_perl 1  | install -m 600 /dev/stdin %%AMANDAHOMEDIR%%/.am_passphrase
-
-# create am_key.gpg from the new/old .am_passphrase if needed
-[ -s %%AMANDAHOMEDIR%%/.gnupg/am_key.gpg ] ||
-    create_amkey || \
-    logger "Info: amcrypt will not work until keys are created."
-
-# check again if pair is associated and ready.. but fail if needed
-check_gnupg
-
-[ -s %%AMANDAHOMEDIR%%/.ssh/id_rsa_amdump ] ||
-    {
-        rm -f %%AMANDAHOMEDIR%%/.ssh/id_rsa_amdump*;  # erase any zero-length files
-        log_output_of ssh-keygen -q -C %%AMANDAUSER%%@server -t rsa -f %%AMANDAHOMEDIR%%/.ssh/id_rsa_amdump -N '' </dev/null
-    } ||
-    logger "Info: failed to create server amdump ssh key"
-
-[ -s %%AMANDAHOMEDIR%%/.ssh/id_rsa_amrecover ] ||
-    {
-        rm -f %%AMANDAHOMEDIR%%/.ssh/id_rsa_amrecover*;  # erase any zero-length files
-        log_output_of ssh-keygen -q -C %%AMANDAUSER%%@client -t rsa -f %%AMANDAHOMEDIR%%/.ssh/id_rsa_amrecover -N '' </dev/null
-    } ||
-    logger "Info: failed to create client amrecover ssh key"
+# needs AMANDAHOMEDIR and amanda_user vars
+create_dynamic_keys
 
 # simply logical for any installs (needed for Debian maint scripts!!)
 chown -R %%AMANDAUSER%%:%%AMANDAGROUP%% %%AMANDAHOMEDIR%%
 chown -R %%AMANDAUSER%%:%%AMANDAGROUP%% %%LOGDIR%%
-chown -R %%AMANDAUSER%%:%%AMANDAGROUP%% /etc/amanda
+chown -R %%AMANDAUSER%%:%%AMANDAGROUP%% %%SYSCONFDIR%%/amanda4
 
-if [ -r /etc/inet/amandaclient ]; then
-    killall -HUP inetd
-fi
+command -v semanage >/dev/null &&
+    semanage fcontext -a -f s -t amanda_data_t -r 's0' '/var/lib/amanda/amandad.sock' || true
 
+add_service_ports
+
+##########################################
+install_smf amandaclient;  # for Solaris
+#units=(\
+#       amanda-client.socket)
+#units=(${units[@]/#//usr/lib/systemd/system/})
+#( set -x; systemctl enable "${units[@]}" )
 #
-# prepare for new sockets to listen
+#shutdown_xinetd_socket amanda-client.socket
 #
-# systemctl stop amanda-client.socket 2>/dev/null || true
+#( set -x; systemctl restart amanda-client.socket )
+##########################################
 
-# disable old verson if needed...
-# is_install_new || systemctl disable amanda-server.socket 2>/dev/null || true
+logger "Amanda Client installation complete."
 
-#rm -f /etc/xinetd.d/amandaserver
-#rm -f /etc/xinetd.d/zmrecover
-# systemctl reload xinetd 2>/dev/null || true  # if it exists?
-
-# port="$(grep -m1 '^ListenStream *= *[0-9]\+$' /usr/lib/systemd/system/amanda-client.socket)"
-# port="${port##*=}"
-# port="$(printf %%04x $port)"
-
-#for i in {1..20}; do
-#    echo "waiting ${i} --> 20 for listening port $port to close..."
-#    grep -qr ": 0\+:$port " /proc/net/tcp* || break
-#    sleep 1
-#done
-
-#command -v semanage &&
-#    semanage fcontext -a -f s -t amanda_data_t -r 's0' '/var/lib/amanda/amandad.sock' || true
-
-#
-# systemd setup
-#
-# systemctl enable /usr/lib/systemd/system/amanda-client.*
-# (no more units)
-# (no more units)
-# (no more units)
-# systemctl start amanda-client.socket
-
-logger "Amanda installation complete."
-
-echo "Amanda installation log can be found in '${INSTALL_LOG}'.";
+echo "Amanda Client installation log can be found in '${INSTALL_LOG}'.";
 
 true
 

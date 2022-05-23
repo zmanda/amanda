@@ -1,4 +1,5 @@
 #!/usr/bin/make -f
+
 SHELL := $(shell [ -x /bin/bash ] && echo /bin/bash || command -v bash)
 THIS_MAKEFILE := $(realpath $(lastword $(MAKEFILE_LIST)))
 #
@@ -11,8 +12,8 @@ SRCDIR := $(realpath $(PWD))
 # dh_testdir
 # dh_testroot
 # dh_clean -d -v  # build dirs only
-# dh_prep --package=amanda-backup-client
-# dh_installdirs -v --package=amanda-backup-client
+# dh_prep --package=amanda-backup-server
+# dh_installdirs -v --package=amanda-backup-server
 # dh_installdocs -v
 # dh_installchangelogs -v ChangeLog
 # dh_install -v --list-missing
@@ -101,12 +102,13 @@ AMANDAGROUP=%%AMANDAGROUP%%
 AMANDACLIGROUP=%%AMANDACLIGROUP%%
 
 # -------------- flags that are not possible
-# CFLAGS="$${CFLAGS}"
 # export CFLAGS="-specs=$${SRCDIR}/gcc-specs -L/usr/ccs/lib -m64 "; \
 # --enable-as-needed
 # LD=$(LD)
 
 define CONFIG_FLAGS_COMMON
+CFLAGS="$${CFLAGS}" \
+LDFLAGS="$${LDFLAGS}" \
 CC=$(CC) \
 PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) \
 MAKE=$(MAKE) \
@@ -149,9 +151,9 @@ MAKE=$(MAKE) \
 --with-debugging=$(LOGDIR) \
 --enable-manpage-build \
 --disable-syntax-checks \
---disable-installperms \
 --with-xsltproc \
---disable-static
+--disable-static \
+--disable-installperms
 endef
 # NOTE: disable-installperms or install conflicts with chown/chmod later
 
@@ -159,25 +161,20 @@ endef
 # subpackage paths
 #
 # used to narrow the dh_ tools focus
-#dhpkg              =  --package=amanda-backup-client
+#dhpkg              =  --package=amanda-backup-server
 #r=$(SRCDIR)/BUILD/tmp
-# buildroot_server  =  $(SRCDIR)/BUILD/amanda-backup-server
-buildroot           =  $(SRCDIR)/BUILD/amanda-backup-client
-devel               =  $(SRCDIR)/BUILD/amanda-backup-client-devel
+# buildroot_client  =  $(SRCDIR)/BUILD/amanda-backup-client
+buildroot           =  $(SRCDIR)/BUILD/amanda-backup-server
+devel               =  $(SRCDIR)/BUILD/amanda-backup-server-devel
 
 build: build-stamp
 build-stamp:
 	# dh_testdir
-	echo 'unset CONFIG_LDPATH ' > ./build-env.sh
 	( \
-	   PERL=$$(command -v perl); \
 	   PYTHON=$$(command -v python3); \
 	   PKG_CONFIG_PATH+=""; \
-	   declare -p PERL PYTHON PKG_CONFIG_PATH >> ./build-env.sh \
-        )
-	( \
-           \
-	   declare -p PATH >> ./build-env.sh \
+	   declare -p PYTHON CFLAGS LDFLAGS PKG_CONFIG_PATH >> ./build-env.sh; \
+	   \
 	)
 	
 	# annoying.. but it forces inclusion of all the needed perl
@@ -192,18 +189,18 @@ build-stamp:
 	
 	# no need for LDPATH, PATH (for perl/python)
 	set -x; . ./build-env.sh; \
-	    ./configure \
+	./configure \
 		$(CONFIG_FLAGS_COMMON) \
-		--without-server \
                 --enable-rpath
 	
 	touch missing
-		
+	
 	# remake once to make sure
 	set -x; $(MAKE) -j1 ./config.status VERBOSE=1
 	# perform real build
 	set -x; . ./build-env.sh; \
 	    $(MAKE) -j`nproc` VERBOSE=1
+	
 	touch $@
 	echo ------------------- END BUILD
 
@@ -215,31 +212,38 @@ DEVEL_INCLUDE_FILES =  \
 	directtcp-connection.h
 
 # build-install step
-binary-install-client: build-stamp
+
+##################
+################################ architecture-dependent files here
+##################
+binary-install-server: build-stamp
 	#dh_testdir
 	rm -rf $(buildroot)
 	mkdir -p $(buildroot)
-	# dh_prep
-	# dh_installdirs -v
+	# dh_prep $(dhpkg)
+	# dh_installdirs -v $(dhpkg)
 	mkdir -p $(buildroot)$(AMANDAHOMEDIR)/{gnutar-lists,.gnupg,.ssh,tmp}
+	mkdir -p $(buildroot)$(AMLIBEXECDIR)
 	
 	echo ------------------- START INSTALL
 	################################################ perform source make-install
 	set -x; . ./build-env.sh; \
-	    $(MAKE) -j1 install DESTDIR=$(buildroot)
+            $(MAKE) -j1 install DESTDIR=$(buildroot)
 	################################################ done with source make-install
 	
 	# rm -f $(buildroot)$(SYS_UNITDIR)/amanda-server*
+	#
 	# rm -f $(buildroot)$(AMANDAHOMEDIR)/example/inetd.conf.amandaclient
-		
+	# rm -f $(buildroot)$(AMANDAHOMEDIR)/example/inetd.conf.amandaserver
+	
 	##################
 	# needed directories
 	##################
 	# install -D -m 644 /dev/null \
-	#          $(buildroot)$(SYS_LDSOCONFDIR)/amanda.conf
-	#install -D -m 644 system-scripts/amanda-logrotate \
+	#         $(buildroot)$(SYS_LDSOCONFDIR)/amanda.conf
+	# install -D -m 644 system-scripts/amanda-logrotate \
 	#          $(buildroot)$(SYS_LOGROTATEDIR)/amanda
-		
+	
 	# only for solaris...
 	# install -D $(buildroot)$(AMANDAHOMEDIR)/example/amandaclient.xml \
 	#		$(buildroot)/var/svc/manifest/network/amandaclient.xml
@@ -259,65 +263,65 @@ binary-install-client: build-stamp
 	umask 027; touch $(buildroot)$(AMANDAHOMEDIR)/.am_passphrase
 	
 	mkdir -p $(buildroot)$(LOGDIR)
-	mkdir -p $(buildroot)$(LOGDIR)/client
+	mkdir -p $(buildroot)$(LOGDIR)/server
 	
 	install -m 640 /dev/null $(buildroot)$(AMANDATES)
 	
 	# both are installed by make-install...
-	install -m 644 $(buildroot)$(AMCONFDIR)/amanda-security.conf                   $(buildroot)$(SYSCONFDIR)/amanda-security.conf
-	install -m 644 $(buildroot)$(AMANDAHOMEDIR)/example/amanda-client.conf         $(buildroot)$(AMCONFDIR)/amanda-client.conf
-	install -m 644 $(buildroot)$(AMANDAHOMEDIR)/example/global-amanda.conf         $(buildroot)$(AMCONFDIR)/amanda.conf
-	install -m 600 $(buildroot)$(AMANDAHOMEDIR)/example/amandahome-dot-amandahosts $(buildroot)$(AMANDAHOMEDIR)/.amandahosts
-	install -m 640 $(buildroot)$(AMANDAHOMEDIR)/example/amandahome-dot-profile     $(buildroot)$(AMANDAHOMEDIR)/.profile
-	
+	install -D -m 644 $(buildroot)$(AMCONFDIR)/amanda-security.conf                   $(buildroot)$(SYSCONFDIR)/amanda-security.conf
+	install -D -m 644 $(buildroot)$(AMANDAHOMEDIR)/example/amanda-client.conf         $(buildroot)$(AMCONFDIR)/amanda-client.conf
+	install -D -m 644 $(buildroot)$(AMANDAHOMEDIR)/example/global-amanda.conf         $(buildroot)$(AMCONFDIR)/amanda.conf
+	install -D -m 600 $(buildroot)$(AMANDAHOMEDIR)/example/amandahome-dot-amandahosts $(buildroot)$(AMANDAHOMEDIR)/.amandahosts
+	install -D -m 640 $(buildroot)$(AMANDAHOMEDIR)/example/amandahome-dot-profile     $(buildroot)$(AMANDAHOMEDIR)/.profile
+
 
 ##################
-################################ permissions for backup-client
+################################ permissions for backup-server
 ##################
-perm-install-client: binary-install
+perm-install-server: binary-install
 	# dh_testroot
 	# dh_fixperms -v
 	
 	# NOTE: USE SINGLE LINES FOR CHOWN.  MUST ACCOMODATE OLDER CHOWN WITH FAKEROOT SETUP
 	# install -o root -g root -m 0644 BUILD/lintian \
-	# 	$(buildroot)/usr/share/lintian/overrides/amanda-backup-client
+	# 	$(buildroot)/usr/share/lintian/overrides/amanda-backup-server
 	chown -R root:root $(buildroot)$(AMLIBEXECDIR)
 	
 	chown -R $(AMANDAUSER):$(AMANDAGROUP) \
-           $(buildroot)$(AMANDAHOMEDIR)
-	chown -R $(AMANDAUSER):$(AMANDAGROUP) $(buildroot)$(AMCONFDIR)
-	chown -R $(AMANDAUSER):$(AMANDAGROUP) $(buildroot)$(LOGDIR)
-	chown -R $(AMANDAUSER):$(AMANDAGROUP) $(buildroot)/usr/sbin/*
-	
+	    $(buildroot)$(AMANDAHOMEDIR) \
+	    $(buildroot)$(SYSCONFDIR)/amanda \
+	    $(buildroot)$(LOGDIR) \
+	    $(buildroot)/usr/sbin/*
+
 	chown root:root \
-           $(buildroot)$(AMLIBDIR)/lib*.so
-	chown root:root                       $(buildroot)$(SYSCONFDIR)/amanda-security.conf
+	    $(buildroot)$(AMLIBDIR)/lib*.so \
+	    $(buildroot)$(SYSCONFDIR)/amanda-security.conf
 	
 	chown root:$(AMANDACLIGROUP) \
-           $(buildroot)$(AMLIBEXECDIR)/ambind
-	chown root:$(AMANDACLIGROUP) $(buildroot)$(AMLIBEXECDIR)/application/amgtar
-	chown root:$(AMANDACLIGROUP) $(buildroot)$(AMLIBEXECDIR)/application/amstar
-	chown root:$(AMANDACLIGROUP) $(buildroot)$(AMLIBEXECDIR)/calcsize
-	chown root:$(AMANDACLIGROUP) $(buildroot)$(AMLIBEXECDIR)/killpgrp
-	chown root:$(AMANDACLIGROUP) $(buildroot)$(AMLIBEXECDIR)/rundump
-	chown root:$(AMANDACLIGROUP) $(buildroot)$(AMLIBEXECDIR)/runtar
+	    $(buildroot)$(AMLIBEXECDIR)/ambind \
+	    $(buildroot)$(AMLIBEXECDIR)/application/amgtar  \
+	    $(buildroot)$(AMLIBEXECDIR)/application/amstar \
+	    $(buildroot)$(AMLIBEXECDIR)/calcsize \
+	    $(buildroot)$(AMLIBEXECDIR)/killpgrp \
+	    $(buildroot)$(AMLIBEXECDIR)/rundump \
+	    $(buildroot)$(AMLIBEXECDIR)/runtar
 	
 	chmod -R u=rwX,g=rX,o=rX $(buildroot)$(AMLIBEXECDIR) 
-	
+
 	chmod 0755 \
-           $(buildroot)$(AMLIBEXECDIR)/*
-	chmod 0755 $(buildroot)$(AMLIBEXECDIR)/application/*
+	    $(buildroot)$(AMLIBEXECDIR)/* \
+	    $(buildroot)$(AMLIBEXECDIR)/application/*
 	# chmod 0755 $(buildroot)$(AMLIBEXECDIR)/rest-server/bin/*
 	
 	# touching these afterward removes the critical setuid bit
 	chmod 04755 \
-           $(buildroot)$(AMLIBEXECDIR)/ambind
-	chmod 04755 $(buildroot)$(AMLIBEXECDIR)/application/amgtar
-	chmod 04755 $(buildroot)$(AMLIBEXECDIR)/application/amstar
-	chmod 04755 $(buildroot)$(AMLIBEXECDIR)/calcsize
-	chmod 04755 $(buildroot)$(AMLIBEXECDIR)/killpgrp
-	chmod 04755 $(buildroot)$(AMLIBEXECDIR)/rundump
-	chmod 04755 $(buildroot)$(AMLIBEXECDIR)/runtar
+	    $(buildroot)$(AMLIBEXECDIR)/ambind \
+	    $(buildroot)$(AMLIBEXECDIR)/application/amgtar \
+	    $(buildroot)$(AMLIBEXECDIR)/application/amstar \
+	    $(buildroot)$(AMLIBEXECDIR)/calcsize \
+	    $(buildroot)$(AMLIBEXECDIR)/killpgrp \
+	    $(buildroot)$(AMLIBEXECDIR)/rundump \
+	    $(buildroot)$(AMLIBEXECDIR)/runtar
 	
 	chmod 0444  $(buildroot)$(AMLIBEXECDIR)/amcat.awk
 	
@@ -376,7 +380,7 @@ perm-install-client: binary-install
 #    -rw-r-----    1 amandabaamandaba                   56 Nov 16 22:05 /var/lib/amanda
 #
 #    drwxrwx---    2 amandabaamandaba                    0 Nov 16 22:05 /var/log/amanda
-#    drwxr-x---    2 amandabaamandaba                    0 Nov 16 22:05 /var/log/amanda/client
+#    drwxr-x---    2 amandabaamandaba                    0 Nov 16 22:05 /var/log/amanda/server
 #
 #    drwxrwx---    2 amandabaamandaba                    0 Nov 16 22:05 /var/lib/amanda/gnutar-lists
 #
@@ -404,9 +408,9 @@ perm-install-client: binary-install
 #    -r--r--r--    1 root    root                     1508 Nov 16 22:05 /usr/share/
 
 ##################
-################################ install for backup-client-devel
+################################ install for backup-server-devel
 ##################
-binary-install-devel: binary-install-client
+binary-install-devel: binary-install-server
 	# dh_testdir
 	rm -rf $(devel)
 	mkdir -p $(devel)
@@ -415,14 +419,14 @@ binary-install-devel: binary-install-client
 	
 	# snip off $(buildroot) from start ... to dup the path
 	mkdir -p $(devel)$(AMLIBDIR)
-	ls -1 $(buildroot)$(AMLIBDIR)/*.{a,la,so} $(buildroot)$(AMLIBDIR)/*.so.* 2>/dev/null | \
-                 xargs -r cp -a -t $(devel)$(AMLIBDIR)
+	ls -1 $(buildroot)$(SHLIBDIR)/*.{a,la,so} $(buildroot)$(SHLIBDIR)/*.so.* 2>/dev/null |  \
+	        xargs -r cp -a -t $(devel)$(SHLIBDIR)
 	mkdir -p $(devel)$(AMANDAHOMEDIR)/amanda-autoconf
 	mkdir -p $(devel)/usr/include/amanda
 	
 	echo "Amanda Community Edition - version $(AMVER)" > $(devel)$(AMANDAHOMEDIR)/amanda-release
 	
-	rm -f $(devel)$(AMANDAHOMEDIR)/amanda-client-config
+	rm -f $(devel)$(AMANDAHOMEDIR)/amanda-config
 	
 	cp -a ./config.status ./config.status.save
 	sed -i -e ':redo' -e '/"\\$$/{N;s,"\\\n",,;b redo}' ./config.status.save
@@ -435,7 +439,7 @@ binary-install-devel: binary-install-client
 		 -e "s|$$build_topdir_abs|$$build_topdir|g" \
 		 -e "s|$$build_topdir|%{BUILD_TOPDIR}|g" \
 		 -e "s| $(AMLIBDIR)/| %{DESTDIR}$(AMLIBDIR)/|g" \
-	     >$(devel)$(AMANDAHOMEDIR)/amanda-client-config
+	     >$(devel)$(AMANDAHOMEDIR)/amanda-config
 	
 	cp -a $(addprefix config/,$(DEVEL_CONFIG_COPIED)) $(devel)$(AMANDAHOMEDIR)/amanda-autoconf
 	
@@ -476,7 +480,7 @@ binary-install-devel: binary-install-client
 	cp -f $(buildroot)$(AMCONFDIR)/amanda-security.conf $(buildroot)$(SYSCONFDIR)/amanda-security.conf
 
 ##################
-################################ permissions for backup-client-devel
+################################ permissions for backup-server-devel
 ##################
 perm-install-devel: binary-install
 	# dh_testroot
@@ -497,7 +501,7 @@ binary-install-stamp:
 	LD_PRELOAD= \
 	LD_LIBRARY_PATH= \
 	    $(MAKE) -f $(THIS_MAKEFILE) \
-		binary-install-client \
+		binary-install-server \
 		binary-install-devel
 	#
 	# dh_installdocs -v
@@ -506,7 +510,7 @@ binary-install-stamp:
 	#dh_installchangelogs -v ChangeLog
 	for i in $$(<$(BUILDROOT).docs); do install -D $$i $(buildroot)$(DOCDIR); done
 	
-	#dh_strip --dbg-package=amanda-backup-client-dbg
+	#dh_strip --dbg-package=amanda-backup-server-dbg
 	
 	#dh_compress
 	# need external dependencies
@@ -522,7 +526,7 @@ final-install:
 	fakeroot -- $(MAKE) -f $(THIS_MAKEFILE) \
 	   GCC_TARGET=$(GCC_TARGET) \
 		perm-install-devel \
-		perm-install-client
+		perm-install-server
 	#
 	# dh_makeshlibs -v
 	# dh_shlibdeps $(dhpkg) -v \
@@ -549,8 +553,7 @@ clean:
 	# dh_clean -d -v  # build dirs only
 
 binary: final-install
-.PHONY: build clean binary-install binary-install-client binary-install-devel binary-install-platform
-.PHONY: final-install perm-install-client perm-install-devel
+.PHONY: build clean binary-install binary-install-server binary-install-devel binary-install-platform
+.PHONY: final-install perm-install-server perm-install-devel
 
 # vim:ft=make
-
