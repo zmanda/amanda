@@ -26,7 +26,6 @@ sbin_PROGRAMS =		amadmin		amcheck
 amlibexec_PROGRAMS =	amindexd	amtrmidx	\
 			amtrmlog	driver		dumper		\
 			planner
-endif
 
 amlibexec_SCRIPTS_PERL = \
 	    amadmin_perl \
@@ -54,6 +53,8 @@ sbin_SCRIPTS_PERL = \
 	    amflush \
 	    amreindex \
 	    amstatus
+endif
+
 if WANT_RESTORE
 amlibexec_SCRIPTS_PERL += \
 	    amidxtaped
