@@ -1,7 +1,8 @@
-#!/bin/bash
-##########################################
+#!/usr/bin/env bash
 bashpath="`command -v bash`"
 [ -x "$bashpath" -a -z "$BASH_VERSION" ] && exec "$bashpath" $0 "$@"
+set +o posix
+##########################################
 #
 # pre un-installation
 # pre un-installation
@@ -19,54 +20,72 @@ PRE_RM_ARGS=("$@")
     LOGDIR=%%LOGDIR%%; 
     LOGFILE=$LOGDIR/install.log; 
     INSTALL_LOG=$LOGDIR/install.log; 
-    SYSCONFDIR=/etc; 
+    INSTALL_TOPDIR=%%INSTALL_TOPDIR%%; 
+    SYSCONFDIR=%%SYSCONFDIR%%; 
     SBINDIR=/usr/sbin; 
     AMLIBEXECDIR=/usr/lib64/amanda; 
     export PYTHON=/usr/bin/python3; 
-    export PATH="%%INSTALL_TOPDIR%%/bin:/opt/csw/gnu:${PATH}:/sbin:/usr/sbin:/opt/csw/bin"; 
-    mkdir -p $LOGDIR
+    export OPATH="${PATH}"; 
+    export PATH="/opt/csw/gnu:${PATH}:/sbin:/usr/sbin:/opt/csw/bin"; 
+    install -m 755 -o %%AMANDAUSER%% -g %%AMANDAGROUP%% -d %%LOGDIR%% 2>/dev/null || true
 # ---------- Library of functions ------------
-%%PKG_STATE_FUNCTIONS%%
+%%COMMON_FUNCTIONS%%
 # ---------- End Library of functions ------------
 
+set +e
 # NOTE: do not remove amandauser here
 
 # got to stop this round before the upgrade/fixes
 bash -c 'read -t10 delay < <(/usr/sbin/amcleanup -vk  --note "critical shutdown before uninstall" 2>&1)'
 bash -c 'read -t10 delay < <(/usr/sbin/amcleanup -vk  --note "second critical shutdown attempt" 2>&1)'
 
+set +e
+################################## halt old services ###################################
+backup_smf amandaclient
+#( set -x; systemctl -q disable --no-reload \
+#       amanda-client.socket ) || true
+#( set -x; systemctl -q stop \
+#       amanda-client.socket ) || true
 #
-# systemd shutdown
+#for i in {0..9}; do
+#   systemctl is-active --quiet \
+#       amanda-client.socket || break
+#   sleep 1;
+#done
 #
-#systemctl reset-failed
+#( set -x; systemctl -q reset-failed ) || true
+#
+#units="$(systemctl -a --no-legend --no-pager list-units 'amanda-client@*' ) "
+#units="$(sed <<<"$units" -e 's,^[^a-z_]*,,' -e 's, .*,,' )"
+#xargs -tr systemctl stop <<<"$units" || true
+#
+#( set -x; systemctl -q reset-failed ) || true
+#( set -x; systemctl -q daemon-reload ) || true
+################################## halt old services ###################################
 
-#systemctl -a list-units '*amanda-client*.service' | grep 'active ' |
-#   xargs -r systemctl stop 2>/dev/null || true
-#systemctl -a list-units '*amanda-client*.socket' | grep 'active ' |
-#   xargs -r systemctl stop 2>/dev/null || true
-
-# attempt to disable by wildcard
-#systemctl -a list-units '*amanda-client*.service' | grep 'active ' |
-#   xargs -r systemctl disable 2>/dev/null || true
-#systemctl -a list-units '*amanda-client*.socket' | grep 'active ' |
-#   xargs -r systemctl disable 2>/dev/null || true
-
-# just in case...
-#rm -f /usr/lib/systemd/system/amanda-client@.service
-
-if [ -r /etc/inet/amandaclient ]; then
-    rm -f /etc/inetd/amandaclient
-    killall -HUP inetd
-fi
+cfgs=(
+    %%AMANDAHOMEDIR%%/.amandahosts
+    %%AMANDAHOMEDIR%%/.am_passphrase
+    %%AMANDAHOMEDIR%%/.gnupg/*
+    %%AMANDAHOMEDIR%%/.profile
+    %%AMANDAHOMEDIR%%/.ssh/*
+    %%AMANDAHOMEDIR%%/amandates
+    %%SYSCONFDIR%%/amanda/amanda-client.conf
+    %%SYSCONFDIR%%/amanda/amanda-security.conf
+    %%SYSCONFDIR%%/amanda/amanda.conf
+    %%SYSCONFDIR%%/amanda-security.conf
+)
 
 #
-#    # Remove ${amanda_user} from sensitive groups.
-#                    deluser ${amanda_user} $group || true
+# prevent their being deleted (automatic in rpm and dpkg)
+for i in "${cfgs[@]}"; do 
+    [[ "$i" == *.cfgsave ]] && continue;
+    [ -e "$i" ] || continue
+    mv -f "$i" "${i}.cfgsave"
+done
+
+true 
 
 # final message
 echo "Amanda removal log can be found in '$LOGFILE'."
-
-# --- Files to install ---
-# System owned directories can not be listed directly, as they will be chowned/chmoded
-
-#############################################################################################
+##########################################
