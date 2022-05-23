@@ -113,7 +113,7 @@ endif
 
 libamanda_la_SOURCES += local-security.c
 
-libamanda_la_LDFLAGS =  -release $(VERSION) $(AS_NEEDED_FLAGS)
+libamanda_la_LDFLAGS =  -release $(SO_VERSION) $(AS_NEEDED_FLAGS)
 
 noinst_HEADERS =		\
 	amanda.h		\
@@ -284,7 +284,6 @@ match_test_LDADD = libamanda.la libtestutils.la
 # divide scripts up both by language and destination directory
 sbin_SCRIPTS_PERL = \
 	    amgpgcrypt \
-	    amcryptsimple \
 	    amgetconf \
 	    amssl
 
@@ -293,6 +292,7 @@ amlibexec_SCRIPTS_PERL =
 sbin_SCRIPTS_SHELL = \
 	    amcrypt \
 	    amaespipe \
+	    amcryptsimple \
 	    amcrypt-ossl \
 	    amcrypt-ossl-asym
 
