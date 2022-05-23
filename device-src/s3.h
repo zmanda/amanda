@@ -135,6 +135,7 @@ typedef size_t (*s3_write_func)(void *data, size_t size, size_t nmemb, void *str
  */
 typedef curl_progress_callback s3_progress_func;
 
+#if LIBCURL_VERSION_NUM >= 0x072000
 /**
  * Callback function to track progress
  *
@@ -149,6 +150,7 @@ typedef curl_progress_callback s3_progress_func;
  * @return CURL_PROGRESSSFUNC_CONTINUE to continue, non-zero to abort.
  */
 typedef curl_xferinfo_callback s3_xferinfo_func;
+#endif
 
 /*
  * Constants
@@ -582,6 +584,17 @@ s3_complete_multi_part_upload(
     const char *bucket,
     const char *key,
     const char *uploadId,
+    s3_read_func read_func,
+    s3_reset_func reset_func,
+    s3_size_func size_func,
+    s3_md5_func md5_func,
+    gpointer read_data);
+
+s3_result_t
+ s3_compose_append_upload(
+    S3Handle *hdl,
+    const char *bucket,
+    const char *key,
     s3_read_func read_func,
     s3_reset_func reset_func,
     s3_size_func size_func,

@@ -20,9 +20,10 @@
  * Broomfield, CO 80021 or: http://www.zmanda.com
  */
 
-/* TODO
- * - collect speed statistics
- * - debugging mode
+/* An S3 device uses Amazon's S3 service (http://www.amazon.com/s3) to store
+ * data.  It stores data in keys named with a user-specified prefix, inside a
+ * user-specified bucket.  Data is stored in the form of numbered (large)
+ * blocks.
  */
 #ifdef HAVE_CONFIG_H
 #include "../config/config.h"
@@ -33,16 +34,12 @@
 #include "s3-device.h"
 #include "s3-util.h"
 
-#ifdef HAVE_UTIL_H
-#include "amutil.h"
-#endif
-#ifdef HAVE_AMANDA_H
-#include "amanda.h"
-#include "sockaddr-util.h"
-#endif
 #include "amjson.h"
+#include "amutil.h"
+#include "sockaddr-util.h"
 
-#include <string.h>
+#include "amanda.h"
+
 
 #ifdef HAVE_REGEX_H
 #include <regex.h>
@@ -93,6 +90,7 @@
 #include <openssl/ssl.h>
 #include <openssl/md5.h>
 #include <glib.h>
+#include <string.h>
 
 char *S3_name[] = {
    "UNKNOWN",
@@ -916,7 +914,7 @@ authenticate_request(S3Handle *hdl,
 	"acl", "lifecycle", "location", "logging",
 	"notification", "partNumber", "policy",
 	"requestPayment", "uploadId", "uploads",
-	"versionId", "versioning", "versions", "website",
+	"versionId", "versioning", "versions", "website","compose",
 	NULL
     };
 
@@ -2096,9 +2094,9 @@ cleanup_thunk:
             hdl->last_etag = g_strdup(thunk.etag+1);
             g_free(thunk.etag);
         } else {
-            hdl->last_etag = thunk.etag;
+            hdl->last_etag = thunk.etag; /* steal the reference to the string */
         }
-        thunk.etag = NULL; /* steal the reference to the string */
+        thunk.etag = NULL;
     }
     g_free(thunk.text);
     g_free(thunk.message);
@@ -2494,11 +2492,11 @@ perform_request(S3Handle *hdl,
         }
 
         // set upload body buffer.. [may be zero]
+#if LIBCURL_VERSION_NUM >= 0x073e00
         if (curlopt_setsizeopt)
         {
             xferbytes_t buffsize;
 
-#if LIBCURL_VERSION_NUM >= 0x073e00
             buffsize = max(hdl->max_send_speed*5,CURL_MAX_READ_SIZE);
             if (request_body_size)
                 buffsize = min(request_body_size,buffsize);
@@ -2506,8 +2504,8 @@ perform_request(S3Handle *hdl,
 
             if ((curl_code=curl_easy_setopt(hdl->curl, CURLOPT_UPLOAD_BUFFERSIZE, buffsize)))
                 goto curl_error;
-#endif
         }
+#endif
 
 #if LIBCURL_VERSION_NUM >= 0x073e00
         if (! curlopt_setsizeopt && write_data && size_func)
@@ -2799,15 +2797,26 @@ s3_internal_write_func(void *ptr, size_t size, size_t nmemb, void * stream)
     if (!hdl->last_response_body) 
     {
 	curl_off_t content_len = MAX_ERROR_RESPONSE_LEN;
+	curl_off_t content_len_dbl = (float) MAX_ERROR_RESPONSE_LEN;
+
+#if LIBCURL_VERSION_NUM >= 0x073700
 
 	// NOTE: only as an upper limit.. as transfer-encoding may contract [or expand?] actual bytes?
 	(void) curl_easy_getinfo(hdl->curl, CURLINFO_CONTENT_LENGTH_DOWNLOAD_T, &content_len);
+        (void) content_len_dbl;
+#else
+
+	// NOTE: only as an upper limit.. as transfer-encoding may contract [or expand?] actual bytes?
+	(void) curl_easy_getinfo(hdl->curl, CURLINFO_CONTENT_LENGTH_DOWNLOAD, &content_len_dbl);
+        content_len = content_len_dbl;
+#endif
 
         if (content_len < 0)
             content_len = MAX_ERROR_RESPONSE_LEN; // be gracious in case its needed
 
 	if (hdl->transfer_encoding && hdl->verbose)
-	   g_debug("%s: [%p] [%p] transfer encoding may overestimate length=%#lx",__FUNCTION__, &data->dup_buffer, data->write_data, content_len);
+	   g_debug("%s: [%p] [%p] transfer encoding may overestimate length=%#lx",__FUNCTION__, 
+                 &data->dup_buffer, data->write_data, (curl_off_t) content_len);
 
 	// may set response_code.  will set data->bodytype
         s3_internal_header_func(NULL, 0, 0, data);
@@ -2816,7 +2825,7 @@ s3_internal_write_func(void *ptr, size_t size, size_t nmemb, void * stream)
 	if (data->bodytype == CONTENT_BINARY)
 	    s3_buffer_load_string(&data->dup_buffer, g_strdup("[binary/octet-string]"), hdl->verbose);
 	else
-	    s3_buffer_init(&data->dup_buffer, min(MAX_ERROR_RESPONSE_LEN,content_len), hdl->verbose);
+	    s3_buffer_init(&data->dup_buffer, min(MAX_ERROR_RESPONSE_LEN,(curl_off_t) content_len), hdl->verbose);
 
 	hdl->last_response_body = s3_buffer_data_func(s3buf_dup);
 	hdl->last_response_body_size = s3_buffer_lsize_func(s3buf_dup);
@@ -3382,8 +3391,16 @@ s3_new_curl(
             curl_easy_setopt(hdl->curl, CURLOPT_UNRESTRICTED_AUTH, 1);
             curl_easy_setopt(hdl->curl, CURLOPT_MAXREDIRS, 5);
             curl_easy_setopt(hdl->curl, CURLOPT_POSTREDIR, CURL_REDIR_POST_ALL);
-            curl_easy_setopt(hdl->curl, CURLOPT_HTTP_VERSION,
-					CURL_HTTP_VERSION_2TLS);
+#if LIBCURL_VERSION_NUM >= 0x072f00
+            // default is the same later on anyway...
+            curl_easy_setopt(hdl->curl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_2TLS);
+#elif LIBCURL_VERSION_NUM >= 0x072100
+            // default is the same later on anyway...
+            curl_easy_setopt(hdl->curl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_2_0);
+#else
+            // default is the same later on anyway...
+            curl_easy_setopt(hdl->curl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
+#endif
             if (hdl->username)
 		 curl_easy_setopt(hdl->curl, CURLOPT_USERNAME, hdl->username);
             if (hdl->password)
@@ -3829,6 +3846,36 @@ s3_complete_multi_part_upload(
 		 read_func, reset_func, size_func, md5_func, read_data,
 		 NULL, NULL, NULL, NULL, NULL,
 		 result_handling, FALSE);
+
+    g_free(query[0]);
+
+    return result;
+}
+
+s3_result_t
+ s3_compose_append_upload(
+    S3Handle *hdl,
+    const char *bucket,
+    const char *key,
+    s3_read_func read_func,
+    s3_reset_func reset_func,
+    s3_size_func size_func,
+    s3_md5_func md5_func,
+    gpointer read_data)
+{
+    char *query[2] = { NULL };
+    s3_result_t result = S3_RESULT_FAIL;
+    static result_handling_t result_handling[] = {
+        { 200,  0,                              0, S3_RESULT_OK },
+        RESULT_HANDLING_ALWAYS_RETRY,
+        { 0,    0, 0, /* default: */ S3_RESULT_FAIL }
+        };
+
+    result = perform_request(hdl, "PUT", bucket, key, "compose",
+                 (const char **)query, "application/xml", NULL, NULL,
+                 read_func, reset_func, size_func, md5_func, read_data,
+                 NULL, NULL, NULL, NULL, NULL,
+                 result_handling, FALSE);
 
     g_free(query[0]);
 

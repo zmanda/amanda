@@ -15,8 +15,8 @@
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
  *
- * Contact information: Carbonite Inc., 756 N Pastoria Ave
- * Sunnyvale, CA 94085, or: http://www.zmanda.com
+ * Contact information: BETSOL - 10901 W 120th Ave #235,
+ * Broomfield, CO 80021 or: http://www.zmanda.com
  */
 
 /* An S3 device uses Amazon's S3 service (http://www.amazon.com/s3) to store
@@ -24,24 +24,49 @@
  * user-specified bucket.  Data is stored in the form of numbered (large)
  * blocks.
  */
+#ifdef HAVE_CONFIG_H
+#include "../config/config.h"
+/* use a relative path here to avoid conflicting with Perl's config.h. */
+#endif
 
 #include "s3-device.h"
 #include "s3.h"
 #include "s3-util.h"
 
-#include "amanda.h"
-#include "amutil.h"
 #include "conffile.h"
 #include "device.h"
-#include <string.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
-#include <dirent.h>
-#include <regex.h>
-#include <time.h>
+#include "amjson.h"
+#include "amutil.h"
+#include "sockaddr-util.h"
+
+#include "amanda.h"
+
 #include <curl/curl.h>
 #include <openssl/md5.h>
+
+#ifdef HAVE_REGEX_H
+#include <regex.h>
+#endif
+#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_STAT_H
+#include <sys/stat.h>
+#endif
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+#ifdef HAVE_DIRENT_H
+#include <dirent.h>
+#endif
+#ifdef HAVE_TIME_H
+#include <time.h>
+#endif
+#include <curl/curl.h>
+
+#ifdef HAVE_STDINT_H
+#include <stdint.h>
+#endif
 
 #ifdef HAVE_OPENSSL_HMAC_H
 # include <openssl/hmac.h>
@@ -54,6 +79,8 @@
 #  endif
 # endif
 #endif
+
+#include <string.h>
 
 // arbitrarily copied from linux 3.10.0 headers
 #define TMPFS_MAGIC   0x01021994
@@ -92,7 +119,7 @@ struct _S3_by_thread {
     volatile guint8      done;         // pseudo-atomic:  thread is reusable now
     volatile guint8    	 ahead;        // pseudo-atomic: thread can be cancelled
 
-    guint16		 object_uploadNum;
+    objbytes_t		 object_uploadNum;
 
     const char          *object_subkey; // used for real s3 url
     const char		*object_uploadId;
@@ -109,12 +136,13 @@ struct _S3_by_thread {
     objbytes_t	         dlnow, ulnow; // atomic
     objbytes_t		 dlnow_last, ulnow_last;
     time_t		 time_expired;
+    GTree               *gcp_object_tree_ref;
 };
 
 typedef char         *(S3CreateObjkey)(const S3Device *self, objbytes_t *offsetp, objbytes_t *eodp, guint file, objbytes_t block);
 typedef S3_by_thread *(S3WriteThreadCTOR)(S3Device *self, char *objkey, objbytes_t pos);
 // typedef void          (*S3WriteSignalEOD)(S3Device *self, S3_by_thread *s3t, objbytes_t eod);
-typedef s3_result_t   (S3WriteComplete)(const S3Device *self, S3_by_thread *s3t);
+typedef s3_result_t   (S3WriteComplete)(const S3Device *self, S3_by_thread *s3t, char *etag);
 typedef s3_result_t   (S3WriteFinish)(S3Device *self, S3_by_thread *s3t);
 
 struct _S3Device {
@@ -180,11 +208,12 @@ struct _S3Device {
     gboolean use_s3_multi_delete:1;          // can try-and-reset
     gboolean use_s3_multi_part_upload:1;     // allowed-and-required both
     gboolean use_padded_stream_uploads:1;    // allowed-and-required both
+    gboolean use_chunked:1;
 
     gboolean allow_s3_multi_part_upload:1;   // prevented in some cases
     gboolean allow_s3_multi_part_copy:1;
     gboolean allow_padded_stream_uploads:1;   // must create full checksum before upload
-    gboolean use_chunked:1;
+    gboolean allow_gcp_compose:1;
 
     guint16      nb_threads;
     guint16      nb_threads_backup;
@@ -200,7 +229,7 @@ struct _S3Device {
     GMutex      *thread_list_mutex;
     GCond       _thread_list_cond_store;
     GMutex      _thread_list_mutex_store;
-    GSList      *volatile delete_objlist;
+    GSList      *delete_objlist;
 
     objbytes_t	 next_xbyte;  // next byte to copy full bytes through..
     objbytes_t	 next_ahead_byte; // next byte to prepare a thread for
@@ -247,6 +276,8 @@ struct _S3Device {
     /* CAStor */
     char        *reps;
     char        *reps_bucket;
+
+    GTree       *gcp_object_tree; // used for all store all temporary uploads in GCP
 };
 
 /*
@@ -271,6 +302,8 @@ struct _S3DeviceClass {
 #define DATA_OBJECT_SUFFIX       ".data"
 #define MULTIPART_OBJECT_SUFFIX  "mp" DATA_OBJECT_SUFFIX
 #define MULTIPART_TEMP_SUFFIX    "mp.tocopy" DATA_OBJECT_SUFFIX
+#define TEMP_COMPOSE_PART_OBJECT_SUFFIX "cp.tocompose" DATA_OBJECT_SUFFIX 
+#define COMPOSE_PART_OBJECT_SUFFIX "cp" DATA_OBJECT_SUFFIX 
 
 /* pointer to the class of our parent */
 static DeviceClass *parent_class = NULL;
@@ -453,6 +486,10 @@ file_and_block_to_key(const S3Device *self, objbytes_t *offsetp, objbytes_t *eod
  */
 static char *
 file_to_single_file_objkey(const S3Device *self, guint file);
+
+static char *
+file_to_single_compose_file_objkey(const S3Device *self, guint file);
+
 
 /* Given file, return an S3 key.
  *
@@ -780,7 +817,7 @@ static void s3_thread_write_session(gpointer thread_data,
 
 static void s3_thread_delete_session( gpointer thread_data, gpointer data );
 
-static s3_result_t s3_thread_multi_delete(Device *pself, S3_by_thread *s3t, GSList *volatile *d_objectsp);
+static s3_result_t s3_thread_multi_delete(Device *pself, S3_by_thread *s3t, GSList **d_objectsp);
 
 
 static int s3_thread_xferinfo_func( void *thread_data,
@@ -916,6 +953,20 @@ file_to_prefix(const S3Device *self,
 }
 
 static char *
+file_and_block_to_compose_temp_key(const S3Device *self, objbytes_t *offsetp, objbytes_t *eodp,
+                      guint file,
+                      objbytes_t pos)
+{
+    objbytes_t block = pos/self->buff_blksize;
+    char *s3_key = g_strdup_printf("%sf%08x-c%010lx-" TEMP_COMPOSE_PART_OBJECT_SUFFIX,
+                                   self->prefix, file, block);
+    if (offsetp) *offsetp = block*self->buff_blksize; // end of key (+2**23--2**29 max)
+    if (eodp)    *eodp = (block+1)*self->buff_blksize; // end of key (+2**23--2**29 max)
+    g_assert(strlen(s3_key) <= S3_MAX_KEY_LENGTH);
+    return s3_key;
+}
+
+static char *
 file_and_block_to_key(const S3Device *self, objbytes_t *offsetp, objbytes_t *eodp,
                       guint file,
                       objbytes_t pos)
@@ -948,6 +999,10 @@ file_and_block_to_temp_key(const S3Device *self, objbytes_t *offsetp, objbytes_t
 static char *
 file_to_single_file_objkey(const S3Device *self, guint file)
     { return g_strdup_printf("%sf%08x-" MULTIPART_OBJECT_SUFFIX, self->prefix, file); }
+
+static char *
+file_to_single_compose_file_objkey(const S3Device *self, guint file)
+    { return g_strdup_printf("%sf%08x-" COMPOSE_PART_OBJECT_SUFFIX, self->prefix, file); }
 
 static char *
 get_write_file_objkey_offset(const S3Device *self, objbytes_t *offsetp, objbytes_t *eodp,
@@ -1260,7 +1315,7 @@ initiate_multi_part_upload(const S3Device *self, S3_by_thread *s3t)
 
     if (s3t->object_uploadId || s3t->object_uploadNum) {
         errmsg = g_strdup_printf(_("Cannot interrupt thread multipart upload: part#%d uploadId=%s"),
-                                   s3t->object_uploadNum, s3t->object_uploadId);
+                                   (int) s3t->object_uploadNum, s3t->object_uploadId);
         errflags = DEVICE_STATUS_DEVICE_ERROR;
         goto error;
     }
@@ -1380,6 +1435,130 @@ get_remaining_mp_parts(const S3_by_thread *s3t, objbytes_t *pblk)
                                   pblk); // position return
 }
 
+static int
+get_remaining_cp_parts(const S3_by_thread *s3t, objbytes_t *pblk)
+{
+    objbytes_t blocknum = s3t->object_uploadNum;
+    objbytes_t start = blocknum - ( (blocknum-1) % GCP_COMPOSE_COUNT );
+    return get_remaining_parts(s3t->gcp_object_tree_ref, 
+                                  start,        // blocknum of first block
+                                  blocknum,     // blocknum of final block (current thread)
+                                  blocknum - start, // count of earlier blocks 
+                                  pblk); // position return
+}
+
+static s3_result_t thread_write_close_compose_append(const S3Device *self, S3_by_thread *s3t)
+{
+    Device *pself = DEVICE(self);
+    GSList *delete_objlist = NULL;
+    int retries = GCP_COMPOSE_COUNT*2;
+    int last_compose_retries = retries;
+    int missing_block_retries = retries;
+    GTree *const tree = s3t->gcp_object_tree_ref;
+    objbytes_t blocknum = s3t->object_uploadNum;
+    const objbytes_t firstNewBlk = blocknum - ((blocknum-1) % GCP_COMPOSE_COUNT); 
+    int missing = 0;
+    GString *buf;
+    objbytes_t pos;
+
+    g_assert( ! g_mutex_trylock(self->thread_list_mutex) );  // confirm lock in effect
+
+    while ( (pos=get_greatest_prev_elt(tree,firstNewBlk)) < G_MAXINT64 && --last_compose_retries ) {
+        if (self->verbose)
+            g_debug("%s: Previous Compose request pending....previous key %#010lx: Wait to complete",__FUNCTION__,pos);
+        g_cond_wait_until(self->thread_list_cond, self->thread_list_mutex, g_get_monotonic_time () + 5 * G_TIME_SPAN_SECOND);
+    }
+
+    if ( !last_compose_retries ) {
+        g_warning("%s: ABORTED: Previous Compose request pending too long....[pos=%#010lx]",__FUNCTION__,pos);
+        return S3_RESULT_FAIL;
+    }
+
+    if( self->verbose)
+        g_debug("%s: No previous compose request pending",__FUNCTION__);
+
+    buf = g_string_new("<ComposeRequest>\n");
+
+    if (blocknum > GCP_COMPOSE_COUNT) { 
+        g_string_append_printf(buf, "<Component>\n    <Name>%s</Name>\n   </Component>\n",self->file_objkey);
+    }
+
+    // always returns at least one 'found' in number
+    while( (missing=get_remaining_cp_parts(s3t, &pos)) && --missing_block_retries)
+    {
+        objbytes_t missingblk = 1 + (pos/self->buff_blksize);
+        if (self->verbose)
+            g_debug("%s: (n=%d) Waiting for key=@%#010lx in gcp_object_tree_ref",__FUNCTION__, missing, missingblk);
+        g_cond_wait_until(self->thread_list_cond, self->thread_list_mutex, g_get_monotonic_time () + 5 * G_TIME_SPAN_SECOND);
+    }
+
+    if (!missing_block_retries) {
+        g_warning("%s: ABORTED: Required entries waiting too long....[pos=%#010lx blk=%#010lx]",__FUNCTION__,pos, 1 + (pos/self->buff_blksize));
+        return S3_RESULT_FAIL;
+    }
+
+    for( objbytes_t partNum = firstNewBlk ; partNum <= blocknum ; ++partNum )
+    {
+        s3_object *object = g_new0(s3_object, 1);
+
+        object->key = g_strdup((char*)g_tree_lookup(tree,GSIZE_TO_POINTER(partNum))); 
+
+        g_assert(object->key);
+        g_string_append_printf(buf, "<Component>\n   <Name>%s</Name>\n   </Component>\n", object->key);
+
+        if( self->verbose)  
+            g_debug("%s: Fetch from gcp object tree key=%010llx,Value=%s", __FUNCTION__,(long long unsigned int)partNum,object->key);
+
+        delete_objlist = g_slist_append(delete_objlist,object);
+        g_tree_remove(tree, GSIZE_TO_POINTER(partNum));
+    }
+
+    g_string_append_printf(buf,"</ComposeRequest>\n");
+
+    {
+        int    nIndex;
+        GSList *node;
+        CurlBuffer upload_tmp = { 0 }; // to load once only
+        CurlBuffer *s3buf_tmp = &upload_tmp;
+        s3_result_t result = S3_RESULT_OK;
+
+        s3_buffer_load_string(s3buf_tmp, g_string_free(buf, FALSE), self->verbose);
+
+        g_mutex_unlock(self->thread_list_mutex);
+        result = s3_compose_append_upload(s3t->s3,
+                                         self->bucket, self->file_objkey,
+                                         S3_BUFFER_READ_FUNCS, s3buf_tmp);
+        g_mutex_lock(self->thread_list_mutex);
+
+        if (result != S3_RESULT_OK) {
+            if (device_in_error(pself))
+                return result;
+            s3t->errflags = DEVICE_STATUS_DEVICE_ERROR;
+            s3t->errmsg = g_strdup_printf(_("Compose Append failed: '%s'"), self->file_objkey);
+            g_slist_free_full(delete_objlist, free_s3_object);
+            return result;
+        }
+
+        for (nIndex = 0; (node=g_slist_nth(delete_objlist, nIndex)) ; nIndex++) 
+        {
+            s3_object *object1 = (s3_object *)node->data;
+
+            g_mutex_unlock(self->thread_list_mutex);
+            result = s3_delete(s3t->s3, self->bucket, object1->key);
+            g_mutex_lock(self->thread_list_mutex);
+           
+            if (result != S3_RESULT_OK) {
+                g_debug("%s: Delete key failed: %s", __FUNCTION__, s3_strerror(s3t->s3));
+                g_slist_free_full(delete_objlist, free_s3_object);
+                return S3_RESULT_FAIL;
+            }
+        }
+    }
+
+    g_slist_free_full(delete_objlist, free_s3_object);
+    return S3_RESULT_OK;
+}
+
 //
 // NOTE: do *not* modify globals/self-fields ... as it causes race conditions
 //
@@ -1419,7 +1598,7 @@ thread_mp_upload_combine(const S3Device *self, S3_by_thread *s3t)
     {
         // failed once yet?
         if ( !--retries ) {
-            g_error("%s: (left=%d) FAILED: missing completion-tree need %d/%d step pos=#%d/<=%#lx range=[%#lx-%#lx] key=%s uploadid=[...%s]", __FUNCTION__, 
+            g_error("%s: (left=%d) FAILED: missing completion-tree need %ld/%d step pos=#%ld/<=%#lx range=[%#lx-%#lx] key=%s uploadid=[...%s]", __FUNCTION__, 
                   missing, 
                   s3t->object_uploadNum, g_tree_nnodes(s3t->mp_etag_tree_ref), 
                   s3t->object_uploadNum - missing, blkOff,
@@ -1430,7 +1609,7 @@ thread_mp_upload_combine(const S3Device *self, S3_by_thread *s3t)
         }
 
         if (self->verbose)
-            g_debug("%s: (left=%d) WAITING: missing completion-tree need %d/%d step pos=#%d/<=%#lx?? range=[%#lx-%#lx] key=%s uploadid=[...%s]", __FUNCTION__, 
+            g_debug("%s: (left=%d) WAITING: missing completion-tree need %ld/%d step pos=#%ld/<=%#lx?? range=[%#lx-%#lx] key=%s uploadid=[...%s]", __FUNCTION__, 
                   missing, 
                   s3t->object_uploadNum, g_tree_nnodes(s3t->mp_etag_tree_ref), 
                   s3t->object_uploadNum - missing, blkOff,
@@ -1452,7 +1631,7 @@ thread_mp_upload_combine(const S3Device *self, S3_by_thread *s3t)
         // add all etag entries to string
         // [ always must re-create correct 1-10,000 (max) numbering of parts ]
         for( partNum=1, blkOff=s3t->object_offset
-               ; partNum <= s3t->object_uploadNum
+               ; partNum <= (int) s3t->object_uploadNum
                   ; ++partNum, blkOff=get_least_next_elt(s3t->mp_etag_tree_ref, blkOff) )
         {
             g_string_append_printf(buf,
@@ -1659,7 +1838,7 @@ delete_file(S3Device *self,
 
     // open threads up to help delete
     s3_cancel_busy_threads(self,TRUE);
-
+    
     s3_wait_threads_done(self); // all previous uploading threads need to finish
 
     { // lock context
@@ -1740,7 +1919,7 @@ delete_all_files(S3Device *self)
 }
 
 static s3_result_t 
-s3_thread_multi_delete(Device *pself, S3_by_thread *s3t, GSList *volatile *d_objectsp)
+s3_thread_multi_delete(Device *pself, S3_by_thread *s3t, GSList **d_objectsp)
 {
     S3Handle *hndlN = s3t->s3;
     const S3Device *self = S3_DEVICE_CONST(pself);
@@ -1835,7 +2014,7 @@ s3_thread_delete_session(
     s3_result_t result = S3_RESULT_OK;
     s3_object *object;
     GSList *d_objects = NULL; // multi-
-    GSList *volatile *objlistp = &((S3Device*)self)->delete_objlist;
+    GSList **objlistp = &((S3Device*)self)->delete_objlist;
 
     {
         char *tname = g_strdup_printf("d#%lx",s3t - self->s3t);
@@ -2075,7 +2254,7 @@ s3_device_init(S3Device * self, gpointer data G_GNUC_UNUSED)
     self->reps_bucket = NULL;
     self->transition_to_glacier = -1;
     self->transition_to_class = NULL;
-
+    
     self->s3t = NULL;
     self->s3t_temp_free = NULL;
     self->xfer_s3t = NULL;
@@ -3557,6 +3736,7 @@ setup_handle(S3Device * self) {
 	    if (self->host && g_str_has_suffix(self->host, GCP_TOP_DOMAIN) ) {
 		self->use_s3_multi_delete = FALSE;    // not implemented
 		self->allow_s3_multi_part_copy = FALSE; // mp-copy not implemented
+		self->allow_gcp_compose = TRUE;
 	    }
 	    break;
 
@@ -4327,6 +4507,18 @@ s3_device_get_bytes_written(
     return ultotal;
 }
 
+static gboolean
+thread_check_at_write_file_finish(const S3Device *self, const S3_by_thread *s3t)
+{
+    // cancel-threads marks detection of the *last* byte
+    if ( self->next_ahead_byte != self->end_xbyte )   
+        return FALSE;
+    // this thread must be the last transfer to have run
+    if ( s3t->xfer_end != self->next_xbyte )   
+        return FALSE;
+    return TRUE;
+}
+
 
 // single case: reset for each segment to cover
 static S3_by_thread *
@@ -4357,15 +4549,15 @@ thread_range_factory(S3Device *self, char *objkey, objbytes_t pos, signed_xferby
 static S3_by_thread *
 thread_device_write_factory(S3Device *self, char *objkey, objbytes_t wrpos)
 {
-    return thread_range_factory(self, objkey, wrpos, self->dev_blksize);
+    return thread_range_factory(self, objkey, wrpos, +self->dev_blksize);
     // standard inits with dev_blksize spacing (up to end_xbyte)
 }
 
 // single case: reset for each segment to cover
 static S3_by_thread *
-thread_buffer_write_factory(S3Device *self, char *objkey, objbytes_t rdpos)
+thread_buffer_write_factory(S3Device *self, char *objkey, objbytes_t wrpos)
 {
-    return thread_range_factory(self, objkey, rdpos, self->buff_blksize);
+    return thread_range_factory(self, objkey, wrpos, +self->buff_blksize);
     // standard inits with dev_blksize spacing (up to end_xbyte)
 }
 
@@ -4502,7 +4694,7 @@ static S3_by_thread *
 thread_write_mpcopy_factory(S3Device *self, char *objkey, objbytes_t pos)
 {
     Device *pself = DEVICE(self);
-    const int blockNum = 1 + (pos / self->dev_blksize); // constant size blocks!!
+    const int blockNum = 1 + (pos / self->dev_blksize); // constant size blocks .. starting with 1
 
     // dangerously close to the maximum!
     if (blockNum >= S3_MULTIPART_UPLOAD_MAX)
@@ -4517,16 +4709,154 @@ thread_write_mpcopy_factory(S3Device *self, char *objkey, objbytes_t pos)
     return thread_write_reliable_mp_factory(self, objkey, pos);
 }
 
-// flush current mp if possible
+static S3_by_thread *
+thread_write_cp_factory(S3Device *self, char *objkey, objbytes_t wrpos)
+{
+    // standard inits with dev_blksize spacing (limited by end_xbyte)
+    S3_by_thread *s3t = NULL;
+    objbytes_t blocknum = 1 + (wrpos/self->buff_blksize); // constant size blocks .. starting with 1
+
+    // global tree setup (done with lock)
+    if (!self->gcp_object_tree) {
+        self->gcp_object_tree = g_tree_new_full(gptr_cmp, NULL, NULL, g_free); 
+        g_tree_ref(self->gcp_object_tree); // count this reference
+    }
+
+    s3t = thread_buffer_write_factory(self, objkey, wrpos);
+
+    if (!s3t)
+        return NULL;
+
+    // moved here from setup_active_thread
+    s3t->object_uploadNum = blocknum;
+    s3t->gcp_object_tree_ref = self->gcp_object_tree;
+    g_tree_ref(s3t->gcp_object_tree_ref); // count this reference
+    return s3t;
+}
+
 static s3_result_t
-thread_write_close_mp(const S3Device *self, S3_by_thread *s3t)
+thread_write_close_compose(const S3Device *self, S3_by_thread *s3t, char *etag)
 {
     s3_result_t result;
     CurlBuffer *s3buf = &s3t->curl_buffer;
+    objbytes_t blocknum = s3t->object_uploadNum;
+
+    amfree(etag); // not needed
+
+    g_tree_insert(s3t->gcp_object_tree_ref, GSIZE_TO_POINTER(blocknum), g_strdup(s3t->object_subkey));
+    g_debug("%s: (n=%d) added to primary-blks-tree key=#%010lx value=%s ", __FUNCTION__,
+          g_tree_nnodes(s3t->gcp_object_tree_ref), 
+          blocknum, s3t->object_subkey);
+
+    // check both cases to prevent appending now
+    if ( blocknum % GCP_COMPOSE_COUNT != 0 && !thread_check_at_write_file_finish(self,s3t) )
+        return S3_RESULT_RETRY;
+
+    // NOTE: waits until all parts have added
+    result = thread_write_close_compose_append(self, s3t);
+    if (result != S3_RESULT_OK) {
+        // error received upon next write...
+        if (!s3t->errmsg)
+            s3t->errmsg = g_strdup_printf(_("While completing upload [key=%s r=%d] to %s: %s"),
+                                         s3t->object_subkey, result,
+                                         S3_name[self->s3_api], s3_strerror(s3t->s3));
+        if (!s3t->errflags)
+        s3t->errflags = DEVICE_STATUS_DEVICE_ERROR | DEVICE_STATUS_VOLUME_ERROR;
+        g_warning("[%p] %s: s3-op error result ctxt#%ld: key=%s flag=%x mesg=%s", s3buf, __FUNCTION__, s3t - self->s3t,
+                    s3t->object_subkey, s3t->errflags, s3t->errmsg);
+    }
+    return result;
+}
+
+static s3_result_t
+thread_write_final_compose(S3Device *wrself, S3_by_thread *s3t)
+{
+    Device *pself = DEVICE(wrself);
+    const S3Device *self = wrself;
+    s3_result_t result = S3_RESULT_OK;
+    objbytes_t blocknum = s3t->object_uploadNum;
+    char        *file_objkey;
+    GString *buf;
+
+    // must be the at_final thread of one copypart set...
+
+    if (! thread_check_at_write_file_finish(self,s3t))
+        return S3_RESULT_RETRY;
+
+    buf = g_string_new("<ComposeRequest>\n");
+    g_string_append_printf(buf, "<Component>\n    <Name>%s</Name>\n   </Component>\n",self->file_objkey);
+    g_string_append_printf(buf,"</ComposeRequest>\n");
+
+    file_objkey = file_to_single_file_objkey(self, pself->file);
+
+    g_debug("%s: Final compose request ..Total number of objects upload  count=%ju ",__FUNCTION__, (uintmax_t)blocknum);
+    g_assert( ! g_mutex_trylock(self->thread_list_mutex) );
+    {
+        CurlBuffer upload_tmp = { 0 }; // to load once only
+        CurlBuffer *s3buf_tmp = &upload_tmp;
+        s3_result_t result = S3_RESULT_OK;
+
+        s3_buffer_load_string(s3buf_tmp, g_string_free(buf, FALSE), self->verbose);
+
+        g_mutex_unlock(self->thread_list_mutex); // allow unlocked
+        result = s3_compose_append_upload(s3t->s3,
+                                         self->bucket, file_objkey,
+                                         S3_BUFFER_READ_FUNCS, s3buf_tmp);
+        g_mutex_lock(self->thread_list_mutex); 
+
+        if (result != S3_RESULT_OK) {
+            if (device_in_error(pself))
+                return result;
+            s3t->errflags = DEVICE_STATUS_DEVICE_ERROR;
+            s3t->errmsg = g_strdup_printf(_("Final Compose Append failed: '%s'"), file_objkey);
+            g_free((char*)file_objkey);
+            file_objkey = NULL;
+            return result;
+        }
+
+        g_free((char*)file_objkey);
+        file_objkey = NULL;
+
+        g_mutex_unlock(self->thread_list_mutex); // allow unlocked
+        result = s3_delete(s3t->s3, self->bucket, wrself->file_objkey);
+        g_mutex_lock(self->thread_list_mutex); 
+
+        if (result != S3_RESULT_OK) {
+                g_debug("%s: Delete key failed: %s", __FUNCTION__, s3_strerror(s3t->s3));
+                return S3_RESULT_FAIL;
+        }
+    }
+
+    return result;
+}
+
+// flush current mp if possible
+static s3_result_t
+thread_write_close_mp(const S3Device *self, S3_by_thread *s3t, char *etag)
+{
+    s3_result_t result;
+    CurlBuffer *s3buf = &s3t->curl_buffer;
+    GTree *const blktree = s3t->mp_etag_tree_ref;
+
+    if (!etag || !etag[0]) {
+        s3t->errmsg = g_strdup_printf(_("No etag was received [key=%s] to %s: %s"), 
+                                         s3t->object_subkey, 
+                                         S3_name[self->s3_api], s3_strerror(s3t->s3));
+        s3t->errflags = DEVICE_STATUS_DEVICE_ERROR | DEVICE_STATUS_VOLUME_ERROR;
+        g_warning("[%p] %s: s3-op no etag returned ctxt#%ld: key=%s flag=%x mesg=%s", s3buf, __FUNCTION__, s3t - self->s3t,
+                    s3t->object_subkey, s3t->errflags, s3t->errmsg);
+        return S3_RESULT_FAIL;
+    }
+
+    g_tree_insert(blktree, GSIZE_TO_POINTER(s3t->xfer_begin), etag);
+    g_debug("%s: (n=%d) added to primary-blks-tree pos=#%ld/%#lx key=%s uploadid=[...%s] etag=[...%s]", __FUNCTION__, 
+          g_tree_nnodes(blktree), 
+          s3t->object_uploadNum, s3t->xfer_begin, s3t->object_subkey,
+          s3t->object_uploadId + strlen(s3t->object_uploadId)-5, etag + strlen(etag)-5);
 
     // only act on final mp-uploads
     if (!s3t->at_final)
-        return S3_RESULT_OK;
+        return S3_RESULT_RETRY;                                                ////// RETURN (RETRY)
 
     // NOTE: waits until all parts have added
     result = thread_mp_upload_combine(self, s3t);
@@ -4538,6 +4868,7 @@ thread_write_close_mp(const S3Device *self, S3_by_thread *s3t)
                                          S3_name[self->s3_api], s3_strerror(s3t->s3));
         if (!s3t->errflags)
             s3t->errflags = DEVICE_STATUS_DEVICE_ERROR | DEVICE_STATUS_VOLUME_ERROR;
+
         g_warning("[%p] %s: s3-op error result ctxt#%ld: key=%s flag=%x mesg=%s", s3buf, __FUNCTION__, s3t - self->s3t,
                     s3t->object_subkey, s3t->errflags, s3t->errmsg);
     }
@@ -4545,32 +4876,23 @@ thread_write_close_mp(const S3Device *self, S3_by_thread *s3t)
 }
 
 static s3_result_t
-thread_write_mpblock_copypart(const S3Device *self, S3_by_thread *s3t)
+thread_write_mpblock_copypart(const S3Device *self, S3_by_thread *s3t, char *etag)
 {
-    char *etag = NULL;
     s3_result_t result;
     const objbytes_t pos = s3t->object_offset;
     const int blocknum = 1 + (pos / self->dev_blksize); // constant size blocks!
     static const char *const FAKE_UPLOAD_ID = "___UPLOAD_ID_DELAY_LOCK___"; // signal who tries first
 
-    // only act on mp-upload at end-of-mp-block
-    if (!s3t->at_final)
-        return S3_RESULT_RETRY;
-
     g_assert(pos % self->dev_blksize == 0); // must divide cleanly
 
     // close the current block-upload
-    result = thread_write_close_mp(self,s3t);
+    result = thread_write_close_mp(self,s3t,etag);
+    if (result != S3_RESULT_OK)
+        return S3_RESULT_RETRY;                                                ////// RETURN (RETRY OR ERROR)
 
-    if (result != S3_RESULT_OK) {
-        if (device_in_error(self)) 
-            return result;
-        g_free(s3t->errmsg);
-        s3t->errmsg = g_strdup_printf(_("While in block-completion upload"));
-        s3t->errflags = DEVICE_STATUS_DEVICE_ERROR | DEVICE_STATUS_VOLUME_ERROR;
-        return result;
-    }
+    etag = NULL;
 
+    // initiate the group upload??
     if (!self->mpcopy_uploadId && self->file_objkey)
     {
         S3_by_thread fake_s3t_store = { 0 };
@@ -4633,8 +4955,7 @@ thread_write_mpblock_copypart(const S3Device *self, S3_by_thread *s3t)
 
     // copy in an entry at the start-of-large-size-block
     g_tree_insert(self->mpcopy_etag_tree, GSIZE_TO_POINTER(pos), etag) ;
-
-    g_debug("%s: (n=%d) added BLOCK-FLAG to MPCOPY-completion-tree pos=#%d/%#lx wkey=%s uploadid=[...%s]", __FUNCTION__, 
+    g_debug("%s: (n=%d) added BLOCK-FLAG to secondary-blks-tree pos=#%d/%#lx wkey=%s uploadid=[...%s]", __FUNCTION__, 
           g_tree_nnodes(self->mpcopy_etag_tree), blocknum, pos, self->file_objkey,
           self->mpcopy_uploadId + strlen(self->mpcopy_uploadId)-5);
 
@@ -4663,48 +4984,52 @@ static s3_result_t
 thread_write_mpblocks_combine(S3Device *wrself, S3_by_thread *s3t)
 {
     const S3Device *self = wrself;
-    objbytes_t pos = s3t->xfer_end;
+    objbytes_t lastblkoff = s3t->object_offset;
     s3_result_t result = S3_RESULT_OK;
+    GTree *const blktree = s3t->mp_etag_tree_ref;
+    GTree *const filetree = self->mpcopy_etag_tree;
+    char *lastetag = NULL;
 
     // must be the at_final thread of one copypart set...
 
-    // GLOBAL: rule out if cancel_threads was not run
-    if ( self->mp_uploadId || self->mp_next_uploadNum )
-        return S3_RESULT_RETRY;
-    // GLOBAL: rule out if cancel_threads was not run
-    if ( self->next_ahead_byte != self->end_xbyte )   
-        return S3_RESULT_RETRY;
-    if ( pos != self->next_xbyte )   
+    if (! thread_check_at_write_file_finish(self,s3t))
         return S3_RESULT_RETRY;
 
+    // GLOBAL: rule out if cancel_threads was not run yet
+    if ( self->mp_uploadId || self->mp_next_uploadNum )
+        return S3_RESULT_RETRY;
+
+    if ( g_tree_nnodes(blktree) )
+        return S3_RESULT_RETRY;
     // detected any later blocks uploaded?
-    if ( get_least_next_elt(self->mp_etag_tree, pos) != (objbytes_t) G_MAXUINT64 )
+    if ( get_least_next_elt(filetree, s3t->xfer_begin+1) != (objbytes_t) G_MAXUINT64 )
         return S3_RESULT_RETRY;
 
     ////////////////////////
     /// transform *this* thread into final-combine thread to complete mpblocks upload
     ////////////////////////
 
-    pos = get_greatest_prev_elt(self->mp_etag_tree, pos); // position of final block
+    lastetag = g_tree_lookup(filetree, GSIZE_TO_POINTER(lastblkoff));
+    lastblkoff = get_greatest_prev_elt(filetree, s3t->xfer_end); // offset of final block
 
-    g_assert(pos % self->dev_blksize == 0);  // must divide cleanly
+    g_assert(lastetag && get_greatest_prev_elt(filetree, s3t->xfer_end) == lastblkoff );
 
-    g_tree_unref(s3t->mp_etag_tree_ref); // release old reference
-    g_tree_ref(self->mpcopy_etag_tree); // add new reference
+    if (blktree) g_tree_unref(blktree); // release old reference
+    g_tree_ref(filetree); // add new reference
     g_free((char*)s3t->object_subkey);
     g_free((char*)s3t->object_uploadId);
 
-    s3t->mp_etag_tree_ref = self->mpcopy_etag_tree; // use the alternate large tree 
+    s3t->mp_etag_tree_ref = filetree; // use the alternate large tree 
     s3t->object_subkey = self->file_objkey; // move out of global
     s3t->object_uploadId = self->mpcopy_uploadId; // move out of global
     s3t->object_offset = 0; // reset to base of file
-    s3t->object_uploadNum = 1 + ( pos / self->dev_blksize ); // needed count of blocks (including final)
+    s3t->object_uploadNum = 1 + ( lastblkoff / self->dev_blksize ); // needed count of blocks (including final)
 
     g_debug("%s: completing mpblocks combination s3t%ld key=%s uploadId=[....%s]", __FUNCTION__, s3t - self->s3t, 
           s3t->object_subkey, s3t->object_uploadId + strlen(s3t->object_uploadId)-5);
     
     // now close the whole-object block-upload
-    result = thread_write_close_mp(self,s3t);
+    result = thread_write_close_mp(self,s3t, g_strdup(lastetag));
 
     wrself->mpcopy_uploadId = NULL;         // mpcopy upload is done
     wrself->file_objkey = NULL;             // mpcopy upload is done
@@ -4796,6 +5121,16 @@ init_block_xfer_hooks(S3Device *self)
         return;
     }
 
+    if (self->allow_gcp_compose && oversize_blks) {
+        self->file_objkey = file_to_single_compose_file_objkey(self, pself->file);
+        // end_xbyte == offset + buff_blksize for each temp
+        self->fxn_create_curr_objkey = &file_and_block_to_compose_temp_key;
+        self->fxn_thread_write_factory = &thread_write_cp_factory;
+        self->fxn_thread_write_complete = &thread_write_close_compose;
+        self->fxn_thread_write_finish = &thread_write_final_compose;
+        return;
+    }
+
     if (self->use_s3_multi_part_upload) {
         // end_xbyte is set to infinite
         self->use_padded_stream_uploads = oversize_padded;
@@ -4809,7 +5144,7 @@ init_block_xfer_hooks(S3Device *self)
 
     if ( oversize_mpblocks ) {
         // end_xbyte is dev_blksize
-        // self->fxn_create_curr_objkey = &file_and_block_to_key;
+        self->fxn_create_curr_objkey = &file_and_block_to_key;
         self->fxn_thread_write_factory = &thread_write_reliable_mp_factory;
         // flush current mp
         self->fxn_thread_write_complete = thread_write_close_mp;
@@ -4818,7 +5153,7 @@ init_block_xfer_hooks(S3Device *self)
 
     self->use_padded_stream_uploads = oversize_padded; // dont use if not needed
     // end_xbyte is dev_blksize
-    // self->fxn_create_curr_objkey = &file_and_block_to_key;
+    self->fxn_create_curr_objkey = &file_and_block_to_key;
     // standard init [with padding allowed]
     self->fxn_thread_write_factory = &thread_device_write_factory; 
     // self->fxn_thread_write_complete = NULL; // nothing
@@ -5109,7 +5444,6 @@ reset_file_state(S3Device *self)
            blksize <<= 21; // up to next 2M hugeblocks
            blksize = max(blksize, S3_DEVICE_DEFAULT_BLOCK_SIZE); // S3 minimum part size
            blksize = min(blksize, S3_DEVICE_MAX_BLOCK_SIZE);     // prevents brittle streaming-uploads & restarts
-           // blksize = S3_DEVICE_DEFAULT_BLOCK_SIZE; // for quicker testing
         }
     }
 #endif
@@ -5145,6 +5479,10 @@ reset_file_state(S3Device *self)
         if (self->mpcopy_etag_tree) {
             g_tree_destroy(self->mpcopy_etag_tree); // strings freed automatically
             self->mpcopy_etag_tree = NULL;
+        }
+        if (self->gcp_object_tree) {
+            g_tree_destroy(self->gcp_object_tree); // no references left?
+            self->gcp_object_tree = NULL;
         }
 
         self->dev_blksize = (pself->block_size ? : blksize); // requested block size [maybe oversize]
@@ -5192,6 +5530,9 @@ reset_idle_thread (S3_by_thread *s3t, gboolean verbose)
     if (s3t->mp_etag_tree_ref)
         g_tree_unref(s3t->mp_etag_tree_ref);
 
+    if (s3t->gcp_object_tree_ref)
+        g_tree_unref(s3t->gcp_object_tree_ref);
+
     {
         // zero all other fields...
         s3t->object_uploadNum = 0;
@@ -5207,6 +5548,7 @@ reset_idle_thread (S3_by_thread *s3t, gboolean verbose)
         s3t->errflags = DEVICE_STATUS_SUCCESS; // value == zero
         s3t->errmsg = NULL;
         s3t->mp_etag_tree_ref = NULL;
+        s3t->gcp_object_tree_ref = NULL;
     }
 
     s3t->now_mutex = &s3t->_now_mutex_store;
@@ -5275,23 +5617,6 @@ setup_active_thread(S3Device *self, S3_by_thread *s3t, const char *newkey, objby
     s3t->done = FALSE;   // thread is active
     s3t->ahead = FALSE;  // thread has in-use data
 
-#if 0
-
-    // use non-global position from key
-    s3t->object_offset = self->curr_object_offset;
-
-    /* now done in thread_write_init_mp_factory() */
-    if (self->mp_objkey && g_str_equal(self->mp_objkey,newkey) ) {
-        g_assert(self->mp_uploadId && self->mp_next_uploadNum && self->mp_etag_tree);
-
-        s3t->mp_etag_tree_ref = self->mp_etag_tree;
-        g_tree_ref(s3t->mp_etag_tree_ref);
-        s3t->object_uploadId = g_strdup(self->mp_uploadId);
-        s3t->object_uploadNum = self->mp_next_uploadNum++;
-    }
-
-#endif
-
     s3t->object_subkey = g_strdup(newkey);
     g_free((char*)newkey); // created it above
 
@@ -5321,6 +5646,16 @@ s3_thread_write_session(gpointer thread_data, gpointer data)
     char *mykey_tmp = s3t->object_subkey ? strdupa(s3t->object_subkey) : "";
     objbytes_t eodbytes;
 
+    {
+        g_mutex_lock(self->thread_list_mutex);
+        if (s3t->errflags || s3t->errmsg || device_in_error(self)) {
+            g_warning("[%p] %s: pre-existing s3-context error blocks progress ctxt#%ld: key=%s flag=%x mesg=%s", s3buf, __FUNCTION__, s3t - self->s3t,
+                        s3t->object_subkey, s3t->errflags, s3t->errmsg);
+            goto failed_locked;
+        }
+        g_mutex_unlock(self->thread_list_mutex);
+    }
+
     // was cancelled before started...
     if (!mykey_tmp[0]) {
         if (self->verbose)
@@ -5333,16 +5668,19 @@ s3_thread_write_session(gpointer thread_data, gpointer data)
         char *tname = NULL;
         char *keysuff = strrchr(s3t->object_subkey,'.');
         if ( self->fxn_create_curr_objkey == file_and_block_to_temp_key ) {
-            tname = g_strdup_printf("wp%x.%02lx.%02x", pself->file, s3t->object_offset/self->dev_blksize, (s3t->object_uploadNum-1)&0xff);
+            tname = g_strdup_printf("wp%x.%02lx.%02lx", pself->file, s3t->object_offset/self->dev_blksize, (s3t->object_uploadNum-1)&0xff);
         }
         else if ( self->fxn_create_curr_objkey == &get_write_file_objkey_offset ) {
-            tname = g_strdup_printf("wp%x.%02x   ", pself->file, s3t->object_uploadNum-1);
+            tname = g_strdup_printf("wp%x.%02lx   ", pself->file, s3t->object_uploadNum-1);
         }
         else if ( self->fxn_create_curr_objkey == file_and_block_to_key && s3t->object_uploadId ) {
-            tname = g_strdup_printf("wb%x:%c%c.%02x", pself->file, keysuff[-2],keysuff[-1], s3t->object_uploadNum-1);
+            tname = g_strdup_printf("wb%x:%c%c.%02lx", pself->file, keysuff[-2],keysuff[-1], s3t->object_uploadNum-1);
         }
         else if ( self->fxn_create_curr_objkey == file_and_block_to_key ) {
             tname = g_strdup_printf("wb%x:%c%c   ", pself->file, keysuff[-2],keysuff[-1]);
+        }
+        else if ( self->fxn_create_curr_objkey == file_and_block_to_compose_temp_key) {
+            tname = g_strdup_printf("wc%x:%02lx", pself->file, s3t->object_offset/self->buff_blksize);
         }
         (void) pthread_setname_np(pthread_self(),tname);
         g_debug("[%p] upload worker thread ctxt#%ld [%s] [%#lx-%#lx)",&s3t->curl_buffer,s3t - self->s3t, 
@@ -5382,16 +5720,16 @@ s3_thread_write_session(gpointer thread_data, gpointer data)
     }
 
     // perform new part upload if data is nonempty
-    if (eodbytes && s3t->object_uploadId && s3t->mp_etag_tree_ref)
+    if (eodbytes && s3t->object_uploadId)
     {
 	result = s3_part_upload(s3t->s3, self->bucket, (char *)s3t->object_subkey,
 				(char *)s3t->object_uploadId, s3t->object_uploadNum, &etag,
 				S3_BUFFER_READ_FUNCS, s3buf,
                                 s3_thread_progress_func, s3t);
         if (self->verbose)
-            g_debug("[%p] %s:%d: s3-op completed ctxt#%ld: [%#lx-%#lx) @%#lx key=%s",
+            g_debug("[%p] %s:%d: s3-op completed ctxt#%ld: [%#lx-%#lx) @%#lx key=%s etag=%s",
                s3buf, __FUNCTION__, __LINE__, s3t - self->s3t, s3t->xfer_begin, s3t->xfer_end, 
-               s3t->object_offset, s3t->object_subkey);
+               s3t->object_offset, s3t->object_subkey, etag + strlen(etag)-5);
     // perform new block upload if data is nonempty
     } else if (eodbytes) {
 	result = s3_upload(s3t->s3, self->bucket, (char *)s3t->object_subkey,
@@ -5404,10 +5742,16 @@ s3_thread_write_session(gpointer thread_data, gpointer data)
     }
 
     // cleared if it was owned
-    g_atomic_pointer_compare_and_exchange((volatile void**)&self->xfer_s3t, s3t, NULL);
+    g_atomic_pointer_compare_and_exchange((void**)&self->xfer_s3t, s3t, NULL);
 
     {
         g_mutex_lock(self->thread_list_mutex);
+
+        if (s3t->errflags || s3t->errmsg || device_in_error(self)) {
+            g_warning("[%p] %s: s3-op error result blocks progress ctxt#%ld: key=%s flag=%x mesg=%s", s3buf, __FUNCTION__, s3t - self->s3t,
+                        s3t->object_subkey, s3t->errflags, s3t->errmsg);
+            goto failed_locked;
+        }
 
         if (!result) {
             // error received upon next write...
@@ -5419,19 +5763,11 @@ s3_thread_write_session(gpointer thread_data, gpointer data)
             goto failed_locked;
         }
 
-        if (etag)
+        if (self->fxn_thread_write_complete) 
         {
-            g_tree_insert(s3t->mp_etag_tree_ref, GSIZE_TO_POINTER(s3t->xfer_begin), etag);
-            g_debug("%s: (n=%d) added to completion-tree pos=#%d/%#lx key=%s uploadid=[...%s]", __FUNCTION__, 
-                  g_tree_nnodes(s3t->mp_etag_tree_ref), s3t->object_uploadNum, s3t->xfer_begin, s3t->object_subkey,
-                  s3t->object_uploadId + strlen(s3t->object_uploadId)-5);
-            etag = NULL;
-        }
-
-        if (self->fxn_thread_write_complete) {
             s3_result_t result = S3_RESULT_OK;
 
-            result = (*self->fxn_thread_write_complete)(self,s3t);
+            result = (*self->fxn_thread_write_complete)(self,s3t, etag);
             if (result == S3_RESULT_OK && self->fxn_thread_write_finish)
                 result = (*self->fxn_thread_write_finish)(self,s3t);
             if (result == S3_RESULT_RETRY) 
@@ -6715,7 +7051,7 @@ s3_thread_read_session(gpointer thread_data, gpointer data)
     }
 
     // cleared if it was owned
-    g_atomic_pointer_compare_and_exchange((volatile void**)&self->xfer_s3t, s3t, NULL);
+    g_atomic_pointer_compare_and_exchange((void**)&self->xfer_s3t, s3t, NULL);
 
     // use the objsize found if non-empty
     if ( s3t->xfer_end == self->end_xbyte && s3t->xfer_end >= s3t->object_offset + objsize )
@@ -6942,9 +7278,12 @@ s3_cancel_busy_threads(S3Device *self, gboolean end_all_xfers)
 
     // clear *any* global state that creates new multipart threads
     // [but do NOT remove file_objkey!]
-    g_free(self->mp_uploadId);
-    self->mp_uploadId = NULL;
-    self->mp_next_uploadNum = 0;
+    // HALT ADDING ANY MULTIPART UPLOADED PARTS
+    {
+        g_free(self->mp_uploadId);
+        self->mp_uploadId = NULL;
+        self->mp_next_uploadNum = 0;
+    }
 
     if (end_all_xfers && self->next_xbyte < self->end_xbyte)
         self->end_xbyte = self->next_ahead_byte; // end_xbyte becomes smaller or non-infinite
@@ -7027,4 +7366,3 @@ s3_cancel_busy_threads(S3Device *self, gboolean end_all_xfers)
     } // for
     g_mutex_unlock(self->thread_list_mutex);
 }
-

@@ -59,6 +59,7 @@ extern DevicePropertyBase device_property_s3_secret_key;
 #define S3_DEVICE_MAX_BLOCK_SIZE (512 * 1024 * 1024)
 #define S3_DEVICE_DEFAULT_BLOCK_SIZE BUFFER_SIZE_MAX_DEFAULT
 
+#define GCP_COMPOSE_COUNT 31
 /*
  * Main object structure
  */
