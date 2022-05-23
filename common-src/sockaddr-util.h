@@ -30,6 +30,14 @@
 
 #include <arpa/inet.h>
 
+#ifdef HAVE_NETINET_TCP_H
+#include <netinet/tcp.h>
+#endif
+
+#ifdef TCP_CONGESTION
+#define TCP_CONGESTION_ALG 	"bbr"
+#endif
+
 /* Unfortunately, the system-level sockaddr_storage definition can lead to
  * C aliasing errors (where the optimizer doesn't notice that two operations
  * affect the same datum).  We define our own similar type as a union.
