@@ -12,6 +12,21 @@ AC_DEFUN([AMANDA_WITH_MAXTAPEBLOCKSIZE], [
     )
 ])
 
+AC_DEFUN([AMANDA_ENABLE_UNSAFE_AUTOLABEL],
+[
+    AC_ARG_ENABLE(unsafe-autolabel,
+        AS_HELP_STRING([--enable-unsafe-autolabel],
+                [allow autolabel to copy over other backup configs and unknown tapes]),
+        [ WANT_UNSAFE_AUTOLABEL="${enableval:-yes}" ],
+        [ WANT_UNSAFE_AUTOLABEL="no" ]
+    )
+
+    if test x"$WANT_UNSAFE_AUTOLABEL" = x"yes"; then
+        AC_DEFINE(WANT_UNSAFE_AUTOLABEL, 1, [Define if unsafe erasure of tapes is allowed])
+    fi
+])
+
+
 # SYNOPSIS
 #
 #   AMANDA_TAPE_DEVICE
@@ -30,6 +45,7 @@ AC_DEFUN([AMANDA_TAPE_DEVICE], [
 	sys/tape.h \
 	sys/mtio.h \
 	)
+    AC_REQUIRE([AMANDA_ENABLE_UNSAFE_AUTOLABEL])
 
     # check for MTIOCTOP, an indicator of POSIX tape support
     AC_CACHE_CHECK([for MTIOCTOP], amanda_cv_HAVE_MTIOCTOP,[
