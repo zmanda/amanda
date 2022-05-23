@@ -217,16 +217,16 @@ ndmconn_connect_sockaddr_in (struct ndmconn *conn,
 
         rc = 1;
         // turn off Nagle to send instantly (if remote side hasn't replied to unrecvd data)
-        setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, (void*)&rc, sizeof(rc));
+        setsockopt(fd, SOL_TCP, TCP_NODELAY, (void*)&rc, sizeof(rc));
         setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, (void*)&rc, sizeof(rc));
 	
 	// two minutes between keepalive checks.. always
 	rc = 120;
 #ifdef TCP_KEEPIDLE
-        setsockopt(fd, IPPROTO_TCP, TCP_KEEPIDLE, (void*)&rc, sizeof(rc));
+        setsockopt(fd, SOL_TCP, TCP_KEEPIDLE, (void*)&rc, sizeof(rc));
 #endif
 #ifdef TCP_KEEPINTVL
-        setsockopt(fd, IPPROTO_TCP, TCP_KEEPINTVL, (void*)&rc, sizeof(rc));
+        setsockopt(fd, SOL_TCP, TCP_KEEPINTVL, (void*)&rc, sizeof(rc));
 #endif
 
 	ndmchan_start_readchk (&conn->chan, fd);
