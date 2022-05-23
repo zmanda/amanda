@@ -290,7 +290,7 @@ if (defined $opt_target and !defined $opt_extract and
 
 if (!defined $opt_target and
     defined $opt_extract) {
-    print STDERR "--directorty must be set when --extract is set\n";
+    print STDERR "--directory must be set when --extract is set\n";
 } elsif (!defined $opt_target and
 	 defined $opt_extract_client) {
     print STDERR "--target must be set when --extract_client is set\n";
