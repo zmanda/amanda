@@ -361,6 +361,28 @@ main(
     read_diskfile(conf_diskfile, &origq);
     disable_skip_disk(&origq);
     amfree(conf_diskfile);
+    /*
+     * add a section here to set the value of COMPRESS_PATH to dp->srvcompprog value if dp->compress == COMP_SERVER_CUST
+     * srvcompprog = ((disk_t *)origq.head->data)->srvcompprog and compress = ((disk_t *)origq.head->data)->compress
+     */
+    char *srvcompprog = NULL;
+    srvcompprog = ((disk_t *)origq.head->data)->srvcompprog;
+    if (((disk_t *)origq.head->data)->compress == COMP_SERVER_CUST) {
+	if (srvcompprog == NULL || srvcompprog[0] == '\0') {
+	    delete_message(amcheck_print_message(build_message(
+			AMANDA_FILE, __LINE__, 2800142, MSG_ERROR, 0)));
+	    g_debug("compression program not found!");
+	    amcheck_exit(1);
+	}
+	else if(access(srvcompprog, X_OK) == -1) {
+	    delete_message(amcheck_print_message(build_message(
+			AMANDA_FILE, __LINE__, 2800144, MSG_ERROR, 1,
+			"program", srvcompprog)));
+	    g_debug("compression program is not executable!");
+	    amcheck_exit(1);
+	}
+
+    }
 
     if (config_errors(NULL) >= CFGERR_WARNINGS) {
 	if (opt_message) {
@@ -1117,7 +1139,7 @@ start_server_check(
 	}
 	if(access(COMPRESS_PATH, X_OK) == -1) {
 	    delete_message(amcheck_fprint_message(outf, build_message(
-			AMANDA_FILE, __LINE__, 2800042, MSG_WARNING, 2,
+			AMANDA_FILE, __LINE__, 2800144, MSG_WARNING, 2,
 			"program", COMPRESS_PATH,
 			"errno",   errno)));
 	}

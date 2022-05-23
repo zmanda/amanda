@@ -65,11 +65,13 @@ int need_vxrestore=0;
 int need_runtar=0;
 int need_gnutar=0;
 int need_compress_path=0;
+int need_custom_compress_path=0;
 int need_calcsize=0;
 int need_global_check=0;
 int program_is_application_api=0;
 
 static char *amandad_auth = NULL;
+static char *failed_compprog = NULL;
 static am_feature_t *our_features = NULL;
 static char *our_feature_string = NULL;
 static g_option_t *g_options = NULL;
@@ -596,9 +598,15 @@ check_options(
 	    need_restore=1;
 #endif
     }
-    if ((dle->compress == COMP_BEST) || (dle->compress == COMP_FAST)
-		|| (dle->compress == COMP_CUST)) {
+    if ((dle->compress == COMP_BEST) || (dle->compress == COMP_FAST)) {
 	need_compress_path=1;
+    }
+    if (dle->compress == COMP_CUST && ! failed_compprog && dle->compprog ) {
+        need_custom_compress_path=1;
+        if (access(dle->compprog, X_OK) != 0) {
+            dbprintf(_("failed custom compression program: %s \n"), dle->compprog);
+            failed_compprog = quote_string(dle->compprog);
+        }
     }
     if (dle->auth && amandad_auth) {
 	if (strcasecmp(dle->auth, amandad_auth) != 0) {
@@ -1577,8 +1585,18 @@ check_overall(void)
 	}
     }
 
-    if (need_compress_path )
-	delete_message(selfcheck_print_message(check_file_message(COMPRESS_PATH, X_OK)));
+    if (need_custom_compress_path && !failed_compprog) {
+        // passed test
+    } else if (need_custom_compress_path) {
+	if (access(failed_compprog, X_OK) == -1) {
+	    delete_message(selfcheck_print_message(build_message(
+		AMANDA_FILE, __LINE__, 3700016, MSG_ERROR, 1,
+		"program", failed_compprog)));
+	}
+        amfree(failed_compprog);
+    } else if (need_compress_path) {
+        delete_message(selfcheck_print_message(check_file_message(COMPRESS_PATH, X_OK)));
+    }
 
     if (need_dump || need_xfsdump ) {
 	if (check_file_exist("/etc/dumpdates")) {
