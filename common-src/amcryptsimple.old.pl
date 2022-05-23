@@ -24,8 +24,8 @@
 
 
 # Run perl.
-eval '(exit $?0)' && eval 'exec /usr/bin/perl -S $0 ${1+"$@"}'
-         & eval 'exec /usr/bin/perl -S $0 $argv:q'
+eval '(exit $?0)' && eval 'exec @PERL@ -S $0 ${1+"$@"}'
+         & eval 'exec @PERL@ -S $0 $argv:q'
                 if 0;
 
 use Time::Local;
@@ -68,10 +68,10 @@ sub do_gpg_agent() {
     }
 
     if (system("$path --use-standard-socket-p 2>/dev/null")) {
-	return "$path --daemon --";
+        return ""
     }
 
-    return ""
+    return "$path --daemon --";
 }
 
 sub which_gpg() {
@@ -89,6 +89,7 @@ sub which_gpg() {
 sub encrypt() {
     my $gpg_agent_cmd = do_gpg_agent();
     my $gpg = which_gpg();
+    system "gpgconf --kill gpg-agent";
     system "$gpg_agent_cmd $gpg --batch -z 0 --no-secmem-warning --cipher-algo AES256 --symmetric --passphrase-fd 3  3<$AM_PASS";
     sleep(2); # allow gpg-agent the time to exit
     if ($? == -1) {
@@ -106,6 +107,7 @@ sub encrypt() {
 sub decrypt() {
     my $gpg_agent_cmd = do_gpg_agent();
     my $gpg = which_gpg();
+    system "gpgconf --kill gpg-agent";
     system "$gpg_agent_cmd $gpg --batch --quiet --no-mdc-warning --decrypt --passphrase-fd 3  3<$AM_PASS";
     sleep(2); # allow gpg-agent the time to exit
     if ($? == -1) {
