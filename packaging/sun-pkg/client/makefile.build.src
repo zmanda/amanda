@@ -240,9 +240,6 @@ build-stamp:
 	# dh_testdir
 	( \
 	   PYTHON=$$(command -v python3); \
-	   \
-	   CFLAGS="-g -pipe -O2 -std=c11"; \
-	   LDFLAGS=""; \
 	   PKG_CONFIG_PATH+=""; \
 	   declare -p PYTHON CFLAGS LDFLAGS PKG_CONFIG_PATH >> ./build-env.sh; \
 	   declare -p PATH >> ./build-env.sh; \
@@ -494,7 +491,8 @@ binary-install-devel: binary-install-client
 	
 	# snip off $(buildroot) from start ... to dup the path
 	mkdir -p $(devel)$(AMLIBDIR)
-	ls -1 $(buildroot)$(SHLIBDIR)/*.{a,la,so} $(buildroot)$(SHLIBDIR)/*.so.* 2>/dev/null | xargs -r cp -a -t $(devel)$(SHLIBDIR)
+	ls -1 $(buildroot)$(SHLIBDIR)/*.{a,la,so} $(buildroot)$(SHLIBDIR)/*.so.* 2>/dev/null | 
+                xargs -r cp -a -t $(devel)$(SHLIBDIR)
 	mkdir -p $(devel)$(AMANDAHOMEDIR)/amanda-autoconf
 	mkdir -p $(devel)/usr/include/amanda
 	
@@ -647,8 +645,6 @@ final-install:
 	# dh_shlibdeps $(dhpkg) -v \
 	#	-l"$(SHLIBDIR):$(AMLIBDIR)"
 	#
-	# no platform for clients and only check backup_client for perl details (perl version/base deps only)
-	#
 	# dh_perl $(dhpkg) -v $(AMPERLDIR)
 	# dh_installdeb
 	# dh_gencontrol
@@ -680,4 +676,5 @@ binary: final-install
 .PHONY: build clean binary-install binary-install-client binary-install-devel binary-install-platform
 .PHONY: final-install perm-install-client perm-install-devel
 
-# vim: filetype=make
+# vim:ft=make
+

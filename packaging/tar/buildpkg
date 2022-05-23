@@ -13,6 +13,7 @@ shift
 # set the var buildpkg_dir as well
 . ./packaging/common/build_functions.sh
 . ./packaging/common/set_zmanda_version
+detect_package_vars
 
 export PATH
 export PKG_DIR=$(realpath .)
