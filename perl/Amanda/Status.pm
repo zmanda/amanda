@@ -42,6 +42,9 @@ package Amanda::Status;
 
 use strict;
 use warnings;
+use utf8;
+use open ':std', ':encoding(utf-8)';
+use Encode;
 use POSIX ();
 use Fcntl qw( O_RDWR O_CREAT LOCK_EX LOCK_NB );
 use Data::Dumper;
@@ -385,6 +388,7 @@ sub new {
 		errno => $!);
 
     } ;
+    binmode($fd, ":encoding(utf-8)");  # all bytes should be valid text-based UTF8
     my $self = {
 	filename    => $filename,
 	fd          => $fd,
