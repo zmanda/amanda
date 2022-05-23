@@ -2872,6 +2872,7 @@ check_user_amandahosts(
 #else
     char ipstr[INET_ADDRSTRLEN];
 #endif
+    sockaddr_union fileaddr;
 
     auth_debug(1, _("check_user_amandahosts(host=%s, pwd=%p, "
 		   "remoteuser=%s, service=%s)\n"),
@@ -2927,23 +2928,11 @@ check_user_amandahosts(
 	    fileuser = pwd->pw_name;
 	}
 
+	SU_INIT(&fileaddr,0);
+
 	hostmatch = (strcasecmp(filehost, host) == 0);
-	/*  ok if addr=127.0.0.1 and
-	 *  either localhost or localhost.domain is in .amandahost */
-	if (!hostmatch  &&
-	    (strcasecmp(filehost, "localhost")== 0 ||
-	     strcasecmp(filehost, "localhost.localdomain")== 0)) {
-#ifdef WORKING_IPV6
-	    if (SU_GET_FAMILY(addr) == (sa_family_t)AF_INET6)
-		inet_ntop(AF_INET6, &addr->sin6.sin6_addr,
-			  ipstr, sizeof(ipstr));
-	    else
-#endif
-		inet_ntop(AF_INET, &addr->sin.sin_addr,
-			  ipstr, sizeof(ipstr));
-	    if (g_str_equal(ipstr, "127.0.0.1") ||
-		g_str_equal(ipstr, "::1"))
-		hostmatch = 1;
+	if ( ! hostmatch ) {
+	    hostmatch = str_to_sockaddr(filehost, &fileaddr) && !cmp_sockaddr(&fileaddr,addr,1);
 	}
 	usermatch = (strcasecmp(fileuser, remoteuser) == 0);
 	auth_debug(9, _("bsd: comparing \"%s\" with\n"), filehost);
