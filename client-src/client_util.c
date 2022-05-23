@@ -524,6 +524,9 @@ parse_options(
 	    amfree(dle->compprog);
 	    dle->compprog = g_strdup(tok + sizeof("srvcomp-cust=") -1);
 	    dle->compress = COMP_SERVER_CUST;
+	    if (!check_access(dle->compprog, X_OK)) {
+	        g_printf(_("ERROR [server custom compression program is not a valid executable]\n"));
+	    }
 	}
 	else if (BSTRNCMP(tok, "comp-cust=") == 0) {
 	    if (dle->compress != COMP_NONE) {
@@ -535,6 +538,10 @@ parse_options(
 	    amfree(dle->compprog);
 	    dle->compprog = g_strdup(tok + sizeof("comp-cust=") -1);
 	    dle->compress = COMP_CUST;
+            if (!check_access(dle->compprog, X_OK)) {
+                g_printf(_("ERROR [custom compression program is not a valid executable]\n"));
+            }
+
 	    /* parse encryption options */
 	} 
 	else if (BSTRNCMP(tok, "encrypt-serv-cust=") == 0) {
