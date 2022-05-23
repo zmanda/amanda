@@ -1482,6 +1482,8 @@ set_message(
     } else if (message->code == 3700015) {
 	msg = "bad DAR property value '%{property_value}'";
 
+    } else if (message->code == 3700016) {
+	msg  = "'%{program}' is not executable, client custom compression will not work";
     } else if (message->code == 3701000) {
 	msg = "%{disk}";
     } else if (message->code == 3701001) {
