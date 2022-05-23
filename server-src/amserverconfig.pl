@@ -26,10 +26,12 @@ use Getopt::Long;
 use Time::Local;
 use File::Copy;
 use File::Path;
-use Socket;   # for gethostbyname
+use Socket qw(:addrinfo);   # for getaddrinfo
+use IO::Socket::INET;       # to make a tmp udp socket...
 use Amanda::Paths;
 use Amanda::Util qw( :constants );
 use Amanda::Constants;
+use Encode qw(decode_utf8);
 
 my $confdir="$CONFIG_DIR";
 my $tmpdir="$AMANDA_DBGDIR";
@@ -76,35 +78,35 @@ sub mprint {
     }
 }
 
-sub log_and_die { 
+sub log_and_die {
     my ($err, $cleanup) = @_;
     print LOG $err;
     # clean up $config directory if cleanup=1
-    # if error in creating vtape or holding disk, 
+    # if error in creating vtape or holding disk,
     # advise user to create manually, no need to cleanup
     if ( $cleanup && defined $config  && -e "$confdir/$config" ) {
 	print LOG "cleaning up $confdir/$config\n";
 	if ( -e "$confdir/$config/amanda.conf" ) {
-	    unlink "$confdir/$config/amanda.conf" || 
+	    unlink "$confdir/$config/amanda.conf" ||
 	    print LOG "unlink $confdir/$config/amanda.conf failed: $!\n";
 	}
 	if ( -e "$confdir/$config/advanced.conf" ) {
-	    unlink "$confdir/$config/advanced.conf" || 
+	    unlink "$confdir/$config/advanced.conf" ||
 	    print LOG "unlink $confdir/$config/advanced.conf failed: $!\n";
 	}
 	if ( -e "$confdir/$config/tapelist" ) {
-	    unlink "$confdir/$config/tapelist" || 
+	    unlink "$confdir/$config/tapelist" ||
 	    print LOG "unlink $confdir/$config/tapelist failed: $!\n";
 	}
 	if ( -e "$confdir/$config/curinfo" ) {
-	    rmdir "$confdir/$config/curinfo" || 
+	    rmdir "$confdir/$config/curinfo" ||
 	    print LOG "rmdir $confdir/$config failed: $!\n";
 	}
 	if ( -e "$confdir/$config/index" ) {
-	    rmdir "$confdir/$config/index" || 
+	    rmdir "$confdir/$config/index" ||
 	    print LOG "rmdir $confdir/$config/index failed: $!\n";
 	}
-	rmdir "$confdir/$config" || 
+	rmdir "$confdir/$config" ||
 	    print LOG "rmdir $confdir/$config failed: $!\n";
     }
     die $err;
@@ -161,7 +163,7 @@ sub copy_template_file {
 sub create_curinfo_index_dir {
     mkpath("$confdir/$config/curinfo", $def_perm) ||
 	&log_and_die ("ERROR: mkpath: $confdir/$config/curinfo failed: $!\n", 1);
-    mkpath("$confdir/$config/index", $def_perm) || 
+    mkpath("$confdir/$config/index", $def_perm) ||
 	&log_and_die ("ERROR: mkpath: $confdir/$config/index failed: $!\n", 1);
     &mprint ("curinfo and index directory created\n");
 }
@@ -179,7 +181,7 @@ sub touch_list_files {
 }
 
 # create holding disk directory, check disk space first
-sub create_holding { 
+sub create_holding {
   if ( -d "$amandahomedir/holdings/$config" ) {
     my $uid = (stat("$amandahomedir/holdings/$config"))[4];
     my $owner = (getpwuid($uid))[0];
@@ -200,10 +202,10 @@ sub create_holding {
     unless (( $dfout[1] eq "1K-blocks" ) || ( $dfout[1] eq "kbytes")) {
          $div=2;	# 512-blocks displayed by df
      }
-    
+ 
     if (( $dfout[10] / $div )  > 1024000 ) { # holding disk is defined 1000 MB
 	&mprint ("creating holding disk directory\n");
-	unless ( -d "$amandahomedir/holdings" ) { 
+	unless ( -d "$amandahomedir/holdings" ) {
 	mkpath ( "$amandahomedir/holdings", $def_perm) ||
 	    (&mprint ("WARNING: mkpath $amandahomedir/holdings failed: $!\n"), $holding_err++, return );
     }
@@ -214,11 +216,11 @@ sub create_holding {
 
 #create default tape dir
 sub create_deftapedir{
-    unless ( -e "$amandahomedir/vtapes" ) { 
+    unless ( -e "$amandahomedir/vtapes" ) {
 	mkpath ( "$amandahomedir/vtapes", $def_perm) ||
 	    ( &mprint ("WARNING: mkpath $amandahomedir/$config/vtapes failed: $!\n"), return );
     }
-    unless ( -e "$amandahomedir/vtapes/$config" ) { 
+    unless ( -e "$amandahomedir/vtapes/$config" ) {
 	mkpath ( "$amandahomedir/vtapes/$config", $def_perm) ||
 	    ( &mprint ("WARNING: mkpath $amandahomedir/vtapes/$config failed: $!\n"), return );
     }
@@ -253,7 +255,7 @@ sub create_vtape {
     my $i;
     &mprint ("amlabel vtapes\n");
 	if (defined $tapecycle) {
-		$tapecycle=~/^\d+/; 
+		$tapecycle=~/^\d+/;
 		$tp_cyclelimit=$&;
 
 		# check space
@@ -278,9 +280,10 @@ sub create_vtape {
 		    mkpath ("slot$i", $def_perm) ||
 		    ( &mprint ("WARNING: mkpath $parentdir/slot$i failed: $!\n"), $vtape_err++, return);
 		}
-		( @amlabel_out = `$sbindir/amlabel -f $config $mylabelprefix-$i slot $i`) ||
-	        ( &mprint ("WARNING: amlabel vtapes failed at slot $i: $!\n"), $vtape_err++, return);
-    }
+		@amlabel_out = qx{$sbindir/amlabel -f $config $mylabelprefix-$i slot $i 2>&1};
+		( $? == 0 ) ||
+                    (&mprint (join("",@amlabel_out)."WARNING: amlabel vtapes failed at slot $i: $!\n"), $vtape_err++, return);
+        }
 	foreach (@amlabel_out) {
 	  print LOG;
         }
@@ -290,7 +293,7 @@ sub create_vtape {
 
 sub create_customconf{
 	   # now create a custom amanda.conf from user input
-	unless ( $mailto ) 
+	unless ( $mailto )
 	{ $mailto="$amanda_user"; }
 	else {  # untaint mailto which can be evil
                 # reject mailto with the following * ( ) < > [ ] , ; : ! $ \ / "
@@ -343,7 +346,7 @@ sub create_customconf{
 		print CONF "}\n";
 		unless ($tapetype) {$tapetype="HP-DAT";}
 	  }
-	elsif ($template eq "tape-changer") 
+	elsif ($template eq "tape-changer")
           {
 		$tpchanger = "my_robot";
 		print CONF "\n";
@@ -487,6 +490,7 @@ unless ( $#ARGV == 0 ) {
     exit 1;
 }
 else {
+	@ARGV = map { decode_utf8($_, 1) } @ARGV;
     if ( "$ARGV[0]" =~ /^([-\@\w.]+)$/ ) {
 	$config = $1;                   #  now untainted
     } else {
@@ -514,15 +518,22 @@ unless ( -e "$tmpdir" ) {
 open (LOG, ">$logfile") || die ("ERROR: Cannot create logfile: $!\n");
 print STDOUT "Logging to $logfile\n";
 
+#
+# try for a canonical name from hostname
+#
 my $lhost=`hostname`;
 chomp($lhost);
-# get our own canonical name, if possible (we don't sweat the IPv6 stuff here)
-$host=(gethostbyname($lhost))[0];
 
-unless ( $host ) {
-    $host = $lhost;  #gethostbyname() failed, go with hostname output
+# get our own canonical name, if possible
+$host = (getaddrinfo($lhost, undef, { flags => AI_CANONNAME }))[1];
+$host &&= ${host}->{canonname};
+
+# get externally-routed address and its canonname
+if ( ! $host ) {
+    $host = $lhost = IO::Socket::INET->new(PeerAddr => '8.8.8.9',PeerPort => '9',Proto => 'udp')->sockhost();
+    $host = (getaddrinfo($lhost, undef, { flags => AI_CANONNAME }))[1];
+    $host &&= ${host}->{canonname};
 }
-
 
 my $need_changer = 0;
 if ( defined $template ) {
@@ -603,7 +614,7 @@ unless ( -e $ttype ) {
 
 # update $def_config value to the specified config value in advanced.conf
     open(ADV, "$templatedir/advanced.conf") || &log_and_die ("ERROR: Cannot open advanced.conf file: $!\n", 1);
-    open(NEWADV, ">$confdir/$config/advanced.conf") || 
+    open(NEWADV, ">$confdir/$config/advanced.conf") ||
 	&log_and_die ("ERROR: Cannot create advanced.conf file: $!\n", 1);
     while (<ADV>) {
 	$_ =~ s/$def_config/$config/;
