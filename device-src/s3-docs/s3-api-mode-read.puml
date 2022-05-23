@@ -1,0 +1,39 @@
+@startuml
+newpage Standard Tape/File Read
+
+actor "Taper"        as taper
+
+create participant "Xfer"        as xfer
+create boundary "S3 Device" 	 as api
+taper -> api ** : << new("s3:<bucket>") >>
+
+taper -> api : << property_set(<name1>,<value1>) >>
+note over api
+	[see API-Write Mode documents]
+end note
+
+taper -> api : << property_set(...) >>
+...
+taper -> api : device_create()
+taper -> api ++ : device_start(ACCESS_READ,<label>,<timestamp>)
+return
+...
+
+xfer -> api : << device_read_label() >>
+activate api
+xfer -> api : << device_init_seek_file(findex) >>
+
+xfer -> api : << device_read_block(ptr,nbytes) >>
+xfer -> api : << device_read_block(ptr,nbytes) >>
+xfer -> api : << device_read_block(ptr,nbytes) >>
+...
+xfer -> api : << device_finish_file() >>
+return 
+deactivate api
+destroy xfer
+
+taper -> api : << device_finish() >>
+taper -> api : << device_finalize() >>
+destroy api
+
+@enduml
