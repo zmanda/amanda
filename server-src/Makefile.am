@@ -20,6 +20,9 @@ LINTFLAGS=$(AMLINTFLAGS)
 
 amlib_LTLIBRARIES = 	libamserver.la
 
+amlibexec_SCRIPTS_PERL =
+sbin_SCRIPTS_PERL =
+
 if WANT_SERVER
 sbin_PROGRAMS =		amadmin		amcheck
 
