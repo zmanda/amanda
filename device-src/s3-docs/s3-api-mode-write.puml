@@ -1,0 +1,60 @@
+@startuml
+newpage Standard Tape/File Write
+
+actor "Taper"        as taper
+
+create participant "Xfer"        as xfer
+taper -> xfer ** : << new() >>
+note over xfer
+	Tape Header Properties
+
+	prop <enum>     [type]
+	prop <timedate> [datestamp]
+	props <number>  [dumplevel] 
+	props <boolean> [compressed] 
+	prop <string>   [label-name]
+	prop <path>     [path]
+	prop <string>   [program]
+end note
+
+create boundary "S3 Device" 	 as api
+taper -> api ** : << new("s3:<bucket>") >>
+
+taper -> api : << property_set(<name1>,<value1>) >>
+note over api
+	S3 Device Properties 
+
+	prop <string>    [STORAGE_API] determines authentication params (s3/aws4/swift-3.0 etc..)
+	prop <host-name> [S3_HOST] determines service / server to use
+	props <strings>  [S3_ACCESS_KEY] [S3_SECRET_KEY] is normal for s3/aws4 authentication
+	props <number>   [NB_THREADS_RECOVERY] [NB_THREADS_RECOVERY] set the # of curl threads allowed
+	prop <boolean>   [S3_MULTI_PART_UPLOAD] enables multipart-combining versus block-style storage
+	prop <boolean>   [CHUNKED] enables an obsolete upload streaming technique
+	prop <number>    [BLOCK_SIZE] permitted block-write size and preferred block-read size
+	prop <boolean>   [VERBOSE] 
+end note
+
+taper -> api : << property_set(...) >>
+...
+taper -> api : device_create()
+taper -> api ++ : device_start(ACCESS_WRITE,<label>,<timestamp>)
+return
+...
+
+xfer -> api ++ : << device_start_file() >>
+activate api
+
+xfer -> api : << device_write_block(ptr,nbytes) >>
+xfer -> api : << device_write_block(ptr,nbytes) >>
+xfer -> api : << device_write_block(ptr,nbytes) >>
+...
+xfer -> api : << device_finish_file() >>
+return 
+deactivate api
+destroy xfer
+
+taper -> api : << device_finish() >>
+taper -> api : << device_finalize() >>
+destroy api
+
+@enduml
