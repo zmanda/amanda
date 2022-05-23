@@ -64,7 +64,7 @@ program_t curprog;
 char *curstr;
 
 int multiline = -1;
-static char *logfile;
+static char *logfile = NULL;
 static int logfd = -1;
 
  /*
@@ -131,7 +131,9 @@ static void log_add_full_v(logtype_t typ, char *pname, char *format, va_list arg
 
     /* append message to the log file */
 
-    if(multiline == -1) open_log();
+    // an error or mistaken log entry is being attempted
+    if (!logfile && logfd < 0) logfd = dup(2);
+    if(logfile && multiline == -1) open_log();
 
     if (full_write(logfd, leader, strlen(leader)) < strlen(leader)) {
 	error(_("log file write error: %s"), strerror(errno));
@@ -180,7 +182,15 @@ log_start_multiline(void)
     assert(multiline == -1);
 
     multiline = 0;
-    open_log();
+
+    // an error or mistaken log entry is being attempted
+    if (!logfile) {
+        logfd = dup(2); // general stderr duplicate
+        logfile = g_strdup("/etc/amanda/invalid/log/path/causes/error");
+        return;
+    }
+
+    if (logfile) open_log();
 }
 
 
