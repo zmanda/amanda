@@ -1085,10 +1085,12 @@ match_level(
     char mylevelexp[100];
     int match_exact;
 
-    if(strlen(levelexp) >= 100 || strlen(levelexp) < 1) {
+    if(strlen(levelexp) >= sizeof(mylevelexp) || strlen(levelexp) <= 0) {
 	error("Illegal level expression %s", levelexp);
 	/*NOTREACHED*/
     }
+
+    // strlen() must be <= 99
 
     if (*levelexp == '=') {
 	return strcmp(levelexp+1, level) == 0;
@@ -1096,7 +1098,7 @@ match_level(
 
     if(levelexp[0] == '^') {
 	strncpy(mylevelexp, levelexp+1, strlen(levelexp)-1);
-	mylevelexp[strlen(levelexp)-1] = '\0';
+	mylevelexp[strlen(levelexp)-1] = '\0'; // <=98
 	if (strlen(levelexp) == 0) {
 	    error("Illegal level expression %s", levelexp);
 	    /*NOTREACHED*/

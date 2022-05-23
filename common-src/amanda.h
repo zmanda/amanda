@@ -447,6 +447,11 @@ time_t	unctime(char *timestr);
     (s1) = t_t_t;							\
 } while(0)
 
+// risky side effects ... but probably fine
+#ifndef strdupa
+#define strdupa(s) ( strcpy(alloca(strlen(s)+1), (s)) )
+#endif
+
 /*
  * min/max.  Don't do something like
  *
