@@ -2,7 +2,7 @@ Source: amanda-backup-client
 Section: utils
 Priority: optional
 Maintainer: Zmanda Inc <support@zmanda.com>
-Build-Depends: debhelper (>=8), dump, fakeroot, flex, gettext, gnuplot-nox|gnuplot,
+Build-Depends: debhelper (>=8), dump, fakeroot, flex, gettext, gnuplot-nox|gnuplot, swig,
 	libtool, automake, perl (>=5.6.0), procps,
         libglib2.0-dev (<<%%BUILD_GLIB2_NEXT_VERSION%%),
 	libcurl-dev, libncurses5-dev,
@@ -17,7 +17,8 @@ Depends: ca-certificates, perl (>=5.6.0), gettext,
         libencode-locale-perl, libio-socket-ssl-perl, libjson-perl, libxml-simple-perl,
 	libglib2.0-0 (>=%%BUILD_GLIB2_VERSION%%),
 	${shlibs:Depends}, ${perl:Depends}, ${misc:Depends}
-Conflicts: amanda-enterprise-backup-server, amanda-backup-server, amanda-server, amanda-client, amanda-common
+Conflicts: amanda-enterprise-backup-server, amanda-backup-server, amanda-server, amanda-client, amanda-common,
+                amanda-enterprise-backup-client
 Replaces: amanda-client, amanda-common
 Description: Amanda Network Backup and Archiving software
  .
@@ -39,6 +40,14 @@ Architecture: any
 Depends: libc6-dev | libc-dev, libglib2.0-dev (>=%%BUILD_GLIB2_VERSION%%)
 Description: Perl library: development files
  Files for developing applications which use Amanda Client libraries.
+
+Package: amanda-backup-client-tests
+Section: libdevel
+Priority: optional
+Architecture: any
+Depends: amanda-backup-client
+Description: Perl library: development files
+ Files for integration test for Amanda Server libraries and utilities.
 
 Package: amanda-backup-client-dbg
 Architecture: any
