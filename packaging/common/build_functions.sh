@@ -427,6 +427,9 @@ gen_top_environ() {
 
     set_zmanda_version HEAD
 
+    [ -n "${PKG_NAME_VER}" ] ||
+        die "PKG_NAME_VER is not set correctly"
+
     [ -d $pkg_bldroot ] ||
 	die "missing call to gen_pkg_build_config() or missing $pkg_bldroot directory"
 
@@ -458,8 +461,10 @@ gen_pkg_environ() {
 
     set_zmanda_version HEAD
 
+    [ -n "${PKG_NAME_VER}" ] ||
+        die "PKG_NAME_VER is not set correctly"
+
     tmp=$(mktemp -d)
-    rm -f $tmp/${PKG_NAME_VER}
     ln -sf ${PKG_DIR} $tmp/${PKG_NAME_VER}
 
     [ -d $pkg_bldroot ] ||
@@ -769,6 +774,7 @@ get_svn_info() {
 }
 
 set_zmanda_version() {
+    detect_package_vars  # in case its not set
     eval "$(get_version_evalstr "$1")"
     # [ -f "$VERSION_TAR" ] || die "failed to create VERSION_TAR file"
     echo -n "$VERSION" > $src_root/FULL_VERSION
