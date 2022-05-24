@@ -72,9 +72,9 @@ rm -rf /tmp/amanda || { echo could not delete old test state; exit -1; }
 export AMHOME=$(echo ~amandabackup)
 export SHELL=/bin/bash
 
-hdr="${host}:$githash-$i"
 for i in $(<.all-tests); do 
-     setuid_run_test -I. "./$i" \
+    hdr="${host}:$githash-$i"
+    setuid_run_test -I. "./$i" \
             >& >(summarize_tests "$hdr") ||
         printf "%s: EXIT STATUS %d" "$hdr" $?
 done;
