@@ -132,7 +132,6 @@ MAKE=$(MAKE) \
 --with-group=$(AMANDAGROUP) \
 --with-fqdn \
 --with-tmpdir=$(AMANDAHOMEDIR)/tmp \
---enable-s3-device \
 --with-bsd-security \
 --with-bsdtcp-security \
 --with-bsdudp-security \
@@ -152,6 +151,7 @@ MAKE=$(MAKE) \
 --disable-installperms
 endef
 # NOTE: disable-installperms or install conflicts with chown/chmod later
+# NOTE: generic --enable-s3-device is best left as default for only if libraries allow
 
 #
 # subpackage paths
