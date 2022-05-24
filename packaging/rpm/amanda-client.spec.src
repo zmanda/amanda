@@ -693,7 +693,7 @@ echo 'cd $(dirname $0);' >> %{ROOT_AMDATADIR}/tests/run.sh
     done
 
     # remove any -flush tests [that always fail] from the all-tests set
-    sed -i -e '/-flush$/d' "%{ROOT_AMDATADIR}/tests/.all-tests"
+    # sed -i -e '/-flush$/d' "%{ROOT_AMDATADIR}/tests/.all-tests"
 
     cp -vt %{ROOT_AMDATADIR}/tests \
        %{BUILD_TOPDIR}/packaging/common/run-installcheck.sh

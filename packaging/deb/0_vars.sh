@@ -1,2 +1,2 @@
-pkg_name=amanda-enterprise
+pkg_name=amanda-backup
 pkg_type=deb
