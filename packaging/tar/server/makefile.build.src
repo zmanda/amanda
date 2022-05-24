@@ -190,8 +190,7 @@ build-stamp:
 	# no need for LDPATH, PATH (for perl/python)
 	set -x; . ./build-env.sh; \
 	./configure \
-		$(CONFIG_FLAGS_COMMON) \
-                --enable-rpath
+		$(CONFIG_FLAGS_COMMON)
 	
 	touch missing
 	

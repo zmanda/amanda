@@ -209,8 +209,7 @@ build-stamp:
 	set -x; . ./rpm-env.sh ; \
 	     ./configure \
 	        $(CONFIG_FLAGS_COMMON) \
-		--without-server \
-                --enable-rpath
+		--without-server
 	touch missing
 	
 	set -x; \
