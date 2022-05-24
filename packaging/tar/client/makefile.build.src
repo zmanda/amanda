@@ -35,6 +35,7 @@ BUILD_TOPDIR=$(SRCDIR)
 # Comment this to disable silent make.
 #MAKEFLAGS+=s LIBTOOLFLAGS=--silent
 
+
 CC := $(shell command -v gcc)
 
 # NOTE: below needs to run under fakeroot!!!
@@ -42,7 +43,6 @@ ifeq ($(FAKEROOTKEY),)
 GCC_TARGET := $(shell $(CC) -dumpmachine)
 GCC_TARGET := $(strip $(GCC_TARGET))
 endif
-FAKEROOT_PATH=$(PATH)
 
 LIBARCHDIR=lib
 BINARCHDIR=bin
@@ -75,6 +75,7 @@ MANDIR=$(AMPREFIX)/share/man
 DOCDIR=$(AMPREFIX)/share/doc
 SYSCONFDIR=%%SYSCONFDIR%%
 AMCONFDIR=$(SYSCONFDIR)/amanda
+#
 AMANDATES=$(AMANDAHOMEDIR)/amandates
 LOCALSTATEDIR=/var
 LOGDIR=%%LOGDIR%%
@@ -100,11 +101,6 @@ CONFIG_FILES = \
 AMANDAUSER=%%AMANDAUSER%%
 AMANDAGROUP=%%AMANDAGROUP%%
 AMANDACLIGROUP=%%AMANDACLIGROUP%%
-
-# -------------- flags that are not possible
-# export CFLAGS="-specs=$${SRCDIR}/gcc-specs -L/usr/ccs/lib -m64 "; \
-# --enable-as-needed
-# LD=$(LD)
 
 define CONFIG_FLAGS_COMMON
 CFLAGS="$${CFLAGS}" \
@@ -167,11 +163,15 @@ endef
 buildroot           =  $(SRCDIR)/BUILD/amanda-backup-client
 devel               =  $(SRCDIR)/BUILD/amanda-backup-client-devel
 
+
 build: build-stamp
 build-stamp:
 	# dh_testdir
 	( \
 	   PYTHON=$$(command -v python3); \
+	   \
+	   CFLAGS="-g -pipe -O2 -std=c11"; \
+	   LDFLAGS=""; \
 	   PKG_CONFIG_PATH+=""; \
 	   declare -p PYTHON CFLAGS LDFLAGS PKG_CONFIG_PATH >> ./build-env.sh; \
 	   \
@@ -196,7 +196,8 @@ build-stamp:
 	touch missing
 	
 	# remake once to make sure
-	set -x; $(MAKE) -j1 ./config.status VERBOSE=1
+	set -x; . ./build-env.sh; \
+	   $(MAKE) -j1 ./config.status VERBOSE=1
 	# perform real build
 	set -x; . ./build-env.sh; \
 	    $(MAKE) -j`nproc` VERBOSE=1
@@ -232,7 +233,7 @@ binary-install-client: build-stamp
 	################################################ done with source make-install
 	
 	# rm -f $(buildroot)$(SYS_UNITDIR)/amanda-server*
-	#
+	# rm -f $(buildroot)$(SYS_UNITDIR)/amanda-client*
 	# rm -f $(buildroot)$(AMANDAHOMEDIR)/example/inetd.conf.amandaclient
 	# rm -f $(buildroot)$(AMANDAHOMEDIR)/example/inetd.conf.amandaserver
 	
@@ -262,6 +263,7 @@ binary-install-client: build-stamp
 	umask 027; touch $(buildroot)$(AMANDAHOMEDIR)/.ssh/{id_rsa_amrecover,id_rsa_amdump}{,.pub};
 	umask 027; touch $(buildroot)$(AMANDAHOMEDIR)/.am_passphrase
 	
+	mkdir -p $(buildroot)$(AMCONFDIR)
 	mkdir -p $(buildroot)$(LOGDIR)
 	mkdir -p $(buildroot)$(LOGDIR)/client
 	
@@ -282,7 +284,7 @@ perm-install-client: binary-install
 	# dh_testroot
 	# dh_fixperms -v
 	
-	# NOTE: USE SINGLE LINES FOR CHOWN.  MUST ACCOMODATE OLDER CHOWN WITH FAKEROOT SETUP
+	#
 	# install -o root -g root -m 0644 BUILD/lintian \
 	# 	$(buildroot)/usr/share/lintian/overrides/amanda-backup-client
 	chown -R root:root $(buildroot)$(AMLIBEXECDIR)
@@ -363,6 +365,7 @@ perm-install-client: binary-install
 	# rely on sanity-check permissions otherwise
 	# ---------------------- ASSESS PERMISSIONS NOW IF NEEDED ----------
 	cd $(buildroot); find . -printf "chmod %m %p; chown %u:%g %p\n" > $(buildroot).install-perms.sh
+
 
 #    -rw-r--r--    1 root    root                     2030 Nov 16 22:05 /etc/amanda-security.conf
 #
@@ -491,6 +494,7 @@ perm-install-devel: binary-install
 	# ---------------------- ASSESS PERMISSIONS NOW IF NEEDED ----------
 	cd $(devel); find . -printf "chmod %m %p; chown %u:%g %p\n" > $(devel).install-perms.sh
 
+
 #
 # bottleneck after completed all installation
 #
@@ -513,6 +517,7 @@ binary-install-stamp:
 	# need external dependencies
 	LD_PRELOAD= /usr/bin/touch $@
 
+
 #
 # bottleneck after completed all permissions resets
 #
@@ -520,8 +525,6 @@ final-install:
 	# fakeroot can remain entirely within this MAKE only,
 	#    if perms were remembered from these chmod/chown calls
 	fakeroot -- $(MAKE) -f $(THIS_MAKEFILE) \
-           \
-           \
 	   GCC_TARGET=$(GCC_TARGET) \
 		perm-install-client \
 		perm-install-devel
@@ -538,6 +541,7 @@ final-install:
 	tar -czvf $$(basename $(buildroot))-$(AMVER)-${BUILD_GNU_TYPE%%-*}.tar.gz -C $(buildroot) .
 	tar -czvf $$(basename $(devel))-$(AMVER)-${BUILD_GNU_TYPE%%-*}.tar.gz -C $(devel) .
 
+	{ ls 2>/dev/null *.tar.gz; } || true
 clean:
 	# dh_testdir
 	-[ -f Makefile ] && make -s LIBTOOLFLAGS=--silent clean
@@ -554,4 +558,5 @@ binary: final-install
 .PHONY: build clean binary-install binary-install-client binary-install-devel binary-install-platform
 .PHONY: final-install perm-install-client perm-install-devel
 
-# vim: filetype=make
+# vim:ft=make
+

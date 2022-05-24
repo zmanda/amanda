@@ -35,6 +35,7 @@ BUILD_TOPDIR=$(SRCDIR)
 # Comment this to disable silent make.
 #MAKEFLAGS+=s LIBTOOLFLAGS=--silent
 
+
 CC := $(shell command -v gcc)
 
 # NOTE: below needs to run under fakeroot!!!
@@ -42,7 +43,6 @@ ifeq ($(FAKEROOTKEY),)
 GCC_TARGET := $(shell $(CC) -dumpmachine)
 GCC_TARGET := $(strip $(GCC_TARGET))
 endif
-FAKEROOT_PATH=$(PATH)
 
 LIBARCHDIR=lib
 BINARCHDIR=bin
@@ -75,6 +75,7 @@ MANDIR=$(AMPREFIX)/share/man
 DOCDIR=$(AMPREFIX)/share/doc
 SYSCONFDIR=%%SYSCONFDIR%%
 AMCONFDIR=$(SYSCONFDIR)/amanda
+#
 AMANDATES=$(AMANDAHOMEDIR)/amandates
 LOCALSTATEDIR=/var
 LOGDIR=%%LOGDIR%%
@@ -100,11 +101,6 @@ CONFIG_FILES = \
 AMANDAUSER=%%AMANDAUSER%%
 AMANDAGROUP=%%AMANDAGROUP%%
 AMANDACLIGROUP=%%AMANDACLIGROUP%%
-
-# -------------- flags that are not possible
-# export CFLAGS="-specs=$${SRCDIR}/gcc-specs -L/usr/ccs/lib -m64 "; \
-# --enable-as-needed
-# LD=$(LD)
 
 define CONFIG_FLAGS_COMMON
 CFLAGS="$${CFLAGS}" \
@@ -162,16 +158,20 @@ endef
 #
 # used to narrow the dh_ tools focus
 #dhpkg              =  --package=amanda-backup-server
-#r=$(SRCDIR)/BUILD/tmp
+# r=$(SRCDIR)/BUILD/tmp
 # buildroot_client  =  $(SRCDIR)/BUILD/amanda-backup-client
 buildroot           =  $(SRCDIR)/BUILD/amanda-backup-server
 devel               =  $(SRCDIR)/BUILD/amanda-backup-server-devel
+
 
 build: build-stamp
 build-stamp:
 	# dh_testdir
 	( \
 	   PYTHON=$$(command -v python3); \
+	   \
+	   CFLAGS="-g -pipe -O2 -std=c11"; \
+	   LDFLAGS=""; \
 	   PKG_CONFIG_PATH+=""; \
 	   declare -p PYTHON CFLAGS LDFLAGS PKG_CONFIG_PATH >> ./build-env.sh; \
 	   \
@@ -195,7 +195,8 @@ build-stamp:
 	touch missing
 	
 	# remake once to make sure
-	set -x; $(MAKE) -j1 ./config.status VERBOSE=1
+	set -x; . ./build-env.sh; \
+	   $(MAKE) -j1 ./config.status VERBOSE=1
 	# perform real build
 	set -x; . ./build-env.sh; \
 	    $(MAKE) -j`nproc` VERBOSE=1
@@ -231,7 +232,7 @@ binary-install-server: build-stamp
 	################################################ done with source make-install
 	
 	# rm -f $(buildroot)$(SYS_UNITDIR)/amanda-server*
-	#
+	# rm -f $(buildroot)$(SYS_UNITDIR)/amanda-client*
 	# rm -f $(buildroot)$(AMANDAHOMEDIR)/example/inetd.conf.amandaclient
 	# rm -f $(buildroot)$(AMANDAHOMEDIR)/example/inetd.conf.amandaserver
 	
@@ -261,6 +262,7 @@ binary-install-server: build-stamp
 	umask 027; touch $(buildroot)$(AMANDAHOMEDIR)/.ssh/{id_rsa_amrecover,id_rsa_amdump}{,.pub};
 	umask 027; touch $(buildroot)$(AMANDAHOMEDIR)/.am_passphrase
 	
+	mkdir -p $(buildroot)$(AMCONFDIR)
 	mkdir -p $(buildroot)$(LOGDIR)
 	mkdir -p $(buildroot)$(LOGDIR)/server
 	
@@ -281,7 +283,7 @@ perm-install-server: binary-install
 	# dh_testroot
 	# dh_fixperms -v
 	
-	# NOTE: USE SINGLE LINES FOR CHOWN.  MUST ACCOMODATE OLDER CHOWN WITH FAKEROOT SETUP
+	#
 	# install -o root -g root -m 0644 BUILD/lintian \
 	# 	$(buildroot)/usr/share/lintian/overrides/amanda-backup-server
 	chown -R root:root $(buildroot)$(AMLIBEXECDIR)
@@ -362,6 +364,7 @@ perm-install-server: binary-install
 	# rely on sanity-check permissions otherwise
 	# ---------------------- ASSESS PERMISSIONS NOW IF NEEDED ----------
 	cd $(buildroot); find . -printf "chmod %m %p; chown %u:%g %p\n" > $(buildroot).install-perms.sh
+
 
 #    -rw-r--r--    1 root    root                     2030 Nov 16 22:05 /etc/amanda-security.conf
 #
@@ -476,7 +479,6 @@ binary-install-devel: binary-install-server
 	set -x; if find $(devel)/usr/include/amanda $(devel)$(AMANDAHOMEDIR) -type f -exec grep -q $(BUILD_TOPDIR) \{} \; -print | grep -q .; then exit -1; fi
 	set -x; if find $(devel)$(LIBDIR) -type f -name \*.la  -exec grep -q $(BUILD_TOPDIR) \{} \; -print | grep -q .; then exit -1; fi
 	
-	cp -f $(buildroot)$(AMCONFDIR)/amanda-security.conf $(buildroot)$(SYSCONFDIR)/amanda-security.conf
 
 ##################
 ################################ permissions for backup-server-devel
@@ -491,15 +493,14 @@ perm-install-devel: binary-install
 	# ---------------------- ASSESS PERMISSIONS NOW IF NEEDED ----------
 	cd $(devel); find . -printf "chmod %m %p; chown %u:%g %p\n" > $(devel).install-perms.sh
 
+
 #
 # bottleneck after completed all installation
 #
 binary-install: binary-install-stamp
 binary-install-stamp:
-	# reset back to BUILD PATH again...
-	LD_PRELOAD= \
-	LD_LIBRARY_PATH= \
 	    $(MAKE) -f $(THIS_MAKEFILE) \
+                \
 		binary-install-server \
 		binary-install-devel
 	#
@@ -507,7 +508,7 @@ binary-install-stamp:
 	#
 	#dh_installexamples -v $(buildroot)$(AMANDAHOMEDIR)/example
 	#dh_installchangelogs -v ChangeLog
-	for i in $$(<$(BUILDROOT).docs); do install -D $$i $(buildroot)$(DOCDIR); done
+	while read i; do install -D $$i $(buildroot)$(DOCDIR); done  <$(buildroot).docs
 	
 	#dh_strip --dbg-package=amanda-backup-server-dbg
 	
@@ -539,6 +540,7 @@ final-install:
 	tar -czvf $$(basename $(buildroot))-$(AMVER)-${BUILD_GNU_TYPE%%-*}.tar.gz -C $(buildroot) .
 	tar -czvf $$(basename $(devel))-$(AMVER)-${BUILD_GNU_TYPE%%-*}.tar.gz -C $(devel) .
 
+	{ ls 2>/dev/null *.tar.gz; } || true
 clean:
 	# dh_testdir
 	-[ -f Makefile ] && make -s LIBTOOLFLAGS=--silent clean
@@ -556,3 +558,4 @@ binary: final-install
 .PHONY: final-install perm-install-server perm-install-devel
 
 # vim:ft=make
+
