@@ -489,7 +489,7 @@ binary-install-devel: binary-install-server
 binary-install-tests: binary-install-server
 	# dh_testdir
 	rm -rf $(tests)
-	mkdir -p $(tests)
+	mkdir -p $(tests)$(AMTESTSDIR)
 	# dh_prep $(dhpkg)-tests
 	# dh_installdirs -v $(dhpkg)-tests
 
