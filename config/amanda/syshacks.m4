@@ -75,7 +75,7 @@ AC_DEFUN([AMANDA_SYSHACKS], [
         *-solaris2.11)  # none is fine
                     ;;
         *-solaris2.10)
-		    AMANDA_ADD_CFLAGS([-D_XOPEN_SOURCE=1 -D_XOPEN_SOURCE_EXTENDED=1 -D_XPG6=1])
+		    AMANDA_ADD_CFLAGS([-D_XOPEN_SOURCE=600])
 		    ;;
         *-solaris2*)
 		    AMANDA_ADD_CFLAGS([-D_XOPEN_SOURCE=1 -D_XOPEN_SOURCE_EXTENDED=1])
