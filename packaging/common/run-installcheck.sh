@@ -67,6 +67,7 @@ rm -rf /tmp/amanda || { echo could not delete old test state; exit -1; }
 export AMHOME=$(echo ~amandabackup)
 export SHELL=/bin/bash
 
+[ -s .all-tests ] || cat >.all-tests .*-tests
 for i in $(<.all-tests); do 
     hdr="${host}-$i"
     HARNESS_ACTIVE=1 setuid_run_test -I. "./$i" \
