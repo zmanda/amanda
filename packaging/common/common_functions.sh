@@ -592,7 +592,7 @@ restore_saved_configs() {
     elif [ $# -gt 1 ]; then
         :
     else
-        echo >&2 "ERROR: failed to query config files"
+        # echo >&2 "ERROR: failed to query config files"
         return 1
     fi
 
