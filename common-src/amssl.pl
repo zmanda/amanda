@@ -35,7 +35,7 @@ use Amanda::Util qw( :constants );
 use Amanda::Logfile qw( :logtype_t log_add );
 use Amanda::Debug qw( debug );
 use Amanda::Paths;
-use Amanda::Amdump;
+# use Amanda::Amdump;
 
 ##
 # Main

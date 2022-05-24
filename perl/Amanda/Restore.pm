@@ -485,6 +485,7 @@ use Amanda::Recovery::Clerk;
 use Amanda::Recovery::Scan;
 use Amanda::Extract;
 use Amanda::Feature;
+use Amanda::Tapelist;
 #use Amanda::CheckDump; # for Amanda::CheckDump::Message
 use Amanda::Logfile qw( :logtype_t log_add log_add_full );
 use MIME::Base64 ();
