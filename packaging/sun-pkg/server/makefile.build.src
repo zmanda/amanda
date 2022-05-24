@@ -262,8 +262,7 @@ build-stamp:
 	set -x; . ./build-env.sh; \
 	./configure \
 		$(CONFIG_FLAGS_COMMON) \
-		--without-server \
-                --enable-rpath
+		--without-server
 
 	touch missing
 	
