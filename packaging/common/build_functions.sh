@@ -146,7 +146,7 @@ detect_pkgdirs_top() {
             pkg_type=${pkg_type%%/*}
         ;;
        # in case buildpkg dir is above type dir
-       */rpm/|*/deb/|*/sun-pkg/|*/whl/)
+       */rpm/|*/deb/|*/sun-pkg/|*/whl/|*/tar/)
             pkg_type=${buildpkg_dir:$n}
             pkg_type=${pkg_type%/}
             pkg_type=${pkg_type##*/}

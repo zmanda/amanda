@@ -58,7 +58,7 @@
 %define glib2_build   %(pkg-config --modversion glib-2.0)
 
 %define glib2_pkg_name glib2
-%define glib2_devel_pkg_name  glib2-devel
+%define glib2_devel_pkg_name glib2-devel
 
 %if "%{dist}" == "suse"
 %define glib2_pkg_name libglib-2_0-0
@@ -206,9 +206,9 @@ BuildRequires: ncurses-devel
 %description
 Amanda is the leading Open-Source Backup and Archiving software.
 
-The amanda-backup_server package should be installed on the Amanda server, i.e.
+The amanda-backup-server package should be installed on the Amanda server, i.e.
 the machine attached to backup media (such as a tape drive or disk
-drives) where backups will be written. The amanda-backup_server package
+drives) where backups will be written. The amanda-backup-server package
 includes Amanda client.  The amanda-backup_client package needs
 to be installed on every system that is being backed up.
 
@@ -235,6 +235,7 @@ Requires: %{_logrotatedir}
 Requires: coreutils
 Requires: gettext
 Requires: grep
+Requires: gnuplot
 Requires: curl >= 7.10.0
 Requires: openssl
 %if "%{dist}" == "suse"
@@ -266,7 +267,7 @@ Requires: tar >= %{tarver}
 Requires: %glib2_pkg_name >= %glib2_build
 Requires: /etc/services
 Provides: amanda-backup-server = %{amanda_version}
-Conflicts: amanda-backup_client, amanda-backup_server
+Conflicts: amanda-backup_client, amanda-backup-server
 Conflicts: amanda, amanda-server, amanda-client, amanda-backup-client
 
 %description -n amanda-backup-server
@@ -314,7 +315,7 @@ This package contains the Amanda server test files.
 %define BINDIR          %{EPREFIX}/bin
 %define SBINDIR         %{EPREFIX}/sbin
 %define AMINCDIR        %{EPREFIX}/include/amanda
-%define SHAREDIR         %{PREFIX}/share
+%define SHAREDIR        %{PREFIX}/share
 %define SYSCONFDIR      %%SYSCONFDIR%%
 %define LOCALSTATEDIR   /var
 %define SYSLOGDIR       /var/log
@@ -549,7 +550,7 @@ rm -rf %{buildroot}
 . ./rpm-env.sh   # last time...
 make -o config.status -o config/config.h -j1 DESTDIR=%{buildroot} install
 
-mkdir -p %{ROOT_INSTALLDIR}
+make -j1 DESTDIR=%{buildroot} install
 ################################################ done with source make-install
 
 # to hold a space in case we need the path /usr/lib64 added!
@@ -683,7 +684,7 @@ echo 'cd $(dirname $0);' >> %{ROOT_AMDATADIR}/tests/run.sh
              cleanfiles-query |
        cpio -dvp %{ROOT_AMDATADIR}/tests || true
 
-    ls -1d *.pm */. | xargs realpaths --relative-to=. | find $(cat) -type f | 
+    ls -1d *.pm */. | xargs realpath --relative-to=. | find $(cat) -type f | 
        cpio -dvp %{ROOT_AMDATADIR}/tests || true
 
     rm -f %{ROOT_AMDATADIR}/tests/amcat*.??
@@ -816,19 +817,10 @@ else
 fi
 %endif
 
-# put extra dir directive if no libraries found from /usr/lib64
-#touch /etc/ld.so.conf.d/amanda.conf
-# just in case...
-#ldconfig
-#if ! ldconfig -p | grep -q '=> /usr/lib64/'; then
-#   bash -xc 'install -m 444 <(echo "/usr/lib64") /etc/ld.so.conf.d/amanda.conf'
-#   ( set -x; ldconfig )
-#fi
-
 restore_saved_configs
 
 # add this path to check for utilities
-fix_security_conf
+fix_security_conf /sbin:/usr/sbin
 
 # needs AMANDAHOMEDIR and amanda_user vars
 create_dynamic_keys
