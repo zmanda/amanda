@@ -2,7 +2,7 @@
 
 cd $(dirname $0)
 
-AMPERL=${AMPERL:-/opt/zmanda/amanda/bin/perl}
+AMPERL=${AMPERL:-perl}
 
 summarize_tests() {
     local hdr=$1
@@ -56,11 +56,6 @@ setuid_run_test() {
     HARNESS_ACTIVE=1 command $AMPERL "$@"
 }
 
-githash=$(rpm -q --changelog amanda_enterprise-backup-server | sed -e '/BUILDENV=/!d')
-githash="${githash##*BUILDENV=}"
-githash="${githash%%.*}"
-githash="${githash:-unkn}"
-
 host="$(hostname)"
 host="${host%%.*}"
 host="${host#os-}"
@@ -73,7 +68,7 @@ export AMHOME=$(echo ~amandabackup)
 export SHELL=/bin/bash
 
 for i in $(<.all-tests); do 
-    hdr="${host}:$githash-$i"
+    hdr="${host}-$i"
     setuid_run_test -I. "./$i" \
             >& >(summarize_tests "$hdr") ||
         printf "%s: EXIT STATUS %d" "$hdr" $?
