@@ -250,6 +250,7 @@ binary-install-server: build-stamp
 	mkdir -p $(buildroot)$(AMCONFDIR)
 	mkdir -p $(buildroot)$(LOGDIR)
 	mkdir -p $(buildroot)$(LOGDIR)/server
+	mkdir -p $(buildroot)$(LOGDIR)/client
 	mkdir -p $(buildroot)$(LOGDIR)/amandad
 	
 	install -m 640 /dev/null $(buildroot)$(AMANDATES)
@@ -472,7 +473,7 @@ binary-install-devel: binary-install-server
 binary-install-tests: binary-install-server
 	dh_testdir
 	rm -rf $(tests)
-	mkdir -p $(tests)
+	mkdir -p $(tests)$(AMTESTSDIR)
 	dh_prep $(dhpkg)-tests
 	dh_installdirs -v $(dhpkg)-tests
 

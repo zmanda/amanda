@@ -471,7 +471,7 @@ binary-install-devel: binary-install-client
 binary-install-tests: binary-install-client
 	dh_testdir
 	rm -rf $(tests)
-	mkdir -p $(tests)
+	mkdir -p $(tests)$(AMTESTSDIR)
 	dh_prep $(dhpkg)-tests
 	dh_installdirs -v $(dhpkg)-tests
 
