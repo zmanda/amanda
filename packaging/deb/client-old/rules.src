@@ -136,7 +136,7 @@ build-stamp:
 	    PYTHON=$$(command -v python3); \
 	    \
 	    CFLAGS="-g -pipe -O2 -std=c11"; \
-	    LDFLAGS="-Wl,--disable-new-dtags -Wl,-rpath -Wl,$(AMLIBDIR)"'; \
+	    LDFLAGS=""'; \
 	    PKG_CONFIG_PATH+=""; \
 	    declare -p PERL PYTHON CFLAGS LDFLAGS PKG_CONFIG_PATH >> ./build-env.sh \
 	)
@@ -155,8 +155,7 @@ build-stamp:
 	set -x; . ./build-env.sh; \
 	./configure \
 		$(CONFIG_FLAGS_COMMON) \
-		--without-server \
-                --enable-rpath
+		--without-server
 
 	touch missing
 

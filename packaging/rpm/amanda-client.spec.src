@@ -405,10 +405,11 @@ export PKG_CONFIG_PATH="${PKG_CONFIG_PATH}:%{_libdir}/pkgconfig:%{_datadir}/pkgc
 export PYTHON="$(realpath ${PYTHON%/*})/${PYTHON##*/}"
 export PERL="$(realpath ${PERL%/*})/${PERL##*/}"
 
-eval 'LDFLAGS="$(tr -d "\\n")"' <<==========LDFLAGS
-    -Wl,--disable-new-dtags
-    -Wl,-rpath -Wl,%{INSTALL_LDPATH}
-==========LDFLAGS
+# eval 'LDFLAGS="$(tr -d "\\n")"' <<==========LDFLAGS
+#     -Wl,--disable-new-dtags
+#     -Wl,-rpath -Wl,%{INSTALL_LDPATH}
+# ==========LDFLAGS
+  LDFLAGS=
   declare -p >>./rpm-env.sh 2>/dev/null \
     LDFLAGS
 
@@ -514,7 +515,6 @@ export GCC_TARGET=$(gcc -dumpmachine | tr -d '\n')
         --disable-installperms \
 	--disable-syntax-checks \
         --enable-manpage-build \
-	--enable-rpath        \
         --with-xsltproc       \
         --${systemd_with}-systemd \
         --without-server
