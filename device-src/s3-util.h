@@ -110,7 +110,7 @@ GByteArray*
 s3_compute_sha256_hash(const GByteArray *to_hash, const GByteArray *to_hash_ext);
 
 char *
-s3_compute_sha256_hash_ptr(const unsigned char *to_hash, gsize len);
+s3_compute_sha256_hash_ptr(const unsigned char *to_hash, size_t len);
 
 unsigned char *
 EncodeHMACSHA256(
