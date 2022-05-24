@@ -69,7 +69,7 @@ export SHELL=/bin/bash
 
 for i in $(<.all-tests); do 
     hdr="${host}-$i"
-    setuid_run_test -I. "./$i" \
+    HARNESS_ACTIVE=1 setuid_run_test -I. "./$i" \
             >& >(summarize_tests "$hdr") ||
         printf "%s: EXIT STATUS %d" "$hdr" $?
 done;
