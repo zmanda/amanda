@@ -146,7 +146,7 @@ build-stamp:
 
 	# annoying.. but it forces inclusion of all the needed perl
 # 	sed -i -e 's,^if *WANT_CLIENT,if WANT_SERVER,' perl/Makefile.am
-
+	
 	# all must be done if configure is not set already
 	[ -f ./configure ] || ./autogen
 
@@ -158,7 +158,6 @@ build-stamp:
 	set -x; . ./build-env.sh; \
 	./configure \
 		$(CONFIG_FLAGS_COMMON) \
-		--without-server
 
 	touch missing
 
