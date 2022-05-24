@@ -17,7 +17,6 @@ Depends: ca-certificates, perl (>=5.6.0), gettext,
         libencode-locale-perl, libio-socket-ssl-perl, libjson-perl, libxml-simple-perl,
 	libglib2.0-0 (>=%%BUILD_GLIB2_VERSION%%),
 	${shlibs:Depends}, ${perl:Depends}, ${misc:Depends}
-
 Conflicts: amanda-enterprise-backup-server, amanda-backup-server, amanda-server, amanda-client, amanda-common
 Replaces: amanda-client, amanda-common
 Description: Amanda Network Backup and Archiving software
