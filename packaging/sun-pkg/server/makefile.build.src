@@ -141,7 +141,7 @@ AMPERLDIR=$(AMLIBDIR)/perl
 SHAREDIR=$(AMPREFIX)/share
 MANDIR=$(SHAREDIR)/man
 DOCDIR=$(SHAREDIR)/doc
-AMDATADIR=$(SHAREDIR)/amanda
+AMDATADIR=$(SHAREDIR)
 AMTESTSDIR=$(AMDATADIR)/tests
 SYSCONFDIR=%%SYSCONFDIR%%
 AMCONFDIR=$(SYSCONFDIR)/amanda
@@ -564,7 +564,7 @@ binary-install-devel: binary-install-server
 binary-install-tests: binary-install-server
 	# dh_testdir
 	rm -rf $(tests)
-	mkdir -p $(tests)
+	mkdir -p $(tests)$(AMTESTSDIR)
 	# dh_prep $(dhpkg)-tests
 	# dh_installdirs -v $(dhpkg)-tests
 
