@@ -42,11 +42,11 @@ sub get_userhomedir {
 }
 
 sub get_topdir {
-    return "/opt/zmanda/amanda";
+    return "/opt/amanda";
 }
 
 sub get_wwwdir {
-    return "/opt/zmanda/amanda/var/www";
+    return "/opt/amanda/var/www";
 }
 
 sub get_logdir {
