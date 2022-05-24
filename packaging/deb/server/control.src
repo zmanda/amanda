@@ -13,11 +13,12 @@ Standards-Version: 3.9.1
 Package: amanda-backup-server
 Architecture: any
 Pre-Depends: libc6
-Depends: ca-certificates, perl (>=5.6.0), gettext, 
+Depends: ca-certificates, perl (>=5.6.0), gettext,
         libencode-locale-perl, libio-socket-ssl-perl, libjson-perl, libxml-simple-perl,
 	libglib2.0-0 (>=%%BUILD_GLIB2_VERSION%%),
 	${shlibs:Depends}, ${perl:Depends}, ${misc:Depends}
-Conflicts: amanda-backup-client, amanda-backup-client, amanda-client
+Conflicts: amanda-enterprise-backup-client, amanda-backup-client, amanda-server, amanda-client, amanda-common,
+                amanda-enterprise-backup-server
 Replaces: amanda-client, amanda-common, amanda-server
 Description: Amanda Network Backup and Archiving software
  .
@@ -39,7 +40,15 @@ Architecture: any
 Depends: libc6-dev | libc-dev, libglib2.0-dev (>=%%BUILD_GLIB2_VERSION%%)
 Description: Perl library: development files
  Files for developing applications which use Amanda Server libraries.
-	
+
+Package: amanda-backup-server-tests
+Section: libdevel
+Priority: optional
+Architecture: any
+Depends: amanda-backup-server, libdancer-perl
+Description: Perl library: development files
+ Files for integration test for Amanda Server libraries and utilities.
+
 Package: amanda-backup-server-dbg
 Architecture: any
 Section: debug

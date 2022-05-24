@@ -233,7 +233,6 @@ Requires: %{_logrotatedir}
 Requires: coreutils
 Requires: gettext
 Requires: grep
-Requires: gnuplot
 Requires: curl >= 7.10.0
 Requires: openssl
 %if "%{dist}" == "suse"
@@ -311,7 +310,7 @@ This package contains the Amanda server test files.
 %define BINDIR          %{EPREFIX}/bin
 %define SBINDIR         %{EPREFIX}/sbin
 %define AMINCDIR        %{EPREFIX}/include/amanda
-%define SHAREDIR         %{PREFIX}/share
+%define SHAREDIR        %{PREFIX}/share
 %define SYSCONFDIR      %%SYSCONFDIR%%
 %define LOCALSTATEDIR   /var
 %define SYSLOGDIR       /var/log
@@ -406,11 +405,11 @@ export PYTHON="$(realpath ${PYTHON%/*})/${PYTHON##*/}"
 export PERL="$(realpath ${PERL%/*})/${PERL##*/}"
 
 # eval 'LDFLAGS="$(tr -d "\\n")"' <<==========LDFLAGS
-#     -Wl,--disable-new-dtags
-#     -Wl,-rpath -Wl,%{INSTALL_LDPATH}
-# ==========LDFLAGS
-  LDFLAGS=
-  declare -p >>./rpm-env.sh 2>/dev/null \
+#    -Wl,--disable-new-dtags
+#    -Wl,-rpath -Wl,%{INSTALL_LDPATH}
+#==========LDFLAGS
+ LDFLAGS=
+ declare -p >>./rpm-env.sh 2>/dev/null \
     LDFLAGS
 
 
@@ -679,7 +678,7 @@ echo 'cd $(dirname $0);' >> %{ROOT_AMDATADIR}/tests/run.sh
              cleanfiles-query |
        cpio -dvp %{ROOT_AMDATADIR}/tests || true
 
-    ls -1d *.pm */. | xargs realpaths --relative-to=. | find $(cat) -type f | 
+    ls -1d *.pm */. | xargs realpath --relative-to=. | find $(cat) -type f | 
        cpio -dvp %{ROOT_AMDATADIR}/tests || true
 
     rm -f %{ROOT_AMDATADIR}/tests/amcat*.??
@@ -688,7 +687,7 @@ echo 'cd $(dirname $0);' >> %{ROOT_AMDATADIR}/tests/run.sh
 # tests/amrecover is executable but has no shebang, removing executable bit
 # tests/Amanda_Report.pl is executable but has no shebang, removing executable bit
 
-    for i in common_tests client_tests server_tests full_tests restore_tests ndmp_tests mock_tests all_tests; do
+    for i in common_tests client_tests restore_tests mock_tests; do
         make --eval=$'testfiles-query:\n\t@ls -1d $('"$i"') 2>/dev/null || true' \
            testfiles-query > "%{ROOT_AMDATADIR}/tests/.${i//_/-}"
     done
