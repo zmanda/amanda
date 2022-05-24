@@ -307,7 +307,7 @@ branch_version_name() {
 
     [[ "$pre" == [D]-??*- ]] && ver+=".${pre%-}"
     [[ "$pre" == [FH]-* ]] &&   ver+=".${pre:0:1}"
-    [[ "$pre" == [a-z]*- ]] && [[ "$pre" != *-[^-]* ]] && ver+=".${pre:0:1}"
+    [[ "$pre" == [a-zA-Z]- ]] && [[ "$pre" != *-[^-]* ]] && ver+=".${pre:0:1}"
 
     ver+="${post,,}"
     if [ "$ver" != "${ver:0:31}" ]; then 
