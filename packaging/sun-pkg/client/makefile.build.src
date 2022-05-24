@@ -49,7 +49,6 @@ BUILD_TOPDIR=$(SRCDIR)
 # then prefer /usr/sfw/bin/gcc
 # then prefer /opt/csw/bin/gcc
 # then allow /bin/gcc etc...
-
 CC := $(shell PATH=$$(ls 2>/dev/null -d /usr/gcc/*/bin):/usr/sfw/bin:/opt/csw/bin:$${PATH} command -v gcc)
 
 # NOTE: below needs to run under fakeroot!!!
@@ -143,6 +142,7 @@ MANDIR=$(AMPREFIX)/share/man
 DOCDIR=$(AMPREFIX)/share/doc
 SYSCONFDIR=%%SYSCONFDIR%%
 AMCONFDIR=$(SYSCONFDIR)/amanda
+#
 AMANDATES=$(AMANDAHOMEDIR)/amandates
 LOCALSTATEDIR=/var
 LOGDIR=%%LOGDIR%%
@@ -168,11 +168,6 @@ CONFIG_FILES = \
 AMANDAUSER=%%AMANDAUSER%%
 AMANDAGROUP=%%AMANDAGROUP%%
 AMANDACLIGROUP=%%AMANDACLIGROUP%%
-
-# -------------- flags that are not possible
-# export CFLAGS="-specs=$${SRCDIR}/gcc-specs -L/usr/ccs/lib -m64 "; \
-# --enable-as-needed
-# LD=$(LD)
 
 define CONFIG_FLAGS_COMMON
 CFLAGS="$${CFLAGS}" \
@@ -219,7 +214,7 @@ MAKE=$(MAKE) \
 --with-debugging=$(LOGDIR) \
 --enable-manpage-build \
 --disable-syntax-checks \
---with-xsltproc \
+--with-xsltproc=$(XSLTPROC_PATH) \
 --disable-static \
 --disable-installperms
 endef
@@ -235,11 +230,15 @@ endef
 buildroot           =  $(SRCDIR)/PKGBUILD/amanda-backup-client
 devel               =  $(SRCDIR)/PKGBUILD/amanda-backup-client-devel
 
+
 build: build-stamp
 build-stamp:
 	# dh_testdir
 	( \
 	   PYTHON=$$(command -v python3); \
+	   \
+	   CFLAGS="-g -pipe -O2 -std=gnu99"; \
+	   LDFLAGS=""; \
 	   PKG_CONFIG_PATH+=""; \
 	   declare -p PYTHON CFLAGS LDFLAGS PKG_CONFIG_PATH >> ./build-env.sh; \
 	   declare -p PATH >> ./build-env.sh; \
@@ -264,7 +263,8 @@ build-stamp:
 	touch missing
 	
 	# remake once to make sure
-	set -x; $(MAKE) -j1 ./config.status VERBOSE=1
+	set -x; . ./build-env.sh; \
+	   $(MAKE) -j1 ./config.status VERBOSE=1
 	# perform real build
 	set -x; . ./build-env.sh; \
 	    $(MAKE) -j`nproc` VERBOSE=1
@@ -300,7 +300,7 @@ binary-install-client: build-stamp
 	################################################ done with source make-install
 	
 	# rm -f $(buildroot)$(SYS_UNITDIR)/amanda-server*
-	#
+	# rm -f $(buildroot)$(SYS_UNITDIR)/amanda-client*
 	# rm -f $(buildroot)$(AMANDAHOMEDIR)/example/inetd.conf.amandaclient
 	# rm -f $(buildroot)$(AMANDAHOMEDIR)/example/inetd.conf.amandaserver
 	
@@ -330,6 +330,7 @@ binary-install-client: build-stamp
 	umask 027; touch $(buildroot)$(AMANDAHOMEDIR)/.ssh/{id_rsa_amrecover,id_rsa_amdump}{,.pub};
 	umask 027; touch $(buildroot)$(AMANDAHOMEDIR)/.am_passphrase
 	
+	mkdir -p $(buildroot)$(AMCONFDIR)
 	mkdir -p $(buildroot)$(LOGDIR)
 	mkdir -p $(buildroot)$(LOGDIR)/client
 	
@@ -435,6 +436,7 @@ perm-install-client: binary-install
 	cd $(buildroot); [ -x /bin/pkgproto ] && \
 		{ /bin/pkgproto . | cat $(buildroot).pkgproto.hdr - > $(buildroot).pkgproto; }
 
+
 #    -rw-r--r--    1 root    root                     2030 Nov 16 22:05 /etc/amanda-security.conf
 #
 #    drwx------    2 amandabaamandaba                    0 Nov 16 22:05 /var/lib/amanda/.gnupg
@@ -490,7 +492,7 @@ binary-install-devel: binary-install-client
 	
 	# snip off $(buildroot) from start ... to dup the path
 	mkdir -p $(devel)$(AMLIBDIR)
-	ls -1 $(buildroot)$(SHLIBDIR)/*.{a,la,so} $(buildroot)$(SHLIBDIR)/*.so.* 2>/dev/null | 
+	ls -1 $(buildroot)$(SHLIBDIR)/*.{a,la,so} $(buildroot)$(SHLIBDIR)/*.so.* 2>/dev/null | \
                 xargs -r cp -a -t $(devel)$(SHLIBDIR)
 	mkdir -p $(devel)$(AMANDAHOMEDIR)/amanda-autoconf
 	mkdir -p $(devel)/usr/include/amanda
@@ -657,6 +659,7 @@ final-install:
 	[ ! -x /bin/pkg ] || $(MAKE) -f $(THIS_MAKEFILE) -C PKGBUILD BUILDROOT=$(buildroot) create_p5m
 	[ ! -x /bin/pkg ] || $(MAKE) -f $(THIS_MAKEFILE) -C PKGBUILD BUILDROOT=$(devel) create_p5m
 	for i in $$(ls 2>/dev/null PKGBUILD/*.pkg PKGBUILD/*.p5p ); do mv $$i $${i/./-$(AMVER)-$(GNU_TRIPLET).}; done
+
 	{ ls 2>/dev/null PKGBUILD/*.pkg PKGBUILD/*.p5p | xargs mv -t "$(SRCDIR)"; } || true
 
 clean:
