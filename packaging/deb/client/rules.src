@@ -39,10 +39,10 @@ SBINDIR=$(PREFIX)/sbin
 LIBDIR=$(PREFIX)/lib
 #LIBEXECDIR=$(PREFIX)/lib
 LIBEXECDIR=$(PREFIX)/libexec
+AMLIBEXECDIR=$(SHLIBDIR)/amanda
 # must be architecture-specific ...
 SHLIBDIR=$(PREFIX)/$(LIBARCHDIR)
 AMLIBDIR=$(SHLIBDIR)/amanda
-AMLIBEXECDIR=$(SHLIBDIR)/amanda
 AMPERLDIR=$(AMLIBDIR)/perl
 
 MANDIR=$(PREFIX)/share/man
@@ -95,7 +95,6 @@ LDFLAGS="$${LDFLAGS}" \
 --with-group=$(AMANDAGROUP) \
 --with-fqdn \
 --with-tmpdir=$(AMANDAHOMEDIR)/tmp \
---enable-s3-device \
 --with-bsd-security \
 --with-bsdtcp-security \
 --with-bsdudp-security \
@@ -222,6 +221,9 @@ binary-install-client: build-stamp
 	install -D -m 644 system-scripts/amanda-logrotate \
 	          $(buildroot)$(SYS_LOGROTATEDIR)/amanda
 	
+	# only for solaris...
+	# install -D $(buildroot)$(AMANDAHOMEDIR)/example/amandaclient.xml \
+	# 		$(buildroot)/var/svc/manifest/network/amandaclient.xml
 	#
 	# write release file with version
 	echo "Amanda Community Edition - version $(AMVER)" \
@@ -395,7 +397,8 @@ binary-install-devel: binary-install-client
 	
 	# snip off $(buildroot) from start ... to dup the path
 	mkdir -p $(devel)$(AMLIBDIR)
-	ls -1 $(buildroot)$(SHLIBDIR)/*.{a,la,so} $(buildroot)$(SHLIBDIR)/*.so.* 2>/dev/null | xargs -r cp -a -t $(devel)$(SHLIBDIR)
+	ls -1 $(buildroot)$(SHLIBDIR)/*.{a,la,so} $(buildroot)$(SHLIBDIR)/*.so.* 2>/dev/null | \
+                xargs -r cp -a -t $(devel)$(SHLIBDIR)
 	mkdir -p $(devel)$(AMANDAHOMEDIR)/amanda-autoconf
 	mkdir -p $(devel)/usr/include/amanda
 	
@@ -495,8 +498,6 @@ final-install:
 	# (now: dpkg-buildpackage instead) fakeroot can [could] remain entirely within this MAKE only, 
 	#    if perms were remembered from these chmod/chown calls
 	env -- $(MAKE) -f $(THIS_MAKEFILE) \
-	   \
-	   \
 	   GCC_TARGET=$(GCC_TARGET) \
 		perm-install-client \
 		perm-install-devel
@@ -504,8 +505,6 @@ final-install:
 	dh_makeshlibs -v
 	dh_shlibdeps $(dhpkg) -v \
 		-l"$(SHLIBDIR):$(AMLIBDIR)"
-	#
-	# hopefully successful analysis of deps
 	#
 	dh_perl $(dhpkg) -v $(AMPERLDIR)
 	dh_installdeb
@@ -531,4 +530,5 @@ binary: final-install
 .PHONY: build clean binary-install binary-install-client binary-install-devel binary-install-platform
 .PHONY: final-install perm-install-client perm-install-devel
 
-# vim: filetype=make
+# vim:ft=make
+
