@@ -136,6 +136,9 @@ Amandadir=$(amperldir)/Amanda
 Amanda_DATA =
 PM_FILES += $(Amanda_DATA)
 
+#
+# isolated access to library
+#
 # PACKAGE: Amanda::Archive
 libArchivedir = $(amperldir)/auto/Amanda/Archive
 libArchive_LTLIBRARIES = libArchive.la
@@ -152,6 +155,9 @@ MAINTAINERCLEANFILES += Amanda/Archive.c Amanda/Archive.pm
 Amanda_DATA += Amanda/Process.pm
 EXTRA_DIST += Amanda/Process.pm
 
+#
+# isolated access to library
+#
 # PACKAGE: Amanda::Device
 libDevicedir = $(amperldir)/auto/Amanda/Device
 libDevice_LTLIBRARIES = libDevice.la
@@ -174,10 +180,14 @@ libLogfile_la_LDFLAGS = $(PERL_EXT_LDFLAGS)
 libLogfile_la_LIBADD = amglue/libamglue.la \
 	$(top_builddir)/server-src/libamserver.la \
 	$(top_builddir)/common-src/libamanda.la
-Amanda_DATA += Amanda/Logfile.pm
+Amanda_DATA += \
+      Amanda/Logfile.pm
 MAINTAINERCLEANFILES += Amanda/Logfile.c Amanda/Logfile.pm
 EXTRA_DIST += Amanda/Logfile.swg Amanda/Logfile.pm Amanda/Logfile.pod
 
+#
+# isolated access to calls
+#
 # PACKAGE: Amanda::Cmdline
 libCmdlinedir = $(amperldir)/auto/Amanda/Cmdline
 libCmdline_LTLIBRARIES = libCmdline.la
@@ -186,11 +196,14 @@ libCmdline_la_LDFLAGS = $(PERL_EXT_LDFLAGS)
 libCmdline_la_LIBADD = amglue/libamglue.la \
 	$(top_builddir)/server-src/libamserver.la \
 	$(top_builddir)/common-src/libamanda.la
-Amanda_DATA += Amanda/Cmdline.pm
+Amanda_DATA += \
+      Amanda/Cmdline.pm
 MAINTAINERCLEANFILES += Amanda/Cmdline.c Amanda/Cmdline.pm
 EXTRA_DIST += Amanda/Cmdline.swg Amanda/Cmdline.pm Amanda/Cmdline.pod
 
-if WANT_SERVER
+#
+# needed by Amanda::Restore <--- Amanda::Service::Restore
+#
 # PACKAGE: Amanda::Tapelist
 libTapelistdir = $(amperldir)/auto/Amanda/Tapelist
 libTapelist_LTLIBRARIES = libTapelist.la
@@ -199,9 +212,9 @@ libTapelist_la_LDFLAGS = $(PERL_EXT_LDFLAGS)
 libTapelist_la_LIBADD = amglue/libamglue.la \
 	$(top_builddir)/server-src/libamserver.la \
 	$(top_builddir)/common-src/libamanda.la
-Amanda_DATA += Amanda/Tapelist.pm
+Amanda_DATA +=  \
+      Amanda/Tapelist.pm
 MAINTAINERCLEANFILES += Amanda/Tapelist.c Amanda/Tapelist.pm
-endif
 EXTRA_DIST += Amanda/Tapelist.swg Amanda/Tapelist.pm Amanda/Tapelist.pod
 
 # PACKAGE: Amanda::Disklist
@@ -237,7 +250,8 @@ libFeature_la_SOURCES = Amanda/Feature.c $(AMGLUE_SWG)
 libFeature_la_LDFLAGS = $(PERL_EXT_LDFLAGS)
 libFeature_la_LIBADD = amglue/libamglue.la \
 	$(top_builddir)/common-src/libamanda.la
-Amanda_DATA += Amanda/Feature.pm
+Amanda_DATA += \
+      Amanda/Feature.pm
 MAINTAINERCLEANFILES += Amanda/Feature.c Amanda/Feature.pm
 EXTRA_DIST += Amanda/Feature.swg Amanda/Feature.pm Amanda/Feature.pod
 
@@ -247,17 +261,20 @@ Amanda_DATA += Amanda/ScanInventory.pm
 endif
 EXTRA_DIST += Amanda/ScanInventory.pm
 
-if WANT_SERVER
+#
+# needed by Amanda::Recovery::Scan <-- Amanda::Restore
+#
 # PACKAGE: Amanda::Interactivity
 Amanda_DATA += Amanda/Interactivity.pm
-endif
 EXTRA_DIST += Amanda/Interactivity.pm
 
 # PACKAGE: Amanda::ClientService
 Amanda_DATA += Amanda/ClientService.pm
 EXTRA_DIST += Amanda/ClientService.pm
 
-if WANT_SERVER
+#
+# needed by Amanda::Recovery::Scan <-- Amanda::Restore
+#
 # PACKAGE: Amanda::Interactivity::*
 AmandaInteractivitydir = $(amperldir)/Amanda/Interactivity
 AmandaInteractivity_DATA = \
@@ -266,7 +283,6 @@ AmandaInteractivity_DATA = \
 	Amanda/Interactivity/tty.pm \
 	Amanda/Interactivity/tty_email.pm
 PM_FILES += $(AmandaInteractivity_DATA)
-endif
 EXTRA_DIST +=  \
 	Amanda/Interactivity/email.pm \
 	Amanda/Interactivity/stdin.pm \
@@ -378,10 +394,11 @@ EXTRA_DIST += \
 Amanda_DATA += Amanda/Index.pm
 EXTRA_DIST += Amanda/Index.pm
 
-if WANT_SERVER
+#
+# needed by Amanda::Restore <-- Amanda::Service::Restore <-- libexec/restore
+#
 # PACKAGE: Amanda::Recovery
 Amanda_DATA += Amanda/Recovery.pm
-endif
 EXTRA_DIST += Amanda/Recovery.pm
 
 # PACKAGE: Amanda::Recovery::*
@@ -439,20 +456,22 @@ EXTRA_DIST += \
 	Amanda/Taper/Scan/oldest.pm \
 	Amanda/Taper/Scan/traditional.pm
 
-if WANT_SERVER
+#
+# needed by Amanda::Recovery::Planner <-- Amanda::Restore
+#
 # PACKAGE: Amanda::DB
 Amanda_DATA += Amanda/DB.pm
 # PACKAGE: Amanda::DB::*
 Amanda_DBdir = $(Amandadir)/DB
 Amanda_DB_DATA =
 PM_FILES += Amanda/DB.pm $(Amanda_DB_DATA)
-endif
 EXTRA_DIST += Amanda/DB.pm
 
-if WANT_SERVER
+#
+# needed by Amanda::Recovery::Planner <-- Amanda::Restore
+#
 # PACKAGE: Amanda::DB::Catalog
 Amanda_DB_DATA += Amanda/DB/Catalog.pm
-endif
 EXTRA_DIST += Amanda/DB/Catalog.pm
 
 # PACKAGE: Amanda::Xfer
@@ -507,8 +526,10 @@ EXTRA_DIST += Amanda/Service.pm
 # PACKAGE: Amanda::Service::*
 AmandaServicedir = $(amperldir)/Amanda/Service
 AmandaService_DATA =
-AmandaService_server = Amanda/Service/Amidxtaped.pm
-AmandaService_client = Amanda/Service/Restore.pm
+AmandaService_server = \
+      Amanda/Service/Amidxtaped.pm
+AmandaService_client = \
+      Amanda/Service/Restore.pm
 if WANT_SERVER
 AmandaService_DATA += $(AmandaService_server)
 endif
@@ -551,7 +572,8 @@ libDebug_la_SOURCES = Amanda/Debug.c $(AMGLUE_SWG)
 libDebug_la_LDFLAGS = $(PERL_EXT_LDFLAGS)
 libDebug_la_LIBADD = amglue/libamglue.la \
 	$(top_builddir)/common-src/libamanda.la
-Amanda_DATA += Amanda/Debug.pm
+Amanda_DATA += \
+      Amanda/Debug.pm
 EXTRA_DIST += Amanda/Debug.swg Amanda/Debug.pm Amanda/Debug.pod
 MAINTAINERCLEANFILES += Amanda/Debug.c Amanda/Debug.pm
 
@@ -562,7 +584,8 @@ libConfig_la_SOURCES = Amanda/Config.c $(AMGLUE_SWG)
 libConfig_la_LDFLAGS = $(PERL_EXT_LDFLAGS)
 libConfig_la_LIBADD = amglue/libamglue.la \
 	$(top_builddir)/common-src/libamanda.la
-Amanda_DATA += Amanda/Config.pm
+Amanda_DATA += \
+      Amanda/Config.pm
 EXTRA_DIST += Amanda/Config.swg Amanda/Config.pm Amanda/Config.pod
 MAINTAINERCLEANFILES += Amanda/Config.c Amanda/Config.pm
 
@@ -611,7 +634,8 @@ libMainLoop_la_SOURCES = Amanda/MainLoop.c $(AMGLUE_SWG)
 libMainLoop_la_LDFLAGS = $(PERL_EXT_LDFLAGS)
 libMainLoop_la_LIBADD = amglue/libamglue.la \
 	$(top_builddir)/common-src/libamanda.la
-Amanda_DATA += Amanda/MainLoop.pm
+Amanda_DATA += \
+      Amanda/MainLoop.pm
 EXTRA_DIST += Amanda/MainLoop.swg Amanda/MainLoop.pm Amanda/MainLoop.pod
 MAINTAINERCLEANFILES += Amanda/MainLoop.c Amanda/MainLoop.pm
 
@@ -638,7 +662,8 @@ EXTRA_DIST += Amanda/Paths.pm.in
 DISTCLEANFILES += Amanda/Paths.pm
 
 # PACKAGE: Amanda::Constants
-Amanda_DATA += Amanda/Constants.pm
+Amanda_DATA += \
+      Amanda/Constants.pm
 EXTRA_DIST += Amanda/Constants.pm.in.src
 DISTCLEANFILES += Amanda/Constants.pm Amanda/Constants.pm.in
 
@@ -650,10 +675,11 @@ EXTRA_DIST += Amanda/Script_App.pm
 Amanda_DATA += Amanda/Extract.pm
 EXTRA_DIST += Amanda/Extract.pm
 
-if WANT_SERVER
+#
+# needed by Amanda::Recovery::Planner <-- Amanda::Restore
+#
 # PACKAGE: Amanda::Holding
 Amanda_DATA += Amanda/Holding.pm
-endif
 EXTRA_DIST += Amanda/Holding.pm
 
 if WANT_SERVER
@@ -705,19 +731,22 @@ libApplication_la_SOURCES = Amanda/Application.c $(AMGLUE_SWG)
 libApplication_la_LDFLAGS = $(PERL_EXT_LDFLAGS)
 libApplication_la_LIBADD = amglue/libamglue.la \
 	$(top_builddir)/client-src/libamclient.la
-Amanda_DATA += Amanda/Application.pm
+Amanda_DATA += \
+   Amanda/Application.pm
 MAINTAINERCLEANFILES += Amanda/Application.c Amanda/Application.pm
 endif
 EXTRA_DIST += Amanda/Application.swg Amanda/Application.pm Amanda/Application.pod
 
 # PACKAGE: Amanda::Script
-Amanda_DATA += Amanda/Script.pm
+Amanda_DATA += \
+    Amanda/Script.pm
 EXTRA_DIST += Amanda/Script.pm
 
 if WANT_CLIENT
 # PACKAGE: Amanda::Application::*
 AmandaApplicationdir = $(amperldir)/Amanda/Application
-AmandaApplication_DATA = Amanda/Application/Zfs.pm
+AmandaApplication_DATA = \
+   Amanda/Application/Zfs.pm
 PM_FILES += $(AmandaApplication_DATA)
 endif
 EXTRA_DIST += Amanda/Application/Zfs.pm
