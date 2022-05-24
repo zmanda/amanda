@@ -258,7 +258,6 @@ build-stamp:
 	set -x; . ./build-env.sh; \
 	./configure \
 		$(CONFIG_FLAGS_COMMON) \
-		--without-server
 
 	touch missing
 	
