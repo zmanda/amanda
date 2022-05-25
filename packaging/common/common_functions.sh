@@ -653,10 +653,10 @@ restore_saved_configs() {
 
         [ "$tgt" = "$fnd" ] &&
            echo >&2 "WARNING: old config file left alone: $fnd "
-        [ "$tgt" != "$fnd" ] && [[ "$fnd" != *.__existing__ ]] &&
-           echo >&2 "NOTE: earlier config file re-used: $tgt "
-        [ "$tgt" != "$fnd" ] && [[ "$fnd" == *.__existing__ ]] &&
-           echo >&2 "NOTE: installed config file retained: $tgt "
+#        [ "$tgt" != "$fnd" ] && [[ "$fnd" != *.__existing__ ]] &&
+#           echo >&2 "NOTE: earlier config file re-used: $tgt "
+#        [ "$tgt" != "$fnd" ] && [[ "$fnd" == *.__existing__ ]] &&
+#           echo >&2 "NOTE: installed config file retained: $tgt "
 
         [ -d "$tgt" ] && rmdir "$tgt" 2>/dev/null 
         [ "$tgt" != "$fnd" ] && mv -fv $fnd $tgt
