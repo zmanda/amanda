@@ -465,6 +465,7 @@ gen_pkg_environ() {
         die "PKG_NAME_VER is not set correctly"
 
     tmp=$(mktemp -d)
+    rm -f $tmp/${PKG_NAME_VER}
     ln -sf ${PKG_DIR} $tmp/${PKG_NAME_VER}
 
     [ -d $pkg_bldroot ] ||
@@ -560,7 +561,7 @@ do_top_package() {
 	    sed -i -e '/^ *%setup/s/$/ -T -D/' $pkgconf_dir/${spec_file}
 
             # repo_targz is the version-only one...
-	    ( set -x; rpmbuild -ba $rpmbuild_opts --define "_topdir $(realpath .)" $pkgconf_dir/$spec_file "$@" || true; )
+	    ( set -x; rpmbuild -ba $rpmbuild_opts --define "_topdir $(realpath .)" --define "buildsubdir ../../" $pkgconf_dir/$spec_file "$@" || true; )
             echo "RPM binary package(s) from $spec_file ------------------------------------"
             ( find RPMS/*/*.rpm | grep -v '[-]debug' | xargs mv -fv -t ${PKG_DIR}; ) ||
 		die "ERROR: rpmbuild compile command failed"
