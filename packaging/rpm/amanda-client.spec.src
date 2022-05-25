@@ -544,8 +544,6 @@ rm -rf %{buildroot}
 ################################################ perform source make-install
 . ./rpm-env.sh   # last time...
 make -o config.status -o config/config.h -j1 DESTDIR=%{buildroot} install
-
-make -j1 DESTDIR=%{buildroot} install
 ################################################ done with source make-install
 
 # to hold a space in case we need the path /usr/lib64 added!
@@ -1139,3 +1137,5 @@ true
 %changelog
 * %{build_date} Christopher Hassell <chris.hassell at betsol dot com> VERSION=%%VERSION%% RELEASE=%%PKG_REV%%
 - Package created.
+
+# vim: filetype=spec
