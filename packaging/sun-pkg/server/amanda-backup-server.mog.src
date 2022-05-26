@@ -1,13 +1,13 @@
-set name=pkg.fmri               value=betsol/amanda/backup-client@4.0,4.0-2002
+set name=pkg.fmri               value=betsol/amanda/backup-server@4.0,4.0-2002
 set name=pkg.human-version      value="%%VERSION%%"
-set name=pkg.summary            value="Amanda Backup Client"
+set name=pkg.summary            value="Amanda Backup Server"
 set name=variant.arch           value="i386"
 set name=info.classification 	value=org.opensolaris.category.2008:System/Services
 set name=pkg.description 	\
 	value="Files for use of remote backup and restore with Amanda Backup Server"
 user username=%%AMANDAUSER%% \
    uid=%%AMANDAUIDNUM%% \
-   gcos-field="Amanda Backup Client User" \
+   gcos-field="Amanda Backup Server User" \
    group=%%AMANDAGROUP%% \
    home-dir=%%AMANDAHOMEDIR%% \
    ftpuser=false \
