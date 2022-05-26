@@ -17,33 +17,19 @@ use POSIX;
 #    die "Error: 'substitute.pl' must be run from the root of a source tree"
 #}
 
-sub get_rpm_username {
-    return $ENV{'AMANDAUSER'} || "amandabackup";
-}
+sub get_rpm_username { return $ENV{'AMANDAUSER'} || "amandabackup"; }
+sub get_deb_username { return $ENV{'AMANDAUSER'} || "backup"; }
+sub get_sun_username { return $ENV{'AMANDAUSER'} || "amandabackup"; }
 
-sub get_deb_username {
-    return $ENV{'AMANDAUSER'} || "backup";
-}
+sub get_useridnum { return "63998"; }
 
-sub get_useridnum {
-    return "63998";
-}
+sub get_rpm_groupname { return $ENV{'AMANDAGROUP'} || "disk"; }
+sub get_deb_groupname { return $ENV{'AMANDAGROUP'} || "backup"; }
 
-sub get_rpm_groupname {
-    return $ENV{'AMANDAGROUP'} || "disk";
-}
+sub get_cligroupname { return $ENV{'AMANDACLIGROUP'} || "disk"; }
 
-sub get_deb_groupname {
-    return $ENV{'AMANDAGROUP'} || "backup";
-}
-
-sub get_cligroupname {
-    return $ENV{'AMANDACLIGROUP'} || "disk";
-}
-
-sub get_tapegroupname {
-    return $ENV{'AMANDATAPEGROUP'} || "tape";
-}
+sub get_tapegroupname { return $ENV{'AMANDATAPEGROUP'} || "tape"; }
+sub get_sun_tapegroupname { return $ENV{'AMANDACLIGROUP'} || "daemon"; }
 
 sub get_userhomedir {
     return $ENV{"AMANDAHOMEDIR"} || "/var/lib/amanda";
@@ -414,6 +400,7 @@ my %replacement_strings_pkg = (
         "AMANDACLIGROUP" =>     sub { "staff"; },
         "AMANDATAPEGROUP" => 	 sub { "sys"; },
 	"SYSCONFDIR" =>		 sub { get_topdir() . "/etc"; }
+        "AMANDATAPEGROUP" =>     sub { get_sun_tapegroupname(); },  # always "daemon"
 );
 
 my $ref;
