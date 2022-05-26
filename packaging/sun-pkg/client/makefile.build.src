@@ -566,7 +566,7 @@ binary-install-tests: binary-install-client
 	# dh_prep $(dhpkg)-tests
 	# dh_installdirs -v $(dhpkg)-tests
 
-	make -C installcheck --eval=$$'cleanfiles-query:\n\t@ls -1 $(CLEANFILES) 2>/dev/null || true' \
+	make -s -C installcheck --eval=$$'cleanfiles-query:\n\t@ls -1 $(CLEANFILES) 2>/dev/null || true' \
                      cleanfiles-query | \
                cpio -dvp $(tests)$(AMTESTSDIR) || true
 	
@@ -580,7 +580,7 @@ binary-install-tests: binary-install-client
 	# tests/Amanda_Report.pl is executable but has no shebang, removing executable bit
 	
 	for i in common_tests client_tests restore_tests mock_tests; do \
-            make -C installcheck --eval=$$'testfiles-query:\n\t@ls -1d $$('"$$i"') 2>/dev/null || true' \
+            make -s -C installcheck --eval=$$'testfiles-query:\n\t@ls -1d $$('"$$i"') 2>/dev/null || true' \
                testfiles-query > "$(tests)$(AMTESTSDIR)/.$${i//_/-}"; \
 	done
 	
