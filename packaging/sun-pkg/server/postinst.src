@@ -16,7 +16,7 @@ AMANDATES=%%AMANDAHOMEDIR%%/amandates
 # ---------- End Library of functions ------------
 
 ################################## halt old services ###################################
-backup_smf amandaclient   # for Solaris
+backup_smf amandaserver   # for Solaris
 ################################## halt old services ###################################
 
 # all config files in %%files section...
@@ -33,9 +33,9 @@ cfgs=(
     %%SYSCONFDIR%%/amanda-security.conf
 )
 
-restore_saved_configs ZMANae-client "${cfgs[@]}"
+restore_saved_configs ZMANae-server "${cfgs[@]}"
 
-# use this path to check
+# add this path to check for utilities
 fix_security_conf /sbin:/usr/sbin:/usr/sfw/bin
 
 # needs AMANDAHOMEDIR and amanda_user vars
@@ -51,12 +51,11 @@ command -v semanage >/dev/null &&
 
 add_service_ports
 
-##########################################
-install_smf amandaclient;  # for Solaris
+install_smf amandaserver
 
-logger "Amanda Community Client installation complete."
+logger "Amanda Community Server installation complete."
 
-echo "Amanda Community Client installation log can be found in '${INSTALL_LOG}'.";
+echo "Amanda Community Server installation log can be found in '${INSTALL_LOG}'.";
 
 true
 

@@ -12,7 +12,7 @@ NAME="Amanda Backup Client from Zmanda"
 DESC="Amanda is the leading Open-Source Backup and Archiving software.
 
 This package contains the Amanda client.
-The amanda-backup_client package needs to be installed on every
+The ZMANae-client package needs to be installed on every
 system that is being backed up.
 
 Documentation: http://network.zmanda.com/
