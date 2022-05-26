@@ -477,7 +477,7 @@ binary-install-tests: binary-install-server
 	dh_prep $(dhpkg)-tests
 	dh_installdirs -v $(dhpkg)-tests
 
-	make -C installcheck --eval=$$'cleanfiles-query:\n\t@ls -1 $(CLEANFILES) 2>/dev/null || true' \
+	make -s -C installcheck --eval=$$'cleanfiles-query:\n\t@ls -1 $(CLEANFILES) 2>/dev/null || true' \
                      cleanfiles-query | \
                cpio -dvp $(tests)$(AMTESTSDIR) || true
 	
