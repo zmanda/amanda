@@ -678,7 +678,7 @@ echo 'cd $(dirname $0);' >> %{ROOT_AMDATADIR}/tests/run.sh
     unset CDPATH
     cd %{BUILD_TOPDIR}/installcheck
 
-    make --eval=$'cleanfiles-query:\n\t@ls -1 $(CLEANFILES) 2>/dev/null || true' \
+    make -s --eval=$'cleanfiles-query:\n\t@ls -1 $(CLEANFILES) 2>/dev/null || true' \
              cleanfiles-query |
        cpio -dvp %{ROOT_AMDATADIR}/tests || true
 
@@ -692,7 +692,7 @@ echo 'cd $(dirname $0);' >> %{ROOT_AMDATADIR}/tests/run.sh
 # tests/Amanda_Report.pl is executable but has no shebang, removing executable bit
 
     for i in common_tests client_tests server_tests full_tests restore_tests ndmp_tests mock_tests all_tests; do
-        make --eval=$'testfiles-query:\n\t@ls -1d $('"$i"') 2>/dev/null || true' \
+        make -s --eval=$'testfiles-query:\n\t@ls -1d $('"$i"') 2>/dev/null || true' \
            testfiles-query > "%{ROOT_AMDATADIR}/tests/.${i//_/-}"
     done
 
