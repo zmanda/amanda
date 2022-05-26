@@ -360,7 +360,7 @@ perm-install-client: binary-install
 	# 	$(buildroot)/usr/share/lintian/overrides/amanda-backup-client
 	chown -R root:root $(buildroot)$(AMLIBEXECDIR)
 	
-	chown -R $(AMANDAUSER):$(AMANDAGROUP) \
+	chown -R %%AMANDAUIDNUM%%:%%AMANDAUIDNUM%% \
 	    $(buildroot)$(AMANDAHOMEDIR) \
 	    $(buildroot)$(SYSCONFDIR)/amanda \
 	    $(buildroot)$(LOGDIR) \
@@ -614,7 +614,8 @@ perm-install-devel: binary-install
 perm-install-tests: binary-install
 	# dh_testroot
 	chown -R root:root $(tests)$(AMDATADIR)
-	chown -R $(AMANDAUSER):$(AMANDAGROUP) $(tests)$(AMTESTSDIR)
+	chown -R %%AMANDAUIDNUM%%:%%AMANDAUIDNUM%% \
+		$(tests)$(AMTESTSDIR)
 	# ---------------------- ASSESS PERMISSIONS NOW IF NEEDED ----------
 
 #
