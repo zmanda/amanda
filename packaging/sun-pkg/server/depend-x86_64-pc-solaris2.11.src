@@ -1,0 +1,13 @@
+depend fmri=runtime/perl-522 type=require
+depend fmri=developer/base-developer-utilities type=require
+depend fmri=library/glib2@2.52.0 type=require
+depend fmri=library/libffi@3.2.1 type=require
+depend fmri=library/pcre type=require
+depend fmri=library/readline@6 type=require
+depend fmri=library/security/openssl@1.0.2.15 type=require
+depend fmri=library/zlib@1 type=require
+depend fmri=system/library/math type=require
+depend fmri=system/library/security/crypto type=require
+depend fmri=system/library type=require
+depend fmri=system/linker type=require
+user username=%%AMANDAUSER%% group=%%AMANDAGROUP%% uid=%%AMANDAUIDNUM%% home-dir=%%AMANDAHOMEDIR%%
