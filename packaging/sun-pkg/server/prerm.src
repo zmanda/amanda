@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+bashpath="`command -v bash`"
+[ -x "$bashpath" -a -z "$BASH_VERSION" ] && exec "$bashpath" $0 "$@"
+##########################################
+#
+# pre un-installation
+# pre un-installation
+# pre un-installation
+#
+##########################################
+# ---------- Library of functions ------------
+%%PRE_RM_FUNCTIONS%%
+# ---------- End Library of functions ------------
+
+set +e
+# NOTE: do not remove amandauser here
+
+# got to stop this round before the upgrade/fixes
+bash -c 'read -t10 delay < <(/usr/sbin/amcleanup -vk  --note "critical shutdown before uninstall" 2>&1)'
+bash -c 'read -t10 delay < <(/usr/sbin/amcleanup -vk  --note "second critical shutdown attempt" 2>&1)'
+
+set +e
+################################## halt old services ###################################
+backup_smf amandaserver
+
+cfgs=(
+    %%AMANDAHOMEDIR%%/.amandahosts
+    %%AMANDAHOMEDIR%%/.am_passphrase
+    %%AMANDAHOMEDIR%%/.gnupg/*
+    %%AMANDAHOMEDIR%%/.profile
+    %%AMANDAHOMEDIR%%/.ssh/*
+    %%AMANDAHOMEDIR%%/amandates
+    %%SYSCONFDIR%%/amanda/amanda-client.conf
+    %%SYSCONFDIR%%/amanda/amanda-security.conf
+    %%SYSCONFDIR%%/amanda/amanda.conf
+    %%SYSCONFDIR%%/amanda-security.conf
+)
+
+#
+# prevent their being deleted (automatic in rpm and dpkg)
+for i in "${cfgs[@]}"; do 
+    [[ "$i" == *.cfgsave ]] && continue;
+    [ -e "$i" ] || continue
+    mv -f "$i" "${i}.cfgsave"
+done
+
+true
+
+# final message
+echo "Amanda removal log can be found in '$LOGFILE'."
+##########################################
