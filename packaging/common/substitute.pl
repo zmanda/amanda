@@ -399,7 +399,7 @@ my %replacement_strings_pkg = (
 	"AMANDAHOMEDIR" =>       sub { get_topdir() . "/amanda"; },
         "AMANDACLIGROUP" =>     sub { "staff"; },
         "AMANDATAPEGROUP" => 	 sub { "sys"; },
-	"SYSCONFDIR" =>		 sub { get_topdir() . "/etc"; }
+	"SYSCONFDIR" =>		 sub { get_topdir() . "/etc"; },
         "AMANDATAPEGROUP" =>     sub { get_sun_tapegroupname(); },  # always "daemon"
 );
 
