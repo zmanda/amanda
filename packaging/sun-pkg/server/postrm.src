@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+bashpath="`command -v bash`"
+[ -x "$bashpath" -a -z "$BASH_VERSION" ] && exec "$bashpath" $0 "$@"
+set +o posix
+##########################################
+#
+# post un-installation
+# post un-installation
+# post un-installation
+#
+##########################################
+
+# ------------ Library of functions --------------
+%%COMMON_FUNCTIONS%%
+%%POST_RM_FUNCTIONS%%
+# ---------- End Library of functions ------------
+
+
+echo "Amanda removal log can be found in '$LOGFILE'."
+true
+
+
+#############################################################################################

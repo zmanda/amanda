@@ -1,0 +1,5 @@
+amanda-backup-server (%%VERSION%%-%%PKG_REV%%%%DISTRO%%%%DEB_REL%%) unstable; urgency=low
+
+  * Initial release of version %%VERSION%%
+
+ -- Zmanda <support@zmanda.com>  %%DATE%%

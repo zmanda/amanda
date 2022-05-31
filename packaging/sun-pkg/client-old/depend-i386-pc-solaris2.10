@@ -1,0 +1,26 @@
+
+P CSWperl               perl - A high-level, general-purpose programming language.
+
+P CSWpm-mime-base64     MIME-Base64: Encoding and decoding of base64 strings
+P SUNWbash              GNU Bourne-again shell (bash)
+P SUNWcry               SUNWcry Crypt Utilities
+P SUNWcslr              SUNWcslr Core Solaris Libraries (Root)
+P SUNWcsu               Core Solaris (usr)
+P SUNWesu               Extended System Utilities
+P SUNWflexruntime       Flex Lexer (Runtime Libraries)
+P SUNWgccruntime        GCC Runtime - Shared libraries used by gcc and other gnu components
+P SUNWgnome-base-libs   GNOME base GUI libraries - platform dependent files, /usr filesystem
+P SUNWgtar              gtar - GNU tape archiver
+P SUNWgzip              The GNU Zip (gzip) compression utility
+P SUNWlibmsr            SUNWcslr Core Solaris Libraries (Root)
+P SUNWopenssl-libraries OpenSSL Libraries (Usr)
+P SUNWsshcu             SSH Common (usr)
+
+
+
+
+
+
+I AmandaBackupServer Amanda Backup Server from Zmanda
+I AmandaBackupClient Amanda Backup Client from Zmanda
+I ZMANae-server Amanda Backup Server from Zmanda

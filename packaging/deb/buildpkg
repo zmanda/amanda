@@ -1,56 +1,40 @@
 #!/bin/bash
 
-#
-# VERSION: the identifier for the amanda determined from git
-#	information.
-# PKG_NAME_VER: the full version name of amanda we're working on.  This will
-#	become part of the deb name.  {PKG_NAME_VER} gets substituted
-#
-
 buildtype=${1:-both}
 shift
 
-BUILDVER="4.0"
-GIT_DIR=.git/modules/tools-archives \
-   git ls-files stack-output/php | grep -q . &&
-   unset BUILDVER
-
 # set the var buildpkg_dir as well
 . ./packaging/common/build_functions.sh
+. ./packaging/common/set_zmanda_version
+detect_package_vars
 
 # . ./packaging/common/set_zmanda_version
 
 export PKG_DIR=$(realpath .)
-mach=`uname -m`
 
 do_deb_package() {
-    gen_pkg_build_config $@
+    gen_pkg_build_config "$@"
     gen_pkg_environ
     do_package "${PKG_NAME_VER}"
 }
 
 set -e
 
-case "$buildtype,$mach,$BUILDVER" in
-   both,x86_64,*)
-        do_deb_package "$buildpkg_dir/server${BUILDVER}"
-        do_deb_package "$buildpkg_dir/client${BUILDVER}"
+case "$buildtype" in
+   both)
+        do_deb_package "$buildpkg_dir/server"
+        do_deb_package "$buildpkg_dir/client"
         ;;
 
-   server,x86_64,*)
-        do_deb_package "$buildpkg_dir/server${BUILDVER}"
+   server)
+        do_deb_package "$buildpkg_dir/server"
         ;;
 
-   client,*,*) ;&
-   both,*,*)
-        do_deb_package "$buildpkg_dir/client${BUILDVER}"
+   client)
+        do_deb_package "$buildpkg_dir/client"
         ;;
 
-#   platform,x86_64,*)
-#       do_deb_package "$buildpkg_dir/zmanda-platform${BUILDVER}.spec"
-#       ;;
-
-   *) echo "ERROR: cannot build combination of $buildtype-$mach-${BUILDVER:-3.6}" >&2; exit -1 ;;
+   *) echo "ERROR: cannot build combination of $buildtype" >&2; exit -1 ;;
 esac
 
 true

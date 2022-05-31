@@ -1,0 +1,44 @@
+#!/bin/bash
+##########################################
+#
+# pre installation
+# pre installation
+# pre installation
+#
+##########################################
+logger "Preinstall for amanda-"Amanda Community Edition - version %%VERSION%%" on $(date -R)"
+
+# ------------ Library of functions --------------
+%%PRE_INST_FUNCTIONS%%
+%%COMMON_FUNCTIONS%%
+# ---------- End Library of functions ------------
+
+logger "Preparing to install: "Amanda Community Edition - version %%VERSION%%" on $(date -R)"
+
+create_user
+check_user_group "%%AMANDAGROUP%%" ||
+   add_group "%%AMANDAGROUP%%"
+check_user_supplemental_group "%%AMANDACLIGROUP%%" ||
+   add_group "%%AMANDACLIGROUP%%"
+# check_user_supplemental_group "%%AMANDATAPEGROUP%%" ||
+#    add_group "%%AMANDATAPEGROUP%%"
+
+
+systemctl -q disable --no-reload \
+       amanda-server.socket \
+       amanda-lserver-unix.socket \
+       amanda-rest-server.service 2>/dev/null || true
+
+# for upgrade or for install... shut it all down for preinstall
+xargs -r     systemctl -q stop <<<"${_my_systemd_units}" 2>/dev/null || true
+# try again one line each
+xargs -r -n1 systemctl -q stop <<<"${_my_systemd_units}" 2>/dev/null || true
+
+( set -x; systemctl reset-failed )
+( set -x; systemctl daemon-reload )
+
+logger "Preinstall done."
+
+echo "Amanda preinstall logs can be found in '$INSTALL_LOG'."
+
+##########################################

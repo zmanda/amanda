@@ -1,0 +1,44 @@
+set name=pkg.fmri               value=betsol/amanda/backup-server@4.0,4.0-2002
+set name=pkg.human-version      value="%%VERSION%%"
+set name=pkg.summary            value="Amanda Backup Server"
+set name=variant.arch           value="i386"
+set name=info.classification 	value=org.opensolaris.category.2008:System/Services
+set name=pkg.description 	\
+	value="Files for use of remote backup and restore with Amanda Backup Server"
+user username=%%AMANDAUSER%% \
+   uid=%%AMANDAUIDNUM%% \
+   gcos-field="Amanda Backup Server User" \
+   group=%%AMANDAGROUP%% \
+   home-dir=%%AMANDAHOMEDIR%% \
+   ftpuser=false \
+   login-shell=/bin/false \
+   group-list="disk"
+group groupname=%%AMANDAGROUP%% \
+   gid=%%AMANDAUIDNUM%%
+license usr/share/amanda/COPYRIGHT \
+   license='license.UnivOfMaryland'
+
+<transform file dir -> default owner root>
+<transform file dir -> default group bin>
+<transform file -> default mode 0444>
+<transform dir -> default mode 0755>
+
+<transform dir path=^usr/lib$ -> edit group root bin>
+<transform dir path=^usr/lib/amd64$ -> edit group root bin>
+
+<transform file path=(var|lib)/svc/manifest/.*\.xml -> \
+    add restart_fmri svc:/system/manifest-import:default>
+
+<transform dir file link hardlink path=usr/.+/man(/.+)? -> \
+    default facet.doc.man true>
+<transform file path=usr/.+/man(/.+)? -> \
+    add restart_fmri svc:/application/man-index:default>
+
+<transform file path=%%REL_INSTALL_TOPDIR%%/etc/amanda-security.conf -> \
+    add preserve install-only>
+<transform file path=%%REL_INSTALL_TOPDIR%%/etc/amanda/.* -> \
+    add preserve install-only>
+<transform file path=%%REL_AMANDAHOMEDIR%%/\..* -> \
+    add preserve install-only>
+<transform file path=%%REL_AMANDAHOMEDIR%%/amandates -> \
+    add preserve install-only>

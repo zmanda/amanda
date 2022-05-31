@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+
+bashpath="`command -v bash`"
+[ -x "$bashpath" -a -z "$BASH_VERSION" ] && exec "$bashpath" $0 "$@"
+##########################################
+#
+# pre installation
+# pre installation
+# pre installation
+#
+##########################################
+echo "Preinstall for amanda-\"Amanda Community Edition - Server %%VERSION%%\" on $(date -R)"
+
+# ------------ Library of functions --------------
+%%PRE_INST_FUNCTIONS%%
+%%COMMON_FUNCTIONS%%
+# ---------- End Library of functions ------------
+
+logger "Preparing to install: \"Amanda Community Edition - Server %%VERSION%%\" on $(date -R)"
+
+create_user
+add_profiles "Media Backup,ZFS File System Management,ZFS Storage Management"
+
+check_user_group "%%AMANDAGROUP%%" ||
+    add_group "%%AMANDAGROUP%%"
+check_user_supplemental_group "%%AMANDACLIGROUP%%" ||
+    add_group "%%AMANDACLIGROUP%%"
+check_user_supplemental_group %%AMANDATAPEGROUP%% ||
+    add_group %%AMANDATAPEGROUP%%
+
+logger "Preinstall done."
+
+echo "Amanda preinstall logs can be found in '$INSTALL_LOG'."
+
+##########################################

@@ -1,0 +1,19 @@
+P SUNWbash              GNU Bourne-again shell (bash)
+
+
+P SUNWcsu               Core Solaris (usr)
+P SUNWsshcu             SSH Common (usr)
+P SUNWscpu              Source Compatibility (usr)
+P SUNWgzip              The GNU Zip (gzip) compression utility
+P SUNWesu               Extended System Utilities
+P CSWgtar               gtar - GNU tape archiver
+P SUNWgnome-base-libs	GNOME base GUI libraries - platform dependent files, /usr filesystem
+P SUNWflexruntime       Flex Lexer (Runtime Libraries)
+P CSWperl   perl - A high-level, general-purpose programming language.
+
+
+
+
+I AmandaBackupClient Amanda Backup Client from Zmanda
+I AmandaBackupServer Amanda Backup Server from Zmanda
+I ZMANae-server Amanda Backup Server from Zmanda

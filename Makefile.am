@@ -7,11 +7,11 @@ include $(top_srcdir)/config/automake/installperms.am
 ACLOCAL_AMFLAGS = --force -I config -I . -I config/gettext-macros -I config/gnulib -I config/amanda -I config/macro-archive -I /usr/share/aclocal
 
 if WANT_CLIENT
-CLIENT_SUBDIRS = client-src application-src device-src server-src
+CLIENT_SUBDIRS = client-src application-src
 endif
-if WANT_SERVER
+# always needed
 SERVER_SUBDIRS = device-src server-src
-endif
+
 if WANT_RECOVER
 RECOVER_SUBDIRS = recover-src oldrecover-src
 endif
@@ -43,9 +43,8 @@ SUBDIRS = . \
 	perl \
 	po \
 	man \
-	example
-
-#	installcheck
+	example \
+	installcheck
 
 pkgdata_DATA = \
 	ReleaseNotes	\
@@ -158,6 +157,7 @@ endif
 	mkdir ${DESTDIR}/include/perl
 	mkdir ${DESTDIR}/include/perl/amglue
 	mkdir ${DESTDIR}/include/gnulib
+	mkdir ${DESTDIR}/include/gnulib/netinet
 	mkdir ${DESTDIR}/include/gnulib/arpa
 	mkdir ${DESTDIR}/include/gnulib/glthread
 	mkdir ${DESTDIR}/include/gnulib/sys

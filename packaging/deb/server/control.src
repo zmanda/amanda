@@ -1,35 +1,53 @@
-Source: amanda
+Source: amanda-backup-server
 Section: utils
 Priority: optional
 Maintainer: Zmanda Inc <support@zmanda.com>
-Build-Depends: debhelper (>=8), dump, fakeroot, flex, gettext, gnuplot-nox|gnuplot,
+Build-Depends: debhelper (>=8), dump, fakeroot, flex, gettext, gnuplot-nox|gnuplot, swig,
 	libtool, automake, perl (>=5.6.0), procps,
         libglib2.0-dev (<<%%BUILD_GLIB2_NEXT_VERSION%%),
 	libcurl-dev, libncurses5-dev,
 	libreadline5-dev|libreadline-dev, libssl-dev,
 	docbook-xsl, swig, xsltproc
-Standards-Version: 3.8.0
+Standards-Version: 3.9.1
 
 Package: amanda-backup-server
 Architecture: any
-Depends: ca-certificates, perl (>=5.6.0), gettext, xinetd, mailx|bsd-mailx,
+Pre-Depends: libc6
+Depends: ca-certificates, perl (>=5.6.0), gettext,
         libencode-locale-perl, libio-socket-ssl-perl, libjson-perl, libxml-simple-perl,
 	libglib2.0-0 (>=%%BUILD_GLIB2_VERSION%%),
-	${shlibs:Depends}, ${perl:Depends}
-Suggests: gnuplot-nox|gnuplot
-Conflicts: amanda-backup-client, amanda-client, amanda-common, amanda-server
-Replaces: amanda-server, amanda-common
+	${shlibs:Depends}, ${perl:Depends}, ${misc:Depends}
+Conflicts: amanda-enterprise-backup-client, amanda-backup-client, amanda-server, amanda-client, amanda-common,
+                amanda-enterprise-backup-server
+Replaces: amanda-client, amanda-common, amanda-server
 Description: Amanda Network Backup and Archiving software
  .
- Amanda is the leading Open-Source Backup and Archiving software.
+ Amanda Community Edition is the most trusted Open-Source Backup and Archiving
+ software solution.
  .
- This package contains the Amanda server.  The amanda-backup_server package 
- should be installed on the Amanda server, i.e. the machine attached to backup 
- media (such as a tape drive or disk drives) where backups will be written.  The 
- amanda-backup_server package includes Amanda client.
+ This package contains the Amanda Backup Server.
+ The amanda-backup-server package needs to be installed on every
+ system that writes out backup data to some archival storage.
  .
- Amanda Forums are located at: http://forums.zmanda.com/
- Amanda Documentation is available at: http://wiki.zmanda.com/
+ Documentation: http://network.zmanda.com/
+                Click on "Documentation" -> "Community Edition"
+ Support: http://network.zmanda.com/
+
+Package: amanda-backup-server-devel
+Section: libdevel
+Priority: optional
+Architecture: any
+Depends: libc6-dev | libc-dev, libglib2.0-dev (>=%%BUILD_GLIB2_VERSION%%)
+Description: Perl library: development files
+ Files for developing applications which use Amanda Server libraries.
+
+Package: amanda-backup-server-tests
+Section: libdevel
+Priority: optional
+Architecture: any
+Depends: amanda-backup-server, libdancer-perl
+Description: Perl library: development files
+ Files for integration test for Amanda Server libraries and utilities.
 
 Package: amanda-backup-server-dbg
 Architecture: any
@@ -37,6 +55,6 @@ Section: debug
 Priority: extra
 Depends: amanda-backup-server (= ${binary:Version}),
     ${misc:Depends}
-Description: debugging symbols for amanda-backup-client
+Description: debugging symbols for amanda-backup-server
  .
  debugging symbols

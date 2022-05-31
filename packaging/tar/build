@@ -10,10 +10,10 @@
 buildtype=${1:-both}
 shift
 
-BUILDVER="4.0"
 # set the var buildpkg_dir as well
 . ./packaging/common/build_functions.sh
 . ./packaging/common/set_zmanda_version
+detect_package_vars
 
 export PATH
 export PKG_DIR=$(realpath .)
@@ -27,14 +27,18 @@ do_tar_package() {
 
 set -e
 
-case "$buildtype,$mach,$BUILDVER" in
-   server,*,*)
-        do_tar_package "$buildpkg_dir/server${BUILDVER}"
+case "$buildtype" in
+   both)
+        do_tar_package "$buildpkg_dir/server"
+        do_tar_package "$buildpkg_dir/client"
         ;;
 
-   client,*,*) ;&
-   both,*,*)
-        do_tar_package "$buildpkg_dir/client${BUILDVER}"
+   server)
+        do_tar_package "$buildpkg_dir/server"
+        ;;
+
+   client)
+        do_tar_package "$buildpkg_dir/client"
         ;;
 
    *) echo "ERROR: cannot build combination of $buildtype-$mach-${BUILDVER:-3.6}" >&2; exit -1 ;;

@@ -2,7 +2,7 @@
 
 cd $(dirname $0)
 
-AMPERL=${AMPERL:-/opt/zmanda/amanda/bin/perl}
+AMPERL=${AMPERL:-perl}
 
 summarize_tests() {
     local hdr=$1
@@ -56,11 +56,6 @@ setuid_run_test() {
     HARNESS_ACTIVE=1 command $AMPERL "$@"
 }
 
-githash=$(rpm -q --changelog amanda_enterprise-backup-server | sed -e '/BUILDENV=/!d')
-githash="${githash##*BUILDENV=}"
-githash="${githash%%.*}"
-githash="${githash:-unkn}"
-
 host="$(hostname)"
 host="${host%%.*}"
 host="${host#os-}"
@@ -72,9 +67,10 @@ rm -rf /tmp/amanda || { echo could not delete old test state; exit -1; }
 export AMHOME=$(echo ~amandabackup)
 export SHELL=/bin/bash
 
-hdr="${host}:$githash-$i"
+[ -s .all-tests ] || cat >.all-tests .*-tests
 for i in $(<.all-tests); do 
-     setuid_run_test -I. "./$i" \
+    hdr="${host}-$i"
+    HARNESS_ACTIVE=1 setuid_run_test -I. "./$i" \
             >& >(summarize_tests "$hdr") ||
         printf "%s: EXIT STATUS %d" "$hdr" $?
 done;

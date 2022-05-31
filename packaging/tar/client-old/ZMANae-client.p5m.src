@@ -1,0 +1,6 @@
+set name=pkg.fmri               value=betsol/amanda/backup-client-devel@4.0,4.0-2002
+set name=variant.arch           value="i386"
+set name=info.classification 	value=org.opensolaris.category.2008:System/Services
+set name=pkg.summary 		value="This is an example package"
+set name=pkg.description 	value="\
+This is a full description of all the interesting attributes of this example package."

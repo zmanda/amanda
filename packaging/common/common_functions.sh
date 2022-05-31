@@ -315,7 +315,7 @@ create_root_cert() {
      ext509opts+=$'basicConstraints=critical,CA:true,pathlen:1\n'
      ext509opts+=$'subjectKeyIdentifier=hash\n'
 
-     config_opts+=$'.include /opt/zmanda/amanda/etc/pki/tls/openssl.cnf\n\n'
+     config_opts+=$'.include /etc/pki/tls/openssl.cnf\n\n'
      config_opts+=$'[ CA_default ]\n'
      config_opts+=$'dir             = .\n'
      config_opts+="database   =  ${public%.*}.idx"$'\n'
@@ -384,7 +384,7 @@ create_self_signed_key() {
 
 
 #   tee out.priv |
-#   /opt/zmanda/amanda/bin/openssl req -x509 -nodes -days 365 -key /dev/stdin -multivalue-rdn -subj \
+#   openssl req -x509 -nodes -days 365 -key /dev/stdin -multivalue-rdn -subj \
 #        "/CN=$fqdn/emailAddress=root@$fqdn/C=US/ST=Colorado/L=Default City/O=Betsol Inc/OU=Zmanda" \
 #        -keyout out.priv -out out.pub
 
@@ -592,7 +592,7 @@ restore_saved_configs() {
     elif [ $# -gt 1 ]; then
         :
     else
-        echo >&2 "ERROR: failed to query config files"
+        # echo >&2 "ERROR: failed to query config files"
         return 1
     fi
 
@@ -653,10 +653,10 @@ restore_saved_configs() {
 
         [ "$tgt" = "$fnd" ] &&
            echo >&2 "WARNING: old config file left alone: $fnd "
-        [ "$tgt" != "$fnd" ] && [[ "$fnd" != *.__existing__ ]] &&
-           echo >&2 "NOTE: earlier config file re-used: $tgt "
-        [ "$tgt" != "$fnd" ] && [[ "$fnd" == *.__existing__ ]] &&
-           echo >&2 "NOTE: installed config file retained: $tgt "
+#        [ "$tgt" != "$fnd" ] && [[ "$fnd" != *.__existing__ ]] &&
+#           echo >&2 "NOTE: earlier config file re-used: $tgt "
+#        [ "$tgt" != "$fnd" ] && [[ "$fnd" == *.__existing__ ]] &&
+#           echo >&2 "NOTE: installed config file retained: $tgt "
 
         [ -d "$tgt" ] && rmdir "$tgt" 2>/dev/null 
         [ "$tgt" != "$fnd" ] && mv -fv $fnd $tgt

@@ -17,36 +17,30 @@ use POSIX;
 #    die "Error: 'substitute.pl' must be run from the root of a source tree"
 #}
 
-sub get_username {
-    return $ENV{'AMANDAUSER'} || "amandabackup";
-}
+sub get_rpm_username { return $ENV{'AMANDAUSER'} || "amandabackup"; }
+sub get_deb_username { return $ENV{'AMANDAUSER'} || "backup"; }
+sub get_sun_username { return $ENV{'AMANDAUSER'} || "amandabackup"; }
 
-sub get_useridnum {
-    return "63998";
-}
+sub get_useridnum { return "63998"; }
 
-sub get_groupname {
-    return $ENV{'AMANDAGROUP'} || "amandabackup";
-}
+sub get_rpm_groupname { return $ENV{'AMANDAGROUP'} || "disk"; }
+sub get_deb_groupname { return $ENV{'AMANDAGROUP'} || "backup"; }
 
-sub get_cligroupname {
-    return $ENV{'AMANDACLIGROUP'} || "amandabackup";
-}
+sub get_cligroupname { return $ENV{'AMANDACLIGROUP'} || "disk"; }
 
-sub get_tapegroupname {
-    return $ENV{'AMANDATAPEGROUP'} || "tape";
-}
+sub get_tapegroupname { return $ENV{'AMANDATAPEGROUP'} || "tape"; }
+sub get_sun_tapegroupname { return $ENV{'AMANDACLIGROUP'} || "daemon"; }
 
 sub get_userhomedir {
     return $ENV{"AMANDAHOMEDIR"} || "/var/lib/amanda";
 }
 
 sub get_topdir {
-    return "/opt/zmanda/amanda";
+    return "/opt/amanda";
 }
 
 sub get_wwwdir {
-    return "/opt/zmanda/amanda/var/www";
+    return "/opt/amanda/var/www";
 }
 
 sub get_logdir {
@@ -357,11 +351,11 @@ my %replacement_strings_common = (
 	"INSTALL_WWWDIR" =>      sub { get_wwwdir();},
 	"AMANDAHOMEDIR" =>       sub { get_userhomedir(); },
 	"LOGDIR" =>              sub { get_logdir(); },
-        "AMANDAUSER" =>          sub { get_username(); },
+        "AMANDAUSER" =>          sub { get_rpm_username(); },
         "AMANDAUIDNUM" =>        sub { get_useridnum(); },
-        "AMANDAGROUP" =>         sub { get_groupname(); },
-        "AMANDACLIGROUP" =>      sub { get_cligroupname(); },
-        "AMANDATAPEGROUP" =>     sub { get_tapegroupname(); },
+        "AMANDAGROUP" =>         sub { get_rpm_groupname(); },
+        "AMANDACLIGROUP" =>      sub { get_cligroupname(); },   # always "disk"
+        "AMANDATAPEGROUP" =>     sub { get_tapegroupname(); },  # always "tape"
 
 	"VERSION" =>             sub { read_file("FULL_VERSION"); },
 	"PKG_REV" =>             sub { read_file("PKG_REV"); },
@@ -385,6 +379,8 @@ my %replacement_strings_deb = (
         "ARCH" =>       sub { get_debian_arch(); },
 	# Used in server rules
 	"PERL" =>       sub { $^X; },
+        "AMANDAUSER" =>   sub { get_deb_username(); },
+        "AMANDAGROUP" =>  sub { get_deb_groupname(); },
 );
 
 # override date
@@ -403,7 +399,8 @@ my %replacement_strings_pkg = (
 	"AMANDAHOMEDIR" =>       sub { get_topdir() . "/amanda"; },
         "AMANDACLIGROUP" =>     sub { "staff"; },
         "AMANDATAPEGROUP" => 	 sub { "sys"; },
-	"SYSCONFDIR" =>		 sub { get_topdir() . "/etc"; }
+	"SYSCONFDIR" =>		 sub { get_topdir() . "/etc"; },
+        "AMANDATAPEGROUP" =>     sub { get_sun_tapegroupname(); },  # always "daemon"
 );
 
 my $ref;

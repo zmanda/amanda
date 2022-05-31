@@ -10,10 +10,10 @@
 buildtype=${1:-both}
 shift
 
-BUILDVER="4.0"
 # set the var buildpkg_dir as well
 . ./packaging/common/build_functions.sh
 . ./packaging/common/set_zmanda_version
+detect_package_vars
 
 [ -d /opt/csw/gnu ] && [[ "$PATH" != */opt/csw/gnu* ]] && PATH=/opt/csw/gnu:${PATH}
 [ -d /usr/sfw/bin ] && [[ "$PATH" != */usr/sfw/bin* ]] && PATH=/usr/sfw/bin:${PATH}
@@ -21,7 +21,6 @@ BUILDVER="4.0"
 
 export PATH
 export PKG_DIR=$(realpath .)
-mach=`uname -m`
 
 do_sun_package() {
     gen_pkg_build_config "$@"
@@ -31,27 +30,21 @@ do_sun_package() {
 
 set -e
 
-case "$buildtype,$mach,$BUILDVER" in
-#   both,x86_64,*)
-#        do_sun_package "$buildpkg_dir/server${BUILDVER}"
-#        do_sun_package "$buildpkg_dir/client${BUILDVER}"
-#        ;;
-
-#   server,x86_64,*)
-   server,*,*)
-        do_sun_package "$buildpkg_dir/server${BUILDVER}"
+case "$buildtype" in
+   both)
+        do_sun_package "$buildpkg_dir/server"
+        do_sun_package "$buildpkg_dir/client"
         ;;
 
-   client,*,*) ;&
-   both,*,*)
-        do_sun_package "$buildpkg_dir/client${BUILDVER}"
+   server)
+        do_sun_package "$buildpkg_dir/server"
         ;;
 
-#   platform,x86_64,*)
-#       do_sun_package "$buildpkg_dir/zmanda-platform${BUILDVER}.spec"
-#       ;;
+   client)
+        do_sun_package "$buildpkg_dir/client"
+        ;;
 
-   *) echo "ERROR: cannot build combination of $buildtype-$mach-${BUILDVER:-3.6}" >&2; exit -1 ;;
+   *) echo "ERROR: cannot build combination of $buildtype" >&2; exit -1 ;;
 esac
 
 true

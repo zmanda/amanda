@@ -4,26 +4,22 @@
 # VERSION: the identifier for the amanda determined from git
 #	information.
 # PKG_NAME_VER: the full version name of amanda we're working on.  This will
-#	become part of the sun name.  {PKG_NAME_VER} gets substituted
+#	become part of the tar name.  {PKG_NAME_VER} gets substituted
 #
 
 buildtype=${1:-both}
 shift
 
-BUILDVER="4.0"
 # set the var buildpkg_dir as well
 . ./packaging/common/build_functions.sh
 . ./packaging/common/set_zmanda_version
-
-[ -d /opt/csw/gnu ] && [[ "$PATH" != */opt/csw/gnu* ]] && PATH=/opt/csw/gnu:${PATH}
-[ -d /usr/sfw/bin ] && [[ "$PATH" != */usr/sfw/bin* ]] && PATH=/usr/sfw/bin:${PATH}
-[ -d /usr/ccs/bin ] && [[ "$PATH" != */usr/ccs/bin* ]] && PATH=${PATH}:/usr/ccs/bin
+detect_package_vars
 
 export PATH
 export PKG_DIR=$(realpath .)
 mach=`uname -m`
 
-do_sun_package() {
+do_tar_package() {
     gen_pkg_build_config "$@"
     gen_pkg_environ
     do_package "${PKG_NAME_VER}"
@@ -31,25 +27,19 @@ do_sun_package() {
 
 set -e
 
-case "$buildtype,$mach,$BUILDVER" in
-#   both,x86_64,*)
-#        do_sun_package "$buildpkg_dir/server${BUILDVER}"
-#        do_sun_package "$buildpkg_dir/client${BUILDVER}"
-#        ;;
-
-#   server,x86_64,*)
-   server,*,*)
-        do_sun_package "$buildpkg_dir/server${BUILDVER}"
+case "$buildtype" in
+   both)
+        do_tar_package "$buildpkg_dir/server${BUILDVER}"
+        do_tar_package "$buildpkg_dir/client${BUILDVER}"
         ;;
 
-   client,*,*) ;&
-   both,*,*)
-        do_sun_package "$buildpkg_dir/client${BUILDVER}"
+   server)
+        do_tar_package "$buildpkg_dir/server${BUILDVER}"
         ;;
 
-#   platform,x86_64,*)
-#       do_sun_package "$buildpkg_dir/zmanda-platform${BUILDVER}.spec"
-#       ;;
+   client)
+        do_tar_package "$buildpkg_dir/client${BUILDVER}"
+        ;;
 
    *) echo "ERROR: cannot build combination of $buildtype-$mach-${BUILDVER:-3.6}" >&2; exit -1 ;;
 esac
