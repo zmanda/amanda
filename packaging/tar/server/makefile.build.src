@@ -101,6 +101,7 @@ AMANDAUSER=%%AMANDAUSER%%
 AMANDAGROUP=%%AMANDAGROUP%%
 AMANDACLIGROUP=%%AMANDACLIGROUP%%
 
+
 define CONFIG_FLAGS_COMMON
 CFLAGS="$${CFLAGS}" \
 LDFLAGS="$${LDFLAGS}" \
@@ -290,7 +291,7 @@ perm-install-server: binary-install
 	# 	$(buildroot)/usr/share/lintian/overrides/amanda-backup-server
 	chown -R root:root $(buildroot)$(AMLIBEXECDIR)
 	
-	chown -R $(AMANDAUSER):$(AMANDAGROUP) \
+	chown -R %%AMANDAUIDNUM%%:%%AMANDAUIDNUM%% \
 	    $(buildroot)$(AMANDAHOMEDIR) \
 	    $(buildroot)$(SYSCONFDIR)/amanda \
 	    $(buildroot)$(LOGDIR) \
@@ -538,8 +539,10 @@ perm-install-devel: binary-install
 perm-install-tests: binary-install
 	# dh_testroot
 	chown -R root:root $(tests)$(AMDATADIR)
-	chown -R $(AMANDAUSER):$(AMANDAGROUP) $(tests)$(AMTESTSDIR)
+	chown -R %%AMANDAUIDNUM%%:%%AMANDAUIDNUM%% \
+		$(tests)$(AMTESTSDIR)
 	# ---------------------- ASSESS PERMISSIONS NOW IF NEEDED ----------
+	cd $(tests); find . -printf "chmod %m %p; chown %u:%g %p\n" > $(devel).install-perms.sh
 
 #
 # bottleneck after completed all installation
@@ -571,6 +574,8 @@ final-install:
 	# fakeroot can remain entirely within this MAKE only,
 	#    if perms were remembered from these chmod/chown calls
 	fakeroot -- $(MAKE) -f $(THIS_MAKEFILE) \
+	   PATH=$(PATH) \
+	   SHELL=$(SHELL) \
 	   GCC_TARGET=$(GCC_TARGET) \
 		perm-install-server \
 		perm-install-devel \
@@ -585,9 +590,9 @@ final-install:
 	# dh_gencontrol
 	# dh_md5sums
 	# dh_builddeb
-	tar -czvf $$(basename $(buildroot))-$(AMVER)-${BUILD_GNU_TYPE%%-*}.tar.gz -C $(buildroot) .
-	tar -czvf $$(basename $(devel))-$(AMVER)-${BUILD_GNU_TYPE%%-*}.tar.gz -C $(devel) .
-	tar -czvf $$(basename $(tests))-$(AMVER)-${BUILD_GNU_TYPE%%-*}.tar.gz -C $(tests) .
+	tar -czvf $$(basename $(buildroot))-$(AMVER)-$${BUILD_GNU_TYPE%%-*}.tar.gz -C $(buildroot) .
+	tar -czvf $$(basename $(devel))-$(AMVER)-$${BUILD_GNU_TYPE%%-*}.tar.gz -C $(devel) .
+	tar -czvf $$(basename $(tests))-$(AMVER)-$${BUILD_GNU_TYPE%%-*}.tar.gz -C $(tests) .
 
 	{ ls 2>/dev/null *.tar.gz; } || true
 clean:

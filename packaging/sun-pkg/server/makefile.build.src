@@ -619,6 +619,10 @@ perm-install-tests: binary-install
 	chown -R %%AMANDAUIDNUM%%:%%AMANDAUIDNUM%% \
 		$(tests)$(AMTESTSDIR)
 	# ---------------------- ASSESS PERMISSIONS NOW IF NEEDED ----------
+	# FIXME: instead, translate fakeroot into pkgproto
+	sed -i -e '/^i /!d' $(tests).pkgproto.hdr       # remove old lines if present?
+	cd $(tests); [ -x /bin/pkgproto ] && \
+		{ /bin/pkgproto . | cat $(tests).pkgproto.hdr - > $(tests).pkgproto; }
 
 #
 # bottleneck after completed all installation
@@ -706,7 +710,6 @@ final-install:
 	# dh_gencontrol
 	# dh_md5sums
 	# dh_builddeb
-
 	cd PKGBUILD; [ -f depend ] || { [ -f depend-$(GNU_TRIPLET) ] && cp -f depend-$(GNU_TRIPLET) depend; }
 	#
 	$(MAKE) -f $(THIS_MAKEFILE) -C PKGBUILD BUILDROOT=$(buildroot) create_pkg
