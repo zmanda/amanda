@@ -584,9 +584,9 @@ final-install:
 	# dh_gencontrol
 	# dh_md5sums
 	# dh_builddeb
-	tar -czvf $$(basename $(buildroot))-$(AMVER)-${BUILD_GNU_TYPE%%-*}.tar.gz -C $(buildroot) .
-	tar -czvf $$(basename $(devel))-$(AMVER)-${BUILD_GNU_TYPE%%-*}.tar.gz -C $(devel) .
-	tar -czvf $$(basename $(tests))-$(AMVER)-${BUILD_GNU_TYPE%%-*}.tar.gz -C $(tests) .
+	tar -czvf $$(basename $(buildroot))-$(AMVER)-$${BUILD_GNU_TYPE%%-*}.tar.gz -C $(buildroot) .
+	tar -czvf $$(basename $(devel))-$(AMVER)-$${BUILD_GNU_TYPE%%-*}.tar.gz -C $(devel) .
+	tar -czvf $$(basename $(tests))-$(AMVER)-$${BUILD_GNU_TYPE%%-*}.tar.gz -C $(tests) .
 
 	{ ls 2>/dev/null *.tar.gz; } || true
 clean:
