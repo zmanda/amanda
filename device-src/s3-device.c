@@ -184,12 +184,6 @@ static DevicePropertyBase device_property_read_from_glacier;
 static DevicePropertyBase device_property_transition_to_glacier;
 #define PROPERTY_TRANSITION_TO_GLACIER (device_property_transition_to_glacier.ID)
 
-/* Adding transition to class property. This should be either GLACIER or DEEP_ARCHIVE. Only
- * used for lifecycle rule
- */
-static DevicePropertyBase device_property_transition_to_class;
-#define PROPERTY_TRANSITION_TO_CLASS (device_property_transition_to_class.ID)
-
 static DevicePropertyBase device_property_timeout;
 #define PROPERTY_TIMEOUT (device_property_timeout.ID)
 
@@ -427,10 +421,6 @@ static gboolean s3_device_set_read_from_glacier_fn(Device *self,
     PropertySurety surety, PropertySource source);
 
 static gboolean s3_device_set_transition_to_glacier_fn(Device *self,
-    DevicePropertyBase *base, GValue *val,
-    PropertySurety surety, PropertySource source);
-
-static gboolean s3_device_set_transtion_to_class_fn(Device *self,
     DevicePropertyBase *base, GValue *val,
     PropertySurety surety, PropertySource source);
 
@@ -1176,9 +1166,6 @@ s3_device_register(void)
     device_property_fill_and_register(&device_property_transition_to_glacier,
                                       G_TYPE_UINT64, "transition_to_glacier",
        "The number of days to wait before migrating to glacier after set to no-reuse");
-    device_property_fill_and_register(&device_property_transition_to_class,
-                                      G_TYPE_STRING, "transition_to_class",
-       "The storage class the transition should happen either GLACIER or DEEP_ARCHIVE");
     device_property_fill_and_register(&device_property_s3_subdomain,
                                       G_TYPE_BOOLEAN, "s3_subdomain",
        "Whether to use subdomain");
@@ -1255,7 +1242,6 @@ s3_device_init(S3Device * self)
     self->reps = NULL;
     self->reps_bucket = NULL;
     self->transition_to_glacier = -1;
-    self->transition_to_class = NULL;
 
     /* Register property values
      * Note: Some aren't added until s3_device_open_device()
@@ -1477,11 +1463,6 @@ s3_device_base_init(
 	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
 	    device_simple_property_get_fn,
 	    s3_device_set_transition_to_glacier_fn);
-
-    device_class_register_property(device_class, PROPERTY_TRANSITION_TO_CLASS ,
-            PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
-            device_simple_property_get_fn,
-            s3_device_set_transtion_to_class_fn);
 
     device_class_register_property(device_class, PROPERTY_STORAGE_API,
 	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
@@ -1924,16 +1905,6 @@ s3_device_set_transition_to_glacier_fn(Device *p_self, DevicePropertyBase *base,
 
     self->transition_to_glacier = g_value_get_uint64(val);
 
-    return device_simple_property_set_fn(p_self, base, val, surety, source);
-}
-
-static gboolean
-s3_device_set_transtion_to_class_fn(Device *p_self, DevicePropertyBase *base,
-    GValue *val, PropertySurety surety, PropertySource source)
-{
-    S3Device *self = S3_DEVICE(p_self);
-    amfree(self->transition_to_class);
-    self->transition_to_class = g_value_dup_string(val);
     return device_simple_property_set_fn(p_self, base, val, surety, source);
 }
 
@@ -3868,11 +3839,7 @@ s3_device_set_no_reuse(
     rule->transition->date = g_strdup_printf(
 		"%04d-%02d-%02dT00:00:00.000Z",
 		1900+tmp.tm_year, tmp.tm_mon+1, tmp.tm_mday);
-    if (self->transition_to_class != NULL) {
-        rule->transition->storage_class = g_strdup(self->transition_to_class);
-    } else {
-        rule->transition->storage_class = g_strdup("GLACIER");
-    }
+    rule->transition->storage_class = g_strdup("GLACIER");
 
     lifecycle = g_slist_append(lifecycle, rule);
     s3_put_lifecycle(self->s3t[0].s3, self->bucket, lifecycle);
@@ -3925,7 +3892,7 @@ s3_device_init_seek_file(
 	s3_object *object = (s3_object *)objects->data;
 	s3_head_t *head;
 	objects = g_slist_remove(objects, objects->data);
-	if (object->storage_class == S3_SC_GLACIER || object->storage_class == S3_SC_DEEP_ARCHIVE) {
+	if (object->storage_class == S3_SC_GLACIER) {
 	    /* HEAD object */
 	    head = s3_head(self->s3t[0].s3, self->bucket, object->key);
 	    if (!head) {

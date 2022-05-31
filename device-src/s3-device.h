@@ -175,7 +175,6 @@ struct _S3Device {
 
     gboolean	 read_from_glacier;
     int		 transition_to_glacier;
-    char         *transition_to_class;
     long	 timeout;
 
     /* CAStor */

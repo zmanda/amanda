@@ -418,6 +418,7 @@ authenticate_request(S3Handle *hdl,
                      const char *md5_hash,
                      const char *data_SHA256Hash,
                      const char *content_type,
+                     const size_t content_length,
                      const char *project_id);
 
 
@@ -868,6 +869,7 @@ authenticate_request(S3Handle *hdl,
                      const char *md5_hash,
                      const char *data_SHA256Hash,
                      const char *content_type,
+                     const size_t content_length,
                      const char *project_id)
 {
     time_t t;
@@ -1045,17 +1047,17 @@ authenticate_request(S3Handle *hdl,
 	}
 	g_string_append(auth_string, "\n");
 
-    if (subresource && strcmp(subresource, "lifecycle") == 0 && md5_hash && '\0' != md5_hash[0]) {
-    	g_string_append(auth_string, "content-md5:");
-    	g_string_append(auth_string, md5_hash);
-    	g_string_append(auth_string, "\n");
+        if (subresource && strcmp(subresource, "lifecycle") == 0 && md5_hash && '\0' != md5_hash[0]) {
+            g_string_append(auth_string, "content-md5:");
+            g_string_append(auth_string, md5_hash);
+            g_string_append(auth_string, "\n");
 
-        buf = g_strdup_printf("Content-MD5: %s", md5_hash);
-        headers = curl_slist_append(headers, buf);
+            buf = g_strdup_printf("Content-MD5: %s", md5_hash);
+            headers = curl_slist_append(headers, buf);
 
-        g_string_append(strSignedHeaders, "content-md5;");
-        g_free(buf);
-    }
+            g_string_append(strSignedHeaders, "content-md5;");
+            g_free(buf);
+        }
 
     /* Header must be in alphebetic order */
 	if (hdl->use_subdomain) {
@@ -1340,6 +1342,11 @@ authenticate_request(S3Handle *hdl,
 
     if (md5_hash && '\0' != md5_hash[0]) {
         buf = g_strdup_printf("Content-MD5: %s", md5_hash);
+        headers = curl_slist_append(headers, buf);
+        g_free(buf);
+    }
+    if (content_length > 0) {
+        buf = g_strdup_printf("Content-Length: %zu", content_length);
         headers = curl_slist_append(headers, buf);
         g_free(buf);
     }
@@ -2067,78 +2074,61 @@ size_t
 s3_buffer_read_func(void *ptr, size_t size, size_t nmemb, void * stream)
 {
     CurlBuffer *data = stream;
-    size_t bytes_desired = size * nmemb;
-    size_t tocopy;
-    size_t nextbytes = 0;
-    size_t buffmax = ( data->max_buffer_size ? data->max_buffer_size : data->buffer_len );
-    size_t unwritten = data->buffer_len % buffmax; // first unreadable byte
-
-    // WARNING: zero-length write is ambiguous with full-buffer!
-
-    // don't ask for anything crazy plz...
-    bytes_desired = min(bytes_desired, buffmax);
-    tocopy = bytes_desired;
-
-    if (! bytes_desired) {
-        return 0;
-    }
-
-    // buffer_len is 'buffer-ring end' and buffer_pos is 'buffer-ring start'
+    guint bytes_desired = (guint) size * nmemb;
+    guint avail;
 
     if (data->mutex) { /* chunked transfer */
 	g_mutex_lock(data->mutex);
-    }
 
-    for(;;) {
-        size_t avail; // amount incl circular buffer
-        //
-        // total up circular bytes readable... (unsigned math!)
-        //
-        // index-distance from first-byte index to last-byte index
-        // in the circle-buffer...
-        // (unwritten is index-after last byte)
-        avail = buffmax - data->buffer_pos + unwritten-1;
-        avail %= buffmax; // circle-back into buffer
-        ++avail; // count last byte too (at least 1 byte)
+	while (1) {
+	    if (data->buffer_len == data->buffer_pos) {
+		avail = 0;
+	    } else if (data->buffer_len > data->buffer_pos) {
+		avail = data->buffer_len - data->buffer_pos;
+	    } else {
+		avail = data->max_buffer_size - data->buffer_pos + data->buffer_len;
+	    }
+	    if (avail > bytes_desired || data->end_of_buffer)
+		break;
 
-        // find next contiguous bytes copy
-        nextbytes = min(data->buffer_pos + avail, buffmax);
-        nextbytes -= data->buffer_pos; // (note: don't underflow)
-        nextbytes = min(nextbytes, tocopy);
+	    g_cond_wait(data->cond, data->mutex);
+	}
 
-        g_debug("s3_buffer_read_func avail (before). . %#lx [%#lx-%#lx] %#lx more",
-           nextbytes, data->buffer_pos, data->buffer_pos + nextbytes, tocopy - nextbytes);
+	if (bytes_desired > avail)
+	    bytes_desired = avail;
+	if (bytes_desired > 0) {
+	    if (data->buffer_len > data->buffer_pos) {
+		memcpy((char *)ptr, data->buffer + data->buffer_pos, bytes_desired);
+		data->buffer_pos += bytes_desired;
+	    } else {
+		guint count_end = data->max_buffer_size - data->buffer_pos;
+		guint count_begin;
 
-        memcpy((char *)ptr, &data->buffer[data->buffer_pos], nextbytes);
-
-        // shift read point
-        data->buffer_pos += nextbytes;
-        data->buffer_pos %= buffmax; // roll around to bottom again if needed
-
-        // shift next write point
-        ptr = (char*) ptr + nextbytes;
-        tocopy -= nextbytes;
-
-        // tocopy is done ...
-        if (!tocopy)
-            break;
-        // or next-byte index is same as unwritten-byte index?
-        if (data->buffer_pos == unwritten && data->end_of_buffer)
-           break;
-
-        if (data->mutex) {
-            g_debug("s3_buffer_read_func BLOCKING START (avail:%#lx missing %#lx bytes)", avail, tocopy - avail);
-            g_cond_wait(data->cond, data->mutex); // wait on writer to permit more
-        }
-    }
-
-    if (data->mutex) {
+		if (count_end > bytes_desired)
+		    count_end = bytes_desired;
+		memcpy((char *)ptr, data->buffer + data->buffer_pos, count_end);
+		data->buffer_pos += count_end;
+		count_begin = bytes_desired - count_end;
+		if (count_begin > 0) {
+		    memcpy((char *)ptr + count_end, data->buffer, count_begin);
+		    data->buffer_pos = count_begin;
+		}
+	    }
+	}
 	/* signal to add more data to the buffer */
 	g_cond_broadcast(data->cond);
 	g_mutex_unlock(data->mutex);
+
+    } else {
+	/* check the number of bytes remaining, just to be safe */
+	if (bytes_desired > data->buffer_len - data->buffer_pos)
+            bytes_desired = data->buffer_len - data->buffer_pos;
+
+	memcpy((char *)ptr, data->buffer + data->buffer_pos, bytes_desired);
+	data->buffer_pos += bytes_desired;
     }
 
-    return bytes_desired - tocopy; // note if less than desired
+    return bytes_desired;
 }
 
 size_t
@@ -2169,8 +2159,8 @@ size_t
 s3_buffer_write_func(void *ptr, size_t size, size_t nmemb, void *stream)
 {
     CurlBuffer * data = stream;
-    size_t new_bytes = size * nmemb;
-    size_t bytes_needed = data->buffer_pos + new_bytes;
+    guint new_bytes = (guint) size * nmemb;
+    guint bytes_needed = data->buffer_pos + new_bytes;
 
 
     if (data->mutex) { /* chunked transfer */
@@ -2184,7 +2174,7 @@ s3_buffer_write_func(void *ptr, size_t size, size_t nmemb, void *stream)
 
 	// Check for enough space in the buffer
 	while (1) {
-	    size_t avail;
+	    guint avail;
 	    if (data->buffer_len == data->buffer_pos) {
 		avail =  data->max_buffer_size;
 	    } else if (data->buffer_len > data->buffer_pos) {
@@ -2200,8 +2190,8 @@ s3_buffer_write_func(void *ptr, size_t size, size_t nmemb, void *stream)
 
 	// Copy the new data to the buffer
 	if (data->buffer_len > data->buffer_pos) {
-	    size_t count_end = data->max_buffer_size - data->buffer_len;
-	    size_t count_begin;
+	    guint count_end = data->max_buffer_size - data->buffer_len;
+	    guint count_begin;
 	    if (count_end > new_bytes)
 		count_end = new_bytes;
 	    memcpy(data->buffer + data->buffer_len, ptr, count_end);
@@ -2229,7 +2219,7 @@ s3_buffer_write_func(void *ptr, size_t size, size_t nmemb, void *stream)
     /* reallocate if necessary. We use exponential sizing to make this
      * happen less often. */
     if (bytes_needed > data->buffer_len) {
-        size_t new_size = MAX(bytes_needed, data->buffer_len * 2);
+        guint new_size = MAX(bytes_needed, data->buffer_len * 2);
         if (data->max_buffer_size) {
             new_size = MIN(new_size, data->max_buffer_size);
         }
@@ -2385,7 +2375,7 @@ curl_debug_message(CURL *curl G_GNUC_UNUSED,
     case CURLINFO_DATA_IN:
 	if (len > 3000) return 0;
 	for (i=0;i<len;i++) {
-	    if ( s[i] < 0 || (g_ascii_iscntrl(s[i]) && ! g_ascii_isspace(s[i])) ) {
+	    if (!g_ascii_isprint(s[i])) {
 		return 0;
 	    }
 	}
@@ -2395,7 +2385,7 @@ curl_debug_message(CURL *curl G_GNUC_UNUSED,
     case CURLINFO_DATA_OUT:
 	if (len > 3000) return 0;
 	for (i=0;i<len;i++) {
-	    if ( s[i] < 0 || (g_ascii_iscntrl(s[i]) && ! g_ascii_isspace(s[i])) ) {
+	    if (!g_ascii_isprint(s[i])) {
 		return 0;
 	    }
 	}
@@ -2456,8 +2446,7 @@ perform_request(S3Handle *hdl,
     gint retry_after_close = 0;
     gulong backoff = EXPONENTIAL_BACKOFF_START_USEC;
     /* corresponds to PUT, HEAD, GET, and POST */
-    int curlopt_methodopt = 0;
-    int curlopt_setsizeopt = 0;
+    int curlopt_upload = 0, curlopt_nobody = 0, curlopt_httpget = 0, curlopt_post = 0;
     /* do we want to examine the headers */
     const char *curlopt_customrequest = NULL;
     /* for MD5 calculation */
@@ -2498,21 +2487,13 @@ perform_request(S3Handle *hdl,
 
     /* libcurl may behave strangely if these are not set correctly */
     if (g_str_has_prefix(verb, "PUT")) {
-        curlopt_methodopt = CURLOPT_UPLOAD;
-        curlopt_setsizeopt = CURLOPT_INFILESIZE_LARGE;
-#if LIBCURL_VERSION_NUM < 0x070b00
-        curlopt_setsizeopt = CURLOPT_INFILESIZE;   // dangerous for large sizes!
-#endif
+        curlopt_upload = 1;
     } else if (g_str_has_prefix(verb, "GET")) {
-        curlopt_methodopt = CURLOPT_HTTPGET;
+        curlopt_httpget = 1;
     } else if (g_str_has_prefix(verb, "POST")) {
-        curlopt_methodopt = CURLOPT_POST;
-        curlopt_setsizeopt = CURLOPT_POSTFIELDSIZE_LARGE;
-#if LIBCURL_VERSION_NUM < 0x070b00
-        curlopt_setsizeopt = CURLOPT_POSTFIELDSIZE; // dangerous for large sizes!
-#endif
+        curlopt_post = 1;
     } else if (g_str_has_prefix(verb, "HEAD")) {
-        curlopt_methodopt = CURLOPT_NOBODY;
+        curlopt_nobody = 1;
     } else {
         curlopt_customrequest = verb;
     }
@@ -2575,7 +2556,7 @@ perform_request(S3Handle *hdl,
 
         /* set up the request */
         headers = authenticate_request(hdl, verb, bucket, key, subresource, query,
-            md5_hash_b64, data_SHA256Hash, content_type, project_id);
+            md5_hash_b64, data_SHA256Hash, content_type, request_body_size, project_id);
 
 	/* add user header to headers */
 	for (header = user_headers; header != NULL; header = header->next) {
@@ -2597,8 +2578,8 @@ perform_request(S3Handle *hdl,
         if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_VERBOSE, hdl->verbose)))
             goto curl_error;
         if (hdl->verbose) {
-        if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_DEBUGFUNCTION,
-                          curl_debug_message)))
+            if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_DEBUGFUNCTION,
+                              curl_debug_message)))
                 goto curl_error;
         }
         if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_ERRORBUFFER,
@@ -2632,37 +2613,33 @@ perform_request(S3Handle *hdl,
         if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_PROGRESSDATA, progress_data)))
             goto curl_error;
 
-        if (!chunked && size_func && curlopt_setsizeopt) 
-        {   
-            guint64 buffsize;
-
-            if ((curl_code=curl_easy_setopt(hdl->curl, 
-                                            curlopt_setsizeopt,
-                                            (curl_off_t)request_body_size)))
-                goto curl_error;
-
-#if LIBCURL_VERSION_NUM >= 0x073e00
-            buffsize = max(hdl->max_send_speed*5,CURL_MAX_READ_SIZE);
-            buffsize = min(request_body_size,buffsize);
-            buffsize = (buffsize |(0x1000-1)) + 1;
-
-            if ((curl_code=curl_easy_setopt(hdl->curl, CURLOPT_UPLOAD_BUFFERSIZE, buffsize)))
-                goto curl_error;
+	if (!chunked) {
+	    /* CURLOPT_INFILESIZE_LARGE added in 7.11.0 */
+#if LIBCURL_VERSION_NUM >= 0x070b00
+            if ((curl_code = curl_easy_setopt(hdl->curl,
+					      CURLOPT_INFILESIZE_LARGE,
+					      (curl_off_t)request_body_size)))
+		goto curl_error;
+#else
+            if ((curl_code = curl_easy_setopt(hdl->curl,
+					      CURLOPT_INFILESIZE,
+					      (long)request_body_size)))
+		goto curl_error;
 #endif
-        }
 
-#if LIBCURL_VERSION_NUM >= 0x073e00
-	if (chunked) 
-        {
-            guint64 buffsize;
-            buffsize = max(hdl->max_send_speed*5,CURL_MAX_READ_SIZE);
-            buffsize = (buffsize |(0x1000-1)) + 1;
-
-            // 512K
-            if ((curl_code=curl_easy_setopt(hdl->curl, CURLOPT_UPLOAD_BUFFERSIZE, buffsize)))
-                goto curl_error;
-        }
+	    /* CURLOPT_POSTFIELDSIZE_LARGE added in 7.11.1 */
+#if LIBCURL_VERSION_NUM >= 0x070b01
+            if ((curl_code = curl_easy_setopt(hdl->curl,
+					      CURLOPT_POSTFIELDSIZE_LARGE,
+					      (curl_off_t)request_body_size)))
+		goto curl_error;
+#else
+            if ((curl_code = curl_easy_setopt(hdl->curl,
+					      CURLOPT_POSTFIELDSIZE,
+					      (long)request_body_size)))
+		goto curl_error;
 #endif
+	}
 
 /* CURLOPT_MAX_{RECV,SEND}_SPEED_LARGE added in 7.15.5 */
 #if LIBCURL_VERSION_NUM >= 0x070f05
@@ -2674,23 +2651,23 @@ perform_request(S3Handle *hdl,
 	    if (hdl->max_recv_speed)
 		if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_MAX_RECV_SPEED_LARGE, (curl_off_t)hdl->max_recv_speed)))
 		    goto curl_error;
-            }
+	}
 #endif
 
-        // perform only one call [*mandatory*] to set httpreq
-        if (curlopt_methodopt) {
-            if ((curl_code = curl_easy_setopt(hdl->curl, curlopt_methodopt, 1)))
-                goto curl_error;
-        } else if (curlopt_customrequest) {
-            if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_CUSTOMREQUEST, curlopt_customrequest)))
-                goto curl_error;
-        } else {
-	    g_debug("perform_request: no method was selected");
+        if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_HTTPGET, curlopt_httpget)))
             goto curl_error;
-        }
+        if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_UPLOAD, curlopt_upload)))
+            goto curl_error;
+        if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_POST, curlopt_post)))
+            goto curl_error;
+        if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_NOBODY, curlopt_nobody)))
+            goto curl_error;
+        if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_CUSTOMREQUEST,
+                                          curlopt_customrequest)))
+            goto curl_error;
 
 
-        if (curlopt_setsizeopt) {
+        if (curlopt_upload || curlopt_post) {
             if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_READFUNCTION, read_func)))
                 goto curl_error;
             if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_READDATA, read_data)))
@@ -2719,7 +2696,7 @@ perform_request(S3Handle *hdl,
 	    goto curl_error;
 	}
 	if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_TIMEOUT,
-              	(long)hdl->timeout))) {
+		(long)hdl->timeout))) {
 	    goto curl_error;
 	}
 
@@ -3460,9 +3437,6 @@ s3_reset(S3Handle *hdl)
         /* We don't call curl_easy_reset here, because doing that in curl
          * < 7.16 blanks the default CA certificate path, and there's no way
          * to get it back. */
-#if LIBCURL_VERSION_NUM >= 0x071000
-        if ( hdl->curl ) curl_easy_reset(hdl->curl);
-#endif
         if (hdl->last_message) {
             g_free(hdl->last_message);
             hdl->last_message = NULL;
@@ -3956,9 +3930,7 @@ list_end_element(GMarkupParseContext *context G_GNUC_UNUSED,
 	    thunk->object->storage_class = S3_SC_REDUCED_REDUNDANCY;
 	} else if (g_str_equal(thunk->text, "GLACIER")) {
 	    thunk->object->storage_class = S3_SC_GLACIER;
-	} else if (g_str_equal(thunk->text, "DEEP_ARCHIVE")) {
-            thunk->object->storage_class = S3_SC_DEEP_ARCHIVE;
-        }
+	}
 	g_free(thunk->text);
 	thunk->text = NULL;
     }

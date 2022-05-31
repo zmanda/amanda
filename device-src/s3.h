@@ -47,8 +47,7 @@ typedef enum {
    S3_SC_STANDARD,
    S3_SC_STANDARD_IA,
    S3_SC_REDUCED_REDUNDANCY,
-   S3_SC_GLACIER,
-   S3_SC_DEEP_ARCHIVE
+   S3_SC_GLACIER
 } StorageClass;
 
 /* An opaque handle.  S3Handles should only be accessed from a single
@@ -57,7 +56,7 @@ typedef enum {
 typedef struct S3Handle S3Handle;
 
 /* Callback function to read data to upload
- *
+ * 
  * @note this is the same as CURLOPT_READFUNCTION
  *
  * @param data: The pointer to write data to
@@ -71,8 +70,6 @@ typedef struct S3Handle S3Handle;
  * Return 0 only if there's no more data to be uploaded.
  */
 typedef size_t (*s3_read_func)(void *data, size_t size, size_t nmemb, void *stream);
-//chandu
-//typedef size_t read_callback(char *buffer, size_t size, size_t nitems, void *userdata);
 
 /* This function is called to get size of the upload data
  *
@@ -100,7 +97,7 @@ typedef GByteArray* (*s3_md5_func)(void *data);
 typedef void (*s3_reset_func)(void *data);
 
 /* Callback function to write data that's been downloaded
- *
+ * 
  * @note this is the same as CURLOPT_WRITEFUNCTION
  *
  * @param data: The pointer to read data from
@@ -762,9 +759,9 @@ gboolean sts_refresh_token(char ** token, const char * directory);
  */
 typedef struct {
     char *buffer;
-    guint64 buffer_len;
-    guint64 buffer_pos;
-    guint64 max_buffer_size;
+    guint buffer_len;
+    guint buffer_pos;
+    guint max_buffer_size;
     gboolean end_of_buffer;
     GMutex   *mutex;
     GCond    *cond;
