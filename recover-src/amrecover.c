@@ -229,7 +229,7 @@ send_command(
     char *buffer;
 
     buffer = g_malloc(strlen(cmd)+3);
-    strncpy(buffer, cmd, strlen(cmd));
+    strncpy(buffer, cmd, strlen(cmd)+1); // keep nul
     buffer[strlen(cmd)] = '\r';
     buffer[strlen(cmd)+1] = '\n';
     buffer[strlen(cmd)+2] = '\0';
