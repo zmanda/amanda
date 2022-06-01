@@ -4999,8 +4999,6 @@ thread_write_mpblocks_combine(S3Device *wrself, S3_by_thread *s3t)
     if ( self->mp_uploadId || self->mp_next_uploadNum )
         return S3_RESULT_RETRY;
 
-    if ( g_tree_nnodes(blktree) )
-        return S3_RESULT_RETRY;
     // detected any later blocks uploaded?
     if ( get_least_next_elt(filetree, s3t->xfer_begin+1) != (objbytes_t) G_MAXUINT64 )
         return S3_RESULT_RETRY;
@@ -5012,13 +5010,14 @@ thread_write_mpblocks_combine(S3Device *wrself, S3_by_thread *s3t)
     lastetag = g_tree_lookup(filetree, GSIZE_TO_POINTER(lastblkoff));
     lastblkoff = get_greatest_prev_elt(filetree, s3t->xfer_end); // offset of final block
 
-    g_assert(lastetag && get_greatest_prev_elt(filetree, s3t->xfer_end) == lastblkoff );
+    g_assert(lastetag && lastblkoff % self->dev_blksize == 0 );
 
     if (blktree) g_tree_unref(blktree); // release old reference
     g_tree_ref(filetree); // add new reference
     g_free((char*)s3t->object_subkey);
     g_free((char*)s3t->object_uploadId);
 
+    s3t->xfer_begin = lastblkoff; // last xfer-block *ending* is same
     s3t->mp_etag_tree_ref = filetree; // use the alternate large tree 
     s3t->object_subkey = self->file_objkey; // move out of global
     s3t->object_uploadId = self->mpcopy_uploadId; // move out of global
@@ -7011,14 +7010,6 @@ s3_thread_read_session(gpointer thread_data, gpointer data)
     char *mykey_tmp = s3t->object_subkey ? strdupa(s3t->object_subkey) : "";
     objbytes_t objsize = G_MAXINT64;
 
-    // was cancelled before started...
-    if (!mykey_tmp[0] || s3buf->cancel) {
-        if (self->verbose)
-            g_debug("%s: pre-cancelled [unused] read-session ctxt#%d [%p]: [%#lx-%#lx) key=<erased> ",
-               __FUNCTION__, myind, s3buf, s3t->xfer_begin, s3t->xfer_end);
-        goto cancel;
-    }
-
     {
         char *tname = NULL;
         char *keysuff = strrchr(mykey_tmp,'.');
@@ -7031,10 +7022,20 @@ s3_thread_read_session(gpointer thread_data, gpointer data)
             tname = g_strdup_printf("rp%x.%02lx", pself->file, 1 + ( s3t->xfer_begin / self->dev_blksize) );
 
         (void) pthread_setname_np(pthread_self(),tname);
-        g_debug("[%p] download worker thread ctxt#%ld [%s] [%#lx-%#lx)",s3buf,s3t - self->s3t,
-              mykey_tmp, s3t->xfer_begin, s3t->xfer_end);
         g_free(tname);
     }
+
+    // was cancelled somehow before started...
+    if (!mykey_tmp[0] || s3buf->cancel) {
+        if (self->verbose)
+            g_debug("%s: pre-cancelled [unused] read-session ctxt#%d [%p]: [%#lx-%#lx) key=<erased> ",
+               __FUNCTION__, myind, s3buf, s3t->xfer_begin, s3t->xfer_end);
+
+        goto early_cancel;
+    }
+
+    g_debug("[%p] download worker thread ctxt#%ld [%s] [%#lx-%#lx)",s3buf,s3t - self->s3t,
+          mykey_tmp, s3t->xfer_begin, s3t->xfer_end);
 
     // NOTE: s3_read / s3_buffer_write_func must block
     //    as external "buffer-reads" pull the data out
@@ -7115,7 +7116,9 @@ s3_thread_read_session(gpointer thread_data, gpointer data)
 
     return;
 
+
  cancel:
+    ///////////////////////////////////////////////////////////////////////////////////////////////
     //
     // FAILED S3_READ CALL.
     //
@@ -7123,15 +7126,20 @@ s3_thread_read_session(gpointer thread_data, gpointer data)
         guint response_code;
         s3_error_code_t s3_error_code;
 
-        g_mutex_lock(self->thread_list_mutex); // block reset of s3t until done...
-
         s3_error(hndl, NULL, &response_code, &s3_error_code, NULL, NULL, NULL);
-        if (response_code - response_code % 100 == 200 && s3_error_code == S3_ERROR_None) {
-           g_debug("%s: completing read-session with \"result\" failure ctxt#%d [%p]: [%#lx-%#lx) key=%s ",
+        // successful yet returned boolean FALSE?
+        if ( response_code - response_code % 100 == 200 && s3_error_code == S3_ERROR_None) {
+           g_debug("%s: completing read-session with \"read-range\" returning failure ctxt#%d [%p]: [%#lx-%#lx) key=%s ",
                  __FUNCTION__, myind, s3buf, s3t->xfer_begin, s3t->xfer_end, mykey_tmp);
-           g_mutex_unlock(self->thread_list_mutex);
            return;
         }
+
+        ///////////////////////////////////////////////////////////////////////////////////////
+        //
+        // FAILED START OR FAILED S3_READ CALL WITH BAD STATUS
+        //
+ early_cancel:
+        g_mutex_lock(self->thread_list_mutex); // block reset of s3t until done...
 
         /* if it's an expected error (not found), just return -1 */
         switch ( MIX_RESPCODE_AND_S3ERR(response_code,s3_error_code) )
