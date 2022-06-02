@@ -50,7 +50,7 @@
 # include <sys/param.h>
 #endif
 
-#if HAVE_SYS_SYSCTL_H
+#if HAVE_SYS_SYSCTL_H && ! defined __GLIBC__
 # include <sys/sysctl.h>
 #endif
 
@@ -62,6 +62,10 @@
 
 # define WIN32_LEAN_AND_MEAN
 # include <windows.h>
+
+/* Don't assume that UNICODE is not defined.  */
+# undef GetModuleHandle
+# define GetModuleHandle GetModuleHandleA
 
 /* Avoid warnings from gcc -Wcast-function-type.  */
 # define GetProcAddress \
@@ -81,7 +85,7 @@ typedef struct
   DWORDLONG ullAvailVirtual;
   DWORDLONG ullAvailExtendedVirtual;
 } lMEMORYSTATUSEX;
-typedef WINBOOL (WINAPI *PFN_MS_EX) (lMEMORYSTATUSEX*);
+typedef BOOL (WINAPI *PFN_MS_EX) (lMEMORYSTATUSEX*);
 
 #endif
 
@@ -149,7 +153,7 @@ physmem_total (void)
   }
 #endif
 
-#if HAVE_SYSCTL && defined HW_PHYSMEM
+#if HAVE_SYSCTL && ! defined __GLIBC__ && defined HW_PHYSMEM
   { /* This works on *bsd and darwin.  */
     unsigned int physmem;
     size_t len = sizeof physmem;
@@ -263,7 +267,7 @@ physmem_available (void)
   }
 #endif
 
-#if HAVE_SYSCTL && defined HW_USERMEM
+#if HAVE_SYSCTL && ! defined __GLIBC__ && defined HW_USERMEM
   { /* This works on *bsd and darwin.  */
     unsigned int usermem;
     size_t len = sizeof usermem;
