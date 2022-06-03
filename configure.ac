@@ -1,19 +1,31 @@
 AMANDA_INIT_VERSION
 AC_INIT([amanda], [AMANDA_F_VERSION])
+
+AC_PROG_CC([gcc cc])
+
 AC_CONFIG_SRCDIR([common-src/amanda.h])
-AC_CONFIG_AUX_DIR(config)
-AC_CONFIG_MACRO_DIR(config)
+AC_CONFIG_AUX_DIR([config])
+AC_CONFIG_MACRO_DIR([config])
 AC_CANONICAL_HOST
+
+AC_USE_SYSTEM_EXTENSIONS
 
 PACKAGE=amanda
 AC_SUBST(PACKAGE)
 
 AMANDA_VERSION
 
+dnl left empty when it neds a default
+AC_SUBST([GNULIB_OVERRIDES_WINT_T],0)
+
 gl_EARLY
 gl_INIT
+LT_INIT
+
 
 AMANDA_CONFIGURE
+
+# reset paths after check of live-local versions
 
 AC_DEFINE([USE_GETTEXT], 1, [Define to 1 if files will be processed with gettextize])
 
@@ -25,6 +37,8 @@ dnl These lines *must* be in configure.in, and not indented
 AM_GNU_GETTEXT_VERSION([0.15])
 AM_GNU_GETTEXT([external])
 AMANDA_PROG_GETTEXT
+
+LT_INIT
 
 
 dnl
@@ -42,12 +56,12 @@ AC_CONFIG_FILES([
     config/Makefile
     device-src/Makefile
     example/Makefile
+    example/systemd/Makefile
     gnulib/Makefile
     installcheck/Makefile
     man/Makefile
     ndmp-src/Makefile
     oldrecover-src/Makefile
-    packaging/Makefile
     perl/amglue/Makefile
     perl/Makefile
     po/Makefile
