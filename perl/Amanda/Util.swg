@@ -130,6 +130,10 @@ sub version_opt {
     exit 0;
 }
 
+sub process_name {
+   return $_pname;
+}
+
 %}
 char *get_original_cwd(void);
 amglue_export_tag(util, get_original_cwd);

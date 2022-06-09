@@ -2099,6 +2099,8 @@ sub _get_state {
     my ($paramsref) = @_;
     my %params = %$paramsref;
 
+    my $p_name = &Amanda::Util::process_name;
+
     my $state = $params{'state'};
 
     my $steps = define_steps
@@ -2193,15 +2195,17 @@ sub _get_state {
 		if (defined $label and defined $tl_label and
 		    $label ne $tl_label) {
 		    debug("MISMATCH label for barcode  state ($label)   tapelist ($tl_label) for barcode $info->{'barcode'}");
-                    return $self->make_error("failed", $params{'res_cb'},
-		           reason => "device",
-		           message => "MISMATCH drive label for barcode  state ($label)   tapelist ($tl_label) for barcode $info->{'barcode'}");
+		    if($p_name eq "taper") {
+                        return $self->make_error("failed", $params{'res_cb'},
+		               reason => "device",
+		               message => "MISMATCH drive label for barcode  state ($label)   tapelist ($tl_label) for barcode $info->{'barcode'}");
+	            }
 		}
 		if (!defined $label && defined $tl_label) {
 		    if (defined $info->{'state'} and
 			$info->{'state'} == Amanda::Changer::SLOT_UNKNOWN) {
 			$label = $tl_label;
-			$state->{'bc2lb'}->{$info->{'barcode'}} = $tl_label;
+	 	        $state->{'bc2lb'}->{$info->{'barcode'}} = $tl_label;
 		    }
 		}
 		$new_slots->{$slot} = {
@@ -2350,9 +2354,11 @@ sub _get_state {
 
 		if (defined $label and defined $tl_label) {
 		    debug("WARNING: MISMATCH drive label for barcode  state ($label)   tapelist ($tl_label) for barcode $info->{'barcode'}");
-                    return $self->make_error("failed", $params{'res_cb'},
-		           reason => "device",
-		           message => "MISMATCH drive label for barcode  state ($label)   tapelist ($tl_label) for barcode $info->{'barcode'}");
+		    if($p_name eq "taper") {
+                        return $self->make_error("failed", $params{'res_cb'},
+		               reason => "device",
+		               message => "MISMATCH drive label for barcode  state ($label)   tapelist ($tl_label) for barcode $info->{'barcode'}");
+		    }
 		}
 		if (!defined $label && defined $tl_label) {
 		    $label = $tl_label;
