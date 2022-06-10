@@ -1,6 +1,9 @@
 #!/bin/sh
 #
 # script "encrypt", use with server_encrypt "/whatever/encrypt":
+#
+# Author: Anton "exuvo" Olsson
+#         exuvo@exuvo.se
 
 AMANDA_HOME=~amanda
 PASSPHRASE=$AMANDA_HOME/.am_passphrase    # required
