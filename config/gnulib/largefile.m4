@@ -30,12 +30,12 @@ m4_version_prereq([2.70], [] ,[
 # _AC_SYS_LARGEFILE_TEST_INCLUDES
 # -------------------------------
 m4_define([_AC_SYS_LARGEFILE_TEST_INCLUDES],
-[@%:@include <sys/types.h>
+[#include <sys/types.h>
  /* Check that off_t can represent 2**63 - 1 correctly.
     We can't simply define LARGE_OFF_T to be 9223372036854775807,
     since some C++ compilers masquerading as C compilers
     incorrectly reject 9223372036854775807.  */
-@%:@define LARGE_OFF_T (((off_t) 1 << 62) - 1 + ((off_t) 1 << 62))
+#define LARGE_OFF_T (((off_t) 1 << 31 << 31) - 1 + ((off_t) 1 << 31 << 31))
   int off_t_is_large[[(LARGE_OFF_T % 2147483629 == 721
                        && LARGE_OFF_T % 2147483647 == 1)
                       ? 1 : -1]];[]dnl
@@ -54,7 +54,7 @@ m4_define([_AC_SYS_LARGEFILE_MACRO_VALUE],
     [AC_LANG_PROGRAM([$5], [$6])],
     [$3=no; break])
   m4_ifval([$6], [AC_LINK_IFELSE], [AC_COMPILE_IFELSE])(
-    [AC_LANG_PROGRAM([@%:@define $1 $2
+    [AC_LANG_PROGRAM([#define $1 $2
 $5], [$6])],
     [$3=$2; break])
   $3=unknown
@@ -113,9 +113,6 @@ if test "$enable_largefile" != no; then
       [Define for large files, on AIX-style hosts.],
       [_AC_SYS_LARGEFILE_TEST_INCLUDES])
   fi
-
-  AC_DEFINE([_DARWIN_USE_64_BIT_INODE], [1],
-    [Enable large inode numbers on Mac OS X 10.5.])
 fi
 ])# AC_SYS_LARGEFILE
 ])# m4_version_prereq 2.70
