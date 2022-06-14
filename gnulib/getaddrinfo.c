@@ -86,9 +86,15 @@ freeaddrinfo (struct addrinfo *ai)
 
 # ifdef WINDOWS_NATIVE
 
+/* Don't assume that UNICODE is not defined.  */
+#  undef GetModuleHandle
+#  define GetModuleHandle GetModuleHandleA
+
+#  if !(_WIN32_WINNT >= _WIN32_WINNT_WINXP)
+
 /* Avoid warnings from gcc -Wcast-function-type.  */
-#  define GetProcAddress \
-    (void *) GetProcAddress
+#   define GetProcAddress \
+     (void *) GetProcAddress
 
 typedef int (WSAAPI *getaddrinfo_func) (const char*, const char*,
                                         const struct addrinfo*,
@@ -135,6 +141,29 @@ use_win32_p (void)
 
   return 1;
 }
+
+#  else
+
+static int
+use_win32_p (void)
+{
+  static int done = 0;
+
+  if (!done)
+    {
+      done = 1;
+
+      gl_sockets_startup (SOCKETS_1_1);
+    }
+
+  return 1;
+}
+
+#   define getaddrinfo_ptr getaddrinfo
+#   define freeaddrinfo_ptr freeaddrinfo
+#   define getnameinfo_ptr getnameinfo
+
+#  endif
 # endif
 
 static bool
@@ -161,6 +190,7 @@ getaddrinfo (const char *restrict nodename,
              const char *restrict servname,
              const struct addrinfo *restrict hints,
              struct addrinfo **restrict res)
+#undef getaddrinfo
 {
   struct addrinfo *tmp;
   int port = 0;
@@ -362,6 +392,7 @@ getaddrinfo (const char *restrict nodename,
 /* Free 'addrinfo' structure AI including associated storage.  */
 void
 freeaddrinfo (struct addrinfo *ai)
+#undef freeaddrinfo
 {
 # ifdef WINDOWS_NATIVE
   if (use_win32_p ())
@@ -388,6 +419,7 @@ getnameinfo (const struct sockaddr *restrict sa, socklen_t salen,
              char *restrict node, socklen_t nodelen,
              char *restrict service, socklen_t servicelen,
              int flags)
+#undef getnameinfo
 {
 # ifdef WINDOWS_NATIVE
   if (use_win32_p ())
