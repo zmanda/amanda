@@ -1,4 +1,4 @@
-#! /usr/bin/perl
+#!/usr/bin/env perl
 
 # amandatape -- a utility to print amanda tape labels for DAT and CD.
 #
