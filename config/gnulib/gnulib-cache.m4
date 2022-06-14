@@ -37,6 +37,7 @@
 #  --no-conditional-dependencies \
 #  --libtool \
 #  --macro-prefix=gl \
+#  --no-vc-files \
 #  base64 \
 #  environ \
 #  euidaccess \
@@ -88,3 +89,4 @@ gl_LIBTOOL
 gl_MACRO_PREFIX([gl])
 gl_PO_DOMAIN([])
 gl_WITNESS_C_MACRO([])
+gl_VC_FILES([false])

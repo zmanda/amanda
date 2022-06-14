@@ -23,11 +23,15 @@
 
 /* Define _GL_HAVE__STATIC_ASSERT to 1 if _Static_assert (R, DIAGNOSTIC)
    works as per C11.  This is supported by GCC 4.6.0 and later, in C
-   mode.
+   mode, and by clang (also in C++ mode).
 
    Define _GL_HAVE__STATIC_ASSERT1 to 1 if _Static_assert (R) works as
-   per C2X, and define _GL_HAVE_STATIC_ASSERT1 if static_assert (R)
-   works as per C++17.  This is supported by GCC 9.1 and later.
+   per C2X.  This is supported by GCC 9.1 and later, and by clang in
+   C++1z mode.
+
+   Define _GL_HAVE_STATIC_ASSERT1 if static_assert (R) works as per
+   C++17.  This is supported by GCC 9.1 and later, and by clang in
+   C++1z mode.
 
    Support compilers claiming conformance to the relevant standard,
    and also support GCC when not pedantic.  If we were willing to slow
@@ -35,7 +39,8 @@
    since this affects only the quality of diagnostics, why bother?  */
 #ifndef __cplusplus
 # if (201112L <= __STDC_VERSION__ \
-      || (!defined __STRICT_ANSI__ && 4 < __GNUC__ + (6 <= __GNUC_MINOR__)))
+      || (!defined __STRICT_ANSI__ \
+          && (4 < __GNUC__ + (6 <= __GNUC_MINOR__) || 4 <= __clang_major__)))
 #  define _GL_HAVE__STATIC_ASSERT 1
 # endif
 # if (202000L <= __STDC_VERSION__ \
@@ -43,7 +48,15 @@
 #  define _GL_HAVE__STATIC_ASSERT1 1
 # endif
 #else
-# if 201703L <= __cplusplus || 9 <= __GNUC__
+# if 4 <= __clang_major__
+#  define _GL_HAVE__STATIC_ASSERT 1
+# endif
+# if 4 <= __clang_major__ && 201411 <= __cpp_static_assert
+#  define _GL_HAVE__STATIC_ASSERT1 1
+# endif
+# if 201703L <= __cplusplus \
+     || 9 <= __GNUC__ \
+     || (4 <= __clang_major__ && 201411 <= __cpp_static_assert)
 #  define _GL_HAVE_STATIC_ASSERT1 1
 # endif
 #endif
@@ -233,6 +246,13 @@ template <int w>
 
 /* @assert.h omit start@  */
 
+#if defined __has_builtin
+/* <https://clang.llvm.org/docs/LanguageExtensions.html#builtin-functions> */
+# define _GL_HAS_BUILTIN_ASSUME __has_builtin (__builtin_assume)
+#else
+# define _GL_HAS_BUILTIN_ASSUME 0
+#endif
+
 #if 3 < __GNUC__ + (3 < __GNUC_MINOR__ + (4 <= __GNUC_PATCHLEVEL__))
 # define _GL_HAS_BUILTIN_TRAP 1
 #elif defined __has_builtin
@@ -277,12 +297,51 @@ template <int w>
 #endif
 
 /* Assume that R always holds.  Behavior is undefined if R is false,
-   fails to evaluate, or has side effects.  Although assuming R can
-   help a compiler generate better code or diagnostics, performance
-   can suffer if R uses hard-to-optimize features such as function
-   calls not inlined by the compiler.  */
+   fails to evaluate, or has side effects.
 
-#if _GL_HAS_BUILTIN_UNREACHABLE
+   'assume (R)' is a directive from the programmer telling the
+   compiler that R is true so the compiler needn't generate code to
+   test R.  This is why 'assume' is in verify.h: it's related to
+   static checking (in this case, static checking done by the
+   programmer), not dynamic checking.
+
+   'assume (R)' can affect compilation of all the code, not just code
+   that happens to be executed after the assume (R) is "executed".
+   For example, if the code mistakenly does 'assert (R); assume (R);'
+   the compiler is entitled to optimize away the 'assert (R)'.
+
+   Although assuming R can help a compiler generate better code or
+   diagnostics, performance can suffer if R uses hard-to-optimize
+   features such as function calls not inlined by the compiler.  */
+
+/* Use __builtin_assume in preference to __builtin_unreachable, because
+   in clang versions 8.0.x and older, the definition based on
+   __builtin_assume has an effect on optimizations, whereas the definition
+   based on __builtin_unreachable does not.  (GCC so far has only
+   __builtin_unreachable.)  */
+#if _GL_HAS_BUILTIN_ASSUME
+/* Use __builtin_constant_p to help clang's data-flow analysis for the case
+   assume (0).
+   Use a temporary variable, to avoid a clang warning
+   "the argument to '__builtin_assume' has side effects that will be discarded"
+   if R contains invocations of functions not marked as 'const'.
+   The type of the temporary variable can't be __typeof__ (R), because that
+   does not work on bit field expressions.  Use '_Bool' or 'bool' as type
+   instead.  */
+# if defined __cplusplus
+#  define assume(R) \
+     (__builtin_constant_p (R) && !(R) \
+      ? (void) __builtin_unreachable () \
+      : (void) ({ bool _gl_verify_temp = (R); \
+                  __builtin_assume (_gl_verify_temp); }))
+# else
+#  define assume(R) \
+     (__builtin_constant_p (R) && !(R) \
+      ? (void) __builtin_unreachable () \
+      : (void) ({ _Bool _gl_verify_temp = (R); \
+                  __builtin_assume (_gl_verify_temp); }))
+# endif
+#elif _GL_HAS_BUILTIN_UNREACHABLE
 # define assume(R) ((R) ? (void) 0 : __builtin_unreachable ())
 #elif 1200 <= _MSC_VER
 # define assume(R) __assume (R)
