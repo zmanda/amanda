@@ -1,4 +1,4 @@
-# wctype_h.m4 serial 22
+# wctype_h.m4 serial 25
 
 dnl A placeholder for ISO C99 <wctype.h>, for platforms that lack it.
 
@@ -57,7 +57,7 @@ AC_DEFUN([gl_WCTYPE_H],
              AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <stdlib.h>
                           #if __GNU_LIBRARY__ == 1
                           Linux libc5 i18n is broken.
-                          #endif]], [])],
+                          #endif]], [[]])],
               [gl_cv_func_iswcntrl_works="guessing yes"],
               [gl_cv_func_iswcntrl_works="guessing no"])
             ])
@@ -204,6 +204,8 @@ AC_DEFUN([gl_WCTYPE_MODULE_INDICATOR],
 AC_DEFUN([gl_WCTYPE_H_DEFAULTS],
 [
   GNULIB_ISWBLANK=0;    AC_SUBST([GNULIB_ISWBLANK])
+  GNULIB_ISWDIGIT=0;    AC_SUBST([GNULIB_ISWDIGIT])
+  GNULIB_ISWXDIGIT=0;   AC_SUBST([GNULIB_ISWXDIGIT])
   GNULIB_WCTYPE=0;      AC_SUBST([GNULIB_WCTYPE])
   GNULIB_ISWCTYPE=0;    AC_SUBST([GNULIB_ISWCTYPE])
   GNULIB_WCTRANS=0;     AC_SUBST([GNULIB_WCTRANS])
@@ -213,4 +215,6 @@ AC_DEFUN([gl_WCTYPE_H_DEFAULTS],
   HAVE_WCTYPE_T=1;      AC_SUBST([HAVE_WCTYPE_T])
   HAVE_WCTRANS_T=1;     AC_SUBST([HAVE_WCTRANS_T])
   REPLACE_ISWBLANK=0;   AC_SUBST([REPLACE_ISWBLANK])
+  REPLACE_ISWDIGIT=0;   AC_SUBST([REPLACE_ISWDIGIT])
+  REPLACE_ISWXDIGIT=0;  AC_SUBST([REPLACE_ISWXDIGIT])
 ])
