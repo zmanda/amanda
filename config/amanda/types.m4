@@ -46,7 +46,7 @@ AC_DEFUN([AMANDA_TYPE_PID_T], [
 		fi
 		for TEST_amanda_cv_pid_type in long short int; do
 		    if test $amanda_cv_pid_type = unknown; then
-			AC_EGREP_CPP(typedef.*${TEST_amanda_cv_pid_type}.*pid_t,
+			_AC_COMPILE_IFELSE(typedef.*${TEST_amanda_cv_pid_type}.*pid_t,
 			    [
 #include <sys/types.h>
 #if STDC_HEADERS
@@ -57,7 +57,7 @@ AC_DEFUN([AMANDA_TYPE_PID_T], [
 			amanda_cv_pid_type=$TEST_amanda_cv_pid_type)
 		    fi
 		    if test $amanda_cv_pid_type = unknown; then
-			AC_EGREP_CPP(ZZZZ.*${TEST_amanda_cv_pid_type},
+			_AC_COMPILE_IFELSE(ZZZZ.*${TEST_amanda_cv_pid_type},
 			    [
 #include <sys/types.h>
 #if STDC_HEADERS
