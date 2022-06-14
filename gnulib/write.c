@@ -43,6 +43,10 @@
 #  include <io.h>
 # endif
 
+/* Don't assume that UNICODE is not defined.  */
+# undef GetNamedPipeHandleState
+# define GetNamedPipeHandleState GetNamedPipeHandleStateA
+
 # undef write
 
 # if HAVE_MSVC_INVALID_PARAMETER_HANDLER
@@ -53,7 +57,7 @@ write_nothrow (int fd, const void *buf, size_t count)
 
   TRY_MSVC_INVAL
     {
-      result = write (fd, buf, count);
+      result = _write (fd, buf, count);
     }
   CATCH_MSVC_INVAL
     {
@@ -65,7 +69,7 @@ write_nothrow (int fd, const void *buf, size_t count)
   return result;
 }
 # else
-#  define write_nothrow write
+#  define write_nothrow _write
 # endif
 
 ssize_t
