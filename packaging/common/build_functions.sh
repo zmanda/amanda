@@ -104,7 +104,7 @@ get_yearly_tag() {
 detect_pkgdirs_top() {
     local calldepth=$(( ${#BASH_SOURCE[@]} - 1 ))
     local topcall=${BASH_SOURCE[${calldepth}]}
-    local pkgsdirs_toptest=
+    local pkgdir=
     local d=
 
     topcall="$(realpath -e "${topcall}" || echo $0)"
@@ -120,14 +120,20 @@ detect_pkgdirs_top() {
 
     # script is real but not a clear directory location
     # top common directory is based on packaging repo common dir ... 
+
     # correct pkgdirs_top is just below it
     if [[ "${buildpkg_dir}" == ${pkgdirs_top}/* ]]; then
         :  # pkgdirs_top dir is correctly above our buildpkg_dir
     # if called from within common or scripts ... just use "packaging" as top
-    elif [[ "${buildpkg_dir}" = "${d}/common" ]]; then
-        declare -g pkgdirs_top=${d}
-    elif [[ "${buildpkg_dir}" = "${d}/scripts" ]]; then
-        declare -g pkgdirs_top=${d}
+    elif [[ "${buildpkg_dir}" == ${d}/* ]]; then
+        pkgdir="${buildpkg_dir#${d}/}" 
+        pkgdir=${pkgdir#common}
+        pkgdir=${pkgdir#scripts}
+        pkgdir=${pkgdir#/} # if present above?
+        pkgdir=${pkgdir%/*} # remove package type if needed
+        declare -g pkgdirs_top="${d}/${pkgdir}"
+    else
+        die "could not locate packaging directory to work in from here $buildpkg_dir"
     fi
 
     # narrow choices with calling scripts path, if possible
@@ -230,9 +236,6 @@ detect_build_dirs() {
 
     # override if they had values originally
     eval "$presets"
-
-    export pkg_name
-    export pkg_type
 }
 
 get_last_git_commit() {
@@ -299,6 +302,9 @@ detect_root_pkgtime() {
 
 get_version_evalstr() {
     local f=$(realpath ${BASH_SOURCE[0]})
+    # assign pkg_name and pkg_type from current context, if available
+    pkg_name=${pkg_name} \
+    pkg_type=${pkg_type} \
     ${BASH} -${setopt} ${f%/*}/version_setup.sh $1
 }
 
