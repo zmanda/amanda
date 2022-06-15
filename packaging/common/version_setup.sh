@@ -9,8 +9,11 @@
 # reformatted.
 #set -x
 
-selfdir=$(dirname ${BASH_SOURCE[0]})
-src_root=$(git rev-parse --show-toplevel)
+# only if called externally ...
+[ $0 -ef ${BASH_SOURCE[0]} ] && gitref=${1:-HEAD}
+
+selfdir=$(readlink -e ${BASH_SOURCE[0]})
+selfdir=$(dirname ${selfdir})
 if [ "$(type -t get_yearly_tag)" != "function" ]; then
     . ${selfdir}/build_functions.sh
 fi
@@ -59,13 +62,15 @@ detect_git_cache() {
 
 get_latest_git_tag() {
     local ref="$1"
-    local sha="$(git 2>/dev/null rev-parse --verify $ref)"
+    local sha="$(git 2>/dev/null rev-parse --verify "${ref}^{commit}")"
     local tags="$(git show-ref --dereference --tags | sed -e "\|^$sha |!d" -e 's,.* refs/tags/,,' -e 's,\^{}$,,')"
     [ -n "$tags" ] || return;
     {
-       # prioritize fully-numeric versions of latest numeric order by decimal
-       grep    '[0-9.][^0-9.]' <<<"$tags" | sort -nt.
-       grep -v '[0-9.][^0-9.]' <<<"$tags" | sort -nt.
+       # prioritize fully-numeric versions with largest numeric value by decimal
+       grep -P    '[\d.][^\d.]' <<<"$tags"              | sort -nt.    # tags with ANY <numeral-period><non-version-char>
+       grep -P -v '[\d.][^\d.]' <<<"$tags"              | sort -nt.    # tags with NO <numeral-period><non-version-char>
+       grep -P -i '^\D*\d[\d.]+\w*[a-z]\w*$' <<<"$tags" | sort -nt.  # tags with one seq of numbers-dots plus an alphastr
+       grep -P    '^\D*\d[\d.]+\d$' <<<"$tags"          | sort -nt.  # tags with *one* seq of numbers-dots at the end
     } | tail -1
 }
 
@@ -82,9 +87,12 @@ get_git_info() {
     local tmpsubject
     local newsha
 
+    [ -d "$src_root" -a "$(cd $src_root; git 2>/dev/null rev-parse --show-toplevel)" = "$src_root" ] ||
+       return 1
+
     ref=$1
     while true; do
-        git --no-pager log $ref --max-count=1 > vcs_repo.info
+        git 2>/dev/null log $ref -1 > vcs_repo.info
 
         # reduce the unix date of pkging dir to Jan 1st
         # ... and give an alpha code [<VOWELS>consonants>] to encode the minute
@@ -116,8 +124,8 @@ get_git_info() {
         ############################################################
         #### MAY USE GIT_DIR ENVIRONMENT OVERRIDE #####
         if [ -d "$cache_repo" -a -n "$rmtref" ]; then
-            if command git --git-dir=$cache_repo rev-parse --verify --quiet "origin/${rmtref##*/}"; then
-               oref="origin/${rmtref##*/}"
+            if command git --git-dir=$cache_repo rev-parse --verify --quiet "refs/remotes/origin/${rmtref##*/}"; then
+               oref="refs/remotes/origin/${rmtref##*/}"
                rmtref="$oref"
                export GIT_DIR=$cache_repo
             fi
@@ -129,7 +137,7 @@ get_git_info() {
             oref=$ref
         fi
 
-        [ $oref = "origin/HEAD" ] && oref=$ref
+        [ $oref = "refs/remotes/origin/HEAD" ] && oref=$ref
 
         if [ -s $(git rev-parse --git-dir)/shallow ]; then
             ( set -xv; git fetch --unshallow; )  # must be done.. even if slow
@@ -153,7 +161,7 @@ get_git_info() {
         ref=$newsha
     done
 
-    declare -g SHA=$(git rev-parse --short=9 $oref)
+    declare -g SHA=$(git rev-parse --short=9 "${oref}^{commit}")
 
     local year_break
 
@@ -208,9 +216,9 @@ get_git_info() {
 
     ####### officially prove a tag or branch are reachable as a base
 
-    # test if we have a specific (master) branch
-    REV_PLACE="$(git rev-parse --short=9 --symbolic-full-name "$REV_TAGPOS" 2>/dev/null)"   # get short hash-version
-    REV_PLACE=${REV_PLACE:-"$(git rev-parse --short=9 --symbolic-full-name "$REV_REFBR" 2>/dev/null)"}
+    # just in case if we have a specific branch (e.g. master)
+    #REV_PLACE="$(git rev-parse --symbolic-full-name "${REV_TAGPOS}" 2>/dev/null)"   # get extend name to full
+    #REV_PLACE=${REV_PLACE:-"$(git rev-parse --symbolic-full-name "${REV_REFBR}" 2>/dev/null)"}
 
     unset GIT_DIR
     #### END OF GIT_DIR ENVIRONMENT OVERRIDE (IF PRESENT) #####
@@ -218,7 +226,7 @@ get_git_info() {
     # check if not using same location as head?
     REV_SUFFIX=
 
-    if [ "$(git rev-parse $ref)" != "$(git rev-parse HEAD)" ]; then
+    if [ "$(git rev-parse "${ref}^{commit}")" != "$(git rev-parse HEAD)" ]; then
 	:
     # check if zero diff found in files anywhere?
     elif GIT_WORKING_DIR=${src_root} git diff --ignore-submodules=all --quiet &&
@@ -273,6 +281,7 @@ get_git_info() {
         esac
     fi
 
+    REV="${REV%${REV_SUFFIX}}"
     REV+=$REV_SUFFIX
 
     [ -z "$BRANCH" ] && die "ref is unclassifiable: $ref with GIT_DIR=$GIT_DIR";
@@ -306,8 +315,9 @@ branch_version_name() {
     [ -z "${post}" ] && ver=${br:${#pre}}            # all
 
     [[ "$pre" == [D]-??*- ]] && ver+=".${pre%-}"
-    [[ "$pre" == [FH]-* ]] &&   ver+=".${pre:0:1}"
-    [[ "$pre" == [a-zA-Z]- ]] && [[ "$pre" != *-[^-]* ]] && ver+=".${pre:0:1}"
+    [[ "$pre" == [FHR]-* ]] &&   ver+=".${pre:0:1}"
+    # if a single letter and some name is used??  why??
+    # [[ "$pre" == [a-zA-Z]-??*- ]] && ver+=".${pre:0:1}"   
 
     ver+="${post,,}"
     if [ "$ver" != "${ver:0:31}" ]; then 
@@ -390,10 +400,13 @@ save_version() {
 }
 
 # Fall back to previous build (or dist build?)?
-if ! [ -e $src_root/.git ]; then
-    [ -f $src_root/FULL_VERSION -a -f $src_root/PKG_REV ] && exit 0
-    echo "Error: $(pwd): No subversion or git info available!"   #### ERROR
-    exit 1
+if [ -e $src_root/.git ]; then
+    git remote -v show > vcs_repo.info
+    git 2>/dev/null log -1 >> vcs_repo.info
+elif [ -s $src_root/FULL_VERSION -a -s $src_root/PKG_REV ]; then
+   get_version
+else
+    die "Error: $(pwd): No subversion or git info available!"   #### ERROR
 fi
 
 git remote -v show > vcs_repo.info

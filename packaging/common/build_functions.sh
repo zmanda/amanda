@@ -104,11 +104,8 @@ get_yearly_tag() {
 detect_pkgdirs_top() {
     local calldepth=$(( ${#BASH_SOURCE[@]} - 1 ))
     local topcall=${BASH_SOURCE[${calldepth}]}
-    local pkgsdirs_toptest=
+    local pkgdir=
     local d=
-
-    # try a smart default for a standard autochk dir
-    declare -g pkgdirs_top=$src_root/packaging
 
     topcall="$(realpath -e "${topcall}" || echo $0)"
 
@@ -119,23 +116,27 @@ detect_pkgdirs_top() {
     local topcall_dir="${topcall%/*}"
     declare -g buildpkg_dir="${buildpkg_dir:-${topcall_dir}}"
 
-    d=${buildpkg_dir}
+    d=$(realpath -e ${pkgdirs_top}/..)  # go up one dir from packaging/.
 
     # script is real but not a clear directory location
     # top common directory is based on packaging repo common dir ... 
+
     # correct pkgdirs_top is just below it
-    [ ! -L $buildpkg_dir/../common -a -d $buildpkg_dir/../common ] && d=$buildpkg_dir/..
-    [ ! -L $buildpkg_dir/../../common -a -d $buildpkg_dir/../../common ] && d=$buildpkg_dir/../..
-    [ ! -L $buildpkg_dir/../../../common -a -d $buildpkg_dir/../../../common ] && d=$buildpkg_dir/../../..
-
+    if [[ "${buildpkg_dir}" == ${pkgdirs_top}/* ]]; then
+        :  # pkgdirs_top dir is correctly above our buildpkg_dir
     # if called from within common or scripts ... just use "packaging" as top
-    [ $d -ef $d/../common ] && d+=/..
-    [ $d -ef $d/../scripts ] && d+=/..
+    elif [[ "${buildpkg_dir}" == ${d}/* ]]; then
+        pkgdir="${buildpkg_dir#${d}/}" 
+        pkgdir=${pkgdir#common}
+        pkgdir=${pkgdir#scripts}
+        pkgdir=${pkgdir#/} # if present above?
+        pkgdir=${pkgdir%/*} # remove package type if needed
+        declare -g pkgdirs_top="${d}/${pkgdir}"
+    else
+        die "could not locate packaging directory to work in from here $buildpkg_dir"
+    fi
 
-    [ -e "$d/.git" ] && d="${d%/..}" # take back one level to keep project directory...
-
-    # narrow choices with calling script.s path, if possible
-    declare -g pkgdirs_top="$(realpath -e $d)"
+    # narrow choices with calling scripts path, if possible
     local n=$(( ${#pkgdirs_top} ))
 
     # confirm dir if needed to assert pkg_type 
@@ -237,54 +238,59 @@ detect_build_dirs() {
     eval "$presets"
 }
 
+get_last_git_commit() {
+    local workdir=$1
+    local subdir=${2:-$1}
+    local args="--no-pager --git-dir=$workdir/.git --work-tree=$workdir"
+
+    # workdir is useless.. so Feb 8 2000 time is offered
+    [ -n "$workdir" -a -d "$workdir" ] ||
+       { echo 950000000; return 1; }
+
+    # workdir exists but not a git directory
+    [ "$(cd $workdir; git 2>/dev/null rev-parse --show-toplevel)" -ef $workdir ] || 
+       return 0
+
+    # dir had detectable edits so no commit time
+    git $args diff --quiet --ignore-submodules=all $subdir || 
+       return 0
+
+    # emit a valid date (or zero if none??)
+    git $args log --pretty='%at' -1 $subdir
+    return 0
+}
+
 detect_root_pkgtime() {
     local a=0
     local b=0
-    local t="$(date +%s)"
-    local now=$t
-    local src_root_t=$t
-    local buildpkg_dir_t=$t
-    local pkg_common_t=$t
-    local src_root_hash=build-time
-    local buildpkg_dir_hash=build-time
-    local pkg_common_hash=build-time
-    local d
+    local pkgdirs_gittop=$(cd $pkgdirs_top; git 2>/dev/null rev-parse --show-toplevel )
+    local now="$(date +%s)"
+    local src_root_t=
+    local buildpkg_dir_t=
+    local pkg_common_t=
+    local src_root_hash=
+    local buildpkg_dir_hash=
+    local pkg_common_hash=
 
-    git rev-parse --git-dir 2>/dev/null | grep -q . || return 0
+    src_root_t=$(get_last_git_commit $src_root) &&
+        src_root_t=${src_root_t:-$now} &&
+        src_root_hash=$(cd $src_root; git 2>/dev/null rev-parse --short "@{@${src_root_t}}"; true)
+        
+    buildpkg_dir_t=$(get_last_git_commit $pkgdirs_gittop $buildpkg_dir) &&
+        buildpkg_dir_t=${buildpkg_dir_t:-$now} &&
+        buildpkg_dir_hash=$(cd $buildpkg_dir; git 2>/dev/null rev-parse --short "@{@$buildpkg_dir_t}}"; true)
 
-    # if no differences..
-    if git $git_srcroot_args diff --quiet --ignore-submodules=all $src_root; then
-        src_root_hash=$(git $git_srcroot_args log --pretty='%h' -1 $src_root)
-        src_root_t=$(git $git_srcroot_args log --pretty='%at' -1 $src_root)
-        src_root_t=$(( src_root_t + 0 ))
-    fi
-
-    d=$(realpath $buildpkg_dir)
-    if ! [ -n "$buildpkg_dir" -a -d "$d" ]; then
-        buildpkg_dir_t=950000000  # feb 2000
-        buildpkg_dir_hash=unkn
-    # if no differences..
-    elif git $git_pkgdirs_args diff --quiet --ignore-submodules=all $d; then
-        buildpkg_dir_hash=$(git $git_pkgdirs_args log --pretty='%h' -1 $d)
-        buildpkg_dir_t=$(git $git_pkgdirs_args log --pretty='%at' -1 $d)
-        buildpkg_dir_t=$(( buildpkg_dir_t + 0 ))
-    fi
-
-    d=$(realpath "$pkgdirs_top/common/.")
-    if ! [ -n "$pkgdirs_top" -a -d "$d" ]; then
-        pkg_common_t=950000000  # feb 2000
-        pkg_common_hash=unkn
-    # if no differences..
-    elif git $git_pkgdirs_args diff --quiet --ignore-submodules=all $d; then
-        pkg_common_hash=$(git $git_pkgdirs_args log --pretty='%h' -1 $d)
-        pkg_common_t=$(git $git_pkgdirs_args log --pretty='%at' -1 $d)
-        pkg_common_t=$(( pkg_common_t + 0 ))
-    fi
+    pkg_common_t=$(get_last_git_commit $pkgdirs_gittop $pkgdirs_top/common_z) &&
+        pkg_common_t=${pkg_common_t:-$now} &&
+        pkg_common_hash=$(cd $buildpkg_dir; git 2>/dev/null rev-parse --short "@{@$pkg_common_t}}"; true)
 
     {
-    printf -- "#--------------- %-14s: %s @%s =%ds old \n" top-dir $(get_yearly_tag $src_root_t) $src_root_hash $(( src_root_t - now ))
-    printf -- "#--------------- %-14s: %s @%s =%ds old \n" pkg-scripts $(get_yearly_tag $buildpkg_dir_t) $buildpkg_dir_hash $(( buildpkg_dir_t - now ))
-    printf -- "#--------------- %-14s: %s @%s =%ds old \n" pkg-common $(get_yearly_tag $pkg_common_t) $pkg_common_hash $(( pkg_common_t - now ))
+    printf -- "#--------------- %-14s: %s @%s =%ds old \n" top-dir \
+       $(get_yearly_tag $src_root_t) "${src_root_hash:-unkn}" $(( src_root_t - now ))
+    printf -- "#--------------- %-14s: %s @%s =%ds old \n" pkg-scripts \
+       $(get_yearly_tag $buildpkg_dir_t) "${buildpkg_dir_hash:-unkn}" $(( buildpkg_dir_t - now ))
+    printf -- "#--------------- %-14s: %s @%s =%ds old \n" pkg-common \
+       $(get_yearly_tag $pkg_common_t) "${pkg_common_hash:-unkn}" $(( pkg_common_t - now ))
     } | LANG=C sort -t: -b -k2
 
     t=${src_root_t}
@@ -296,6 +302,9 @@ detect_root_pkgtime() {
 
 get_version_evalstr() {
     local f=$(realpath ${BASH_SOURCE[0]})
+    # assign pkg_name and pkg_type from current context, if available
+    pkg_name=${pkg_name} \
+    pkg_type=${pkg_type} \
     ${BASH} -${setopt} ${f%/*}/version_setup.sh $1
 }
 
@@ -349,10 +358,14 @@ do_file_subst() {
 }
 
 get_version() {
-    # requires FULL_VERSION is in place already
-    declare -g VERSION=$(cd $src_root; $pkgdirs_top/common/substitute.pl <(echo %%VERSION%%) /dev/stdout);
+    # requires FULL_VERSION is accessible already
+    declare -g VERSION=$(<$src_root/FULL_VERSION)
+    declare -g LONG_BRANCH=$(<$src_root/LONG_BRANCH)
+    declare -g BRANCH=$LONG_BRANCH
+    declare -g REV=$(<$src_root/REV)
+    declare -g PKG_REV=$(<$src_root/PKG_REV)
     [ -n "$pkg_name" ] &&
-       declare -g PKG_NAME_VER="$pkg_name-$VERSION"
+       declare -g PKG_NAME_VER="${pkg_name}-$VERSION"
 }
 
 gen_pkg_build_config() {
@@ -788,7 +801,6 @@ set_zmanda_version() {
 # detect missing variables from calling script location
 detect_package_vars() {
     local localpkg_suffix=
-    local pkgdirs_top_top=
 
     declare >&/dev/null -p pkgconf_dir \
           buildpkg_dir \
@@ -812,17 +824,9 @@ detect_package_vars() {
 
    detect_build_dirs
 
-    if ! declare >&/dev/null -p pkg_name_pkgtime; then
-        src_root_top=$(cd $src_root; git rev-parse --show-toplevel)
-        pkgdirs_top_top=$(cd $pkgdirs_top; git rev-parse --show-toplevel)
-
-        git_srcroot_args="--git-dir=$src_root_top/.git --work-tree=$src_root_top"
-        git_pkgdirs_args="--git-dir=$pkgdirs_top_top/.git --work-tree=$pkgdirs_top_top"
-
-        # detect time stamp from areas touched by this script
-
+    # succeeds if it has been defined .. else probe for a good pkgtime
+    declare >&/dev/null -p pkg_name_pkgtime ||
         detect_root_pkgtime
-    fi
 
     [ -n "$pkg_name" ] && export pkg_name
     [ -n "$pkg_type" ] && export pkg_type
