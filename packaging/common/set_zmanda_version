@@ -14,20 +14,9 @@
 
 selfdir=$(readlink -e ${BASH_SOURCE[0]})
 selfdir=$(dirname ${selfdir})
-src_root=$(git rev-parse --show-toplevel)
 if [ "$(type -t get_yearly_tag)" != "function" ]; then
     . ${selfdir}/build_functions.sh
 fi
-
-# Fall back to previous build (or dist build?)?
-[ ! -e $src_root/.git -a -s $src_root/FULL_VERSION -a -s $src_root/PKG_REV ] && 
-   exit 0
-
-[ -e $src_root/.git ] ||
-    die "Error: $(pwd): No subversion or git info available!"   #### ERROR
-
-git remote -v show > vcs_repo.info
-git --no-pager log --max-count=1 >> vcs_repo.info
 
 # call the version setup
 set_zmanda_version $gitref
