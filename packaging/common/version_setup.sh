@@ -216,9 +216,9 @@ get_git_info() {
 
     ####### officially prove a tag or branch are reachable as a base
 
-    # test if we have a specific (master) branch
-    REV_PLACE="$(git rev-parse --short=9 --symbolic-full-name "$REV_TAGPOS" 2>/dev/null)"   # get short hash-version
-    REV_PLACE=${REV_PLACE:-"$(git rev-parse --short=9 --symbolic-full-name "$REV_REFBR" 2>/dev/null)"}
+    # just in case if we have a specific branch (e.g. master)
+    #REV_PLACE="$(git rev-parse --symbolic-full-name "${REV_TAGPOS}" 2>/dev/null)"   # get extend name to full
+    #REV_PLACE=${REV_PLACE:-"$(git rev-parse --symbolic-full-name "${REV_REFBR}" 2>/dev/null)"}
 
     unset GIT_DIR
     #### END OF GIT_DIR ENVIRONMENT OVERRIDE (IF PRESENT) #####
@@ -315,8 +315,9 @@ branch_version_name() {
     [ -z "${post}" ] && ver=${br:${#pre}}            # all
 
     [[ "$pre" == [D]-??*- ]] && ver+=".${pre%-}"
-    [[ "$pre" == [FH]-* ]] &&   ver+=".${pre:0:1}"
-    [[ "$pre" == [a-zA-Z]*- ]] && [[ "$pre" != *-[^-]* ]] && ver+=".${pre:0:1}"
+    [[ "$pre" == [FHR]-* ]] &&   ver+=".${pre:0:1}"
+    # if a single letter and some name is used??  why??
+    # [[ "$pre" == [a-zA-Z]-??*- ]] && ver+=".${pre:0:1}"   
 
     ver+="${post,,}"
     if [ "$ver" != "${ver:0:31}" ]; then 
