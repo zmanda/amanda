@@ -69,7 +69,8 @@ if WANT_SYSTEMD
 else
 if WANT_SERVER
     xinetd_in_FILE = xinetd.amandaserver.in
-else
+endif
+if WANT_CLIENT
     xinetd_in_FILE = xinetd.amandaclient.in
 endif
 
