@@ -35,7 +35,7 @@ use Amanda::Logfile qw( :logtype_t log_add );
 use Symbol;
 use Data::Dumper;
 use Scalar::Util;
-use File::Glob qw( :glob );
+use File::Glob qw( :bsd_glob );
 
 use vars qw(@ISA);
 
