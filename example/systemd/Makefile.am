@@ -17,7 +17,8 @@ systemd_units_in_FILE = \
     amanda-lserver-unix.socket.in \
     amanda-lserver-unix@.service.in \
     amanda-rest-server.service.in
-else
+endif
+if WANT_CLIENT
 systemd_units_in_FILE = \
     amanda-client.socket.in \
     amanda-client@.service.in
