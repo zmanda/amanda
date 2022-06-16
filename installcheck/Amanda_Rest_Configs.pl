@@ -288,7 +288,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 			'HOLDINGDISK' => [
 				'hd1'
 			],
-			'REST-API-PORT' => 0,
+			'REST-API-PORT' => 5000,
 			'MAXDUMPSIZE' => -1,
 			'DEBUG-TAPER' => 0,
 			'REPORT-FORMAT' => [],
@@ -296,8 +296,8 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 			'DEVICE-PROPERTY' => {},
 			'VAULT-STORAGE' => [],
 			'RESERVED-TCP-PORT' => [
-				'512',
-				'1023'
+				'800',
+				'840'
 			],
 			'TAPECYCLE' => 3,
 			'DEBUG-RECOVERY' => 1,
@@ -309,8 +309,8 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 			'INTERACTIVITY' => undef,
 			'AMRECOVER-CHECK-LABEL' => 'YES',
 			'UNRESERVED-TCP-PORT' => [
-				'1024',
-				'65535'
+				'11000',
+				'11040'
 			],
 			'DEBUG-SENDSIZE' => 0,
 			'MAX-DLE-BY-VOLUME' => 1000000000,
@@ -326,8 +326,8 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 			'CHANGERDEV' => undef,
 			'FLUSH-THRESHOLD-DUMPED' => 0,
 			'RESERVED-UDP-PORT' => [
-				'512',
-				'1023'
+				'800',
+				'840'
 			],
 			'REPORT-NEXT-MEDIA' => 'YES',
 			'DUMPCYCLE' => 10,
