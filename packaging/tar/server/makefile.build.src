@@ -101,7 +101,6 @@ AMANDAUSER=%%AMANDAUSER%%
 AMANDAGROUP=%%AMANDAGROUP%%
 AMANDACLIGROUP=%%AMANDACLIGROUP%%
 
-
 define CONFIG_FLAGS_COMMON
 CFLAGS="$${CFLAGS}" \
 LDFLAGS="$${LDFLAGS}" \
@@ -574,8 +573,6 @@ final-install:
 	# fakeroot can remain entirely within this MAKE only,
 	#    if perms were remembered from these chmod/chown calls
 	fakeroot -- $(MAKE) -f $(THIS_MAKEFILE) \
-	   PATH=$(PATH) \
-	   SHELL=$(SHELL) \
 	   GCC_TARGET=$(GCC_TARGET) \
 		perm-install-server \
 		perm-install-devel \
