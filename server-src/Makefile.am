@@ -20,13 +20,15 @@ LINTFLAGS=$(AMLINTFLAGS)
 
 amlib_LTLIBRARIES = 	libamserver.la
 
+amlibexec_SCRIPTS_PERL =
+sbin_SCRIPTS_PERL =
+
 if WANT_SERVER
 sbin_PROGRAMS =		amadmin		amcheck
 
 amlibexec_PROGRAMS =	amindexd	amtrmidx	\
 			amtrmlog	driver		dumper		\
 			planner
-
 amlibexec_SCRIPTS_PERL = \
 	    amadmin_perl \
 	    ambackupd \
@@ -53,7 +55,8 @@ sbin_SCRIPTS_PERL = \
 	    amflush \
 	    amreindex \
 	    amstatus
-endif
+# endif
+# if WANT_SERVER
 
 if WANT_RESTORE
 amlibexec_SCRIPTS_PERL += \
@@ -76,12 +79,14 @@ endif
 sbin_SCRIPTS_SHELL = \
 	    amcheckdb
 
-if WANT_SERVER
+# endif
+# if WANT_SERVER
 SCRIPTS_PERL = $(sbin_SCRIPTS_PERL) $(amlibexec_SCRIPTS_PERL)
 SCRIPTS_SHELL = $(sbin_SCRIPTS_SHELL) $(amlibexec_SCRIPTS_SHELL)
 sbin_SCRIPTS = $(sbin_SCRIPTS_PERL) $(sbin_SCRIPTS_SHELL)
 amlibexec_SCRIPTS = $(amlibexec_SCRIPTS_PERL) $(amlibexec_SCRIPTS_SHELL)
 endif
+# if WANT_SERVER
 
 ###
 # Because libamanda includes routines (e.g. regex) provided by some system
