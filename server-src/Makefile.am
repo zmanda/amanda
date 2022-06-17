@@ -96,7 +96,7 @@ LDADD = \
 	../device-src/libamdevice.la     \
 	../xfer-src/libamxfer.la         \
 	../ndmp-src/libndmlib.la         \
-	../common-src/libamanda.la   \
+	../common-src/libamanda.la       \
 	-lm
 
 libamserver_la_SOURCES=	amindex.c	cmdfile.c \
