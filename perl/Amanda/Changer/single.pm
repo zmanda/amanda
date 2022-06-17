@@ -26,7 +26,7 @@ use Carp;
 use vars qw( @ISA );
 @ISA = qw( Amanda::Changer );
 
-use File::Glob qw( :glob );
+use File::Glob qw( :bsd_glob );
 use File::Path;
 use Amanda::Config qw( :getconf );
 use Amanda::Debug;

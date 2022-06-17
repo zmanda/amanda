@@ -426,7 +426,7 @@ use Amanda::Logfile qw( :constants );
 use Amanda::Tapelist;
 use Amanda::Config qw( :init :getconf config_dir_relative );
 use Amanda::Util qw( quote_string weaken_ref match_disk match_host match_datestamp match_level match_labelstr_expr);
-use File::Glob qw( :glob );
+use File::Glob qw( :bsd_glob );
 use warnings;
 use strict;
 
