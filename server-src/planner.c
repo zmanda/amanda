@@ -1757,7 +1757,7 @@ static char *client_lvl_estimate_as_text(disk_t *dp, one_est_t *est,
     GString *strbuf;
     char *tmp;
 
-    strbuf = g_string_new(use_calcsize ? "CALCSIZE" : NULL);
+    strbuf = g_string_new(use_calcsize ? "CALCSIZE " : NULL);
 
     tmp = quote_string(dp->name);
     g_string_append_printf(strbuf, "%s %s ", dp->program, tmp);
