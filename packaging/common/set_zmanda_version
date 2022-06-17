@@ -26,7 +26,7 @@ if [[ "$VERSION_TAR" == /tmp/*/*.tar ]] && [ -f "$VERSION_TAR" ]; then
 fi
 
 ## Generate version from repository data.
-[ -n "${BRANCH}${REV}" ] ||
+[ -n "${VERSION}" ] ||
     die "Couldn't set FULL_VERSION or PKG_REV!"   #### ERROR
 
 # Amanda makes it easy to "force" a version string: just set FULL_VERSION

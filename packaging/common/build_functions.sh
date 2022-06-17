@@ -280,7 +280,7 @@ detect_root_pkgtime() {
         buildpkg_dir_t=${buildpkg_dir_t:-$now} &&
         buildpkg_dir_hash=$(cd $buildpkg_dir; git 2>/dev/null rev-parse --short "@{@$buildpkg_dir_t}}"; true)
 
-    pkg_common_t=$(get_last_git_commit $pkgdirs_gittop $pkgdirs_top/common_z) &&
+    pkg_common_t=$(get_last_git_commit $pkgdirs_gittop $pkgdirs_top/common) &&
         pkg_common_t=${pkg_common_t:-$now} &&
         pkg_common_hash=$(cd $buildpkg_dir; git 2>/dev/null rev-parse --short "@{@$pkg_common_t}}"; true)
 

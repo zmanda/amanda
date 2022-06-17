@@ -362,10 +362,10 @@ save_version() {
     # quiet!  no output until end
     get_git_info $ref >/dev/null
 
-    VERSION=$(branch_version_name "$BRANCH")
-    [ "${BRANCH}" = "trunk" ] && VERSION="trunk"
-    VERSION+="${REV}"
-    # old_set_pkg_rev o>/dev/null
+    if [ -z "$VERSION" ]; then
+        VERSION=$(branch_version_name "$BRANCH")
+        VERSION+="${REV}"
+    fi
 
     tmp=$(mktemp -d)
 
@@ -409,6 +409,4 @@ else
     die "Error: $(pwd): No subversion or git info available!"   #### ERROR
 fi
 
-git remote -v show > vcs_repo.info
-git --no-pager log --max-count=1 >> vcs_repo.info
 save_version ${1:-HEAD}
