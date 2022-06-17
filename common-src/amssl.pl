@@ -24,7 +24,7 @@ use warnings;
 
 use Getopt::Long;
 use POSIX qw(WIFEXITED WEXITSTATUS strftime);
-use File::Glob qw( :glob );
+use File::Glob qw( :bsd_glob );
 use File::Compare;
 use File::Copy;
 use Socket;        # This defines PF_INET and SOCK_STREAM

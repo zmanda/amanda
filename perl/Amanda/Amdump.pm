@@ -48,7 +48,7 @@ use warnings;
 
 use Getopt::Long;
 use POSIX qw(WIFEXITED WEXITSTATUS strftime);
-use File::Glob qw( :glob );
+use File::Glob qw( :bsd_glob );
 use File::Basename;
 
 use Amanda::Config qw( :init :getconf config_dir_relative );
