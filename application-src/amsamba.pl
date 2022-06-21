@@ -651,11 +651,26 @@ sub command_backup {
     $self->validate_inexclude();
 
     my ($pid);
-    my($smbclient_rdr, $smbclient_err);
+    my($tar_rdr, $smbclient_err);
     my (@cmd);
 
     push @cmd, "-d", "0";
     push @cmd, "-c", "";
+
+    my($tar_out_tmp, $tar_out) = (Symbol::gensym(), Symbol::gensym());
+
+    pipe $tar_rdr, $tar_out_tmp || 
+       $self->print_to_server_and_die("Can't open tarout_fd pipe: $!", $Amanda::Script_App::ERROR);
+
+    # create writable fds that the spawned smbclient can use
+    {
+        local $^F;
+
+        open($tar_out, ">&", $tar_out_tmp) ||
+           $self->print_to_server_and_die("Can't open tarout_fd: $!", $Amanda::Script_App::ERROR);
+        close($tar_out_tmp);
+        undef $tar_out_tmp;
+    }
 
     # tarmode quiet is missing/defaulted later on
     # tar flag "q" is missing in later versions
@@ -669,18 +684,19 @@ sub command_backup {
     $cmd[$#cmd] .= "r" if ($self->{regex_match}); # wildcards in the inc/exc patterns
     $cmd[$#cmd] .= "X" if (@{$self->{exclude}}); # not both
     $cmd[$#cmd] .= "I" if (@{$self->{include}}); # not both
-    $cmd[$#cmd] .= " - ";
+    $cmd[$#cmd] .= " /proc/self/fd/$tar_out->fileno ";
     $cmd[$#cmd] .= " @{$self->{exclude}}" if (@{$self->{exclude}}); # not both
     $cmd[$#cmd] .= " @{$self->{include}}" if (@{$self->{include}}); # not both
 
-    $pid = $self->spawn_smbclient(\$smbclient_rdr, \$smbclient_err, @cmd);
+    $pid = $self->spawn_smbclient(\$smbclient_err, \$smbclient_err, @cmd);
 
-    if ( ! $pid || ! $smbclient_rdr || ! $smbclient_err ) {
-	$self->print_to_server(sprintf("backup smbclient: failed to spawn w/[%s]: %d %s %s",
-                                join("' '",@cmd), ( defined($pid) ? $pid : -1 ),
-                                $smbclient_rdr."", $smbclient_err.""),
+    if ( ! $pid || ! $smbclient_err ) {
+	$self->print_to_server(sprintf("backup smbclient: failed to spawn w/[%s]: %d out=%s",
+                                   join("' '",@cmd), 
+                                   ( defined($pid) ? $pid : -1 ), 
+                                   $smbclient_err.""),
                                 $Amanda::Script_App::ERROR);
-        close($smbclient_rdr) if ( $smbclient_rdr );
+        close($tar_out) if ( $tar_out );
         close($smbclient_err) if ( $smbclient_err );
         unlink($self->{include_filename})
            if ( notNull($self->{include_filename}) );
@@ -705,7 +721,7 @@ sub command_backup {
     }
 
     my $file_to_close = 3;
-    my $smbclient_stdout_src = Amanda::MainLoop::fd_source($smbclient_rdr,
+    my $smbclient_stdout_src = Amanda::MainLoop::fd_source($tar_rdr,
 				$G_IO_IN|$G_IO_HUP|$G_IO_ERR);
     my $smbclient_stderr_src = Amanda::MainLoop::fd_source($smbclient_err,
 				$G_IO_IN|$G_IO_HUP|$G_IO_ERR);
@@ -721,7 +737,7 @@ sub command_backup {
     $smbclient_stdout_src->set_callback(sub {
 	my $buf;
 	my $blocksize = -1;
-	$blocksize = sysread($smbclient_rdr, $buf, 32768);
+	$blocksize = sysread($tar_rdr, $buf, 32768);
 
 	if (!$blocksize) {
 	    $file_to_close--;
