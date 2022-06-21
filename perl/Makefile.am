@@ -5,7 +5,7 @@
 include $(top_srcdir)/config/automake/vars.am
 include $(top_srcdir)/config/automake/scripts.am
 
-GENDATE := $(shell date --utc --date="@${SOURCE_DATE_EPOCH:-$(shell date +%s)}")
+GENDATE := $(shell date --utc --date="@$${SOURCE_DATE_EPOCH:-$(shell date +%s)}")
 
 # build amglue *first*
 SUBDIRS = amglue .
