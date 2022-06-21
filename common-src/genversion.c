@@ -32,8 +32,9 @@
  */
 #include "amanda.h"
 
-/* distribution-time information */
-#include "svn-info.h"
+/* distribution-time information for BUILT_BRANCH and BUILT_REV is ideally kept 
+ * in LONG_BRANCH and FULL_VERSION files.  If they are not found upon configuration
+ * it is generated from SVN or GIT if possible. */
 
 /* build-time information */
 #include "genversion.h"
