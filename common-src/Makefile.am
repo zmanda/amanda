@@ -10,7 +10,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/gnulib -I$(top_builddir)/common-src
 AM_CFLAGS = $(AMANDA_WARNING_CFLAGS) $(AMANDA_FILE_CFLAGS)
 AM_LDFLAGS = $(AMANDA_STATIC_LDFLAGS) $(AS_NEEDED_FLAGS)
 
-GENDATE = $(shell date --utc --date="@${SOURCE_DATE_EPOCH:-$(shell date +%s)}")
+GENDATE = $(shell date --utc --date="@$${SOURCE_DATE_EPOCH:-$(shell date +%s)}")
 
 amlib_LTLIBRARIES =	libamanda.la
 
@@ -157,14 +157,15 @@ EXTRA_PROGRAMS = genversion $(TEST_PROGS) make_security_file
 
 # Version-building steps:
 #
-# 1. configure builds svn-info.h, if svn info is available; this
-#    file is included in distribution tarballs
+# 1a. attempt to use LONG_BRANCH and FULL_VERSION if present from tarball
+# 1b. attempt to use "svn info" to generate build info
+# 1c. attempt to use "git rev-parse --symbolic-full-name" and "git describe" for build info
 # 2. Makefile creates genversion.h with build-time information
 # 3. Makefile builds genversion
 # 4. Makefile runs genversion to create version.c
 # 5. version.c is compiled into libamanda normally
 
-genversion_SOURCES = genversion.c svn-info.h
+genversion_SOURCES = genversion.c
 genversion_LDADD = $(libamanda_la_LIBADD)	\
 	../gnulib/libgnu.la
 
@@ -331,7 +332,3 @@ listlibsrc:
 	echo '#include "$<"' >>$@
 
 install-build-dependencies: install-data-am
-
-distclean-local:
-	if test `cd $(srcdir) && pwd` != `pwd`; then rm -f svn-info.h; fi
-MAINTAINERCLEANFILES+=svn-info.h
