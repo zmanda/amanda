@@ -779,7 +779,7 @@ sub command_backup {
     debug("index-wtr " .$index_wtr->fileno);
     debug("index-rdr " .$index_rdr->fileno);
 
-    my $size = -1;
+    my $size = 0;
     my $indexout_fd;
     if (notNull($self->{index})) {
 	open($indexout_fd, '>&=4') ||
@@ -934,7 +934,7 @@ sub command_backup {
 	print {$self->{mesgout}} "sendbackup: size $ksize\n";
 	debug("sending message: sendbackup: size $ksize\n");
     } else {
-	debug("no sendbackup-size message sent\n");
+	debug("no sendbackup-size message sent: $size + $data_size\n");
     }
 
     waitpid($pid, 0) if ( $pid );
@@ -956,7 +956,6 @@ sub command_index_from_output {
 
 sub index_from_output {
    my($fhin, $fhout) = @_;
-   my($size) = -1;
    while(<$fhin>) {
       next if m{^Total bytes written:};
       next if !m{^\./};
