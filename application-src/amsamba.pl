@@ -25,6 +25,8 @@ use warnings;
 use Getopt::Long;
 
 package Amanda::Application::Amsamba;
+
+use POSIX ":sys_wait_h";
 use base qw(Amanda::Application);
 use File::Copy;
 use File::Path;
@@ -47,6 +49,9 @@ our (@CLI_ARGV) = map {
        s{[\n].*}{};
        ( $_ ne "" ? ($_) : ());  # snip out empty strings.. (?)
     } ( @ARGV[1..$#ARGV] );
+
+
+our (%pids);
 
 # must not evaluate undef-uncreated vars using ne or eq
 # BUT ... must also differentiate between defined-but-"" and undef itself..
@@ -362,6 +367,54 @@ sub command_support {
     print "RECOVER-MODE SMB\n";
 }
 
+sub _cleanup_pids($) {
+    my ($sig) = @_;
+    my ($pid) = keys(%::pids);
+
+    die @_ if $^S;  # normal cleanup... not full killoff
+
+    return if ( ! %::pids );
+
+    for $pid ( keys(%::pids) ) {
+        ( waitpid($pid,WNOHANG) ? delete $::pids{$pid} 
+                                : kill(15,$pid) );
+    }
+
+    do { ($pid=waitpid(-1, WNOHANG)) && delete $::pids{$pid}; } 
+       while $pid > 0;
+
+    return if ( ! %::pids );
+    sleep(3);
+
+    for $pid ( keys(%::pids) ) {
+        ( waitpid($pid,WNOHANG) ? delete $::pids{$pid} 
+                                : kill(9,$pid) );
+    }
+
+    do { ($pid=waitpid(-1, WNOHANG)) && delete $::pids{$pid}; } 
+       while $pid > 0;
+
+    return if ( ! %::pids );
+    sleep(3);
+
+    for $pid ( keys(%::pids) ) {
+        ( waitpid($pid,WNOHANG) ? delete $::pids{$pid} 
+                                : kill(9,$pid) );
+    }
+
+    do { ($pid=waitpid(-1, WNOHANG)); } while $pid > 0;
+
+    return if ( ! %::pids );
+    sleep(3);
+
+    do { $pid = waitpid(-1, WNOHANG); } while $pid > 0;
+
+    return if ( ! %::pids );
+    sleep(3);
+
+    do { $pid = waitpid(-1, WNOHANG); } while $pid > 0;
+}
+
 sub spawn_smbclient {
     my ($self, $ref_stdout,$ref_stderr,@call_args) = @_;
     # my ($password_rdr, $password_wtr);
@@ -437,6 +490,7 @@ sub spawn_smbclient {
 
         $ENV{LC_CTYPE} = 'en_US.UTF-8';
         $pid = open3($stdin, $$ref_stdout, $$ref_stderr, @cmd);
+        $pid && ++$::pids{$pid};
         delete $ENV{LC_CTYPE};
 
         debug(sprintf("smbclient cmd: done pid=%d %s %s %s: $!",$pid, $stdin, $$ref_stdout,$$ref_stderr));
@@ -630,14 +684,17 @@ sub send_empty_tar_file {
     my $out;
     my $buf;
     my $size;
+    my $pid;
 
     Amanda::Debug::debug("Create empty archive with: tar --create --file=- --files-from=/dev/null");
-    open2($out, undef, "tar", "--create", "--file=-", "--files-from=/dev/null");
+    $pid = open2($out, undef, "tar", "--create", "--file=-", "--files-from=/dev/null");
+    $pid && ++$::pids{$pid};
 
     while(($size = sysread($out, $buf, 32768))) {
 	syswrite($out1, $buf, $size);
 	syswrite($out2, $buf, $size);
     }
+    waitpid($pid, 0) if ( $pid );
 }
 
 sub command_backup {
@@ -658,18 +715,21 @@ sub command_backup {
     push @cmd, "-c", "";
 
     my($tar_out_tmp, $tar_out) = (Symbol::gensym(), Symbol::gensym());
+    my $tar_out_fd;
 
     pipe $tar_rdr, $tar_out_tmp || 
        $self->print_to_server_and_die("Can't open tarout_fd pipe: $!", $Amanda::Script_App::ERROR);
 
     # create writable fds that the spawned smbclient can use
     {
-        local $^F;
+        local $^F = 0x10000; # silly-high-file-descriptor number
 
         open($tar_out, ">&", $tar_out_tmp) ||
            $self->print_to_server_and_die("Can't open tarout_fd: $!", $Amanda::Script_App::ERROR);
         close($tar_out_tmp);
         undef $tar_out_tmp;
+        # fcntl($tar_out, F_SETFD, fcntl($tar_out, F_GETFD, 0) & ~FD_CLOEXEC);
+        $tar_out_fd = $tar_out->fileno();
     }
 
     # tarmode quiet is missing/defaulted later on
@@ -684,11 +744,16 @@ sub command_backup {
     $cmd[$#cmd] .= "r" if ($self->{regex_match}); # wildcards in the inc/exc patterns
     $cmd[$#cmd] .= "X" if (@{$self->{exclude}}); # not both
     $cmd[$#cmd] .= "I" if (@{$self->{include}}); # not both
-    $cmd[$#cmd] .= " /proc/self/fd/$tar_out->fileno ";
+    $cmd[$#cmd] .= " /proc/self/fd/$tar_out_fd ";
     $cmd[$#cmd] .= " @{$self->{exclude}}" if (@{$self->{exclude}}); # not both
     $cmd[$#cmd] .= " @{$self->{include}}" if (@{$self->{include}}); # not both
 
-    $pid = $self->spawn_smbclient(\$smbclient_err, \$smbclient_err, @cmd);
+    debug("tar-out " .$tar_out->fileno);
+    debug("tar-rdr " .$tar_rdr->fileno);
+
+    $pid = $self->spawn_smbclient(\$smbclient_err, undef, @cmd);
+
+    close($tar_out); # don't keep a pipe open forever
 
     if ( ! $pid || ! $smbclient_err ) {
 	$self->print_to_server(sprintf("backup smbclient: failed to spawn w/[%s]: %d out=%s",
@@ -710,7 +775,9 @@ sub command_backup {
 
     my $pid_index1 = open3($index_wtr, $index_rdr, $index_err,
           $self->{gnutar}, "-tf", "-");
-    debug("index " .$index_rdr->fileno);
+    $pid_index1 && ++$::pids{$pid_index1};
+    debug("index-wtr " .$index_wtr->fileno);
+    debug("index-rdr " .$index_rdr->fileno);
 
     my $size = -1;
     my $indexout_fd;
@@ -721,7 +788,7 @@ sub command_backup {
     }
 
     my $file_to_close = 3;
-    my $smbclient_stdout_src = Amanda::MainLoop::fd_source($tar_rdr,
+    my $tar_src = Amanda::MainLoop::fd_source($tar_rdr,
 				$G_IO_IN|$G_IO_HUP|$G_IO_ERR);
     my $smbclient_stderr_src = Amanda::MainLoop::fd_source($smbclient_err,
 				$G_IO_IN|$G_IO_HUP|$G_IO_ERR);
@@ -730,19 +797,21 @@ sub command_backup {
     my $index_tar_stderr_src = Amanda::MainLoop::fd_source($index_err,
 				$G_IO_IN|$G_IO_HUP|$G_IO_ERR);
 
-    my $smbclient_stdout_done = 0;
+    my $tar_done = 0;
     my $smbclient_stderr_done = 0;
+    #  NOTE: needed for message
     my $data_size = 0;
     my $nb_files = 0;
-    $smbclient_stdout_src->set_callback(sub {
+    $tar_src->set_callback(sub {
 	my $buf;
 	my $blocksize = -1;
 	$blocksize = sysread($tar_rdr, $buf, 32768);
 
 	if (!$blocksize) {
+            debug("index-early-quit $data_size");
 	    $file_to_close--;
-	    $smbclient_stdout_src->remove();
-	    $smbclient_stdout_done = 1;
+	    $tar_src->remove();
+	    $tar_done = 1;
 	    if ($smbclient_stderr_done) {
 		if ($data_size == 0 and $nb_files == 0 and $size == 0) {
 		    $self->send_empty_tar_file(*STDOUT, $index_wtr);
@@ -750,12 +819,13 @@ sub command_backup {
 		close($index_wtr);
 		close(STDOUT);
 	    }
-	    close($smbclient_rdr);
+	    close($tar_rdr);
 	    Amanda::MainLoop::quit() if $file_to_close == 0;
 	    return;
 	}
 
 	$data_size += $blocksize;
+	# debug("index-copy $data_size");
 	syswrite(STDOUT, $buf, $blocksize);
 	syswrite($index_wtr, $buf, $blocksize);
     });
@@ -767,7 +837,7 @@ sub command_backup {
 	    $file_to_close--;
 	    $smbclient_stderr_src->remove();
 	    $smbclient_stderr_done = 1;
-	    if ($smbclient_stdout_done) {
+	    if ($tar_done) {
 		if ($data_size == 0 and $nb_files == 0 and $size == 0) {
 		    $self->send_empty_tar_file(*STDOUT, $index_wtr);
 		}
@@ -780,7 +850,7 @@ sub command_backup {
 	}
 
 	chomp $line;
-	debug("stderr: " . $line);
+	debug("stderr: $line");
 	return if $line =~ m{Domain=};
 	return if $line =~ m{tarmode is now };
 	return if $line =~ m{tar_re_search set};
@@ -856,12 +926,15 @@ sub command_backup {
     # handle all "coroutines" together...
     Amanda::MainLoop::run();
 
-    if ($size >= 0) {
-	my $ksize = $size / 1024;
+    if ( ($size||$data_size) >= 0) {
+	my $ksize = ($size||$data_size) / 1024;
 	if ($ksize < 32) {
 	    $ksize = 32;
 	}
 	print {$self->{mesgout}} "sendbackup: size $ksize\n";
+	debug("sending message: sendbackup: size $ksize\n");
+    } else {
+	debug("no sendbackup-size message sent\n");
     }
 
     waitpid($pid, 0) if ( $pid );
@@ -895,10 +968,15 @@ sub index_from_output {
 sub command_index {
     my $self = shift;
     my $index_fd;
-    open2($index_fd, ">&0", $self->{gnutar}, "--list", "--file", "-") ||
+    my $pid;
+
+    ( $pid = open2($index_fd, ">&0", $self->{gnutar}, "--list", "--file", "-")) ||
 	$self->print_to_server_and_die("Can't run $self->{gnutar}: $!",
 				       $Amanda::Script_App::ERROR);
+    $pid && ++$::pids{$pid};
+
     index_from_output($index_fd, \*STDOUT);
+    waitpid($pid, 0) if ($pid);
 }
 
 sub create_smb_subdir {
@@ -1055,6 +1133,7 @@ sub command_validate {
    my $pid = open3('<&STDIN', '>&STDOUT', '>&STDERR', @cmd) ||
 	$self->print_to_server_and_die("Unable to run @cmd: $!",
 				       $Amanda::Script_App::ERROR);
+   $pid && ++$::pids{$pid};
    waitpid($pid, 0) if ($pid);
    if( $? != 0 ){
 	$self->print_to_server_and_die("$self->{gnutar} returned error",
@@ -1140,6 +1219,11 @@ if (notNull($opt_version)) {
     print "amsamba-" . $Amanda::Constants::VERSION , "\n";
     exit(0);
 }
+
+$SIG{'__DIE__'} = \&Amanda::Application::Amsamba::_cleanup_pids;
+$SIG{'TERM'} = \&Amanda::Application::Amsamba::_cleanup_pids;
+$SIG{'PIPE'} = \&Amanda::Application::Amsamba::_cleanup_pids;
+$SIG{'INT'} = \&Amanda::Application::Amsamba::_cleanup_pids;
 
 my $application = Amanda::Application::Amsamba->new($opt_config, $opt_host, $opt_disk, $opt_device, \@opt_level, $opt_index, $opt_message, $opt_collection, $opt_record, $opt_calcsize, $opt_gnutar_path, $opt_smbclient_path, $opt_amandapass, \@opt_exclude_file, \@opt_exclude_list, $opt_exclude_optional, \@opt_include_file, \@opt_include_list, $opt_include_optional, $opt_recover_mode, $opt_allow_anonymous, $opt_target, $opt_regex_match);
 
