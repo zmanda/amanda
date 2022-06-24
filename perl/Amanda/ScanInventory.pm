@@ -247,19 +247,22 @@ sub _scan {
 
             my $status = $res->{'device'}->status;
             my $volume_header = $res->{'device'}->volume_header;
-            my $label = $volume_header->{'name'};
+            my $label = undef; # set on success only
+            my $vol_tle = undef; # set on success only
 
             if ( $status == $DEVICE_STATUS_SUCCESS ) {
+                $label = $volume_header->{'name'}; # only use label found on success
+
                 # success if device has success and is_reusable_volume()
                 next if ($self->is_reusable_volume(label => $label, new_label_ok => 1));
 
-                my $vol_tle = $self->{'tapelist'}->lookup_tapelabel($label);
+                $vol_tle = $self->{'tapelist'}->lookup_tapelabel($label);
                 # success if device has success and volume_is_new_labelled()
                 next if ($vol_tle && $self->volume_is_new_labelled($vol_tle, {label => $label, barcode => $res->{barcode}}));
             }
 
             # try if volume_is_labelable at all...
-            next if ($self->volume_is_labelable({ device_status => $status,
+            next if (!$vol_tle && $self->volume_is_labelable({ device_status => $status,
 						     f_type  => $volume_header->{'type'},
 						     label   => $label,
 						     slot    => $res->{'this_slot'},
