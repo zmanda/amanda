@@ -1,4 +1,24 @@
-2019-11-30  Chris Hassell <lamby@debian.org>
+2022-05-23 chassell <chris.hassell@betsol.com>
+	* Purpose: set a default to disable auto-label from claiming non-amanda and "other-config" labels as if available
+	* Changes: Add a build flag to re-include options.  Block use of two enums for the features.  Change perl uses to null-set options.
+	* File: config/amanda/tape.m4: adds build flag to prevent auto-label issues: "Define if unsafe erasure of tapes is allowed"
+	* File: common-src/conffile.c: exclude definition(s) of CONF_OTHER_CONFIG and CONF_NON_AMANDA enums
+	* File: common-src/conffile.h: add C-macros of null-set for AL_OTHER_CONFIG and AL_NON_AMANDA flag bits
+	* File: installcheck/{Amanda_Changer.pl,Amanda_Config.pl}: tests for OTHER_CONFIG and NON_AMANDA options
+
+2022-06-23 chassell <chris.hassell@betsol.com>
+	* issue#160: found problem with code refactor earlier
+
+2019-12-10 chassell <chris.hassell@betsol.com>
+	* 3 5.default amanda security (#142)
+	* amanda-security.conf becomes a default installed file
+	* adding final step in install files
+
+2019-12-03 chassell <chris.hassell@betsol.com>
+	* handle tape scan more correctly (#136)
+	* check the correct variable to ensure exclude-list is not used (#138)
+	* modernize s3/aws interface (#137)
+	* remove strange use of @prefix@ (#135)
 	* perl/Amanda/Taper/Scan/lexical.pm (last_use_label_from_pool):  issue #126
 		bad copy-paste fail fix
 
