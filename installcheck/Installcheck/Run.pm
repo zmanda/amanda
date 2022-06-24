@@ -656,7 +656,7 @@ sub is_sort_array
 sub my_quotemeta($) {
     # allow spaces, tabs, commas, colons and dashes to be unquoted to make matching easier in program regexes
     my $v = quotemeta($_[0]);
-    $v =~ s{\\([-@%: \t/,\n\r])}{\1}gs;
+    $v =~ s{\\([-@%: \t/,\n\r])}{$1}gs;
     $v =~ s{\\$}{}gm;
     return $v;
 }
