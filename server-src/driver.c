@@ -4278,7 +4278,7 @@ read_flush(
 	    cmddata = g_hash_table_lookup(cmddatas->cmdfile, GINT_TO_POINTER(id));
 	    if (cmddata) {
 		for (taper = tapetable; taper < tapetable+nb_storage ; taper++) {
-		    if (g_str_equal(taper->storage_name, cmddata->dst_storage)) {
+		    if (cmddata->dst_storage && g_str_equal(taper->storage_name, cmddata->dst_storage)) {
 			sched_t *sp;
 			sp = g_new0(sched_t, 1);
 			sp->command_id = cmddata->id;
@@ -4689,7 +4689,7 @@ cmdfile_vault(
     // find taper_t for the storage
     for (i=0; i < nb_storage ; i++) {
 	if (tapetable[i].storage_name &&
-	    g_str_equal(tapetable[i].storage_name, cmddata->dst_storage)) {
+	    cmddata->dst_storage && g_str_equal(tapetable[i].storage_name, cmddata->dst_storage)) {
 	    taper = &tapetable[i];
 	    break;
 	}

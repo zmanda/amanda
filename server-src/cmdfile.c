@@ -833,7 +833,7 @@ cmdfile_get_nb_image_cmd_for_storage_fn(
 	strcmp(cmddata->diskname, data->diskname) == 0 &&
 	strcmp(cmddata->dump_timestamp, data->timestamp) == 0 &&
 	cmddata->level == data->level &&
-	strcmp(cmddata->dst_storage, data->storage) == 0) {
+        cmddata->dst_storage && strcmp(cmddata->dst_storage, data->storage) == 0) {
 	data->count++;
     }
 }
