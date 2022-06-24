@@ -75,9 +75,9 @@ pad() {
 
 if [ "$1" = -d ]; then
 	# decrypt
-	"${OPENSSL}" enc -d "-${CIPHER}" -nopad -salt -pass fd:3 3< "${PASSPHRASE}"
+	"${OPENSSL}" enc -d -pbkdf2 "-${CIPHER}" -nopad -salt -pass fd:3 3< "${PASSPHRASE}"
 else
 	# encrypt
-	pad | "${OPENSSL}" enc -e "-${CIPHER}" -nopad -salt -pass fd:3 3< "${PASSPHRASE}"
+	pad | "${OPENSSL}" enc -e -pbkdf2 "-${CIPHER}" -nopad -salt -pass fd:3 3< "${PASSPHRASE}"
 fi
 
