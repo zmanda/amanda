@@ -43,7 +43,6 @@ server_tests = \
 	Amanda_Disklist \
 	Amanda_DB_Catalog \
 	Amanda_Device \
-	Amanda_S3_Debug \
 	Amanda_Holding \
 	Amanda_Logfile \
 	Amanda_Process \
