@@ -10,8 +10,8 @@ service amanda
         socket_type     = stream
         protocol        = tcp
         wait            = no
-        user            = amandabackup
-        group           = disk
+        user            = @CLIENT_LOGIN@
+        group           = @SETUID_GROUP@
         groups          = yes
         server          = @amlibexecdir@/amandad
         server_args     = -auth=bsdtcp amdump amindexd amidxtaped senddiscover

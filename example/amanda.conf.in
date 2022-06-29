@@ -107,8 +107,8 @@ runtapes 1			# number of tapes to be used in a single run of amdump
 tapedev "@EXAMPLE_TAPEDEV@"	# tape changer or device to use
 
 # To use vtapes, create some slotN directories (slot0, slot1, etc.) under
-# /var/amanda/vtapes and use this tapedev:
-## tapedev "chg-disk:/var/amanda/vtapes"
+# /var/lib/amanda/vtapes and use this tapedev:
+## tapedev "chg-disk:/var/lib/amanda/vtapes"
 
 # To use a tape library, uncomment this definition.  See amanda-changers(7)
 # for more configuration options.
@@ -628,7 +628,7 @@ define dumptype custom-compress {
    program "GNUTAR"
    comment "custom client compression dumped with tar"
    compress client custom
-   client_custom_compress "/usr/bin/bzip2"
+   client_custom_compress "@BZIP2@"
 }
 
 define dumptype server-encrypt-fast {

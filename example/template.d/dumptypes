@@ -327,7 +327,7 @@ define dumptype custom-compress {
    root-tar
    comment "custom client compression, dumped with tar"
    compress client custom
-   client_custom_compress "/usr/bin/bzip2"
+   client_custom_compress "@BZIP2@"
 }
 
 # amcrypt requires aespipe and uuencode
