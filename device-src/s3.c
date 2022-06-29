@@ -3741,7 +3741,7 @@ s3_part_upload(S3Handle *hdl,
  * @returns: false if an error ocurred
  */
 s3_result_t
-s3_copypart_upload(S3Handle *hdl,
+s3_copypart_upload_rt(S3Handle *hdl,
           const char *bucket,
           const char *key,
 	  const char *uploadId,
@@ -3790,7 +3790,7 @@ s3_copypart_upload(S3Handle *hdl,
 
 
 char *
-s3_initiate_multi_part_upload(
+s3_initiate_multi_part_upload_rstr(
     S3Handle *hdl,
     const char *bucket,
     const char *key)
@@ -3818,7 +3818,7 @@ s3_initiate_multi_part_upload(
 }
 
 s3_result_t
-s3_complete_multi_part_upload(
+s3_complete_multi_part_upload_rt(
     S3Handle *hdl,
     const char *bucket,
     const char *key,
@@ -3853,7 +3853,7 @@ s3_complete_multi_part_upload(
 }
 
 s3_result_t
- s3_compose_append_upload(
+s3_compose_append_upload_rt(
     S3Handle *hdl,
     const char *bucket,
     const char *key,
@@ -4420,12 +4420,12 @@ s3_read_range(S3Handle *hdl,
     return result == S3_RESULT_OK;
 }
 
-s3_result_t
+gboolean
 s3_delete(S3Handle *hdl,
           const char *bucket,
           const char *key)
 {
-    s3_result_t result = S3_RESULT_FAIL;
+    s3_result_t result;
 
     static result_handling_t result_handling[] = { // delete function responses
         { 200,  0,                     0, S3_RESULT_OK },
@@ -4446,7 +4446,7 @@ s3_delete(S3Handle *hdl,
 		 NULL, NULL, NULL, NULL, NULL,  // delete needs no read
                  result_handling, FALSE);
 
-    return result;
+    return ( result == S3_RESULT_OK );
 }
 
 gboolean
@@ -5168,7 +5168,7 @@ get_openstack_swift_api_v1_setting(
                              NULL, NULL, result_handling, FALSE);
 }
 
-static gboolean
+static s3_result_t
 get_openstack_swift_api_v2_setting(
 	S3Handle *hdl)
 {
@@ -5369,7 +5369,7 @@ parse_swift_v3_catalog(
 }
 
 s3_result_t
-s3_multi_delete(S3Handle *hdl,
+s3_multi_delete_rt(S3Handle *hdl,
 		const char *bucket,
 		GSList *objects)
 {

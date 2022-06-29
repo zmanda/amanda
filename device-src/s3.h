@@ -547,7 +547,7 @@ s3_part_upload(S3Handle *hdl,
  * @returns: false if an error ocurred
  */
 s3_result_t
-s3_copypart_upload(S3Handle *hdl,
+s3_copypart_upload_rt(S3Handle *hdl,
           const char *bucket,
           const char *key,
 	  const char *uploadID,
@@ -564,7 +564,7 @@ s3_copypart_upload(S3Handle *hdl,
  * @returns: string, the uploadId or NULL on failure
  */
 char *
-s3_initiate_multi_part_upload(
+s3_initiate_multi_part_upload_rstr(
     S3Handle *hdl,
     const char *bucket,
     const char *key);
@@ -578,8 +578,8 @@ s3_initiate_multi_part_upload(
  *
  * @returns: false if an error ocurred
  */
-gboolean
-s3_complete_multi_part_upload(
+s3_result_t
+s3_complete_multi_part_upload_rt(
     S3Handle *hdl,
     const char *bucket,
     const char *key,
@@ -591,7 +591,7 @@ s3_complete_multi_part_upload(
     gpointer read_data);
 
 s3_result_t
- s3_compose_append_upload(
+s3_compose_append_upload_rt(
     S3Handle *hdl,
     const char *bucket,
     const char *key,
@@ -728,7 +728,7 @@ s3_delete(S3Handle *hdl,
  *           occurs; a non-existent file is I{not} considered an error.
  */
 s3_result_t
-s3_multi_delete(S3Handle *hdl,
+s3_multi_delete_rt(S3Handle *hdl,
                 const char *bucket,
                 GSList *objects);
 
