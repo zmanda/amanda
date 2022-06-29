@@ -35,7 +35,7 @@ property "foo-PG-HOST" "localhost"
 #   Connect to port 5432 (PostgreSQL's default)
 property "foo-PG-PORT" "5432"
 #   Connect as user amandabackup (Note: must be a superuser)
-property "foo-PG-USER" "amandabackup"
+property "foo-PG-USER" "@CLIENT_LOGIN@"
 #   Connect to database template1 (exists by default)
 property "foo-PG-DB" "template1"
 #   Database's data directory

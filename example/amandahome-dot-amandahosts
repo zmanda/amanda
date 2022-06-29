@@ -2,3 +2,9 @@ localhost root amindexd amidxtaped
 localhost amandabackup amdump senddiscover
 localhost.localdomain root amindexd amidxtaped
 localhost.localdomain amandabackup amdump senddiscover
+::ffff:127.0.0.1 root amindexd amidxtaped
+::ffff:127.0.0.1 amandabackup amdump senddiscover
+127.0.0.1 root amindexd amidxtaped
+127.0.0.1 amandabackup amdump senddiscover
+::1 root amindexd amidxtaped
+::1 amandabackup amdump senddiscover
