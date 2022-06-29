@@ -72,5 +72,5 @@ for i in $(<.all-tests); do
     hdr="${host}-$i"
     HARNESS_ACTIVE=1 setuid_run_test -I. "./$i" \
             >& >(summarize_tests "$hdr") ||
-        printf "%s: EXIT STATUS %d" "$hdr" $?
+        printf "%s: EXIT STATUS %d\n" "$hdr" $?
 done;
