@@ -817,7 +817,7 @@ static void s3_thread_write_session(gpointer thread_data,
 
 static void s3_thread_delete_session( gpointer thread_data, gpointer data );
 
-static s3_result_t s3_thread_multi_delete(Device *pself, S3_by_thread *s3t, GSList **d_objectsp);
+static s3_result_t s3_thread_multi_delete(Device *pself, S3_by_thread *s3t, GSList *volatile *d_objectsp);
 
 
 static int s3_thread_xferinfo_func( void *thread_data,
@@ -836,8 +836,8 @@ static gboolean make_bucket(Device * pself);
 
 
 /* Wait that all threads are done */
-static void s3_wait_threads_done(const S3Device *self);
-static void s3_cancel_busy_threads(S3Device *self, gboolean do_truncate);
+static void wait_threads_done(const S3Device *self);
+static void cancel_busy_threads(S3Device *self, gboolean do_truncate);
 
 /*
  * virtual functions for device API */
@@ -1190,7 +1190,7 @@ write_amanda_header(S3Device *self,
     CurlBuffer amanda_header_tmp = { 0 }; // to load once only
     CurlBuffer *s3buf_hdr_tmp = &amanda_header_tmp;
     char * key = NULL;
-    gboolean result;
+    gboolean result_ok;
     dumpfile_t * dumpinfo = NULL;
     Device *d_self = DEVICE(self);
     size_t header_size;
@@ -1207,7 +1207,7 @@ write_amanda_header(S3Device *self,
     if (!s3_buffer_load(s3buf_hdr_tmp, hdr, header_size, self->verbose)) {
         errmsg = g_strdup(_("Amanda tapestart header won't fit in a single block!"));
         errflags = DEVICE_STATUS_DEVICE_ERROR;
-        result = FALSE;
+        result_ok = FALSE;
 	goto cleanup;
     }
 
@@ -1220,7 +1220,7 @@ write_amanda_header(S3Device *self,
         d_self->is_eom = TRUE;
         errmsg = g_strdup(_("No space left on device")),
         errflags = DEVICE_STATUS_DEVICE_ERROR;
-        result = FALSE;
+        result_ok = FALSE;
         goto cleanup;
     }
  
@@ -1230,16 +1230,16 @@ write_amanda_header(S3Device *self,
     catalog_reset(self, s3_buffer_data_func(s3buf_hdr_tmp), label);
 
     key = tapestart_key(self); // prefix+"special"+"-tapestart"
-    result = s3_upload(get_temp_curl(self), self->bucket, key, FALSE,
+    result_ok = s3_upload(get_temp_curl(self), self->bucket, key, FALSE,
 		       S3_BUFFER_READ_FUNCS, s3buf_hdr_tmp,
                        NULL, NULL);
-    if (!result) {
+    if (!result_ok) {
         errmsg = g_strdup_printf(_("While writing amanda header: %s"), s3_strerror(get_temp_curl(self))); 
         errflags = DEVICE_STATUS_DEVICE_ERROR | DEVICE_STATUS_VOLUME_ERROR;
-        // result = FALSE;
+        // result_ok = FALSE;
 	goto cleanup;
     }
-    // result = TRUE;
+    // result_ok = TRUE;
 
     self->volume_bytes += header_size;
     d_self->header_block_size = header_size; // save this size
@@ -1257,7 +1257,7 @@ cleanup:
         device_set_error(d_self, errmsg, errflags);
     dumpfile_free(dumpinfo); // free the one *not* in d_self->volume_header
     s3_buffer_destroy(s3buf_hdr_tmp);
-    return result;
+    return result_ok;
 }
 
 /* Convert an object name into a file number, assuming the given prefix
@@ -1328,7 +1328,7 @@ initiate_multi_part_upload(const S3Device *self, S3_by_thread *s3t)
     {
         g_mutex_unlock(self->thread_list_mutex); // allow unlocked
         // use "object_uploadNum" for ordered writes
-        last_uploadID = s3_initiate_multi_part_upload(s3t->s3, self->bucket, s3t->object_subkey);
+        last_uploadID = s3_initiate_multi_part_upload_rstr(s3t->s3, self->bucket, s3t->object_subkey);
         g_mutex_lock(self->thread_list_mutex); // allow unlocked
     }
 
@@ -1447,7 +1447,8 @@ get_remaining_cp_parts(const S3_by_thread *s3t, objbytes_t *pblk)
                                   pblk); // position return
 }
 
-static s3_result_t thread_write_close_compose_append(const S3Device *self, S3_by_thread *s3t)
+static s3_result_t 
+thread_write_close_compose_append(const S3Device *self, S3_by_thread *s3t)
 {
     Device *pself = DEVICE(self);
     GSList *delete_objlist = NULL;
@@ -1524,27 +1525,30 @@ static s3_result_t thread_write_close_compose_append(const S3Device *self, S3_by
 
         s3_buffer_load_string(s3buf_tmp, g_string_free(buf, FALSE), self->verbose);
 
-        g_mutex_unlock(self->thread_list_mutex);
-        result = s3_compose_append_upload(s3t->s3,
-                                         self->bucket, self->file_objkey,
-                                         S3_BUFFER_READ_FUNCS, s3buf_tmp);
-        g_mutex_lock(self->thread_list_mutex);
+	{
+	    g_mutex_unlock(self->thread_list_mutex);
+	    result = s3_compose_append_upload_rt(s3t->s3,
+					     self->bucket, self->file_objkey,
+					     S3_BUFFER_READ_FUNCS, s3buf_tmp);
+	    g_mutex_lock(self->thread_list_mutex);
+	}
 
-        if (result != S3_RESULT_OK) {
-            if (device_in_error(pself))
-                return result;
-            s3t->errflags = DEVICE_STATUS_DEVICE_ERROR;
-            s3t->errmsg = g_strdup_printf(_("Compose Append failed: '%s'"), self->file_objkey);
-            g_slist_free_full(delete_objlist, free_s3_object);
-            return result;
-        }
+	if (result != S3_RESULT_OK) {
+	    if (device_in_error(pself))
+		return result;
+	    s3t->errflags = DEVICE_STATUS_DEVICE_ERROR;
+	    s3t->errmsg = g_strdup_printf(_("Compose Append failed: '%s'"), self->file_objkey);
+	    g_slist_free_full(delete_objlist, free_s3_object);
+	    return result;
+	}
 
         for (nIndex = 0; (node=g_slist_nth(delete_objlist, nIndex)) ; nIndex++) 
         {
             s3_object *object1 = (s3_object *)node->data;
 
             g_mutex_unlock(self->thread_list_mutex);
-            result = s3_delete(s3t->s3, self->bucket, object1->key);
+            result = ( s3_delete(s3t->s3, self->bucket, object1->key) 
+	    		? S3_RESULT_OK : S3_RESULT_FAIL );
             g_mutex_lock(self->thread_list_mutex);
            
             if (result != S3_RESULT_OK) {
@@ -1652,7 +1656,7 @@ thread_mp_upload_combine(const S3Device *self, S3_by_thread *s3t)
     /////////////////////////////// prepared with string: now unlock
     {
         g_mutex_unlock(self->thread_list_mutex); // allow unlocked
-        result = s3_complete_multi_part_upload(s3t->s3,
+        result = s3_complete_multi_part_upload_rt(s3t->s3,
                              self->bucket, s3t->object_subkey, s3t->object_uploadId,
                              S3_BUFFER_READ_FUNCS, s3buf_tmp);
        g_mutex_lock(self->thread_list_mutex); // allow unlocked
@@ -1671,11 +1675,11 @@ thread_mp_upload_combine(const S3Device *self, S3_by_thread *s3t)
 
 
 
-static int
+static gboolean
 abort_partial_upload(S3Device *self)
 {
     Device *pself = DEVICE(self);
-    gboolean result;
+    gboolean result_ok;
     GSList *partlist;
     s3_object *part = NULL;
     DeviceAccessMode oldmode = pself->access_mode;
@@ -1693,12 +1697,12 @@ abort_partial_upload(S3Device *self)
     }
 
     // all multipart-uploads from "?uploads" ... for EVERY file AND temporary
-    result = s3_list_keys(get_temp_curl(self), self->bucket, "uploads", self->prefix, NULL, 0,
+    result_ok = s3_list_keys(get_temp_curl(self), self->bucket, "uploads", self->prefix, NULL, 0,
                           &partlist, NULL);
 
-    if (!result) {
+    if (!result_ok) {
         if (device_in_error(pself)) 
-            return result;
+            return result_ok;
 	device_set_error(pself,
 	    g_strdup_printf(_("While listing partial upload: %s"), s3_strerror(get_temp_curl(self))),
 	    DEVICE_STATUS_DEVICE_ERROR | DEVICE_STATUS_VOLUME_ERROR);
@@ -1720,15 +1724,15 @@ abort_partial_upload(S3Device *self)
 static guint
 find_last_file(S3Device *self)
 {
-    gboolean result;
+    gboolean result_ok;
     GSList *keys;
     guint last_file = 0;
     // Device *d_self = DEVICE(self);
 
     // get common-prefixes from <prefix>*-* subkeys
-    result = s3_list_keys(get_temp_curl(self), self->bucket, NULL, self->prefix, "-", 0,
+    result_ok = s3_list_keys(get_temp_curl(self), self->bucket, NULL, self->prefix, "-", 0,
                           &keys, NULL);
-    if (!result) {
+    if (!result_ok) {
 	// device_set_error(d_self,
 	//     g_strdup_printf(_("While listing S3 keys: %s"), s3_strerror(get_temp_curl(self))),
 	//     DEVICE_STATUS_DEVICE_ERROR | DEVICE_STATUS_VOLUME_ERROR);
@@ -1753,15 +1757,15 @@ find_last_file(S3Device *self)
  */
 static guint
 find_next_file(S3Device *self, guint last_file) {
-    gboolean result;
+    gboolean result_ok;
     GSList *keylist;
     guint next_file = G_MAXUINT;
     // Device *d_self = DEVICE(self);
 
     // get common-prefixes from <prefix>*-* subkeys
-    result = s3_list_keys(get_temp_curl(self), self->bucket, NULL, self->prefix, "-", 0,
+    result_ok = s3_list_keys(get_temp_curl(self), self->bucket, NULL, self->prefix, "-", 0,
                           &keylist, NULL);
-    if (!result) {
+    if (!result_ok) {
 	// device_set_error(d_self,
 	//     g_strdup_printf(_("While listing S3 keys: %s"), s3_strerror(get_temp_curl(self))),
 	//     DEVICE_STATUS_DEVICE_ERROR | DEVICE_STATUS_VOLUME_ERROR);
@@ -1797,7 +1801,7 @@ static gboolean
 delete_file(S3Device *self,
             int file)
 {
-    gboolean result;
+    gboolean result_ok;
     GSList *keylist;
     guint64 file_bytes = 0;
     Device *pself = DEVICE(self);
@@ -1810,10 +1814,10 @@ delete_file(S3Device *self,
     }
 
     // all keys for file# file
-    result = s3_list_keys(get_temp_curl(self), self->bucket, NULL, my_prefix, NULL, 0,
+    result_ok = s3_list_keys(get_temp_curl(self), self->bucket, NULL, my_prefix, NULL, 0,
 			  &keylist, &file_bytes);
     g_free(my_prefix);
-    if (!result) 
+    if (!result_ok) 
     {
 	guint response_code;
 	s3_error_code_t s3_error_code;
@@ -1837,9 +1841,9 @@ delete_file(S3Device *self,
     }
 
     // open threads up to help delete
-    s3_cancel_busy_threads(self,TRUE);
+    cancel_busy_threads(self,TRUE);
     
-    s3_wait_threads_done(self); // all previous uploading threads need to finish
+    wait_threads_done(self); // all previous uploading threads need to finish
 
     { // lock context
 	g_mutex_lock(self->thread_list_mutex);
@@ -1862,8 +1866,8 @@ delete_file(S3Device *self,
 
 	{ /// UNLOCK AND RELOCK
 	    g_mutex_unlock(self->thread_list_mutex);
-	    // single test of multi_delete
-	    result = s3_thread_multi_delete(pself,s3t,&self->delete_objlist);
+	    // single test of multi_delete in API thread...
+	    (void) s3_thread_multi_delete(pself,s3t,&self->delete_objlist);
 	    g_mutex_lock(self->thread_list_mutex);
 	} /// UNLOCK AND RELOCK
 
@@ -1894,7 +1898,7 @@ success_easy:
 
     // NOTE: WASABI took 181 seconds to complete a response...
     // if (next_ind)
-    // 	s3_wait_threads_done(self); // all the threads need to finish
+    // 	wait_threads_done(self); // all the threads need to finish
 
     self->volume_bytes -= min(self->volume_bytes,file_bytes);
 
@@ -1907,8 +1911,8 @@ failed:
     }
     // exit lock .. and perform wait-thread-delete
     g_mutex_unlock(self->thread_list_mutex);
-    s3_cancel_busy_threads(self,TRUE);
-    s3_wait_threads_done(self);
+    cancel_busy_threads(self,TRUE);
+    wait_threads_done(self);
     return FALSE;
 }
 
@@ -1919,7 +1923,7 @@ delete_all_files(S3Device *self)
 }
 
 static s3_result_t 
-s3_thread_multi_delete(Device *pself, S3_by_thread *s3t, GSList **d_objectsp)
+s3_thread_multi_delete(Device *pself, S3_by_thread *s3t, GSList *volatile *d_objectsp)
 {
     S3Handle *hndlN = s3t->s3;
     const S3Device *self = S3_DEVICE_CONST(pself);
@@ -1934,14 +1938,17 @@ s3_thread_multi_delete(Device *pself, S3_by_thread *s3t, GSList **d_objectsp)
 
     g_mutex_lock(self->thread_list_mutex);
 
-    g_debug("%s: using s3t#%ld ...", __FUNCTION__, s3t - self->s3t);
+    g_debug("%s: locking ...", __FUNCTION__);
    
     // one iteration only...
     do
     {
 	int  n;
 
+        d_objects = g_atomic_pointer_get(d_objectsp); // within the lock
         d_objects_prev = d_objects;
+
+	if (!d_objects) break;
 
 	for (n = 0 ; d_objects && n<1000 ; n++ ) 
 	{
@@ -1955,12 +1962,14 @@ s3_thread_multi_delete(Device *pself, S3_by_thread *s3t, GSList **d_objectsp)
 							d_objects);  // put new subset back for others
 	g_assert(xchg_ok);
 
+	g_debug("%s: unlock to delete multiple keys n=%d",__FUNCTION__, n);
 	{ /// UNLOCK AND RELOCK
 	    g_mutex_unlock(self->thread_list_mutex);
-	    g_debug("%s: Delete multiple keys n=%d",__FUNCTION__, n);
-	    result = s3_multi_delete(hndlN, (const char *)self->bucket, mreq_objects);
+	    result = s3_multi_delete_rt(hndlN, (const char *)self->bucket, mreq_objects);
 	    g_mutex_lock(self->thread_list_mutex);
 	} /// UNLOCK AND RELOCK
+
+	g_debug("%s: relocked after delete of multiple keys n=%d",__FUNCTION__, n);
 
 	if (result == S3_RESULT_NOTIMPL) {
 	    g_debug("%s: Deleting multiple keys not implemented",__FUNCTION__);
@@ -1977,19 +1986,24 @@ s3_thread_multi_delete(Device *pself, S3_by_thread *s3t, GSList **d_objectsp)
     } while(FALSE); 
     // one iteration only...
 
-    if (!mreq_objects) // task was completed?
+    if (!mreq_objects) { // first task of 1000 was completed?
+	g_debug("%s: completed multi delete ...", __FUNCTION__);
 	goto done;
+    }
 
-    d_objects = g_atomic_pointer_get(d_objectsp);
     ((S3Device*)self)->use_s3_multi_delete = FALSE; // continue one by one
 
     // objects were left over? re-add all object-names
+    d_objects = g_atomic_pointer_get(d_objectsp);
     d_objects_prev = d_objects;
+ 
     while (mreq_objects) {
 	s3_object *object = mreq_objects->data;
 	mreq_objects = g_slist_remove(mreq_objects, object);
 	d_objects = g_slist_prepend(d_objects, object);
     }
+
+    g_debug("%s: FAILED multi-delete. restoring original list back ...", __FUNCTION__);
 
     xchg_ok = g_atomic_pointer_compare_and_exchange(d_objectsp,
 						    d_objects_prev,
@@ -2051,8 +2065,8 @@ s3_thread_delete_session(
             // if (!count) 
 	    g_debug("%s: Deleting %s ...", __FUNCTION__, object->key);
 
-            result = s3_delete(hndlN, (const char *)self->bucket,
-                                        (const char *)object->key);
+            result = ( s3_delete(hndlN, (const char *)self->bucket, (const char *)object->key) 
+	    		? S3_RESULT_OK : S3_RESULT_FAIL );
             g_mutex_lock(self->thread_list_mutex);
         } /// UNLOCK AND RELOCK
 
@@ -3493,8 +3507,8 @@ s3_device_at_finalize(GObject * obj_self) {
 
     __API_FXN_CALLED__(self);  // [never verbose?] 
 
-    s3_cancel_busy_threads(self,TRUE);
-    s3_wait_threads_done(self);
+    cancel_busy_threads(self,TRUE);
+    wait_threads_done(self);
 
     __API_LONG_FXN_CHECK__(self,"[idled-before-clear]");
 
@@ -3660,13 +3674,13 @@ static gboolean
 catalog_close(
     S3Device *self)
 {
-    gboolean result;
+    gboolean result_ok;
 
-    result = write_catalog(self);
+    result_ok = write_catalog(self);
     amfree(self->catalog_filename); // sets NULL
     amfree(self->catalog_label); // sets NULL
     amfree(self->catalog_header); // sets NULL
-    return result;
+    return result_ok;
 }
 
 static gboolean
@@ -4172,7 +4186,7 @@ s3_device_read_label(Device *pself) {
     CurlBuffer label_buffer_tmp = { 0 }; // to read in w/max of S3_DEVICE_DEFAULT_BLOCK_SIZE,
     CurlBuffer *s3buf_label_tmp = &label_buffer_tmp;
     dumpfile_t *amanda_header;
-    gboolean result;
+    gboolean result_ok;
 
     /* note that this may be called from s3_device_start, when
      * self->access_mode is not ACCESS_NULL */
@@ -4193,9 +4207,9 @@ s3_device_read_label(Device *pself) {
     }
 
     // if no full reader/write needs to be shut down
-    s3_cancel_busy_threads(self,TRUE);
+    cancel_busy_threads(self,TRUE);
 
-    s3_wait_threads_done(self);
+    wait_threads_done(self);
 
     if (self->catalog_label && self->catalog_header) {
 	char *header_buf;
@@ -4220,12 +4234,12 @@ s3_device_read_label(Device *pself) {
 
 	s3_device_get_keys_restored(pself, 0);
         s3_buffer_init(s3buf_label_tmp, DISK_BLOCK_BYTES, self->verbose); // small-size buffer
-	result = s3_read(get_temp_curl(self), self->bucket, key,
+	result_ok = s3_read(get_temp_curl(self), self->bucket, key,
                           S3_BUFFER_WRITE_FUNCS, s3buf_label_tmp,
                           NULL, NULL);
 	g_free(key);
 
-	if (!result)
+	if (!result_ok)
         {
             guint response_code;
             s3_error_code_t s3_error_code;
@@ -4314,7 +4328,7 @@ s3_device_start(Device * pself, DeviceAccessMode mode,
                  char * label, char * timestamp) 
 {
     S3Device * self = S3_DEVICE(pself);
-    gboolean result;
+    gboolean result_ok;
 
     __API_FXN_CALLED__(self);  // [never verbose?] 
 
@@ -4327,9 +4341,9 @@ s3_device_start(Device * pself, DeviceAccessMode mode,
     }
 
     // truncate is needed if we/re starting up
-    s3_cancel_busy_threads(self,TRUE);
+    cancel_busy_threads(self,TRUE);
 
-    s3_wait_threads_done(self);
+    wait_threads_done(self);
     pself->access_mode = mode;
     g_mutex_lock(pself->device_mutex);
     pself->in_file = FALSE;
@@ -4396,9 +4410,9 @@ s3_device_start(Device * pself, DeviceAccessMode mode,
                 g_info("renew volume_bytes count %s/%s", self->bucket, self->prefix);
 
                 // XXX: all keys for all files .. may take a while.
-                result = s3_list_keys(get_temp_curl(self), self->bucket, NULL, self->prefix, NULL, 0,
+                result_ok = s3_list_keys(get_temp_curl(self), self->bucket, NULL, self->prefix, NULL, 0,
                                       &keys, &total_size);
-                if(!result) {
+                if(!result_ok) {
                     // fault really blocks device
                     device_set_error(pself,
                         g_strdup_printf(_("While listing all S3 keys: %s"), s3_strerror(get_temp_curl(self))),
@@ -4429,9 +4443,9 @@ s3_device_finish (Device * pself)
     __API_FXN_CALLED__(self);  // [never verbose?] 
 
     // if no full reader/write needs to be shut down
-    s3_cancel_busy_threads(self,TRUE);
+    cancel_busy_threads(self,TRUE);
 
-    s3_wait_threads_done(self);
+    wait_threads_done(self);
 
     __API_LONG_FXN_CHECK__(self,"[done]");
 
@@ -4799,7 +4813,7 @@ thread_write_final_compose(S3Device *wrself, S3_by_thread *s3t)
         s3_buffer_load_string(s3buf_tmp, g_string_free(buf, FALSE), self->verbose);
 
         g_mutex_unlock(self->thread_list_mutex); // allow unlocked
-        result = s3_compose_append_upload(s3t->s3,
+        result = s3_compose_append_upload_rt(s3t->s3,
                                          self->bucket, file_objkey,
                                          S3_BUFFER_READ_FUNCS, s3buf_tmp);
         g_mutex_lock(self->thread_list_mutex); 
@@ -4818,12 +4832,13 @@ thread_write_final_compose(S3Device *wrself, S3_by_thread *s3t)
         file_objkey = NULL;
 
         g_mutex_unlock(self->thread_list_mutex); // allow unlocked
-        result = s3_delete(s3t->s3, self->bucket, wrself->file_objkey);
+        result = ( s3_delete(s3t->s3, self->bucket, wrself->file_objkey) 
+			? S3_RESULT_OK : S3_RESULT_FAIL );
         g_mutex_lock(self->thread_list_mutex); 
 
         if (result != S3_RESULT_OK) {
-                g_debug("%s: Delete key failed: %s", __FUNCTION__, s3_strerror(s3t->s3));
-                return S3_RESULT_FAIL;
+	    g_debug("%s: Delete key failed: %s", __FUNCTION__, s3_strerror(s3t->s3));
+	    return S3_RESULT_FAIL;
         }
     }
 
@@ -4937,7 +4952,7 @@ thread_write_mpblock_copypart(const S3Device *self, S3_by_thread *s3t, char *eta
 
         g_assert(s3t->xfer_begin != s3t->xfer_end);
 
-        result = s3_copypart_upload(s3t->s3, self->bucket, self->file_objkey,
+        result = s3_copypart_upload_rt(s3t->s3, self->bucket, self->file_objkey,
                     self->mpcopy_uploadId, blocknum, &etag,
                     s3t->object_subkey);
 
@@ -4963,7 +4978,8 @@ thread_write_mpblock_copypart(const S3Device *self, S3_by_thread *s3t, char *eta
     {
         g_mutex_unlock(self->thread_list_mutex); // allow unlocked
 
-        result = s3_delete(s3t->s3, self->bucket, s3t->object_subkey);
+        result = ( s3_delete(s3t->s3, self->bucket, s3t->object_subkey) 
+			? S3_RESULT_OK : S3_RESULT_FAIL );
 
         g_mutex_lock(self->thread_list_mutex); // allow unlocked
     }
@@ -5164,7 +5180,7 @@ s3_device_start_file(Device *pself, dumpfile_t *jobInfo)
     S3Device *self = S3_DEVICE(pself);
     CurlBuffer amanda_header_tmp = { 0 }; // to load once only
     CurlBuffer *s3buf_hdr_tmp = &amanda_header_tmp;
-    gboolean result;
+    gboolean result_ok;
     size_t header_size;
     char  *key = NULL;
     char *errmsg = NULL;
@@ -5234,13 +5250,13 @@ s3_device_start_file(Device *pself, dumpfile_t *jobInfo)
     /* write it out as a special block (not the 0th) */
     key = filestart_key(self, pself->file); // prefix+"fXXXXXXXX-filestart" (file#)
 
-    result = s3_upload(get_temp_curl(self), self->bucket, key, FALSE,
+    result_ok = s3_upload(get_temp_curl(self), self->bucket, key, FALSE,
 		       S3_BUFFER_READ_FUNCS, s3buf_hdr_tmp,
                        NULL, NULL);
     g_free(key);
     key = NULL;
 
-    if (!result) {
+    if (!result_ok) {
         errmsg = g_strdup_printf(_("While writing filestart header: %s"), s3_strerror(get_temp_curl(self)));
         errflags = DEVICE_STATUS_DEVICE_ERROR | DEVICE_STATUS_VOLUME_ERROR;
         goto error;
@@ -5640,7 +5656,7 @@ s3_thread_write_session(gpointer thread_data, gpointer data)
     const Device *pself = (Device *)data;
     S3Device *self = S3_DEVICE(pself);
     const int myind = s3t - self->s3t;
-    gboolean result = FALSE;
+    gboolean result_ok = FALSE;
     char *etag = NULL;
     char *mykey_tmp = s3t->object_subkey ? strdupa(s3t->object_subkey) : "";
     objbytes_t eodbytes;
@@ -5721,7 +5737,7 @@ s3_thread_write_session(gpointer thread_data, gpointer data)
     // perform new part upload if data is nonempty
     if (eodbytes && s3t->object_uploadId)
     {
-	result = s3_part_upload(s3t->s3, self->bucket, (char *)s3t->object_subkey,
+	result_ok = s3_part_upload(s3t->s3, self->bucket, (char *)s3t->object_subkey,
 				(char *)s3t->object_uploadId, s3t->object_uploadNum, &etag,
 				S3_BUFFER_READ_FUNCS, s3buf,
                                 s3_thread_progress_func, s3t);
@@ -5731,7 +5747,7 @@ s3_thread_write_session(gpointer thread_data, gpointer data)
                s3t->object_offset, s3t->object_subkey, etag + strlen(etag)-5);
     // perform new block upload if data is nonempty
     } else if (eodbytes) {
-	result = s3_upload(s3t->s3, self->bucket, (char *)s3t->object_subkey,
+	result_ok = s3_upload(s3t->s3, self->bucket, (char *)s3t->object_subkey,
 			   self->use_chunked,
 			   S3_BUFFER_READ_FUNCS, s3buf,
                            s3_thread_progress_func, s3t);
@@ -5752,7 +5768,7 @@ s3_thread_write_session(gpointer thread_data, gpointer data)
             goto failed_locked;
         }
 
-        if (!result) {
+        if (!result_ok) {
             // error received upon next write...
             s3t->errflags = DEVICE_STATUS_DEVICE_ERROR | DEVICE_STATUS_VOLUME_ERROR;
             s3t->errmsg = g_strdup_printf(_("While writing data block to %s: %s"), S3_name[self->s3_api], s3_strerror(s3t->s3));
@@ -5822,10 +5838,10 @@ s3_device_finish_file(Device * pself)
 
     // must truncate if we have a partial-write waiting...
     // automatically sets self->end_xbyte = self->next_xbyte;
-    s3_cancel_busy_threads(self,TRUE);
+    cancel_busy_threads(self,TRUE);
 
     // session thread(s?) should be complete ...
-    s3_wait_threads_done(self);
+    wait_threads_done(self);
 
     __API_LONG_FXN_CHECK__(self,"[finish-complete]");
 
@@ -5844,11 +5860,11 @@ s3_device_recycle_file(Device *pself, guint file)
         return FALSE;
 
     // only one file can be cancelled at a time now
-    s3_cancel_busy_threads(self,TRUE);
+    cancel_busy_threads(self,TRUE);
 
-    s3_wait_threads_done(self);
+    wait_threads_done(self);
     delete_file(self, file);
-    s3_wait_threads_done(self);
+    wait_threads_done(self);
 
     __API_LONG_FXN_CHECK__(self,"[done]");
     return !device_in_error(self);
@@ -5873,13 +5889,14 @@ s3_device_erase(Device *pself)
     }
 
     // only one file can be cancelled at a time now
-    s3_cancel_busy_threads(self,TRUE);
+    cancel_busy_threads(self,TRUE);
 
-    s3_wait_threads_done(self);
+    wait_threads_done(self);
 
     key = tapestart_key(self); // prefix+"special"+"-tapestart"
 
-    result = s3_delete(get_temp_curl(self), self->bucket, key);
+    result = ( s3_delete(get_temp_curl(self), self->bucket, key) 
+    		? S3_RESULT_OK : S3_RESULT_FAIL );
     if (result != S3_RESULT_OK) {
         s3_error(get_temp_curl(self), &errmsg, NULL, NULL, NULL, NULL, NULL);
 	device_set_error(pself,
@@ -5894,9 +5911,6 @@ s3_device_erase(Device *pself)
 
     if (!delete_all_files(self))
         return FALSE;
-
-    device_set_error(pself, g_strdup("Unlabeled volume"),
-		     DEVICE_STATUS_VOLUME_UNLABELED);
 
     // must be free after the delete_all_files above!
     if (self->create_bucket && !s3_delete_bucket(get_temp_curl(self), self->bucket))
@@ -5918,14 +5932,19 @@ s3_device_erase(Device *pself)
                 return FALSE;
         }
     }
+
     self->bucket_made = FALSE;
     self->volume_bytes = 0;
     catalog_remove(self);
 
-    if (self->create_bucket)
+    if (self->create_bucket) {
         __API_LONG_FXN_CHECK__(self,"[bucket-erased]");
-    else
+	// no device error because no bucket left now
+    } else {
         __API_LONG_FXN_CHECK__(self,"[files-erased]");
+	device_set_error(pself, g_strdup("Unlabeled volume"),
+		DEVICE_STATUS_VOLUME_UNLABELED);
+    }
 
     return TRUE;
 }
@@ -5955,9 +5974,9 @@ s3_device_set_reuse(
 
 
     // only one file can be cancelled at a time now
-    s3_cancel_busy_threads(self,TRUE);
+    cancel_busy_threads(self,TRUE);
 
-    s3_wait_threads_done(self);
+    wait_threads_done(self);
 
     s3_get_lifecycle(get_temp_curl(self), self->bucket, &lifecycle);
 
@@ -6013,9 +6032,9 @@ s3_device_set_no_reuse(
     }
 
     // only one file can be cancelled at a time now
-    s3_cancel_busy_threads(self,TRUE);
+    cancel_busy_threads(self,TRUE);
 
-    s3_wait_threads_done(self);
+    wait_threads_done(self);
 
     s3_get_lifecycle(get_temp_curl(self), self->bucket, &lifecycle);
 
@@ -6093,7 +6112,7 @@ s3_device_get_keys_restored(
     guint file)
 {
     S3Device *self = S3_DEVICE(pself);
-    gboolean result;
+    gboolean result_ok;
     GSList *objects;
     char *prefix;
     const char *errmsg = NULL;
@@ -6111,11 +6130,11 @@ s3_device_get_keys_restored(
 	prefix = file_to_prefix(self, file); // prefix+"fXXXXXXXX-"
     }
     // all keys
-    result = s3_list_keys(get_temp_curl(self), self->bucket, NULL, prefix, NULL, 0,
+    result_ok = s3_list_keys(get_temp_curl(self), self->bucket, NULL, prefix, NULL, 0,
 			  &objects, NULL);
     g_free(prefix);
 
-    if (!result) {
+    if (!result_ok) {
         guint response_code;
         s3_error_code_t s3_error_code;
         s3_error(get_temp_curl(self), &errmsg, &response_code, &s3_error_code,
@@ -6164,8 +6183,8 @@ s3_device_get_keys_restored(
         free_s3_head(head),
 
         /* init restore */
-        result = s3_init_restore(get_temp_curl(self), self->bucket, object->key);
-        if (!result) {
+        result_ok = s3_init_restore(get_temp_curl(self), self->bucket, object->key);
+        if (!result_ok) {
             guint response_code;
             s3_error_code_t s3_error_code;
 
@@ -6207,9 +6226,9 @@ s3_device_seek_file(Device *pself, guint file)
         return NULL;
 
     // only one file can be cancelled at a time now
-    s3_cancel_busy_threads(self,TRUE);
+    cancel_busy_threads(self,TRUE);
 
-    s3_wait_threads_done(self);
+    wait_threads_done(self);
 
     reset_file_state(self);
 
@@ -6217,7 +6236,7 @@ s3_device_seek_file(Device *pself, guint file)
     {
         guint response_code;
         s3_error_code_t s3_error_code;
-	gboolean result;
+	gboolean result_ok;
 
         // arg passed in or directly from find_next_file() ...
         if (file) {
@@ -6229,20 +6248,20 @@ s3_device_seek_file(Device *pself, guint file)
 	do {
             // test valid number or just-previous bound if in error...
 	    headerkey = filestart_key(self, ( (gint) file ? : pself->file-1));  // prefix+"fXXXXXXXX-filestart"
-	    result = s3_device_get_keys_restored(pself, ( (gint) file ? : pself->file-1) );
+	    result_ok = s3_device_get_keys_restored(pself, ( (gint) file ? : pself->file-1) );
 	    /* read it in */
 
-	    if (!result) break; // failed
+	    if (!result_ok) break; // failed
 
 	    s3_buffer_init(s3buf_tmp, DISK_BLOCK_BYTES, self->verbose);
-	    result = s3_read(get_temp_curl(self), self->bucket, headerkey, 
+	    result_ok = s3_read(get_temp_curl(self), self->bucket, headerkey, 
                             S3_BUFFER_WRITE_FUNCS, s3buf_tmp,
                             NULL, NULL);
 
 	    g_free(headerkey);
 	    headerkey = NULL;
 
-	    if (!result) break; // failed
+	    if (!result_ok) break; // failed
 
 	    // successfully tested actual boundary
  
@@ -6256,7 +6275,7 @@ s3_device_seek_file(Device *pself, guint file)
 	} while(FALSE);
 	
 	// success .. so escape the loop
-	if (result) break; // success!
+	if (result_ok) break; // success!
 
 	////////////////////////////////////// failed so retry
 
@@ -6264,9 +6283,6 @@ s3_device_seek_file(Device *pself, guint file)
 
         if (file <= 0) {
 	    g_debug("%s: completing after reading past tape-end %d file limit", __FUNCTION__, pself->file);
-            device_set_error(pself,
-                g_strdup(_("Attempt to read past tape-end file")),
-                DEVICE_STATUS_SUCCESS);
             return NULL;
         }
 
@@ -6403,9 +6419,9 @@ s3_device_seek_block(Device *pself, objbytes_t block) {
     if (self->end_xbyte < pos)
         return FALSE; // cannot seek past the one object
 
-    s3_cancel_busy_threads(self,TRUE);
+    cancel_busy_threads(self,TRUE);
 
-    s3_wait_threads_done(self);
+    wait_threads_done(self);
 
     self->next_xbyte = pos;              // set to location for new reads to start
     self->next_ahead_byte = pos;
@@ -7006,7 +7022,7 @@ s3_thread_read_session(gpointer thread_data, gpointer data)
 
     const int myind = s3t - self->s3t;
     S3Handle *hndl = s3t->s3;
-    gboolean result;
+    gboolean result_ok;
     char *mykey_tmp = s3t->object_subkey ? strdupa(s3t->object_subkey) : "";
     objbytes_t objsize = G_MAXINT64;
 
@@ -7045,7 +7061,7 @@ s3_thread_read_session(gpointer thread_data, gpointer data)
         const objbytes_t rmin = s3t->xfer_begin - s3t->object_offset;
         const objbytes_t rmax = s3t->xfer_end - s3t->object_offset -1;
 
-	result = s3_read_range(hndl, self->bucket, mykey_tmp, rmin, rmax,
+	result_ok = s3_read_range(hndl, self->bucket, mykey_tmp, rmin, rmax,
 			       S3_BUFFER_WRITE_FUNCS, s3buf,
                                s3_thread_progress_func, s3t,
                                &objsize);
@@ -7068,7 +7084,7 @@ s3_thread_read_session(gpointer thread_data, gpointer data)
         g_mutex_unlock(self->thread_list_mutex); // block reset of s3t until done...
     }
 
-    if (!result)
+    if (!result_ok)
 	goto cancel;
 
     if (s3buf->mutex && s3buf->cond && !s3t->curl_buffer.cancel)
@@ -7218,7 +7234,7 @@ check_at_leom(S3Device *self, objbytes_t size)
 
 
 static void
-s3_wait_threads_done(
+wait_threads_done(
     const S3Device *self)
 {
     Device *pself = DEVICE(self);
@@ -7270,7 +7286,7 @@ s3_wait_threads_done(
 
 
 static void
-s3_cancel_busy_threads(S3Device *self, gboolean end_all_xfers)
+cancel_busy_threads(S3Device *self, gboolean end_all_xfers)
 {
     Device *pself = DEVICE(self);
     S3_by_thread *s3t = NULL;
