@@ -267,8 +267,6 @@ $chg = Amanda::Changer->new("mychanger", tapelist => $tl,
 			    labelstr => { match_autolabel => 0,
 					  template => "TESTCONF-[0-9][0-9][0-9]-[a-z][a-z][a-z]-[0-9][0-9][0-9]"},
 			    autolabel => { template => '$c-$m-$b-%%%',
-					   other_config => 1,
-					   non_amanda => 1,
 					   volume_error => 0,
 					   empty => 1 },
 			    meta_autolabel => "%%%");
