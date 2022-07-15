@@ -1132,6 +1132,12 @@ char *hexdecode_string(const char *str, GError **err)
     new_len = orig_len = strlen(str);
     for (i = 0; i < orig_len; i++) {
         if (str[i] == '%') {
+            if (new_len < 2) {
+                g_set_error(err, am_util_error_quark(), AM_UTIL_ERROR_HEXDECODEINVAL,
+                    "Invalid hexcode string: %s", str);
+                s = g_string_sized_new(0);
+                goto cleanup;
+            }
             new_len -= 2;
         }
     }
