@@ -346,8 +346,8 @@ bsdtcp_accept(
 
 return_error:
     {
-	char *errstr = g_strjoin(" ", errmsg, NULL);
-	size_t len = strlen(errmsg);
+	char *errstr = g_strjoin(NULL, " ", errmsg, NULL);
+	size_t len = strlen(errstr);
 	guint32 *nethandle = g_malloc(sizeof(guint32));
 	guint32 *netlength = g_malloc(sizeof(guint32));
 	struct iovec iov[3];
