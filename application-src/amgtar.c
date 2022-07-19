@@ -823,6 +823,7 @@ static char *validate_command_options(
 	if (g_str_has_prefix(opt,"--create") ||
 		g_str_has_prefix(opt,"--totals") ||
 		g_str_has_prefix(opt,"--dereference") ||
+		g_str_has_prefix(opt,"--hard-dereference") ||
 		g_str_has_prefix(opt,"--no-recursion") ||
 		g_str_has_prefix(opt,"--one-file-system") ||
 		g_str_has_prefix(opt,"--incremental") ||
