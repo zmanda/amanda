@@ -846,7 +846,7 @@ sub get_parts_and_dumps {
 		my $s = $str;
 		my $b_unit;
 		($secs, $b_unit, $kb, $str) = ($str =~ /^\[sec ([-0-9.]+) (kb|bytes) ([-0-9]+).*\] ?(.*)$/)
-		    or die("'$s'");
+		    or die("logfile '$logfile_dir/$logfile': cannot parse '$s'");
 		if ($b_unit eq 'bytes') {
 		    $bytes = $kb;
 		    $kb /= 1024;
