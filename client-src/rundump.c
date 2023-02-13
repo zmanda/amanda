@@ -279,6 +279,7 @@ void validate_dump_option(int argc, char ** argv)
 		numargs--;
 	}
 }
+
 void validate_xfsdump_options(int argc, char ** argv)
 {
 	int c;
