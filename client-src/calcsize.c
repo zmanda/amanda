@@ -433,7 +433,6 @@ traverse_dirs(
 	    continue;
 	}
 	if((d = opendir(dirname)) == NULL) {
-	    perror(dirname);
 	    continue;
 	}
 
