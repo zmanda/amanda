@@ -22,19 +22,21 @@ diffs or instructions to the address given in the `README' so they can
 be considered for the next release.  If at some point `config.cache'
 contains results you don't want to keep, you may remove or edit it.
 
-   The file `configure.in' is used to create `configure' by a program
-called `autoconf'.  You only need `configure.in' if you want to change
-it or regenerate `configure' using a newer version of `autoconf'.
+   The file `configure.ac` is used to create `configure` by a program
+called `autoconf'.  You only need `configure.ac` if you want to change
+it or regenerate `configure` using a newer version of `autoconf`.
 
 The simplest way to compile this package is:
 
-  1. `cd' to the directory containing the package's source code and type
-     `./configure' to configure the package for your system.  If you're
-     using `csh' on an old version of System V, you might need to type
-     `sh ./configure' instead to prevent `csh' from trying to execute
-     `configure' itself.
+  1. `cd` to the directory containing the package's source code and type
+     `./autogen`, this bash script performs few pre-requirsites and
+     calls `autoconf` internally to generate `configure` script, run
+     `./configure` to configure the package for your system.  If you're
+     using `csh` on an old version of System V, you might need to type
+     `sh ./configure` instead to prevent `csh` from trying to execute
+     `configure` itself.
 
-     Running `configure' takes a while.  While running, it prints some
+     Running `configure` takes a while.  While running, it prints some
      messages telling which features it is checking for.
 
   2. Type `make' to compile the package.
