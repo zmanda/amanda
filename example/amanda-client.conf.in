@@ -22,3 +22,5 @@ auth "bsdtcp"
 
 ssh_keys ""			# your ssh keys file if you use ssh auth
 
+#resolves "resource temporarily unavailable" bug
+unreserved-tcp-port 1025,65535

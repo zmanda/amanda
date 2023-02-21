@@ -771,3 +771,6 @@ taperscan "taper_lexical"
 # configurations.
 
 #includefile "@CONFIG_DIR@/amanda.conf.main"
+
+#resolves "resource temporarily unavailable" bug
+unreserved-tcp-port 1025,65535

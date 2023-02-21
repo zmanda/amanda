@@ -44,3 +44,6 @@ property "foo-PG-DATADIR" "/var/postgresql/data"
 #   For this example:
 #   archive_command = 'test ! -f /var/postgresql/archive/%f && cp %p /var/postgresql/archive/%f'
 property "foo-PG-ARCHIVEDIR" "/var/postgresql/archive"
+
+#resolves "resource temporarily unavailable" bug
+unreserved-tcp-port 1025,65535
