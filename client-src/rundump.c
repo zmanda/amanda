@@ -197,6 +197,24 @@ main(
     amfree(cmdline);
 
     env = safe_env();
+    //Filter or Discard RSH Environmental variable
+    int env_count = 0;
+    for (int i = 0; env[i] != NULL; i++){
+        env_count++;
+    }
+    for (int i = 0; i < env_count; i++){
+        if (strncmp(env[i], "RSH=", 4) == 0){
+            // Remove RSH
+            g_free(env[i]);
+            // move array elements one step left - which are after "RSH"
+            for (int j = i; j < env_count; j++){
+                env[j] = env[j + 1];
+            }
+            //decrease the variable count
+            env[env_count-1] = NULL;
+            break;
+        }
+    }
     execve(dump_program, argv, env);
     free_env(env);
 
