@@ -65,7 +65,7 @@ main(
 {
 #ifndef ERRMSG
     char *dump_program;
-    int i;
+    int i, j;
     char *e;
     char *cmdline;
     GPtrArray *array = g_ptr_array_new();
@@ -206,7 +206,7 @@ main(
             // Remove RSH
             g_free(env[i]);
             // move array elements one step left - which are after "RSH"
-            for (int j = i; j < env_count; j++){
+            for (j = i; j < env_count; j++){
                 env[j] = env[j + 1];
             }
             //decrease the variable count
