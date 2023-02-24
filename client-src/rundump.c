@@ -198,10 +198,10 @@ main(
     env = safe_env();
     //Filter or Discard RSH Environmental variable
     int env_count = 0;
-    for (int i = 0; env[i] != NULL; i++){
+    for (i = 0; env[i] != NULL; i++){
         env_count++;
     }
-    for (int i = 0; i < env_count; i++){
+    for (i = 0; i < env_count; i++){
         if (strncmp(env[i], "RSH=", 4) == 0){
             // Remove RSH
             g_free(env[i]);
