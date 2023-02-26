@@ -138,9 +138,10 @@ main(
 
 #ifdef XFSDUMP
 
-    if (g_str_equal(argv[0], "xfsdump"))
+    if (g_str_equal(argv[0], "xfsdump")) {
         dump_program = XFSDUMP;
-    else /* strcmp(argv[0], "xfsdump") != 0 */
+        validate_xfsdump_options(argc, argv);
+    } else /* strcmp(argv[0], "xfsdump") != 0 */
 
 #endif
 
@@ -160,6 +161,7 @@ main(
 
 #endif
 
+      {
 #if defined(DUMP)
         dump_program = DUMP;
         validate_dump_option(argc, argv);
@@ -176,6 +178,7 @@ main(
 #  endif
 # endif
 #endif
+      }
 
 
     /*
