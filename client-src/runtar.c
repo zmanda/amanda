@@ -191,9 +191,13 @@ main(
 		g_str_has_prefix(argv[i],"--newer") ||
 		g_str_has_prefix(argv[i],"--exclude-from") ||
 		g_str_has_prefix(argv[i],"--files-from")) {
-		good_option++;
+		if (strchr(argv[i], '=')) {
+		    good_option++;
+		} else {
+		    /* Accept theses options with the following argument */
+		    good_option += 2;
+		}
 	    } else if (argv[i][0] != '-') {
-		/* argument values are accounted for here */
 		good_option++;
 	    }
 	}
