@@ -191,10 +191,13 @@ main(
 		g_str_has_prefix(argv[i],"--newer") ||
 		g_str_has_prefix(argv[i],"--exclude-from") ||
 		g_str_has_prefix(argv[i],"--files-from")) {
-		good_option++;
-	    } else if (argv[i][0] != '-' || g_str_equal(argv[i], "-")) {
-		/* argument values are accounted for here */
-		/* for --file argument '-' is passed as valid argument from amgtar */
+		if (strchr(argv[i], '=')) {
+		    good_option++;
+		} else {
+		    /* Accept theses options with the following argument */
+		    good_option += 2;
+		}
+	    } else if (argv[i][0] != '-') {
 		good_option++;
 	    }
 	}
