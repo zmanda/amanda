@@ -2702,6 +2702,7 @@ check_user(
     return result;
 }
 
+#ifndef USE_AMANDAHOSTS
 /*
  * See if a remote user is allowed in.  This version uses ruserok()
  * and friends.
@@ -2843,7 +2844,7 @@ check_user_ruserok(
 
     return result;
 }
-
+#else
 /*
  * Check to see if a user is allowed in.  This version uses .amandahosts
  * Returns an error message on failure, or NULL on success.
@@ -3030,6 +3031,7 @@ common_exit:
 
     return result;
 }
+#endif
 
 /* return 1 on success, 0 on failure */
 int
