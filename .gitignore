@@ -1,15 +1,15 @@
-# Created by https://www.toptal.com/developers/gitignore/api/linux,macos,windows,vim,emacs,visualstudiocode,git,subversion,autotools,c,perl
-# Edit at https://www.toptal.com/developers/gitignore?templates=linux,macos,windows,vim,emacs,visualstudiocode,git,subversion,autotools,c,perl
+# Created by https://www.toptal.com/developers/gitignore/api/linux,macos,windows,vim,emacs,visualstudiocode,git,svn,autotools,c,perl
+# Edit at https://www.toptal.com/developers/gitignore?templates=linux,macos,windows,vim,emacs,visualstudiocode,git,svn,autotools,c,perl
 
 ### Autotools ###
 # http://www.gnu.org/software/automake
 
 Makefile.in
-/ar-lib
-/mdate-sh
-/py-compile
-/test-driver
-/ylwrap
+/config/ar-lib
+/config/mdate-sh
+/config/py-compile
+/config/test-driver
+/config/ylwrap
 .deps/
 .dirstamp
 
@@ -19,19 +19,19 @@ autom4te.cache
 /autoscan.log
 /autoscan-*.log
 /aclocal.m4
-/compile
+/config/compile
 /config.cache
-/config.guess
-/config.h.in
-/config.log
+/config/config.guess
+/config/config.h.in
+config.log
 /config.status
-/config.sub
+/config/config.sub
 /configure
 /configure.scan
-/depcomp
-/install-sh
-/missing
-/stamp-h1
+/config/depcomp
+/config/install-sh
+/config/missing
+/config/stamp-h1
 
 # https://www.gnu.org/software/libtool/
 
@@ -259,7 +259,8 @@ inc/
 /pm_to_blib
 /*.zip
 
-#!! ERROR: subversion is undefined. Use list command to see defined gitignore types !!#
+### SVN ###
+.svn/
 
 ### Vim ###
 # Swap
@@ -326,4 +327,14 @@ $RECYCLE.BIN/
 # Windows shortcuts
 *.lnk
 
-# End of https://www.toptal.com/developers/gitignore/api/linux,macos,windows,vim,emacs,visualstudiocode,git,subversion,autotools,c,perl
+# End of https://www.toptal.com/developers/gitignore/api/linux,macos,windows,vim,emacs,visualstudiocode,git,svn,autotools,c,perl
+
+### Amanda ###
+file-list
+conftemp.svn
+FULL_VERSION
+/config/config.h
+/common-src/svn-info.h
+/libtool
+.libs/
+!/example/template.d/
