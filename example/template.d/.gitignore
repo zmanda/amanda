@@ -1,0 +1,6 @@
+/advanced.conf
+/amanda-CAStor.conf
+/amanda-S3.conf
+/amanda-harddisk.conf
+/amanda-single-tape.conf
+/amanda-tape-changer.conf

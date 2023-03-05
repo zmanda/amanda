@@ -1,0 +1,10 @@
+/amanda-client-postgresql.conf
+/amanda-client.conf
+/amanda.conf
+/amandaclient.xml
+/amandaserver.xml
+/inetd.conf.amandaclient
+/inetd.conf.amandaserver
+/xinetd.amandaclient
+/xinetd.amandaserver
+!/template.d/
