@@ -36,7 +36,7 @@ config.log
 
 # https://www.gnu.org/software/libtool/
 
-/ltmain.sh
+/config/ltmain.sh
 /libtool
 .libs/
 
