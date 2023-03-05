@@ -38,6 +38,9 @@ config/set_full_version
 echo "..aclocal"
 aclocal $includes || die "aclocal failed"
 
+echo "..libtoolize"
+libtoolize --force || die "libtoolize failed"
+
 echo "...aclocal patches"
 # See http://bugzilla.gnome.org/show_bug.cgi?id=418778
 #
