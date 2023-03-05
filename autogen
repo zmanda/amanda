@@ -19,7 +19,6 @@ die() {
 echo "See DEVELOPING for instructions on updating:"
 echo " * gettext macros"
 echo " * gnulib"
-echo " * libtool files"
 
 echo "..creating file lists"
 (   cd config
