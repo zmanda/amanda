@@ -3372,6 +3372,9 @@ s3_new_curl(
 	}
 #endif
     }
+    /* google cloud api's are not HTTP2 compatiable YET*/
+    if (hdl->s3_api == S3_API_OAUTH2)
+        curl_easy_setopt(hdl->curl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
 }
 
 gboolean
