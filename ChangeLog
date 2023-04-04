@@ -1,3 +1,16 @@
+2023-02-25 amandaTrusted <amandaTrusted@Zmanda.com>
+    * Fixed: removed vulnerable jQuery dependency
+    * Fixed: fix suppressed 1st char of error message in common-src/bsdtcp-security.c
+    * docs: improved README with Markdown
+    * docs: updated README file name for docs in Debian builds
+    * Fixed: post_inst_functions.sh to create amkey
+    * Fixed: added extern keyword for tu_debugging_enabled declaration in testutils.h
+    * Fixed: https://sogis.eu complaint symmetric encryption key derivation algorithm
+    * Fixed: removed perror to fix information leak vulnerability found in the calcsize SUID binary. (CVE-2022-37703)
+    * Fixed: added filter for RSH environment settings in rundump to fix privilege escalation vulnerability (CVE-2022-37704)
+    * Fixed: arg checking for runtar.c (CVE-2022-37705)
+
+
 2022-05-23 chassell <chris.hassell@betsol.com>
 	* Purpose: set a default to disable auto-label from claiming non-amanda and "other-config" labels as if available
 	* Changes: Add a build flag to re-include options.  Block use of two enums for the features.  Change perl uses to null-set options.

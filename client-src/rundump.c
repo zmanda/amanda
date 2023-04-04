@@ -65,7 +65,7 @@ main(
 {
 #ifndef ERRMSG
     char *dump_program;
-    int i;
+    int i, j;
     char *e;
     char *cmdline;
     GPtrArray *array = g_ptr_array_new();
@@ -138,9 +138,10 @@ main(
 
 #ifdef XFSDUMP
 
-    if (g_str_equal(argv[0], "xfsdump"))
+    if (g_str_equal(argv[0], "xfsdump")) {
         dump_program = XFSDUMP;
-    else /* strcmp(argv[0], "xfsdump") != 0 */
+        validate_xfsdump_options(argc, argv);
+    } else /* strcmp(argv[0], "xfsdump") != 0 */
 
 #endif
 
@@ -160,6 +161,7 @@ main(
 
 #endif
 
+      {
 #if defined(DUMP)
         dump_program = DUMP;
         validate_dump_option(argc, argv);
@@ -176,6 +178,7 @@ main(
 #  endif
 # endif
 #endif
+      }
 
     /*
      * Build the array
@@ -196,6 +199,24 @@ main(
     amfree(cmdline);
 
     env = safe_env();
+    //Filter or Discard RSH Environmental variable
+    int env_count = 0;
+    for (i = 0; env[i] != NULL; i++){
+        env_count++;
+    }
+    for (i = 0; i < env_count; i++){
+        if (strncmp(env[i], "RSH=", 4) == 0){
+            // Remove RSH
+            g_free(env[i]);
+            // move array elements one step left - which are after "RSH"
+            for (j = i; j < env_count; j++){
+                env[j] = env[j + 1];
+            }
+            //decrease the variable count
+            env[env_count-1] = NULL;
+            break;
+        }
+    }
     execve(dump_program, argv, env);
     free_env(env);
 
@@ -279,6 +300,7 @@ void validate_dump_option(int argc, char ** argv)
 		numargs--;
 	}
 }
+
 void validate_xfsdump_options(int argc, char ** argv)
 {
 	int c;
