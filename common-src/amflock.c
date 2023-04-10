@@ -314,7 +314,7 @@ file_lock_write(
 
     if (lock->data)
 	g_free(lock->data);
-    lock->data = g_strdup(data);
+    lock->data = g_strndup(data, len);
     lock->len = len;
 
     return 0;
