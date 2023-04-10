@@ -29,7 +29,6 @@
  * $Id: server_util.c,v 1.17 2006/05/25 01:47:20 johnfranks Exp $
  *
  */
-#include "config.h"
 #include <sys/wait.h>
 
 #include "amanda.h"
