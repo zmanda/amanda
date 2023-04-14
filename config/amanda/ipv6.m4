@@ -85,7 +85,7 @@ AC_DEFUN([AMANDA_CHECK_IPV6],
 #include <sys/socket.h>
 #include <errno.h>
 
-main()
+int main(void)
 {
    int aa;
    aa = socket(AF_INET6, SOCK_STREAM, 0);
