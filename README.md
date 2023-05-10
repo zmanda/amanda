@@ -176,15 +176,9 @@ have a server class CPU in the backup server.
 
 ## Where do I get Amanda?
 
-Until early 2019 Amanda, including its source tree, was on SourceForge:
-
-http://sourceforge.net/projects/amanda
-
-Since spring 2019 the main development of the community version happens on GitHub:
+The development of the community version happens on GitHub:
 
 https://github.com/zmanda/amanda
-
-Or see http://www.amanda.org/download.php
 
 Most Linux distributions include amanda rpms or debian packages
 pre-built for various architectures. Pre-built binaries are also
@@ -203,28 +197,28 @@ client machines.
 
 You can read Amanda documentation at:
 
-http://www.amanda.org
+https://docs.zmanda.com
 
 and at the Amanda wiki:
 
 http://wiki.zmanda.com
 
-## Who do I talk to if I have a problem?
+## Where can I get community help?
 
-* You may file Issues at GitHub:
+* You may ask questions by filing Issues on GitHub:
 
 https://github.com/zmanda/amanda/issues
 
-* You can get Amanda help and questions answered from the mailing lists and
-Amanda forums.
+## How do I subscribe to the mailing list?
 
-Check http://www.amanda.org/support/mailinglists.php
+Send an email to:
 
-for instructions how to subscribe.
-
-You will receive an email acknowledging your subscription. Keep
-it. Should you ever wish to depart our company, it has unsubscribe
-and other useful information.
+<listname>-request@amanda.org
+with the following line in the body of the message:
+subscribe <your-email-address>
+and when you want to unsubscribe, use the following line in the body:
+unsubscribe <your-email-address>
+where <listname> is one of the following:
 
 * amanda-announce
 
@@ -250,9 +244,11 @@ and other useful information.
         ports, bugs, fixes, and alpha testing of new versions.
         To subscribe, send a message to amanda-hackers-request@amanda.org.
 
-Amanda forums: http://forums.zmanda.com
+You will receive an email acknowledging your subscription. Keep it. Should you ever wish to depart our company, it has unsubscribe and other useful information.
 
-Amanda Platform Experts: http://wiki.zmanda.com/index.php/Platform_Experts
+NOTE: You must be subscribed to a mailing list to send mail to it. Also, the address you send from must match the address you subscribed with.
+
+Additionally, there are size limits on messages to the lists ranging from 40k-60k, (amanda-hackers is larger). If you are sending something larger, your message will silently fail. Please trim logs down to the relevant bits or put them up on the web and include a link in your request. This is primarily as a courtesy to the thousands of people who receive the emails.
 
 Backup, Share and Enjoy,
 The Amanda Development Team, 2019
