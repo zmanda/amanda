@@ -197,7 +197,8 @@ client machines.
 
 You can read Amanda documentation at:
 
-https://docs.zmanda.com
+Releases 4.X and newer: https://docs.zmanda.com
+Earlier releases: https://legacydocs.zmanda.com
 
 and at the Amanda wiki:
 
