@@ -46,7 +46,6 @@ RestServerpublicimagesdir = $(RestServerdir)/public/images
 RestServerpublicimages_DATA = public/images/perldancer-bg.jpg \
 			      public/images/perldancer.jpg
 RestAmandapublicjavascriptsdir = $(RestServerdir)/public/javascripts
-RestAmandapublicjavascripts_DATA = public/javascripts/jquery.js
 RestServerviewsdir = $(RestServerdir)/views
 RestServerviews_DATA = views/index.tt
 RestServerviewslayoutsdir = $(RestServerdir)/views/layout
@@ -70,7 +69,6 @@ EXTRA_DIST += config.yml \
 	      public/css/style.css \
 	      public/images/perldancer-bg.jpg \
 	      public/images/perldancer.jpg \
-	      public/javascripts/jquery.js \
 	      views/index.tt \
 	      views/layouts/main.tt
 endif

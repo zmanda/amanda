@@ -99,15 +99,6 @@
             </table>
           </div>
 
-    <script type="text/javascript">
-    $('#about_env_link').click(function() {
-        $('#about-content').slideToggle('fast', function() {
-            // ok
-        });
-        return( false );
-    });
-    </script>
-
 
           <ol>          
             <li>
