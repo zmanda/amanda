@@ -211,46 +211,5 @@ http://wiki.zmanda.com
 
 https://github.com/zmanda/amanda/issues
 
-## How do I subscribe to the mailing list?
-
-Send an email to:
-
-<listname>-request@amanda.org
-with the following line in the body of the message:
-subscribe <your-email-address>
-and when you want to unsubscribe, use the following line in the body:
-unsubscribe <your-email-address>
-where <listname> is one of the following:
-
-* amanda-announce
-
-        The amanda-announce mailing list is for important announcements
-        related to the Amanda Network Backup Manager package, including new
-        versions, contributions, and fixes.  NOTE: the amanda-users list is
-        itself on the amanda-announce distribution, so you only need to
-        subscribe to one of the two lists, not both.
-        To subscribe, send a message to amanda-announce-request@amanda.org.
-
-* amanda-users
-
-        The amanda-users mailing list is for questions and general discussion
-        about the Amanda Network Backup Manager.  NOTE: the amanda-users list
-        is itself on the amanda-announce distribution, so you only need to
-        subscribe to one of the two lists, not both.
-        To subscribe, send a message to amanda-users-request@amanda.org.
-
-* amanda-hackers
-
-        The amanda-hackers mailing list is for discussion of the
-        technical details of the Amanda package, including extensions,
-        ports, bugs, fixes, and alpha testing of new versions.
-        To subscribe, send a message to amanda-hackers-request@amanda.org.
-
-You will receive an email acknowledging your subscription. Keep it. Should you ever wish to depart our company, it has unsubscribe and other useful information.
-
-NOTE: You must be subscribed to a mailing list to send mail to it. Also, the address you send from must match the address you subscribed with.
-
-Additionally, there are size limits on messages to the lists ranging from 40k-60k, (amanda-hackers is larger). If you are sending something larger, your message will silently fail. Please trim logs down to the relevant bits or put them up on the web and include a link in your request. This is primarily as a courtesy to the thousands of people who receive the emails.
-
 Backup, Share and Enjoy,
-The Amanda Development Team, 2019
+The Amanda Community Development Team
