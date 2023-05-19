@@ -1,0 +1,256 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"
+[
+  <!-- entities files to use -->
+  <!ENTITY % global_entities SYSTEM 'global.entities'>
+  %global_entities;
+]>
+
+<refentry id='amlvmsnapshot.8'>
+
+<refmeta>
+<refentrytitle>amlvmsnapshot</refentrytitle>
+<manvolnum>8</manvolnum>
+&rmi.source;
+&rmi.version;
+&rmi.manual.8;
+</refmeta>
+<refnamediv>
+<refname>amlvmsnapshot</refname>
+<refpurpose>Amanda script to make an LVM snapshot</refpurpose>
+</refnamediv>
+<refentryinfo>
+<author><personname>Chapman Flack</personname></author>
+</refentryinfo>
+<!-- body begins here -->
+
+<refsect1><title>DESCRIPTION</title>
+
+<para>amlvmsnapshot is an Amanda script implementing the Script API.
+It should not be run by users directly.  It creates and mounts a
+snapshot of an LVM filesystem in preparation for backup, then unmounts
+and removes it.</para>
+
+<para>The logical volume to be snapshotted is specified with the VOLUMEGROUP
+and LOGICALVOLUME properties, and the SNAPSHOTNAME property will be used to
+give the created snapshot a name. The EXTENTS property must be set to indicate
+the size of the snapshot. The mount point for the snapshot will be the
+directory named by <emphasis remap='B'>diskdevice</emphasis> in the
+disklist (DLE). This is the directory where the estimate and backup application
+will expect to find the data for backup.</para>
+
+<para>A snapshot begins with nearly zero space consumed, but grows (up to
+the specified size) as the origin filesystem accumulates changes made since
+the snapshot. The EXTENTS property must size the snapshot generously enough
+for the volume of changes expected in the origin filesystem during the
+snapshot's lifetime, while fitting in the volume group's available, unused
+space.</para>
+
+<para>This script can be run in PRE-DLE-ESTIMATE and POST-DLE-BACKUP, in which
+case one snapshot will be made and mounted before estimating, and unmounted and
+removed after backup. If limited free space in the volume group forces a small
+snapshot size, or changes to the origin filesystem accumulate quickly, or the
+Amanda installation in total has a long delay in planning/dumping between the
+estimate and backup phases, it may be safer to execute this script four times,
+on PRE-DLE-ESTIMATE, POST-DLE-ESTIMATE, PRE-DLE-BACKUP, and POST-DLE-BACKUP. In
+that case, the snapshot used for estimating is unmounted and removed after that
+phase, and a new snapshot is created later for actual dumping.</para>
+
+<para>The snapshot is made and mounted after <emphasis>removing all existing
+content under the directory named as the
+<emphasis remap='B'>diskdevice</emphasis></emphasis> if it exists, or
+creating it empty if it does not, which happens
+during PRE-DLE-ESTIMATE (and PRE-DLE-BACKUP if also executed then).
+Both (or all four) phases must be set to be executed on the client:
+<programlisting>
+    execute-on  pre-dle-estimate, post-dle-backup
+    #execute-on  pre-dle-estimate, post-dle-estimate, pre-dle-backup, post-dle-backup
+    execute-where client
+</programlisting></para>
+
+<para>The script is run as the amanda user, and must be able to run the
+necessary <command>lvm</command>, <command>mount</command>, and
+<command>umount</command> commands. One approach is to set the
+LVMEXECUTABLE, MOUNTEXECUTABLE, and UMOUNTEXECUTABLE not to the actual
+paths of those commands, but to set-uid wrappers that take the same
+arguments, check that they represent allowed operations and filesystems,
+and then execute the actual commands with the same arguments.</para>
+
+<note><para>A set-uid wrapper obtains its owner's <emphasis>effective</emphasis>
+ID, but may need to set the <emphasis>real</emphasis> ID to match it before
+the <command>lvm</command>, <command>mount</command>, and
+<command>umount</command> commands will permit the operations.</para></note>
+</refsect1>
+
+<refsect1><title>PROPERTIES</title>
+
+<para>This section lists the properties that control amlvmsnapshot's
+functionality.
+See <manref name="amanda-scripts" vol="7"/>
+for information on the Script API, script configuration.</para>
+
+<!-- PLEASE KEEP THIS LIST IN ALPHABETICAL ORDER -->
+<variablelist>
+ <!-- ==== -->
+ <varlistentry><term>EXTENTS</term><listitem>
+The size to make the created snapshot. Syntaxes like
+<literal>10%ORIGIN</literal> or <literal>50%FREE</literal>
+are possible; see <manref name='lvcreate' vol='8'/>.
+There must be at least this much unused space available in
+the same volume group as the origin filesystem, and this size
+must be large enough for all the expected modification activity
+for that filesystem during the snapshot's existence.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>LOGICALVOLUME</term><listitem>
+The name of the logical volume that will be the origin of the snapshot.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>LVMEXECUTABLE</term><listitem>
+Path to the <command>lvm</command> executable, search in $PATH by default.
+If necessary for authorization, this can be set
+instead to a set-uid wrapper that (after appropriate checks) will
+execute <command>lvm</command> with the same arguments.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>MOUNTEXECUTABLE</term><listitem>
+Path to the <command>mount</command> executable, search in $PATH by default.
+If necessary for authorization, this can be set
+instead to a set-uid wrapper that (after appropriate checks) will
+execute <command>mount</command> with the same arguments.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>MOUNTOPTS</term><listitem>
+Mount options to be used when mounting the snapshot. Multiple values
+are accepted. If the filesystem is XFS, two mount options are necessary:
+<programlisting>
+    property "mountopts" "nouuid" "norecovery"
+</programlisting>
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>SNAPSHOTNAME</term><listitem>
+The name to be given to the newly-created snapshot.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>UMOUNTEXECUTABLE</term><listitem>
+Path to the <command>umount</command> executable, search in $PATH by default.
+If necessary for authorization, this can be set
+instead to a set-uid wrapper that (after appropriate checks) will
+execute <command>mount</command> with the same arguments.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>UNMOUNTSWHENFILLED</term><listitem>
+Whether the OS kernel in use is known to unmount a mounted snapshot
+automatically if its maximum allocation is reached. This affects the script's
+treatment of the race condition between unmounting the snapshot post-backup
+and checking whether its allocation reached 100%. A true setting allows the
+backup to be considered successful if the unmount succeeded, even if the
+allocation is then reported as 100% when checked. A false setting (the default)
+forces a failure result any time the snapshot allocation is seen to reach
+100%. This property should be set true only if the OS version in use has been
+tested and definitely shown to automatically unmount snapshots that fill.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>VOLUMEGROUP</term><listitem>
+Name of the volume group in which the logical volume to be snapshotted,
+and in which the snapshot will be created.
+</listitem></varlistentry>
+ <!-- ==== -->
+</variablelist>
+
+</refsect1>
+
+<refsect1><title>EXAMPLE</title>
+
+<para>This example defines a script <literal>lvmsnapshot</literal> and a DLE
+that backs up a logical volume <literal>lv_root</literal> in volume group
+<literal>vg_example</literal> (assuming there is already a
+<literal>remote-gtar</literal> dumptype defined. A single snapshot will be
+used for both the estimate and backup phases. While in use, the snapshot
+will be mounted at <filename>/tmp/rootsnap</filename>, which will be
+created empty if absent, or emptied if present.</para>
+
+<para>A dumptype <literal>remote-gtar-root-tinysnap</literal> dumptype is also
+created, setting the same VOLUMEGROUP, LOGICALVOLUME, SNAPSHOTNAME, and
+EXTENTS properties to avoid repeating them in DLEs for several
+identically-configured clients, and also overriding EXECUTE-ON to use
+a shorter-lived, smaller snapshot for each phase,
+in case a client may have insufficient free space in the volume group for
+all of the modification activity during the longer life of a single
+snapshot.</para>
+
+<para>In a realistic application where <command>amandad</command> does not
+run as the superuser, privileged wrappers may need to be written and named
+in the LVMEXECUTABLE, MOUNTEXECUTABLE, and UMOUNTEXECUTABLE properties as
+discussed above.</para>
+
+<para>In <manref name='amanda.conf' vol='5'/>:
+<programlisting>
+ define script "lvmsnapshot" {
+   plugin "amlvmsnapshot"
+   execute-where client
+   execute-on pre-dle-estimate, post-dle-backup
+   property    "lvmexecutable" "/path/to/lvm-wrapper"
+   property  "mountexecutable" "/path/to/mount-wrapper"
+   property "umountexecutable" "/path/to/umount-wrapper"
+ }
+
+ define dumptype remote-gtar-root-tinysnap {
+   remote-gtar
+   script {
+     "lvmsnapshot"
+     property "volumegroup"   "vg_example"
+     property "logicalvolume" "lv_root"
+     property "snapshotname"  "snap_root"
+     property "extents"       "2%ORIGIN"
+     execute-on pre-dle-estimate, post-dle-estimate, pre-dle-backup, post-dle-backup
+   }
+ }
+</programlisting></para>
+
+<para>And in <manref name='disklist' vol='5'/>:
+<programlisting>
+ example / /tmp/rootsnap {
+   remote-gtar
+   script {
+     "lvmsnapshot"
+     property "volumegroup"   "vg_example"
+     property "logicalvolume" "lv_root"
+     property "snapshotname"  "snap_root"
+     property "extents"       "10%ORIGIN"
+   }
+ } 1 enet100
+
+ tiny / /tmp/rootsnap remote-gtar-root-tinysnap -1 enet100
+</programlisting></para>
+</refsect1>
+
+<refsect1><title>BUGS</title>
+<para>This script does not (yet) capture and interpret most standard output
+from the <command>lvm</command>, which normally produces some. Uncaptured, such
+output mixes with Amanda's client/server messaging, leading to backup failures.
+A cheap workaround is to include <code>dup2(2,1)</code> in the wrapper that
+executes <command>lvm</command>, so such output goes to standard error and
+ends up in the client <command>amandad</command> log file. The wrapper should
+avoid that <code>dup2</code> if the <command>lvm</command> subcommand being
+executed is <code>lvs</code>, because the output in that case is captured
+and used.</para>
+
+<para>Also, this script does not (yet) do anything to prevent
+<command>lvm</command> inheriting file descriptors other than standard
+input/output/error that are used in Amanda's script API. That leads to
+benign warnings from <command>lvm</command> about file descriptor leaks.
+This also has a cheap workaround that can be added to the wrapper, namely
+to define <literal>LVM_SUPPRESS_FD_WARNINGS</literal> in the environment
+before executing <command>lvm</command>.</para>
+</refsect1>
+
+<seealso>
+<manref name="amanda.conf" vol="5"/>,
+<manref name="amanda-client.conf" vol="5"/>,
+<manref name="amanda-scripts" vol="7"/>
+</seealso>
+
+
+</refentry>

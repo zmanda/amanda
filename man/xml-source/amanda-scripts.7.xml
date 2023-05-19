@@ -41,6 +41,22 @@ see http://wiki.zmanda.com/index.php/Script_API.</para>
 
 <itemizedlist>
 <listitem>
+<manref name="am389bak" vol="8"/>,
+- generate consistent point-in-time copy of a 389 Directory Server instance.
+</listitem>
+<listitem>
+<manref name="amlibvirtfsfreeze" vol="8"/>,
+- freeze/thaw guest VM filesystems so image files are not dirty on host backup.
+</listitem>
+<listitem>
+<manref name="amlvmsnapshot" vol="8"/>,
+- create/destroy and mount/unmount LVM snapshot.
+</listitem>
+<listitem>
+<manref name="amsvnmakehotcopy" vol="8"/>,
+- generate consistent point-in-time copy of a Subversion repository.
+</listitem>
+<listitem>
 <manref name="amzfs-snapshot" vol="8"/>,
 - create/destroy zfs snapshot.
 </listitem>

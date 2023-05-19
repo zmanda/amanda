@@ -20,8 +20,17 @@ AM_LDFLAGS = $(AMANDA_STATIC_LDFLAGS) $(AS_NEEDED_FLAGS)
 applicationexec_SCRIPTS_SHELL = script-fail
 
 applicationexec_SCRIPTS_PERL = script-email \
+	     am389bak \
+	     amgrowingfile \
+	     amgrowingzip \
+	     amlibvirtfsfreeze \
 	     amlog-script \
+	     amlvmsnapshot \
+	     amooraw \
+	     amopaquetree \
 	     ampgsql \
+	     amsvnmakehotcopy \
+	     amzfs-holdsend \
 	     amzfs-sendrecv \
 	     amzfs-snapshot \
 	     amrandom \

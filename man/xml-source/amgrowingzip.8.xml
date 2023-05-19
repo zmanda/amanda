@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"
+[
+  <!-- entities files to use -->
+  <!ENTITY % global_entities SYSTEM '../entities/global.entities'>
+  %global_entities;
+]>
+
+<refentry id='amgrowingzip.8'>
+
+<refmeta>
+<refentrytitle>amgrowingzip</refentrytitle>
+<manvolnum>8</manvolnum>
+&rmi.source;
+&rmi.version;
+&rmi.manual.8;
+</refmeta>
+<refnamediv>
+<refname>amgrowingzip</refname>
+<refpurpose>Amanda Application for backup of append-only ZIP archive</refpurpose>
+</refnamediv>
+<refentryinfo>
+<author><personname>Chapman Flack</personname></author>
+</refentryinfo>
+<!-- body begins here -->
+
+<refsect1><title>DESCRIPTION</title>
+
+<para>Amgrowingzip is an Amanda Application API script.  It should not be run
+by users directly.  It can backup and restore a single file that is
+a ZIP archive known to change only by appending members.</para>
+
+<para>Such a file may be used to collect many small files that are created
+over time, such as data acquired from instruments, write-ahead logs of some
+databases, etc. Where many small files in a directory could use disk blocks
+inefficiently, appending them, as they are generated, to a growing ZIP archive
+can achieve efficient storage along with the ability to extract individual
+files from the ZIP as needed.</para>
+
+<para>Amgrowingzip itself only deals with the ZIP archive as a unit.
+When restoring, the entire archive will be restored. Any extraction of
+individual members from the archive can then be done with ordinary ZIP
+tools. The growing ZIP file can be large, and amgrowingzip supports backup
+levels.</para>
+
+<note><para>For correctness, this application requires that the ZIP archive
+be known to grow only by new members being appended to it. This is analogous to
+an append-only operation at the file level, but not the same, so it cannot
+be enforced by typical <emphasis>append-only</emphasis> flags offered by
+the operating system. The structure of a ZIP archive consists of members of
+the archive (typically compressed), followed by a directory structure
+at the end. Appending a member involves seeking to the end of the file,
+backspacing to the start of the directory structure, and overwriting with the
+new member(s) followed by the new directory structure. For amgrowingzip,
+a backup level greater than zero is simply everything that must be written
+over the file starting at the directory structure offset in the prior-level 
+backup.</para>
+
+<para>Any time the ZIP archive is rebuilt rather than simply appended,
+the next <command>amgrowingzip</command> backup must be forced to level 0.
+Not all ZIP-related tools truly append a member as described here;
+some perform any modification of the archive by rebuilding it from scratch.
+To be usable with amgrowingzip, whatever process adds members to the archive
+must be known to truly append them. The <package>zipfile</package> module in
+Python offers a suitable <emphasis>append</emphasis> mode, for example.
+</para></note>
+
+<note><para>If it is possible for the process that appends members to be
+active while <command>amgrowingzip</command> is taking a backup, the FLOCK
+property should be set, and the appending process should also be coded to
+hold an advisory exclusive lock on the archive file during each modification.
+Otherwise, a failure or unusable backup could result from trying to locate
+the archive's directory while a write is in progress.
+</para></note>
+
+<para>The <emphasis remap='B'>diskdevice</emphasis> in the disklist (DLE)
+names the ZIP archive <command>amgrowingzip</command> will read, unless
+overridden by a TARGET property given explicitly. When restoring,
+the TARGET property (which can be set with the
+<emphasis remap='B'>setproperty</emphasis> command in
+<manref name="amrecover" vol="8"/>) will be used, or, if it is not set,
+<filename>amgrowingzip-restored</filename> in the current directory.
+In other words, <command>amgrowingzip</command> will not default to
+restoring data directly to the original location named by
+<emphasis remap='B'>diskdevice</emphasis>, but the TARGET property
+can be set to that name, if that is what's desired.
+</para>
+
+<para>When restoring, the file named with the TARGET property (or
+<filename>amgrowingzip-restored</filename>) is truncated and rewritten
+in place if it exists, or created with mode 0600 if it does not.</para>
+
+<para>No locking is used while restoring, regardless of the FLOCK property.
+There is no sense in allowing any writes to the file being restored before
+the last increment needed has been applied to it. The best approach is to
+restore under a temporary name and, only after restoration, move the file
+to the expected place.</para>
+</refsect1>
+
+<refsect1><title>PROPERTIES</title>
+
+<para>This section lists the properties that control amgrowingfile's
+functionality.
+See <manref name="amanda-applications" vol="7"/>
+for information on application properties and how they are configured.
+For the recognized <amkeyword>true</amkeyword>/<amkeyword>false</amkeyword>
+values for a boolean property, see <manref name="amanda.conf" vol="5"/>.
+</para>
+
+<!-- PLEASE KEEP THIS LIST IN ALPHABETICAL ORDER -->
+<variablelist>
+ <!-- ==== -->
+ <varlistentry><term>FLOCK</term><listitem>
+Set to a <amkeyword>true</amkeyword> value to require an advisory shared lock
+before backing up the file, in case the process that appends members to it
+could be simultaneously active. The appending process must also be coded to take
+an advisory exclusive lock while writing. If this property is given a
+<amkeyword>false</amkeyword> value, no locking is used.
+</listitem></varlistentry>
+
+ <!-- ==== -->
+ <varlistentry><term>TARGET</term><listitem>
+For a restore command, the file name under which the data will
+be restored, instead of <filename>amgrowingzip-restored</filename>.
+Otherwise, names the file to be backed up, overriding DEVICE.
+</listitem></varlistentry>
+</variablelist>
+
+</refsect1>
+
+<refsect1><title>EXAMPLE</title>
+<para>
+<programlisting>
+  define application-tool app_amgrowingzip {
+    plugin "amgrowingzip"
+  }
+</programlisting>
+A dumptype using this application might look like:
+<programlisting>
+  define dumptype amgrowingzip {
+    global
+    program "APPLICATION"
+    application "app_amgrowingzip"
+  }
+</programlisting>
+Note that the <emphasis>program</emphasis> parameter must be set to
+<emphasis>"APPLICATION"</emphasis> to use the <emphasis>application</emphasis>
+parameter.
+</para>
+</refsect1>
+
+<seealso>
+<manref name="amanda.conf" vol="5"/>,
+<manref name="amanda-applications" vol="7"/>
+<manref name="amrecover" vol="8"/>
+</seealso>
+
+</refentry>

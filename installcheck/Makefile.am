@@ -21,7 +21,11 @@ all_tests += $(common_tests)
 client_tests = \
         noop \
 	ambsdtar \
+	amgrowingfile \
+	amgrowingzip \
 	amgtar \
+	amooraw \
+	amopaquetree \
 	ampgsql \
 	amraw \
 	amstar \
