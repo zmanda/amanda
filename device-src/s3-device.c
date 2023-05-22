@@ -2339,7 +2339,7 @@ s3_device_set_http_v1_1_version(Device *p_self, DevicePropertyBase *base,
 {
     S3Device *self = S3_DEVICE(p_self);
 
-    self->reps_bucket = g_value_get_boolean(val);
+    self->http_v1_1 = g_value_get_boolean(val);
 
     return device_simple_property_set_fn(p_self, base, val, surety, source);
 }
