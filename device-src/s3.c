@@ -237,6 +237,8 @@ struct S3Handle {
     /* CAStor */
     char *reps;
     char *reps_bucket;
+
+    gboolean http_v1_1;
 };
 
 typedef struct {
@@ -3205,7 +3207,8 @@ s3_open(const char *access_key,
 	const gboolean read_from_glacier,
 	const long timeout,
         const char *reps,
-        const char *reps_bucket)
+        const char *reps_bucket,
+        const gboolean http_v1_1)
 {
     S3Handle *hdl;
     char *hwp;
@@ -3330,6 +3333,8 @@ s3_open(const char *access_key,
 	hdl->service_path = NULL;
     }
 
+    hdl->http_v1_1 = http_v1_1;
+
     s3_new_curl(hdl);
     if (!hdl->curl) goto error;
     return hdl;
@@ -3372,8 +3377,9 @@ s3_new_curl(
 	}
 #endif
     }
-    /* google cloud api's are not HTTP2 compatiable YET*/
-    if (hdl->s3_api == S3_API_OAUTH2)
+
+    /* if user wants to set HTTP version to 1.1 */
+    if (hdl->http_v1_1)
         curl_easy_setopt(hdl->curl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
 }
 
