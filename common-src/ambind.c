@@ -58,6 +58,11 @@ main(
     }
     sockfd = atoi(argv[1]);
 
+    if (sockfd < 0 || sockfd >= FD_SETSIZE) {
+        fprintf(stderr, "ambind: incorrect file descriptor provided: %d\n", sockfd);
+        return -1;
+    }
+
     do {
         struct timeval timeout = { 5, 0 };
         fd_set readSet;
