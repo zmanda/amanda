@@ -188,17 +188,7 @@ main(
 		g_str_has_prefix(argv[i],"--verbose")) {
 		/* Accept theses options */
 		good_option++;
-	    } else if (check_whitelist(argv[i])
-        //     g_str_has_prefix(argv[i],"--blocking-factor") ||
-		// g_str_has_prefix(argv[i],"--file") ||
-		// g_str_has_prefix(argv[i],"--directory") ||
-		// g_str_has_prefix(argv[i],"--exclude") ||
-		// g_str_has_prefix(argv[i],"--transform") ||
-		// g_str_has_prefix(argv[i],"--listed-incremental") ||
-		// g_str_has_prefix(argv[i],"--newer") ||
-		// g_str_has_prefix(argv[i],"--exclude-from") ||
-		// g_str_has_prefix(argv[i],"--files-from")
-        ) {
+	    } else if (check_whitelist(argv[i])) {
 		if (strchr(argv[i], '=')) {
 		    good_option++;
 		} else {
