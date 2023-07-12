@@ -39,8 +39,11 @@
 #include "amutil.h"
 #include "conffile.h"
 #include "client_util.h"
+#include <stdbool.h>
 
 static const char *whitelisted_args[] = {"--blocking-factor", "--file", "--directory", "--exclude", "--transform", "--listed-incremental", "--newer", "--exclude-from", "--files-from", NULL};
+
+bool check_whitelist(char* option);
 
 int main(int argc, char **argv);
 
@@ -185,15 +188,17 @@ main(
 		g_str_has_prefix(argv[i],"--verbose")) {
 		/* Accept theses options */
 		good_option++;
-	    } else if (g_str_has_prefix(argv[i],"--blocking-factor") ||
-		g_str_has_prefix(argv[i],"--file") ||
-		g_str_has_prefix(argv[i],"--directory") ||
-		g_str_has_prefix(argv[i],"--exclude") ||
-		g_str_has_prefix(argv[i],"--transform") ||
-		g_str_has_prefix(argv[i],"--listed-incremental") ||
-		g_str_has_prefix(argv[i],"--newer") ||
-		g_str_has_prefix(argv[i],"--exclude-from") ||
-		g_str_has_prefix(argv[i],"--files-from")) {
+	    } else if (check_whitelist(argv[i])
+        //     g_str_has_prefix(argv[i],"--blocking-factor") ||
+		// g_str_has_prefix(argv[i],"--file") ||
+		// g_str_has_prefix(argv[i],"--directory") ||
+		// g_str_has_prefix(argv[i],"--exclude") ||
+		// g_str_has_prefix(argv[i],"--transform") ||
+		// g_str_has_prefix(argv[i],"--listed-incremental") ||
+		// g_str_has_prefix(argv[i],"--newer") ||
+		// g_str_has_prefix(argv[i],"--exclude-from") ||
+		// g_str_has_prefix(argv[i],"--files-from")
+        ) {
 		if (strchr(argv[i], '=')) {
 		    good_option++;
 		} else {
@@ -253,4 +258,24 @@ main(
     g_free(my_realpath);
     return 1;
 #endif
+}
+
+bool
+check_whitelist(
+    gchar* option)
+{
+    bool result = TRUE;
+    char** i;
+
+    for(i=whitelisted_args; *i; i++) {
+        if (g_str_has_prefix(option, *i)) {
+            break;
+        }
+    }
+
+    if (!*i) {
+        result = FALSE; // not allowing arguments absent in the whitelist
+    }
+
+    return result;
 }
