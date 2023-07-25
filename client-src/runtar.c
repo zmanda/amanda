@@ -39,6 +39,11 @@
 #include "amutil.h"
 #include "conffile.h"
 #include "client_util.h"
+#include <stdbool.h>
+
+static const char *whitelisted_args[] = {"--blocking-factor", "--file", "--directory", "--exclude", "--transform", "--listed-incremental", "--newer", "--exclude-from", "--files-from", NULL};
+
+bool check_whitelist(char* option);
 
 int main(int argc, char **argv);
 
@@ -49,6 +54,7 @@ main(
 {
 #ifdef GNUTAR
     int i;
+    char **j;
     char *e;
     char *dbf;
     char *cmdline;
@@ -182,20 +188,23 @@ main(
 		g_str_has_prefix(argv[i],"--verbose")) {
 		/* Accept theses options */
 		good_option++;
-	    } else if (g_str_has_prefix(argv[i],"--blocking-factor") ||
-		g_str_has_prefix(argv[i],"--file") ||
-		g_str_has_prefix(argv[i],"--directory") ||
-		g_str_has_prefix(argv[i],"--exclude") ||
-		g_str_has_prefix(argv[i],"--transform") ||
-		g_str_has_prefix(argv[i],"--listed-incremental") ||
-		g_str_has_prefix(argv[i],"--newer") ||
-		g_str_has_prefix(argv[i],"--exclude-from") ||
-		g_str_has_prefix(argv[i],"--files-from")) {
+	    } else if (check_whitelist(argv[i])) {
 		if (strchr(argv[i], '=')) {
 		    good_option++;
 		} else {
 		    /* Accept theses options with the following argument */
 		    good_option += 2;
+
+            /* Whitelisting only the allowed arguments*/
+            for(j=whitelisted_args; *j; j++) {
+                if (strcmp(argv[i], *j) == 0) {
+                    break;
+                }
+            }
+
+            if (!*j) {
+                good_option = 0; // not allowing arguments absent in the whitelist
+            }
 		}
 	    } else if (argv[i][0] != '-') {
 		good_option++;
@@ -227,6 +236,7 @@ main(
     env = safe_env();
     execve(my_realpath, new_argv, env);
     free_env(env);
+    free_env(new_argv);
 
     e = strerror(errno);
     dbreopen(dbf, "more");
@@ -238,4 +248,24 @@ main(
     g_free(my_realpath);
     return 1;
 #endif
+}
+
+bool
+check_whitelist(
+    gchar* option)
+{
+    bool result = TRUE;
+    char** i;
+
+    for(i=whitelisted_args; *i; i++) {
+        if (g_str_has_prefix(option, *i)) {
+            break;
+        }
+    }
+
+    if (!*i) {
+        result = FALSE; // not allowing arguments absent in the whitelist
+    }
+
+    return result;
 }
