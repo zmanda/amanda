@@ -1,3 +1,6 @@
+2023-07-26 amandaTrusted <amandaTrusted@Zmanda.com>
+    * Fixed: arg checking for runtar.c (CVE-2023-30577)
+
 2023-02-25 amandaTrusted <amandaTrusted@Zmanda.com>
     * Fixed: removed vulnerable jQuery dependency
     * Fixed: fix suppressed 1st char of error message in common-src/bsdtcp-security.c
