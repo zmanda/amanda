@@ -1,0 +1,16 @@
+/alloca.h
+/fcntl.h
+/inttypes.h
+/langinfo.h
+/limits.h
+/locale.h
+/netdb.h
+/signal.h
+/stdckdint.h
+/stdio.h
+/stdlib.h
+/string.h
+/time.h
+/unistd.h
+/wchar.h
+/wctype.h

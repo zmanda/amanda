@@ -1,11 +1,11 @@
-# serial 36
+# serial 42
 
 dnl From Jim Meyering.
 dnl Check for the nanosleep function.
 dnl If not found, use the supplied replacement.
 dnl
 
-# Copyright (C) 1999-2001, 2003-2016 Free Software Foundation, Inc.
+# Copyright (C) 1999-2001, 2003-2023 Free Software Foundation, Inc.
 
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
@@ -13,14 +13,13 @@ dnl
 
 AC_DEFUN([gl_FUNC_NANOSLEEP],
 [
- AC_REQUIRE([gl_HEADER_TIME_H_DEFAULTS])
+ AC_REQUIRE([gl_TIME_H_DEFAULTS])
  AC_REQUIRE([AC_CANONICAL_HOST]) dnl for cross-compiles
 
  dnl Persuade glibc and Solaris <time.h> to declare nanosleep.
  AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS])
 
- AC_CHECK_HEADERS_ONCE([sys/time.h])
- AC_REQUIRE([gl_FUNC_SELECT])
+ AC_CHECK_DECLS_ONCE([alarm])
 
  nanosleep_save_libs=$LIBS
 
@@ -51,9 +50,6 @@ AC_DEFUN([gl_FUNC_NANOSLEEP],
           #include <errno.h>
           #include <limits.h>
           #include <signal.h>
-          #if HAVE_SYS_TIME_H
-           #include <sys/time.h>
-          #endif
           #include <time.h>
           #include <unistd.h>
           #define TYPE_SIGNED(t) (! ((t) 0 < (t) -1))
@@ -62,52 +58,70 @@ AC_DEFUN([gl_FUNC_NANOSLEEP],
                   ? (t) -1 \
                   : ((((t) 1 << (sizeof (t) * CHAR_BIT - 2)) - 1) * 2 + 1)))
 
+          #if HAVE_DECL_ALARM
           static void
           check_for_SIGALRM (int sig)
           {
             if (sig != SIGALRM)
               _exit (1);
           }
+          #endif
 
           int
           main ()
           {
             static struct timespec ts_sleep;
             static struct timespec ts_remaining;
-            static struct sigaction act;
             /* Test for major problems first.  */
             if (! nanosleep)
               return 2;
-            act.sa_handler = check_for_SIGALRM;
-            sigemptyset (&act.sa_mask);
-            sigaction (SIGALRM, &act, NULL);
             ts_sleep.tv_sec = 0;
             ts_sleep.tv_nsec = 1;
-            alarm (1);
-            if (nanosleep (&ts_sleep, NULL) != 0)
+            #if HAVE_DECL_ALARM
+            {
+              static struct sigaction act;
+              act.sa_handler = check_for_SIGALRM;
+              sigemptyset (&act.sa_mask);
+              sigaction (SIGALRM, &act, NULL);
+              alarm (1);
+              if (nanosleep (&ts_sleep, NULL) != 0)
+                return 3;
+              /* Test for a minor problem: the handling of large arguments.  */
+              ts_sleep.tv_sec = TYPE_MAXIMUM (time_t);
+              ts_sleep.tv_nsec = 999999999;
+              alarm (1);
+              if (nanosleep (&ts_sleep, &ts_remaining) != -1)
+                return 4;
+              if (errno != EINTR)
+                return 5;
+              if (ts_remaining.tv_sec <= TYPE_MAXIMUM (time_t) - 10)
+                return 6;
+            }
+            #else /* A simpler test for native Windows.  */
+            if (nanosleep (&ts_sleep, &ts_remaining) < 0)
               return 3;
-            /* Test for a minor problem: the handling of large arguments.  */
-            ts_sleep.tv_sec = TYPE_MAXIMUM (time_t);
-            ts_sleep.tv_nsec = 999999999;
-            alarm (1);
+            /* Test for 32-bit mingw bug: negative nanosecond values do not
+               cause failure.  */
+            ts_sleep.tv_sec = 1;
+            ts_sleep.tv_nsec = -1;
             if (nanosleep (&ts_sleep, &ts_remaining) != -1)
-              return 4;
-            if (errno != EINTR)
-              return 5;
-            if (ts_remaining.tv_sec <= TYPE_MAXIMUM (time_t) - 10)
-              return 6;
+              return 7;
+            #endif
             return 0;
           }]])],
        [gl_cv_func_nanosleep=yes],
-       [case $? in dnl (
-        4|5|6) gl_cv_func_nanosleep='no (mishandles large arguments)';; dnl (
-        *)   gl_cv_func_nanosleep=no;;
+       [case $? in
+        4|5|6) gl_cv_func_nanosleep='no (mishandles large arguments)' ;;
+        7)     gl_cv_func_nanosleep='no (mishandles negative tv_nsec)' ;;
+        *)     gl_cv_func_nanosleep=no ;;
         esac],
-       [case "$host_os" in dnl ((
+       [case "$host_os" in
           linux*) # Guess it halfway works when the kernel is Linux.
             gl_cv_func_nanosleep='guessing no (mishandles large arguments)' ;;
-          *)      # If we don't know, assume the worst.
+          mingw*) # Guess no on native Windows.
             gl_cv_func_nanosleep='guessing no' ;;
+          *)      # If we don't know, obey --enable-cross-guesses.
+            gl_cv_func_nanosleep="$gl_cross_guess_normal" ;;
         esac
        ])
     ])
@@ -122,15 +136,6 @@ AC_DEFUN([gl_FUNC_NANOSLEEP],
            AC_DEFINE([HAVE_BUG_BIG_NANOSLEEP], [1],
              [Define to 1 if nanosleep mishandles large arguments.])
            ;;
-         *)
-           # The replacement uses select(). Add $LIBSOCKET to $LIB_NANOSLEEP.
-           for ac_lib in $LIBSOCKET; do
-             case " $LIB_NANOSLEEP " in
-               *" $ac_lib "*) ;;
-               *) LIB_NANOSLEEP="$LIB_NANOSLEEP $ac_lib";;
-             esac
-           done
-           ;;
        esac
        ;;
    esac
@@ -138,11 +143,4 @@ AC_DEFUN([gl_FUNC_NANOSLEEP],
    HAVE_NANOSLEEP=0
  fi
  LIBS=$nanosleep_save_libs
-])
-
-# Prerequisites of lib/nanosleep.c.
-AC_DEFUN([gl_PREREQ_NANOSLEEP],
-[
-  AC_CHECK_HEADERS_ONCE([sys/select.h])
-  gl_PREREQ_SIG_HANDLER_H
 ])

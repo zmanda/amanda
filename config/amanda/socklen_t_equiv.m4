@@ -14,7 +14,7 @@
 AC_DEFUN([AMANDA_SOCKLEN_T_EQUIV],
 [
       ## lifted from config/gnulib/socklen.m4
-      AC_REQUIRE([gl_HEADER_SYS_SOCKET])dnl
+      AC_REQUIRE([gl_SYS_SOCKET_H])dnl
       AC_MSG_CHECKING([for socklen_t equivalent])
       AC_CACHE_VAL([gl_cv_socklen_t_equiv],
 	[# Systems have either "struct sockaddr *" or
