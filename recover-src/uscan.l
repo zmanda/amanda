@@ -92,6 +92,7 @@ quit		{ BEGIN(needstring); return QUIT; }
 exit		{ BEGIN(needstring); return QUIT; }
 history		{ BEGIN(needstring); return DHIST; }
 ls		{ BEGIN(needstring); return LS; }
+ls-all  { BEGIN(needstring); return LSALL; }
 add		{ BEGIN(needstring); return ADD; }
 addx		{ BEGIN(needstring); return ADDX; }
 list		{ BEGIN(needstring); return LIST; }
@@ -106,6 +107,9 @@ lpwd		{ BEGIN(needstring); return LPWD; }
 extract		{ BEGIN(needstring); return EXTRACT; }
 mode		{ BEGIN(needstring); return MODE; }
 storage		{ BEGIN(needstring); return STORAGE; }
+find        { BEGIN(needstring); return FIND; }
+findx       { BEGIN(needstring); return FINDX; }
+version     { BEGIN(needstring); return FILEHISTORY; }
 <needmode>tar   { BEGIN(needstring); return TAR; }
 <needmode>smb   { BEGIN(needstring); return SMB; }
 <INITIAL,needdevice,needmode,needstring,astring,propertyappend,propertypriority>{LINEFEED}	{ BEGIN(INITIAL); return NL; }

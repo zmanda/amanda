@@ -46,7 +46,10 @@ set_date(
 {
     char *cmd = NULL;
     char *qdisk_path;
-
+    
+    amfree(listing_date);
+    listing_date = g_strdup(date);
+    
     clear_dir_list();
 
     cmd = g_strconcat("DATE ", date, NULL);

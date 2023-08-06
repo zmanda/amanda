@@ -49,11 +49,16 @@ help_list(void)
     g_printf(_("deletex path1 ... - delete from extraction list (regular expressions)\n"));
     g_printf(_("extract           - extract selected files from tapes\n"));
     g_printf(_("exit\n"));
+    g_printf(_("find file         - find file in current directory and subdirectories\n"));
+    g_printf(_("find path file    - find file in path and path subdirectories\n"));
+    g_printf(_("findx filename    - find file in current directory and subdirectories (regular expressions)\n"));
+    g_printf(_("findx path file   - find file in path and path subdirectories (regular expressions)\n"));
     g_printf(_("help\n"));
     g_printf(_("history           - show dump history of disk\n"));
     g_printf(_("list [filename]   - show extraction list, optionally writing to file\n"));
     g_printf(_("lcd directory     - change cwd on local file system\n"));
     g_printf(_("ls                - list directory on virtual file system\n"));
+    g_printf(_("ls-all            - list all directories and file on virtual file system\n"));
     g_printf(_("lpwd              - show cwd on local file system\n"));
     g_printf(_("mode              - show the method used to extract SMB shares\n"));
     g_printf(_("pwd               - show cwd on virtual file system\n"));
@@ -71,5 +76,6 @@ help_list(void)
     g_printf(_("settranslate [on|off]              - set/unset translation of non-ASCII characters\n"));
     g_printf(_("storage [storage-name]*            - the name of the storage in order of preference\n"));
     g_printf(_("                                     use 'HOLDING' for the holding disk\n"));
+    g_printf(_("version filename                   - show file history\n"));
     g_printf("\n");
 }

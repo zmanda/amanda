@@ -88,6 +88,7 @@ static char *errstr = NULL;
 char *authopt;
 int amindexd_alive = 0;
 security_handle_t *gsech;
+char *listing_date = NULL;
 
 static struct {
     const char *name;
@@ -606,6 +607,7 @@ main(
 
     g_printf(_("Setting restore date to today (%s)\n"), dump_date);
     line = g_strdup_printf("DATE %s", dump_date);
+    listing_date = g_strdup(dump_date);
     if (converse(line) == -1) {
         aclose(server_socket);
 	exit(1);

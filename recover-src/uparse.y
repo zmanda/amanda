@@ -53,9 +53,9 @@ extern char *	yytext;
 
 %token LISTHOST LISTDISK LISTPROPERTY
 %token SETHOST SETDISK SETDATE SETTAPE SETMODE SETDEVICE SETPROPERTY
-%token CD CDX QUIT DHIST LS ADD ADDX EXTRACT DASH_H
+%token CD CDX QUIT DHIST LS LSALL ADD ADDX EXTRACT DASH_H
 %token LIST DELETE DELETEX PWD CLEAR HELP LCD LPWD MODE SMB TAR
-%token APPEND PRIORITY SETTRANSLATE STORAGE
+%token APPEND PRIORITY SETTRANSLATE STORAGE FIND FINDX FILEHISTORY
 %token NL
 
         /* typed tokens */
@@ -129,6 +129,17 @@ set_command:
   |	SETMODE invalid_string { yyerror("Invalid argument"); }
   |	SETMODE NL { yyerror("Argument required"); }
   |	STORAGE storage_value { set_storage(); }
+  | FIND STRING STRING NL { find_file($3, $2, 0); amfree($2); amfree($3); }
+  | FIND STRING NL { find_file($2, "", 0); amfree($2); }
+  | FIND NL { yyerror("Argument required"); }
+  | FIND STRING STRING invalid_string { yyerror("Invalid argument"); amfree($2); amfree($3); }
+  | FINDX STRING STRING NL { find_file($3, $2, 1); amfree($2); amfree($3); }
+  | FINDX STRING NL { find_file($2, "", 1); amfree($2); }
+  | FINDX NL { yyerror("Argument required"); }
+  | FINDX STRING STRING invalid_string { yyerror("Invalid argument"); amfree($2); amfree($3); }
+  |	FILEHISTORY STRING NL { list_file_history($2); amfree($2); }
+  |	FILEHISTORY STRING invalid_string { yyerror("Invalid argument"); amfree($2); }
+  |	FILEHISTORY NL { yyerror("Argument required"); }
   ;
 
 setdate_command:
@@ -186,6 +197,8 @@ display_command:
   |	DHIST invalid_string { yyerror("Invalid argument"); }
   |	LS NL { list_directory(); }
   |	LS invalid_string { yyerror("Invalid argument"); }
+  | LSALL NL { list_all_file(mount_point, ".*", 1); }
+  | LSALL invalid_string { yyerror("Invalid argument"); }
   |	LIST STRING NL { display_extract_list($2); amfree($2); }
   |	LIST NL { display_extract_list(NULL); }
   |	LIST STRING invalid_string { yyerror("Invalid argument"); }
