@@ -19,7 +19,6 @@ die() {
 echo "See DEVELOPING for instructions on updating:"
 echo " * gettext macros"
 echo " * gnulib"
-echo " * libtool files"
 
 echo "..creating file lists"
 (   cd config
@@ -37,6 +36,9 @@ config/set_full_version
 
 echo "..aclocal"
 aclocal $includes || die "aclocal failed"
+
+echo "..libtoolize"
+libtoolize --force || die "libtoolize failed"
 
 echo "...aclocal patches"
 # See http://bugzilla.gnome.org/show_bug.cgi?id=418778

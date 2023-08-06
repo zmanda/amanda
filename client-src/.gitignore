@@ -1,0 +1,13 @@
+/ambackup
+/amdump_client
+/calcsize
+/killpgrp
+/noop
+/patch-system
+/restore
+/rundump
+/runtar
+/selfcheck
+/sendbackup
+/senddiscover
+/sendsize

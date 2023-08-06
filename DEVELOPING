@@ -38,16 +38,6 @@ Get the object ID of the latest commit, using 'git show', and replace the
 previous object ID in Amanda's gnulib/regenerate/regenerate, so that other
 developers can access the same "release" of gnulib as you did.
 
-Updating Libtool
-----------------
-
-Libtool includes such useful files as config/config.guess.
-Occasionally (probably right after a release), these files should be
-updated.  On a machine with libtool installed, simply run 
-  libtoolize --force --copy
-
-Then use 'svn status' to see what changed, test it out, and commit.
-
 Updating Gettext
 ----------------
 
