@@ -45,6 +45,8 @@ static const char *whitelisted_args[] = {"--blocking-factor", "--file", "--direc
 
 bool check_whitelist(char* option);
 
+static const char *whitelisted_args[] = {"--blocking-factor", "--file", "--directory", "--exclude", "--transform", "--listed-incremental", "--newer", "--exclude-from", "--files-from", NULL};
+
 int main(int argc, char **argv);
 
 int
