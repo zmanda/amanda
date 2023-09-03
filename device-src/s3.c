@@ -237,6 +237,8 @@ struct S3Handle {
     /* CAStor */
     char *reps;
     char *reps_bucket;
+
+    gboolean http_v1_1;
 };
 
 typedef struct {
@@ -2918,8 +2920,8 @@ compile_regexes(void)
         {"^[a-z0-9](-*[a-z0-9]){2,62}$", REG_EXTENDED | REG_NOSUB, &subdomain_regex},
         {"(/>)|(>([^<]*)</LocationConstraint>)", REG_EXTENDED | REG_ICASE, &location_con_regex},
         {"^Date:(.*)$",REG_EXTENDED | REG_ICASE | REG_NEWLINE, &date_sync_regex},
-        {"\"access_token\" : \"([^\"]*)\",", REG_EXTENDED | REG_ICASE | REG_NEWLINE, &access_token_regex},
-	{"\"expires_in\" : (.*)", REG_EXTENDED | REG_ICASE | REG_NEWLINE, &expires_in_regex},
+        {"\"access_token\"[[:space:]]*:[[:space:]]*\"([^\"]*)\",", REG_EXTENDED | REG_ICASE | REG_NEWLINE, &access_token_regex},
+	{"\"expires_in\"[[:space:]]*:[[:space:]]*(.*),", REG_EXTENDED | REG_ICASE | REG_NEWLINE, &expires_in_regex},
         {"\"details\": \"([^\"]*)\",", REG_EXTENDED | REG_ICASE | REG_NEWLINE, &details_regex},
         {"\"code\": (.*),", REG_EXTENDED | REG_ICASE | REG_NEWLINE, &code_regex},
         {"\"message\": \"([^\"]*)\",", REG_EXTENDED | REG_ICASE | REG_NEWLINE, &json_message_regex},
@@ -2978,10 +2980,10 @@ compile_regexes(void)
         {"^Date:(.*)$",
          G_REGEX_OPTIMIZE | G_REGEX_CASELESS,
          &date_sync_regex},
-        {"\"access_token\" : \"([^\"]*)\"",
+        {"\"access_token\"\\s*:\\s*\"([^\"]*)\"",
          G_REGEX_OPTIMIZE | G_REGEX_CASELESS,
          &access_token_regex},
-        {"\"expires_n\" : (.*)",
+        {"\"expires_in\"\\s*:\\s*(.*),",
          G_REGEX_OPTIMIZE | G_REGEX_CASELESS,
          &expires_in_regex},
         {"\"details\" : \"([^\"]*)\"",
@@ -3205,7 +3207,8 @@ s3_open(const char *access_key,
 	const gboolean read_from_glacier,
 	const long timeout,
         const char *reps,
-        const char *reps_bucket)
+        const char *reps_bucket,
+        const gboolean http_v1_1)
 {
     S3Handle *hdl;
     char *hwp;
@@ -3330,6 +3333,8 @@ s3_open(const char *access_key,
 	hdl->service_path = NULL;
     }
 
+    hdl->http_v1_1 = http_v1_1;
+
     s3_new_curl(hdl);
     if (!hdl->curl) goto error;
     return hdl;
@@ -3372,6 +3377,10 @@ s3_new_curl(
 	}
 #endif
     }
+
+    /* if user wants to set HTTP version to 1.1 */
+    if (hdl->http_v1_1)
+        curl_easy_setopt(hdl->curl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
 }
 
 gboolean

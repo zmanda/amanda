@@ -174,9 +174,13 @@ static DevicePropertyBase device_property_refresh_token;
 static DevicePropertyBase device_property_project_id;
 #define PROPERTY_PROJECT_ID (device_property_project_id.ID)
 
-/* The PROJECT ID */
+/* Create Bucket */
 static DevicePropertyBase device_property_create_bucket;
 #define PROPERTY_CREATE_BUCKET (device_property_create_bucket.ID)
+
+/* Set HTTP version for CURL requests */
+static DevicePropertyBase device_property_http_version;
+#define PROPERTY_HTTP_V1_1_VERSION (device_property_http_v1_1_version.ID)
 
 /* glacier */
 static DevicePropertyBase device_property_read_from_glacier;
@@ -517,6 +521,10 @@ static gboolean s3_device_set_reps_fn(Device *self,
     PropertySurety surety, PropertySource source);
 
 static gboolean s3_device_set_reps_bucket_fn(Device *self,
+    DevicePropertyBase *base, GValue *val,
+    PropertySurety surety, PropertySource source);
+
+static gboolean s3_device_set_http_v1_1_version(Device *self,
     DevicePropertyBase *base, GValue *val,
     PropertySurety surety, PropertySource source);
 
@@ -1186,6 +1194,10 @@ s3_device_register(void)
                                       G_TYPE_UINT64, "timeout",
        "The timeout for one tranfer");
 
+    device_property_fill_and_register(&device_property_http_version,
+                                      G_TYPE_BOOLEAN, "http_v1_1",
+       "Use HTTP version 1.1");
+
     /* register the device itself */
     register_device(s3_device_factory, device_prefix_list);
 }
@@ -1242,6 +1254,7 @@ s3_device_init(S3Device * self)
     self->reps = NULL;
     self->reps_bucket = NULL;
     self->transition_to_glacier = -1;
+    self->http_version_v1_1 = FALSE;
 
     /* Register property values
      * Note: Some aren't added until s3_device_open_device()
@@ -1580,6 +1593,11 @@ s3_device_base_init(
 	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
 	    device_simple_property_get_fn,
 	    s3_device_set_reps_bucket_fn);
+
+    device_class_register_property(device_class, PROPERTY_HTTP_V1_1_VERSION,
+	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
+	    device_simple_property_get_fn,
+	    s3_device_set_http_version);
 }
 
 static gboolean
@@ -2315,6 +2333,18 @@ s3_device_set_reps_bucket_fn(Device *p_self, DevicePropertyBase *base,
     return device_simple_property_set_fn(p_self, base, val, surety, source);
 }
 
+static gboolean
+s3_device_set_http_v1_1_version(Device *p_self, DevicePropertyBase *base,
+    GValue *val, PropertySurety surety, PropertySource source)
+{
+    S3Device *self = S3_DEVICE(p_self);
+
+    self->http_v1_1 = g_value_get_boolean(val);
+
+    return device_simple_property_set_fn(p_self, base, val, surety, source);
+}
+/* end of setter functions */
+
 static Device*
 s3_device_factory(char * device_name, char * device_type, char * device_node)
 {
@@ -2774,7 +2804,8 @@ setup_handle(S3Device * self) {
 					   self->reuse_connection,
 					   self->read_from_glacier,
 					   self->timeout,
-                                           self->reps, self->reps_bucket);
+                                           self->reps, self->reps_bucket
+                                           self->http_version_v1_1);
             if (self->s3t[thread].s3 == NULL) {
 	        device_set_error(d_self,
 		    g_strdup(_("Internal error creating S3 handle")),

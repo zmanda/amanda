@@ -180,6 +180,8 @@ struct _S3Device {
     /* CAStor */
     char        *reps;
     char        *reps_bucket;
+
+    gboolean    http_version_v1_1;
 };
 
 /*
