@@ -330,7 +330,7 @@ typedef struct result_handling {
 /*
  * get the access token for OAUTH2
  */
-static gboolean oauth2_get_access_token(S3Handle *hdl);
+static s3_result_t oauth2_get_access_token(S3Handle *hdl);
 
 /* Lookup a result in C{result_handling}.
  *
@@ -2448,7 +2448,7 @@ perform_request(S3Handle *hdl,
     if (hdl->s3_api == S3_API_OAUTH2 && !hdl->getting_oauth2_access_token &&
 	(!hdl->access_token || hdl->expires < time(NULL))) {
 	result = oauth2_get_access_token(hdl);
-	if (!result) {
+	if (result != S3_RESULT_OK) {
 	    g_debug("oauth2_get_access_token returned %d", result);
 	    return result;
 	}
@@ -2696,7 +2696,7 @@ perform_request(S3Handle *hdl,
 	if (hdl->s3_api == S3_API_OAUTH2 &&
 	    hdl->last_response_code == 401 &&
 	    hdl->last_s3_error_code == S3_ERROR_AuthenticationRequired) {
-	    should_retry = oauth2_get_access_token(hdl);
+	    should_retry = oauth2_get_access_token(hdl) == S3_RESULT_RETRY;
 	}
         /* and, unless we know we need to retry, see what we're to do now */
         if (!should_retry) {
@@ -4598,7 +4598,7 @@ oauth2_get_access_token(
 
 cleanup:
     g_free(body);
-    return result == S3_RESULT_OK;
+    result;
 }
 
 gboolean
