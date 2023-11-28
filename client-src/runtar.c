@@ -54,7 +54,7 @@ main(
 {
 #ifdef GNUTAR
     int i;
-    char **j;
+    const char **j;
     char *e;
     char *dbf;
     char *cmdline;
@@ -255,7 +255,7 @@ check_whitelist(
     gchar* option)
 {
     bool result = TRUE;
-    char** i;
+    const char** i;
 
     for(i=whitelisted_args; *i; i++) {
         if (g_str_has_prefix(option, *i)) {
