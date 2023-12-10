@@ -2653,19 +2653,29 @@ perform_request(S3Handle *hdl,
 		    goto curl_error;
 	}
 #endif
-
-        if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_HTTPGET, curlopt_httpget)))
-            goto curl_error;
-        if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_UPLOAD, curlopt_upload)))
-            goto curl_error;
-        if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_POST, curlopt_post)))
-            goto curl_error;
-        if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_NOBODY, curlopt_nobody)))
-            goto curl_error;
-        if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_CUSTOMREQUEST,
-                                          curlopt_customrequest)))
-            goto curl_error;
-
+        // set only required http method 
+        // libcurl seems to behave strangely in 7.29 >  i.e. 7.81
+        if(curlopt_httpget) {
+            if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_HTTPGET, curlopt_httpget)))
+                goto curl_error;
+        }
+        if(curlopt_upload) {
+            if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_UPLOAD, curlopt_upload)))
+                goto curl_error;
+        }
+        if(curlopt_post) {
+            if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_POST, curlopt_post)))
+                goto curl_error;
+        }
+        if(curlopt_nobody) {
+            if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_NOBODY, curlopt_nobody)))
+                goto curl_error;
+        }
+        if(curlopt_customrequest) {
+            if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_CUSTOMREQUEST,
+                                            curlopt_customrequest)))
+                goto curl_error;
+        }
 
         if (curlopt_upload || curlopt_post) {
             if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_READFUNCTION, read_func)))
