@@ -709,11 +709,6 @@ cat $LOGFILE >> $INSTALL_LOG && {
 } || \
     echo "Amanda postinstall logs can be found in '$LOGFILE'."
 
-echo "`date +'%b %e %Y %T'`: Sending anonymous distribution and version information to Zmanda" >> ${INSTALL_LOG}
-if [ -x /usr/bin/wget ]; then 
-        /usr/bin/wget -q -o /dev/null -O - --timeout=5 http://www.zmanda.com/amanda-tips.php\?version=%{amanda_version}\&os=%{disttag}%{distver}\&type=client 
-fi
-
 %postun backup_client
 ##########################################
 LOGFILE=`mktemp /tmp/amanda_client-remove.log.XXXXXXXXXXX`
