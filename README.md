@@ -211,5 +211,7 @@ http://wiki.zmanda.com
 
 https://github.com/zmanda/amanda/issues
 
+* To report security issues: [Security Policy](SECURITY.md)
+
 Backup, Share and Enjoy,
 The Amanda Community Development Team
